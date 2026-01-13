@@ -212,7 +212,7 @@ export function pageHome() {
       <section class="mb-10">
         <div class="flex items-end justify-between mb-5">
           <div>
-            <span class="text-xs font-medium text-emerald-400 uppercase tracking-wider">Lo más vendido</span>
+            <span class="text-xs font-medium text-brand uppercase tracking-wider">Lo más vendido</span>
             <h2 class="text-xl font-bold text-white mt-1">Favoritos del público</h2>
           </div>
           <a href="#/catalog" class="text-sm font-medium text-gray-400 hover:text-white transition-colors">
@@ -233,7 +233,7 @@ export function pageHome() {
         />
         <div class="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-transparent flex items-center p-6">
           <div>
-            <p class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1">CUPÓN EXCLUSIVO</p>
+            <p class="text-brand text-xs font-bold uppercase tracking-wider mb-1">CUPÓN EXCLUSIVO</p>
             <p class="text-2xl font-bold text-white mb-1">10% de descuento</p>
             <p class="text-sm text-gray-300 mb-3">Usa el código <span class="font-mono bg-white/20 px-2 py-0.5 rounded">WELCOME10</span></p>
             <a href="#/catalog" class="inline-flex text-sm font-medium text-white underline underline-offset-2 hover:no-underline">
@@ -346,9 +346,9 @@ export function pageHome() {
       </section>
 
       <!-- Newsletter -->
-      <section class="mb-6 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-6 text-center">
+      <section class="mb-6 bg-brand rounded-2xl p-6 text-center">
         <h2 class="text-xl font-bold text-white mb-2">¿Quieres recibir ofertas?</h2>
-        <p class="text-sm text-emerald-100 mb-4">Suscríbete y recibe un cupón de 10% de descuento</p>
+        <p class="text-sm text-blue-100 mb-4">Suscríbete y recibe un cupón de 10% de descuento</p>
         
         ${isSubscribed ? `
           <div class="flex items-center justify-center gap-2 text-white">
@@ -363,10 +363,10 @@ export function pageHome() {
               type="email" 
               name="email"
               placeholder="tu@email.com" 
-              class="flex-1 px-4 py-2.5 rounded-full bg-white/20 border border-white/30 text-white placeholder:text-emerald-100 text-sm focus:outline-none focus:border-white"
+              class="flex-1 px-4 py-2.5 rounded-full bg-white/20 border border-white/30 text-white placeholder:text-blue-100 text-sm focus:outline-none focus:border-white"
               required
             />
-            <button type="submit" class="px-5 py-2.5 bg-white text-emerald-700 font-semibold rounded-full text-sm hover:bg-emerald-50 transition-colors btn-scale">
+            <button type="submit" class="px-5 py-2.5 bg-white text-brand font-semibold rounded-full text-sm hover:bg-blue-50 transition-colors btn-scale">
               Suscribir
             </button>
           </form>

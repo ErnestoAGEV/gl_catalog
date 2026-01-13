@@ -38,7 +38,7 @@ export function pageCheckout(state) {
             <span class="text-gray-900 dark:text-white">${formatMoney(subtotal)}</span>
           </div>
           ${coupon ? `
-          <div class="flex justify-between text-emerald-400">
+          <div class="flex justify-between text-brand">
             <span class="flex items-center gap-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
               ${coupon.code}
@@ -48,7 +48,7 @@ export function pageCheckout(state) {
           ` : ''}
           <div class="flex justify-between">
             <span class="text-gray-500 dark:text-gray-400">Envío</span>
-            <span class="${freeShipping ? 'text-emerald-500' : 'text-gray-500 dark:text-gray-400'}">${freeShipping ? 'GRATIS' : 'Por calcular'}</span>
+            <span class="${freeShipping ? 'text-brand' : 'text-gray-500 dark:text-gray-400'}">${freeShipping ? 'GRATIS' : 'Por calcular'}</span>
           </div>
           <div class="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
             <span class="font-semibold text-gray-900 dark:text-white">Total</span>
@@ -61,12 +61,12 @@ export function pageCheckout(state) {
       <section class="mb-5 rounded-xl bg-gray-100 dark:bg-gray-900 p-4">
         <div class="text-xs text-gray-500 dark:text-gray-400 mb-3">¿Tienes un cupón?</div>
         ${coupon ? `
-          <div class="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3">
+          <div class="flex items-center justify-between bg-brand/10 border border-brand/30 rounded-lg p-3">
             <div class="flex items-center gap-2">
-              <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
               <div>
-                <p class="text-sm font-medium text-emerald-600 dark:text-emerald-400">${coupon.code}</p>
-                <p class="text-xs text-emerald-600/70 dark:text-emerald-400/70">${coupon.label}</p>
+                <p class="text-sm font-medium text-brand">${coupon.code}</p>
+                <p class="text-xs text-brand/70">${coupon.label}</p>
               </div>
             </div>
             <button id="remove-coupon" class="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Quitar</button>

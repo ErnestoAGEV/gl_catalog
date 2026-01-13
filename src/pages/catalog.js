@@ -176,7 +176,7 @@ export function pageCatalog(state) {
       <div id="modal-container"></div>
       <div id="toast-container" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50"></div>
 
-      <a href="#/cart" class="fixed bottom-6 right-6 flex items-center gap-2 rounded-full bg-emerald-500 text-white pl-4 pr-5 py-3 shadow-lg hover:bg-emerald-600 hover:scale-105 active:scale-95 transition-all z-20 font-medium text-sm">
+      <a href="#/cart" class="fixed bottom-6 right-6 flex items-center gap-2 rounded-full bg-brand text-white pl-4 pr-5 py-3 shadow-lg hover:bg-brand-dark hover:scale-105 active:scale-95 transition-all z-20 font-medium text-sm">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
         Ver carrito
       </a>
@@ -190,7 +190,7 @@ export function pageCatalog(state) {
       const showToast = (message) => {
         const toast = document.createElement('div')
         toast.className = 'toast-enter bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium flex items-center gap-2'
-        toast.innerHTML = `<svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${message}`
+        toast.innerHTML = `<svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${message}`
         toastContainer.appendChild(toast)
         setTimeout(() => { toast.classList.add('toast-exit'); setTimeout(() => toast.remove(), 300) }, 2000)
       }
@@ -264,10 +264,10 @@ export function pageCatalog(state) {
         addToCart({ productId: id, size, color, qty: 1 })
         const originalHtml = btn.innerHTML
         btn.innerHTML = '✓ Agregado'
-        btn.classList.add('bg-emerald-600')
+        btn.classList.add('bg-brand')
         btn.classList.remove('bg-black')
         showToast('Producto agregado al carrito')
-        setTimeout(() => { btn.innerHTML = originalHtml; btn.classList.remove('bg-emerald-600'); btn.classList.add('bg-black') }, 1500)
+        setTimeout(() => { btn.innerHTML = originalHtml; btn.classList.remove('bg-brand'); btn.classList.add('bg-black') }, 1500)
       })
     },
   }

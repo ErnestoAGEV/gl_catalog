@@ -2,6 +2,13 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Brand Colors */
+@theme {
+  --color-brand: #0000FF;
+  --color-brand-light: #3333FF;
+  --color-brand-dark: #0000CC;
+}
+
 html,
 body {
   height: 100%;

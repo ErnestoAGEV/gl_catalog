@@ -15,7 +15,7 @@ export function layoutPublic({ contentHtml, state }) {
 
   return container(`
     <!-- Free Shipping Banner -->
-    <div class="bg-gradient-to-r from-emerald-600 to-emerald-500 text-white text-center py-2 px-4">
+    <div class="bg-brand text-white text-center py-2 px-4">
       <p class="text-xs font-medium flex items-center justify-center gap-2">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
@@ -35,15 +35,15 @@ export function layoutPublic({ contentHtml, state }) {
             type="search" 
             id="global-search"
             placeholder="Buscar productos..." 
-            class="w-full pl-10 pr-4 py-2.5 rounded-full ${isDark ? 'bg-gray-900 border-gray-800 text-white placeholder:text-gray-500' : 'bg-gray-100 border-gray-200 text-gray-900 placeholder:text-gray-400'} border text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+            class="w-full pl-10 pr-4 py-2.5 rounded-full ${isDark ? 'bg-gray-900 border-gray-800 text-white placeholder:text-gray-500' : 'bg-gray-100 border-gray-200 text-gray-900 placeholder:text-gray-400'} border text-sm focus:outline-none focus:ring-2 focus:ring-brand/50"
           />
         </div>
       </div>
 
       <!-- Navigation -->
       <div class="mx-auto flex w-full max-w-screen-sm items-center justify-between px-4 py-3">
-        <a href="#/" class="text-xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}">
-          G&L
+        <a href="#/" class="flex items-center gap-2">
+          <img src="/logo.png" alt="G&L" class="h-10 w-auto object-contain" />
         </a>
         <nav class="flex items-center gap-3">
           <a class="text-sm ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors" href="#/catalog">
@@ -63,7 +63,8 @@ export function layoutPublic({ contentHtml, state }) {
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
             </svg>
-            ${count > 0 ? `<span class="absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">${count}</span>` : ''}
+            ${count > 0 ? `<span class="absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">${count}</span>` : ''}
+          </a>
           </a>
 
           <!-- Theme Toggle -->
