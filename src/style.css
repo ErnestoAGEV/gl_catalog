@@ -4,9 +4,9 @@
 
 /* Brand Colors */
 @theme {
-  --color-brand: #0000FF;
-  --color-brand-light: #3333FF;
-  --color-brand-dark: #0000CC;
+  --color-brand: #2563EB;
+  --color-brand-light: #60A5FA;
+  --color-brand-dark: #1E40AF;
 }
 
 html,
@@ -192,4 +192,58 @@ body.dark {
 .modal-backdrop {
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(4px);
+}
+
+/* Smooth scroll snap */
+.snap-x {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.snap-start {
+  scroll-snap-align: start;
+}
+
+.snap-mandatory {
+  scroll-snap-type: x mandatory;
+}
+
+/* Parallax subtle effect on hero */
+@keyframes subtle-zoom {
+  0%, 100% { transform: scale(1.05); }
+  50% { transform: scale(1.08); }
+}
+
+.hero-bg-animate {
+  animation: subtle-zoom 20s ease-in-out infinite;
+}
+
+/* Glow effect */
+.glow-brand {
+  box-shadow: 0 0 30px rgba(0, 0, 255, 0.3);
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Gradient text */
+.text-gradient {
+  background: linear-gradient(135deg, #fff 0%, #ddd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Hover lift effect */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
 }

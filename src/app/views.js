@@ -38,7 +38,7 @@ export function renderRoute(path, state) {
 
   return {
     title,
-    html: layoutPublic({ title, contentHtml: view.html, state }),
+    html: layoutPublic({ title, contentHtml: view.html, state, showSearch: view.showSearch }),
     onMount: view.onMount,
   }
 }

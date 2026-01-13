@@ -134,6 +134,7 @@ export function pageCatalog(state) {
 
   return {
     title: 'Catálogo | G&L',
+    showSearch: true,
     html: `
       <section class="mb-4">
         <div class="flex items-center justify-between">

@@ -7,24 +7,13 @@ function container(children, theme = 'dark') {
   </div>`
 }
 
-export function layoutPublic({ contentHtml, state }) {
+export function layoutPublic({ contentHtml, state, showSearch = false }) {
   const count = (state.cart || []).reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
   const wishlistCount = (state.wishlist || []).length
   const theme = state.theme || 'dark'
   const isDark = theme === 'dark'
 
-  return container(`
-    <!-- Free Shipping Banner -->
-    <div class="bg-brand text-white text-center py-2 px-4">
-      <p class="text-xs font-medium flex items-center justify-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
-        </svg>
-        <span>Envío GRATIS en compras +$${BRAND.freeShippingMin} MXN</span>
-      </p>
-    </div>
-
-    <header class="sticky top-0 z-30 ${isDark ? 'bg-black/95' : 'bg-white/95'} backdrop-blur-lg border-b ${isDark ? 'border-gray-800/50' : 'border-gray-200'}">
+  const searchBarHtml = showSearch ? `
       <!-- Search Bar -->
       <div class="mx-auto w-full max-w-screen-sm px-4 pt-3">
         <div class="relative">
@@ -39,7 +28,21 @@ export function layoutPublic({ contentHtml, state }) {
           />
         </div>
       </div>
+  ` : ''
 
+  return container(`
+    <!-- Free Shipping Banner -->
+    <div class="bg-brand text-white text-center py-2 px-4">
+      <p class="text-xs font-medium flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+        </svg>
+        <span>Envío GRATIS en compras +$${BRAND.freeShippingMin} MXN</span>
+      </p>
+    </div>
+
+    <header class="sticky top-0 z-30 ${isDark ? 'bg-black/95' : 'bg-white/95'} backdrop-blur-lg border-b ${isDark ? 'border-gray-800/50' : 'border-gray-200'}">
+      ${searchBarHtml}
       <!-- Navigation -->
       <div class="mx-auto flex w-full max-w-screen-sm items-center justify-between px-4 py-3">
         <a href="#/" class="flex items-center gap-2">
