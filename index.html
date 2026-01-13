@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>G&L | Ropa de Hombre en México</title>
+    <meta
+      name="description"
+      content="G&L: ropa de hombre moderna y minimalista en México. Compra rápida: arma tu carrito y envía tu pedido directo por WhatsApp."
+    />
+    <meta name="robots" content="index,follow" />
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="G&L" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+  </head>
+  <body class="bg-black">
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+    <script>
+      // Register Service Worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('SW registered:', reg.scope))
+            .catch(err => console.log('SW registration failed:', err));
+        });
+      }
+    </script>
+  </body>
+</html>
