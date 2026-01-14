@@ -1,12 +1,12 @@
 export const BRAND = {
   name: 'G&L',
   tagline: 'Ropa de hombre en México. Compra rápida por WhatsApp.',
-  whatsapp: '523123202932',
+  whatsapp: '523121018263',
   freeShippingMin: 999,
 }
 
 // Formato internacional sin '+' (ej: 5255XXXXXXXX). Reemplazar por el número real.
-export const STORE_WHATSAPP_NUMBER = '523123202932'
+export const STORE_WHATSAPP_NUMBER = '523121018263'
 
 export const STORAGE_KEYS = {
   products: 'gl_products',

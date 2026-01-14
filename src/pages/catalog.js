@@ -28,21 +28,11 @@ function applyFilters(products, filters) {
   })
   if (filters.sort === 'price-asc') result.sort((a, b) => a.price - b.price)
   if (filters.sort === 'price-desc') result.sort((a, b) => b.price - a.price)
-  if (filters.sort === 'rating') result.sort((a, b) => (b.rating || 0) - (a.rating || 0))
   return result
 }
 
 function getBadgeColor(badge) {
   return { 'Nuevo': 'bg-blue-500', 'Oferta': 'bg-red-500', 'Popular': 'bg-amber-500', 'Premium': 'bg-purple-500' }[badge] || 'bg-gray-700'
-}
-
-function renderStars(rating) {
-  const full = Math.floor(rating || 0)
-  let html = ''
-  for (let i = 0; i < 5; i++) {
-    html += `<svg class="w-3 h-3 ${i < full ? 'text-amber-400' : 'text-gray-600'}" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>`
-  }
-  return html
 }
 
 function productCard(p, idx) {
@@ -68,7 +58,6 @@ function productCard(p, idx) {
         <button data-quickview="${p.id}" class="absolute bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 bg-black/80 backdrop-blur text-white text-xs font-medium rounded-full">Vista rápida</button>
       </div>
       <div class="p-3">
-        <div class="flex items-center gap-1 mb-1">${renderStars(p.rating)}<span class="text-[10px] text-gray-500">(${p.reviews || 0})</span></div>
         <h3 class="text-sm font-medium text-gray-900 truncate mb-1">${p.name}</h3>
         <div class="flex items-center gap-2 mb-3">
           <p class="text-base font-bold text-gray-900">${formatMoney(p.price)}</p>
@@ -103,7 +92,6 @@ function quickViewModal(p) {
           ${p.badge ? `<span class="absolute top-4 left-4 px-3 py-1 text-xs font-bold ${getBadgeColor(p.badge)} text-white rounded">${p.badge.toUpperCase()}</span>` : ''}
         </div>
         <div class="p-5">
-          <div class="flex items-center gap-1 mb-2">${renderStars(p.rating)}<span class="text-xs text-gray-500">(${p.reviews || 0} reseñas)</span></div>
           <h2 class="text-xl font-bold text-gray-900 mb-1">${p.name}</h2>
           <p class="text-sm text-gray-500 mb-3">${p.type}</p>
           <div class="flex items-center gap-3 mb-4">
@@ -156,7 +144,6 @@ export function pageCatalog(state) {
             <option value="">Relevancia</option>
             <option value="price-asc">Menor precio</option>
             <option value="price-desc">Mayor precio</option>
-            <option value="rating">Mejor calificados</option>
           </select>
         </div>
         <div class="overflow-x-auto pb-2 -mx-4 px-4 hide-scrollbar">
