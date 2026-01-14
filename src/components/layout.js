@@ -46,7 +46,7 @@ export function layoutPublic({ contentHtml, state, showSearch = false }) {
       <!-- Navigation -->
       <div class="mx-auto flex w-full max-w-screen-sm items-center justify-between px-4 py-3">
         <a href="#/" class="flex items-center gap-2">
-          <img src="/logo.png" alt="G&L" class="h-10 w-auto object-contain" />
+          <img src="logo.png" alt="G&L" class="h-10 w-auto object-contain" />
         </a>
         <nav class="flex items-center gap-3">
           <a class="text-sm ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors" href="#/catalog">
