@@ -63,9 +63,21 @@ function productCard(p, idx) {
           <p class="text-base font-bold text-gray-900">${formatMoney(p.price)}</p>
           ${p.originalPrice ? `<p class="text-xs text-gray-400 line-through">${formatMoney(p.originalPrice)}</p>` : ''}
         </div>
-        <div class="grid grid-cols-2 gap-2 mb-3">
-          <select class="w-full rounded-md border border-gray-200 bg-gray-50 px-2 py-2 text-xs text-gray-700 focus:border-gray-400 focus:outline-none" name="size">${sizeOpts}</select>
-          <select class="w-full rounded-md border border-gray-200 bg-gray-50 px-2 py-2 text-xs text-gray-700 focus:border-gray-400 focus:outline-none" name="color">${colorOpts}</select>
+        <div class="flex flex-col gap-2 mb-3">
+          <div class="relative">
+            <select class="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2.5 pr-8 text-sm text-gray-700 focus:border-gray-400 focus:outline-none appearance-none" data-card-size>
+              <option value="" disabled>Talla</option>
+              ${sizeOpts}
+            </select>
+            <svg class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="relative">
+            <select class="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2.5 pr-8 text-sm text-gray-700 focus:border-gray-400 focus:outline-none appearance-none" data-card-color>
+              <option value="" disabled>Color</option>
+              ${colorOpts}
+            </select>
+            <svg class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
         </div>
         <button data-add-to-cart data-product-id="${p.id}" class="w-full flex items-center justify-center gap-2 rounded-lg bg-black px-4 py-2.5 text-xs font-semibold text-white hover:bg-gray-800 active:scale-[0.98] transition-all btn-scale" type="button">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
@@ -158,7 +170,7 @@ export function pageCatalog(state) {
       </section>
 
       <section>
-        <div id="catalog-grid" class="grid grid-cols-2 gap-3 stagger-children"></div>
+        <div id="catalog-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 stagger-children"></div>
       </section>
 
       <div id="modal-container"></div>
@@ -210,7 +222,7 @@ export function pageCatalog(state) {
       }
 
       setTimeout(renderGrid, 100)
-      on(root, 'change', 'select,input[name="minPrice"],input[name="maxPrice"]', () => renderGrid())
+      on(root, 'change', 'select[name="type"],select[name="size"],select[name="color"],select[name="sort"],input[name="minPrice"],input[name="maxPrice"]', () => renderGrid())
 
       on(root, 'click', '[data-wishlist]', (ev, btn) => {
         ev.preventDefault()
@@ -235,27 +247,77 @@ export function pageCatalog(state) {
         const closeModal = () => { modalContainer.innerHTML = ''; document.body.style.overflow = '' }
         modalContainer.querySelector('#close-quickview').addEventListener('click', closeModal)
         modalContainer.querySelector('#quick-view-modal').addEventListener('click', (e) => { if (e.target.id === 'quick-view-modal') closeModal() })
-        modalContainer.querySelector('#qv-add-to-cart').addEventListener('click', () => {
+        
+        const qvAddBtn = modalContainer.querySelector('#qv-add-to-cart')
+        qvAddBtn.addEventListener('click', () => {
+          if (qvAddBtn.disabled) return
+          qvAddBtn.disabled = true
+          
           const size = modalContainer.querySelector('#qv-size').value
           const color = modalContainer.querySelector('#qv-color').value
           addToCart({ productId: product.id, size, color, qty: 1 })
+          
+          // Update cart counter in header immediately
+          const cartBadge = document.querySelector('a[href="#/cart"] span')
+          if (cartBadge) {
+            const currentCount = parseInt(cartBadge.textContent) || 0
+            cartBadge.textContent = currentCount + 1
+          } else {
+            const cartLink = document.querySelector('a[href="#/cart"]')
+            if (cartLink) {
+              const newBadge = document.createElement('span')
+              newBadge.className = 'absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white'
+              newBadge.textContent = '1'
+              cartLink.appendChild(newBadge)
+            }
+          }
+          
           showToast('Producto agregado al carrito')
           closeModal()
         })
       })
 
       on(root, 'click', '[data-add-to-cart]', (ev, btn) => {
+        ev.preventDefault()
+        ev.stopPropagation()
+        
+        // Prevent double clicks
+        if (btn.disabled) return
+        btn.disabled = true
+        
         const id = btn.getAttribute('data-product-id')
         const card = btn.closest('article')
-        const size = card?.querySelector('select[name="size"]')?.value || ''
-        const color = card?.querySelector('select[name="color"]')?.value || ''
+        const size = card?.querySelector('select[data-card-size]')?.value || ''
+        const color = card?.querySelector('select[data-card-color]')?.value || ''
         addToCart({ productId: id, size, color, qty: 1 })
+        
+        // Update cart counter in header immediately
+        const cartBadge = document.querySelector('a[href="#/cart"] span')
+        if (cartBadge) {
+          const currentCount = parseInt(cartBadge.textContent) || 0
+          cartBadge.textContent = currentCount + 1
+        } else {
+          // Create badge if it doesn't exist
+          const cartLink = document.querySelector('a[href="#/cart"]')
+          if (cartLink) {
+            const newBadge = document.createElement('span')
+            newBadge.className = 'absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white'
+            newBadge.textContent = '1'
+            cartLink.appendChild(newBadge)
+          }
+        }
+        
         const originalHtml = btn.innerHTML
         btn.innerHTML = '✓ Agregado'
         btn.classList.add('bg-brand')
         btn.classList.remove('bg-black')
         showToast('Producto agregado al carrito')
-        setTimeout(() => { btn.innerHTML = originalHtml; btn.classList.remove('bg-brand'); btn.classList.add('bg-black') }, 1500)
+        setTimeout(() => { 
+          btn.innerHTML = originalHtml
+          btn.classList.remove('bg-brand')
+          btn.classList.add('bg-black')
+          btn.disabled = false
+        }, 1500)
       })
     },
   }

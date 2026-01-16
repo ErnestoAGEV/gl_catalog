@@ -2,7 +2,7 @@ import { BRAND } from '../app/config.js'
 
 function container(children, theme = 'dark') {
   const isDark = theme === 'dark'
-  return `<div class="min-h-dvh ${isDark ? 'bg-black text-white' : 'bg-white text-gray-900'}">
+  return `<div class="min-h-dvh overflow-x-hidden ${isDark ? 'bg-black text-white' : 'bg-white text-gray-900'}">
     ${children}
   </div>`
 }
@@ -81,7 +81,7 @@ export function layoutPublic({ contentHtml, state, showSearch = false }) {
       </div>
     </header>
 
-    <main class="mx-auto w-full max-w-screen-sm px-4 py-5 pb-24">
+    <main class="mx-auto w-full max-w-screen-sm md:max-w-screen-md lg:max-w-screen-lg px-4 py-5 pb-24 overflow-x-hidden">
       ${contentHtml}
     </main>
 

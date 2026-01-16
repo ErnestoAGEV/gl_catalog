@@ -146,22 +146,22 @@ export function toggleTheme() {
 }
 
 // ========== COUPONS ==========
-export function applyCoupon(code) {
+export function applyCoupon(code, silent = false) {
   const normalizedCode = code.toUpperCase().trim()
   const coupon = COUPONS[normalizedCode]
   if (coupon) {
     state.coupon = { code: normalizedCode, ...coupon }
     writeJson(STORAGE_KEYS.coupon, state.coupon)
-    emit()
+    if (!silent) emit()
     return { success: true, coupon: state.coupon }
   }
   return { success: false, error: 'Cupón no válido' }
 }
 
-export function removeCoupon() {
+export function removeCoupon(silent = false) {
   state.coupon = null
   writeJson(STORAGE_KEYS.coupon, null)
-  emit()
+  if (!silent) emit()
 }
 
 export function getCoupon() {

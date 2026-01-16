@@ -71,7 +71,15 @@ export function startApp(mountEl) {
   // Ensure first paint even if hash doesn't change.
   render(getRoute())
 
-  const unsub = subscribe(() => render(getRoute()))
+  // Only re-render on state changes for pages that need it (cart, wishlist, checkout)
+  // Catalog handles its own updates to avoid full page reloads
+  const unsub = subscribe(() => {
+    const currentPath = getRoute()
+    const shouldRerender = ['/cart', '/wishlist', '/checkout'].some(p => currentPath.startsWith(p))
+    if (shouldRerender) {
+      render(currentPath)
+    }
+  })
 
   // First render is triggered by router, but store subscribe keeps it synced.
   // Cleanup function in case you ever want to unmount.

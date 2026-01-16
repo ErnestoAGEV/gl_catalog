@@ -105,10 +105,12 @@ function featuredProductCard(p, idx) {
         
         <h3 class="text-sm font-bold text-gray-900 dark:text-white line-clamp-2 mb-1 group-hover:text-brand transition-colors">${p.name}</h3>
         
-        <div class="mt-auto flex items-center gap-2 pt-2">
-            <p class="text-lg font-black text-gray-900 dark:text-white">${formatMoney(p.price)}</p>
-            ${p.originalPrice ? `<p class="text-xs text-gray-400 line-through decoration-gray-400/50">${formatMoney(p.originalPrice)}</p>` : ''}
-            ${p.originalPrice ? `<span class="text-[10px] font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-1.5 py-0.5 rounded">-${Math.round((1 - p.price/p.originalPrice)*100)}%</span>` : ''}
+        <div class="mt-auto pt-2">
+            <div class="flex items-baseline flex-wrap gap-x-2 gap-y-1">
+              <p class="text-lg font-black text-gray-900 dark:text-white">${formatMoney(p.price)}</p>
+              ${p.originalPrice ? `<p class="text-sm text-gray-400 line-through">${formatMoney(p.originalPrice)}</p>` : ''}
+              ${p.originalPrice ? `<span class="text-xs font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-1.5 py-0.5 rounded">-${Math.round((1 - p.price/p.originalPrice)*100)}%</span>` : ''}
+            </div>
         </div>
       </div>
     </article>
@@ -136,8 +138,8 @@ export function pageHome() {
     title: `${BRAND.name} | Men´s Cloting`,
     html: `
       <!-- Hero Section - Redesigned -->
-      <section class="relative -mx-4 -mt-5 mb-8">
-        <div class="relative h-[65vh] min-h-[500px] w-full overflow-hidden">
+      <section class="relative mb-8">
+        <div class="relative h-[65vh] min-h-[500px] w-full overflow-hidden rounded-2xl">
             <img 
               src="${heroSlides[0].image}"
               alt="Nueva Colección"
@@ -181,33 +183,33 @@ export function pageHome() {
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <!-- Camisas -->
           <a href="#/catalog" class="relative aspect-[3/4] md:aspect-[4/5] rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block">
-            <img src="https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&h=800&fit=crop" alt="Camisas" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"/>
+            <img src="https://i.pinimg.com/736x/f0/cc/e5/f0cce55c3da63f81343dd530422c7558.jpg" alt="Camisas" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"/>
             <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-500"></div>
             <div class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
               <span class="inline-block px-4 py-1.5 bg-white/10 backdrop-blur rounded-full text-xs font-bold text-white uppercase tracking-widest mb-4 border border-white/20 shadow-sm">Casual</span>
-              <h3 class="text-2xl md:text-3xl font-black text-white mb-3 leading-tight drop-shadow-lg">Camisas Premium</h3>
+              <h3 class="text-2xl md:text-3xl font-black text-white mb-3 leading-tight drop-shadow-lg">Camisas </h3>
               <p class="text-gray-200 text-sm font-medium max-w-[200px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 translate-y-2 group-hover:translate-y-0">Estilo y confort para cualquier ocasión.</p>
             </div>
           </a>
           
           <!-- Playeras -->
           <a href="#/catalog" class="relative aspect-[3/4] md:aspect-[4/5] rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block">
-            <img src="https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&h=800&fit=crop" alt="Playeras" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"/>
+            <img src="https://i.pinimg.com/736x/9d/b5/3a/9db53ac193e070ec32bfc55102d5cadb.jpg" alt="Playeras" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"/>
             <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-500"></div>
              <div class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
               <span class="inline-block px-4 py-1.5 bg-white/10 backdrop-blur rounded-full text-xs font-bold text-white uppercase tracking-widest mb-4 border border-white/20 shadow-sm">Básicos</span>
-              <h3 class="text-2xl md:text-3xl font-black text-white mb-3 leading-tight drop-shadow-lg">Playeras Esenciales</h3>
+              <h3 class="text-2xl md:text-3xl font-black text-white mb-3 leading-tight drop-shadow-lg">Playeras </h3>
               <p class="text-gray-200 text-sm font-medium max-w-[200px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 translate-y-2 group-hover:translate-y-0">Algodón pima de alta calidad.</p>
             </div>
           </a>
           
           <!-- Pantalones -->
           <a href="#/catalog" class="relative aspect-[3/4] md:aspect-[4/5] rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block">
-            <img src="https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&h=800&fit=crop" alt="Pantalones" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"/>
+            <img src="https://i.pinimg.com/736x/8a/e5/6c/8ae56c59aba6c6a1f88e579b133a0104.jpg" alt="Pantalones" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"/>
             <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-500"></div>
              <div class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
               <span class="inline-block px-4 py-1.5 bg-white/10 backdrop-blur rounded-full text-xs font-bold text-white uppercase tracking-widest mb-4 border border-white/20 shadow-sm">Denim</span>
-              <h3 class="text-2xl md:text-3xl font-black text-white mb-3 leading-tight drop-shadow-lg">Jeans & Pantalones</h3>
+              <h3 class="text-2xl md:text-3xl font-black text-white mb-3 leading-tight drop-shadow-lg">Jeans & Chinos</h3>
               <p class="text-gray-200 text-sm font-medium max-w-[200px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 translate-y-2 group-hover:translate-y-0">Corte perfecto y durabilidad.</p>
             </div>
           </a>

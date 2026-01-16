@@ -3,39 +3,68 @@ import { formatMoney } from './format.js'
 
 export function buildOrderMessage({ customer, cartLines, subtotal, discount, couponCode, total }) {
   const lines = []
-  lines.push('🛒 G&L - Nuevo pedido')
+  
+  // Header
+  lines.push('═══════════════════')
+  lines.push('🛍️ *NUEVO PEDIDO G&L*')
+  lines.push('═══════════════════')
   lines.push('')
-  lines.push(`👤 Cliente: ${customer.name}`)
-  lines.push(`📱 WhatsApp: ${customer.whatsapp}`)
-  lines.push(`💳 Pago: ${customer.paymentMethod}`)
-  lines.push(`🚚 Entrega: ${customer.deliveryMethod}`)
-  if (customer.address) lines.push(`📍 Dirección: ${customer.address}`)
+  
+  // Customer info
+  lines.push('👤 *DATOS DEL CLIENTE*')
+  lines.push('───────────────────')
+  lines.push(`• Nombre: ${customer.name}`)
+  lines.push(`• WhatsApp: ${customer.whatsapp}`)
+  lines.push(`• Pago: ${customer.paymentMethod}`)
+  lines.push(`• Entrega: ${customer.deliveryMethod}`)
+  
+  if (customer.address) {
+    lines.push('')
+    lines.push('📍 *DIRECCIÓN DE ENVÍO*')
+    lines.push('───────────────────')
+    lines.push(customer.address)
+  }
+  
   lines.push('')
-  lines.push('📦 Productos:')
-
+  
+  // Products
+  lines.push('📦 *PRODUCTOS*')
+  lines.push('───────────────────')
+  
+  let itemNum = 1
   for (const line of cartLines) {
     const variant = [
-      line.size ? `Talla ${line.size}` : null,
-      line.color ? `Color ${line.color}` : null,
+      line.size ? `Talla: ${line.size}` : null,
+      line.color ? `Color: ${line.color}` : null,
     ]
       .filter(Boolean)
-      .join(' | ')
+      .join(' • ')
 
-    const left = `${line.qty} x ${line.name}`
-    const mid = variant ? ` (${variant})` : ''
-    const right = `${formatMoney(line.price)} = ${formatMoney(line.subtotal)}`
-
-    lines.push(`  • ${left}${mid} — ${right}`)
+    lines.push(`*${itemNum}.* ${line.name}`)
+    if (variant) lines.push(`   ${variant}`)
+    lines.push(`   Cant: ${line.qty} × ${formatMoney(line.price)} = *${formatMoney(line.subtotal)}*`)
+    lines.push('')
+    itemNum++
   }
-
-  lines.push('')
+  
+  // Totals
+  lines.push('───────────────────')
+  lines.push('💰 *RESUMEN*')
+  lines.push('───────────────────')
+  
   if (subtotal && subtotal !== total) {
     lines.push(`Subtotal: ${formatMoney(subtotal)}`)
   }
+  
   if (couponCode && discount > 0) {
-    lines.push(`🏷️ Cupón: ${couponCode} (-${formatMoney(discount)})`)
+    lines.push(`🏷️ Cupón *${couponCode}*: -${formatMoney(discount)}`)
   }
-  lines.push(`💰 Total: ${formatMoney(total)}`)
+  
+  lines.push('')
+  lines.push(`✅ *TOTAL A PAGAR: ${formatMoney(total)}*`)
+  lines.push('')
+  lines.push('═══════════════════')
+  
   return lines.join('\n')
 }
 
