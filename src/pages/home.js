@@ -242,25 +242,25 @@ export function pageHome() {
       </section>
 
       <!-- Promo Banner -->
-      <section class="mb-16 relative rounded-[2rem] overflow-hidden shadow-2xl group">
+      <section class="mb-16 relative rounded-[2rem] overflow-hidden shadow-2xl group min-h-[18rem] md:min-h-[20rem] flex items-center">
         <img 
           src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&h=600&fit=crop"
           alt="Promo"
-          class="w-full h-64 md:h-80 object-cover group-hover:scale-105 transition-transform duration-1000"
+          class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
         />
         <div class="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent"></div>
-        <div class="absolute inset-0 flex items-center p-8 md:p-12">
+        <div class="relative z-10 w-full p-6 md:p-12">
           <div class="max-w-md animate-slide-up">
             <div class="inline-flex items-center gap-2 px-3 py-1 bg-brand text-white rounded-full mb-4 shadow-lg shadow-brand/20">
               <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
               <span class="text-[10px] font-black uppercase tracking-wider">Oferta Exclusiva</span>
             </div>
             
-            <h2 class="text-4xl md:text-5xl font-black text-white leading-tight mb-2">10% OFF</h2>
-            <p class="text-lg text-gray-200 mb-6 font-medium">Obtén un descuento especial en tu primera compra.</p>
+            <h2 class="text-3xl md:text-5xl font-black text-white leading-tight mb-2">10% OFF</h2>
+            <p class="text-base md:text-lg text-gray-200 mb-6 font-medium">Obtén un descuento especial en tu primera compra.</p>
             
-            <div class="flex flex-col sm:flex-row items-start gap-3">
-              <div class="relative group/code">
+            <div class="flex flex-col sm:flex-row items-start gap-3 w-full sm:w-auto">
+              <div class="relative group/code w-full sm:w-auto">
                  <code class="block px-6 py-3 bg-white/10 backdrop-blur border border-white/20 rounded-xl text-white font-mono text-lg tracking-widest text-center">WELCOME10</code>
                  <button id="copy-coupon" class="absolute inset-0 w-full h-full flex items-center justify-center bg-brand/90 opacity-0 group-hover/code:opacity-100 transition-opacity rounded-xl cursor-copy text-white font-bold text-xs gap-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
@@ -433,14 +433,14 @@ export function pageHome() {
               <p class="text-blue-200 text-sm">Gracias por ser parte de la comunidad.</p>
             </div>
           ` : `
-            <form id="newsletter-form" class="bg-white/5 backdrop-blur rounded-2xl p-6 border border-white/10">
+            <form id="newsletter-form-page" class="bg-white/5 backdrop-blur rounded-2xl p-6 border border-white/10">
               <div class="flex flex-col gap-4">
                   <div>
-                    <label class="block text-xs font-bold text-blue-200 uppercase tracking-wider mb-2" for="email">Correo electrónico</label>
+                    <label class="block text-xs font-bold text-blue-200 uppercase tracking-wider mb-2" for="email-page">Correo electrónico</label>
                     <input 
                         type="email" 
                         name="email"
-                        id="email"
+                        id="email-page"
                         placeholder="ejemplo@correo.com" 
                         class="w-full px-5 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder:text-blue-300/50 focus:outline-none focus:bg-black/30 focus:border-white/30 transition-all"
                         required
@@ -495,6 +495,7 @@ export function pageHome() {
            </div>
         </div>
       </section>
+
     `,
     onMount(root) {
       // Copy coupon code
@@ -522,21 +523,24 @@ export function pageHome() {
         setTimeout(() => svg.classList.remove('heart-pop'), 300)
       })
 
-      // Newsletter form
-      const newsletterForm = qs(root, '#newsletter-form')
-      if (newsletterForm) {
-        newsletterForm.addEventListener('submit', (ev) => {
+      // Newsletter Logic (Page only)
+      const form = qs(root, '#newsletter-form-page')
+      if (form) {
+        form.addEventListener('submit', (ev) => {
           ev.preventDefault()
-          const email = newsletterForm.querySelector('input[name="email"]').value.trim()
+          const emailInput = form.querySelector('input[type="email"]')
+          const email = emailInput ? emailInput.value.trim() : ''
+          
           if (email) {
             subscribeNewsletter(email)
-            newsletterForm.innerHTML = `
-              <div class="flex items-center justify-center gap-2 text-white py-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                <span class="text-sm font-medium">¡Gracias por suscribirte!</span>
-              </div>
+            form.innerHTML = `
+                  <div class="flex flex-col items-center justify-center gap-2 text-white py-4 text-center animate-fade-in">
+                    <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg mb-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                    <span class="text-sm font-bold">¡Suscripción exitosa!</span>
+                    <p class="text-xs text-blue-200">Revisa tu correo para tu cupón.</p>
+                  </div>
             `
           }
         })
