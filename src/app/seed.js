@@ -23,6 +23,10 @@ const IMAGES = {
     'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&h=750&fit=crop',
     'https://images.unsplash.com/photo-1559551409-dadc959f76b8?w=600&h=750&fit=crop',
   ],
+  perfumes: [
+    'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=600&h=750&fit=crop',
+    'https://images.unsplash.com/photo-1541643600914-78b084683601?w=600&h=750&fit=crop',
+  ],
   general: [
     'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=600&h=750&fit=crop',
     'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&h=750&fit=crop',
@@ -240,9 +244,66 @@ const SEED_PRODUCTS = [
     reviews: 14,
     images: IMAGES.chamarras,
   },
+  // Perfumes
+  {
+    id: 'p-perfume-01',
+    name: 'Perfume Intense Noir',
+    type: 'Perfumes',
+    price: 1299,
+    originalPrice: 1599,
+    colors: ['100ml', '50ml'],
+    sizes: ['100ml', '50ml'],
+    badge: 'Oferta',
+    stock: 12,
+    rating: 4.9,
+    reviews: 45,
+    images: IMAGES.perfumes,
+  },
+  {
+    id: 'p-perfume-02',
+    name: 'Perfume Fresh Ocean',
+    type: 'Perfumes',
+    price: 999,
+    originalPrice: null,
+    colors: ['100ml', '50ml'],
+    sizes: ['100ml', '50ml'],
+    badge: 'Nuevo',
+    stock: 20,
+    rating: 4.7,
+    reviews: 32,
+    images: IMAGES.perfumes,
+  },
+  {
+    id: 'p-perfume-03',
+    name: 'Perfume Classic Wood',
+    type: 'Perfumes',
+    price: 1499,
+    originalPrice: null,
+    colors: ['100ml'],
+    sizes: ['100ml'],
+    badge: 'Premium',
+    stock: 8,
+    rating: 5.0,
+    reviews: 28,
+    images: IMAGES.perfumes,
+  },
+  {
+    id: 'p-perfume-04',
+    name: 'Perfume Sport Energy',
+    type: 'Perfumes',
+    price: 799,
+    originalPrice: 999,
+    colors: ['100ml', '50ml'],
+    sizes: ['100ml', '50ml'],
+    badge: 'Popular',
+    stock: 25,
+    rating: 4.8,
+    reviews: 67,
+    images: IMAGES.perfumes,
+  },
 ]
 
-const SEED_VERSION = 2 // Increment this to force re-seed
+const SEED_VERSION = 3 // Increment this to force re-seed
 
 export function ensureSeedData() {
   const storedVersion = localStorage.getItem('gl_seed_version')
