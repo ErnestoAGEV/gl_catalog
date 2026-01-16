@@ -8,7 +8,7 @@ const state = {
   cart: readJson(STORAGE_KEYS.cart, []),
   adminSession: readJson(STORAGE_KEYS.adminSession, null),
   wishlist: readJson(STORAGE_KEYS.wishlist, []),
-  theme: readJson(STORAGE_KEYS.theme, 'dark'),
+  theme: 'light', // Always start in light mode
   coupon: readJson(STORAGE_KEYS.coupon, null),
   newsletter: readJson(STORAGE_KEYS.newsletter, null),
   searchQuery: '',

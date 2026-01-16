@@ -150,13 +150,17 @@ export function pageCatalog(state) {
       </section>
 
       <section class="mb-5 space-y-3">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
           <span class="text-xs text-gray-500">Ordenar:</span>
           <select name="sort" class="rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2 text-xs text-gray-900 dark:text-white focus:border-gray-400 dark:focus:border-gray-500 focus:outline-none">
             <option value="">Relevancia</option>
             <option value="price-asc">Menor precio</option>
             <option value="price-desc">Mayor precio</option>
           </select>
+          <button id="reset-filters" class="ml-auto rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Limpiar filtros
+          </button>
         </div>
         <div class="overflow-x-auto pb-2 -mx-4 px-4 hide-scrollbar">
           <div class="flex gap-2 min-w-max">
@@ -207,18 +211,66 @@ export function pageCatalog(state) {
         productCountEl.textContent = `${visible.length} productos${searchLabel}`
 
         if (visible.length === 0) {
-          grid.innerHTML = `<div class="col-span-2 text-center py-16"><div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center"><svg class="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div><h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No encontramos productos</h3><p class="text-gray-500 dark:text-gray-400 text-sm">${searchQuery ? `No hay resultados para "${searchQuery}". ` : ''}Intenta con otros filtros</p>${searchQuery ? `<button id="clear-search" class="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded-lg text-sm text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-700">Limpiar búsqueda</button>` : ''}</div>`
+          grid.innerHTML = `<div class="col-span-full text-center py-16"><div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center"><svg class="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div><h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No encontramos productos</h3><p class="text-gray-500 dark:text-gray-400 text-sm">${searchQuery ? `No hay resultados para "${searchQuery}". ` : ''}Intenta con otros filtros</p>${searchQuery ? `<button id="clear-search" class="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded-lg text-sm text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-700">Limpiar búsqueda</button>` : ''}</div>`
           
           const clearBtn = grid.querySelector('#clear-search')
           if (clearBtn) {
             clearBtn.addEventListener('click', () => {
               setSearchQuery('')
+              const searchInput = document.getElementById('global-search')
+              if (searchInput) searchInput.value = ''
               renderGrid()
             })
           }
           return
         }
         grid.innerHTML = visible.map((p, idx) => productCard(p, idx)).join('')
+      }
+
+      // Reset all filters button
+      const resetFiltersBtn = qs(root, '#reset-filters')
+      if (resetFiltersBtn) {
+        resetFiltersBtn.addEventListener('click', () => {
+          // Reset all filter selects
+          const selects = root.querySelectorAll('select[name="type"], select[name="size"], select[name="color"], select[name="sort"]')
+          selects.forEach(sel => sel.selectedIndex = 0)
+          
+          // Reset price inputs
+          const minPrice = qs(root, 'input[name="minPrice"]')
+          const maxPrice = qs(root, 'input[name="maxPrice"]')
+          if (minPrice) minPrice.value = ''
+          if (maxPrice) maxPrice.value = ''
+          
+          // Clear search query
+          setSearchQuery('')
+          const searchInput = document.getElementById('global-search')
+          if (searchInput) searchInput.value = ''
+          
+          renderGrid()
+        })
+      }
+
+      // Listen for search input changes
+      const searchInput = document.getElementById('global-search')
+      if (searchInput) {
+        // Handle Enter key
+        searchInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            setSearchQuery(e.target.value.trim())
+            renderGrid()
+          }
+        })
+        
+        // Handle search on input (debounced)
+        let searchTimeout
+        searchInput.addEventListener('input', (e) => {
+          clearTimeout(searchTimeout)
+          searchTimeout = setTimeout(() => {
+            setSearchQuery(e.target.value.trim())
+            renderGrid()
+          }, 300)
+        })
       }
 
       setTimeout(renderGrid, 100)

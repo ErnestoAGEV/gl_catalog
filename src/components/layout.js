@@ -1,4 +1,5 @@
 import { BRAND } from '../app/config.js'
+import { getSearchQuery } from '../app/store.js'
 
 function container(children, theme = 'dark') {
   const isDark = theme === 'dark'
@@ -24,6 +25,7 @@ export function layoutPublic({ contentHtml, state, showSearch = false }) {
             type="search" 
             id="global-search"
             placeholder="Buscar productos..." 
+            value="${getSearchQuery() || ''}"
             class="w-full pl-10 pr-4 py-2.5 rounded-full ${isDark ? 'bg-gray-900 border-gray-800 text-white placeholder:text-gray-500' : 'bg-gray-100 border-gray-200 text-gray-900 placeholder:text-gray-400'} border text-sm focus:outline-none focus:ring-2 focus:ring-brand/50"
           />
         </div>
