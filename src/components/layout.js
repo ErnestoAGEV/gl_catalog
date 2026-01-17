@@ -114,16 +114,16 @@ export function layoutPublic({ contentHtml, state, showSearch = false }) {
 
 export function layoutAdmin({ contentHtml, state }) {
   const authed = Boolean(state?.adminSession?.ok)
-  return container(`
-    <header class="sticky top-0 z-30 bg-black/90 backdrop-blur-lg border-b border-gray-800/50">
+  return `<div class="min-h-dvh overflow-x-hidden bg-gray-50 text-gray-900">
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-lg border-b border-gray-200 shadow-sm">
       <div class="mx-auto flex w-full max-w-screen-sm items-center justify-between px-4 py-3">
         <div class="flex items-center gap-2">
-          <span class="text-lg font-bold text-white">G&L</span>
-          <span class="text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium">Admin</span>
+          <span class="text-lg font-bold text-gray-900">G&L</span>
+          <span class="text-xs px-2 py-0.5 rounded bg-brand/10 text-brand font-medium">Admin</span>
         </div>
         ${
           authed
-            ? `<button id="admin-logout" class="text-sm text-gray-400 hover:text-white transition-colors">
+            ? `<button id="admin-logout" class="text-sm text-gray-500 hover:text-brand transition-colors">
                 Salir
               </button>`
             : ''
@@ -134,5 +134,5 @@ export function layoutAdmin({ contentHtml, state }) {
     <main class="mx-auto w-full max-w-screen-sm px-4 py-5">
       ${contentHtml}
     </main>
-  `)
+  </div>`
 }
