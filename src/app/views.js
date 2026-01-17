@@ -3,7 +3,6 @@ import { pageHome } from '../pages/home.js'
 import { pageCatalog } from '../pages/catalog.js'
 import { pageCart } from '../pages/cart.js'
 import { pageCheckout } from '../pages/checkout.js'
-import { pageWishlist } from '../pages/wishlist.js'
 import { pageAdminLogin } from '../pages/adminLogin.js'
 import { pageAdminProducts } from '../pages/adminProducts.js'
 
@@ -12,7 +11,6 @@ const publicRoutes = {
   '/catalog': pageCatalog,
   '/cart': pageCart,
   '/checkout': pageCheckout,
-  '/wishlist': pageWishlist,
 }
 
 const adminRoutes = {

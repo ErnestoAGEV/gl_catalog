@@ -10,7 +10,6 @@ function container(children, theme = 'dark') {
 
 export function layoutPublic({ contentHtml, state, showSearch = false }) {
   const count = (state.cart || []).reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
-  const wishlistCount = (state.wishlist || []).length
   const theme = state.theme || 'dark'
   const isDark = theme === 'dark'
 
@@ -53,14 +52,6 @@ export function layoutPublic({ contentHtml, state, showSearch = false }) {
         <nav class="flex items-center gap-3">
           <a class="text-sm ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors" href="#/catalog">
             Tienda
-          </a>
-
-          <!-- Wishlist -->
-          <a class="relative p-1.5 ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors" href="#/wishlist" title="Favoritos">
-            <svg class="w-5 h-5" fill="${wishlistCount > 0 ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-            </svg>
-            ${wishlistCount > 0 ? `<span class="absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">${wishlistCount}</span>` : ''}
           </a>
 
           <!-- Cart -->

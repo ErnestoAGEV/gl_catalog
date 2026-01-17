@@ -1,7 +1,7 @@
 import { BRAND } from '../app/config.js'
 import { formatMoney } from '../app/format.js'
-import { getState, isInWishlist, toggleWishlist, subscribeNewsletter, isSubscribedNewsletter } from '../app/store.js'
-import { on, qs } from '../app/dom.js'
+import { getState, subscribeNewsletter, isSubscribedNewsletter } from '../app/store.js'
+import { qs } from '../app/dom.js'
 
 // Hero slides for carousel
 const heroSlides = [
@@ -72,7 +72,6 @@ function renderStars(rating) {
 
 function featuredProductCard(p, idx) {
   const img = p.images?.[0] || 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400&h=500&fit=crop'
-  const inWishlist = isInWishlist(p.id)
   
   return `
     <article class="group relative bg-white dark:bg-gray-900 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 animate-fade-in h-full flex flex-col" style="animation-delay: ${idx * 50}ms">
@@ -89,16 +88,6 @@ function featuredProductCard(p, idx) {
           ${p.badge ? `<span class="inline-flex px-2.5 py-1 text-[10px] font-bold tracking-wider ${getBadgeColor(p.badge)} text-white uppercase rounded-md shadow-sm">${p.badge}</span>` : ''}
           ${p.stock <= 5 && p.stock > 0 ? `<span class="inline-flex px-2.5 py-1 text-[10px] font-bold tracking-wider bg-orange-500 text-white uppercase rounded-md shadow-sm">¡Últimas piezas!</span>` : ''}
         </div>
-
-        <!-- Wishlist -->
-        <button 
-          data-wishlist="${p.id}" 
-          class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 dark:bg-gray-900/90 backdrop-blur flex items-center justify-center shadow-sm hover:scale-110 active:scale-95 transition-all text-gray-400 hover:text-red-500 dark:text-gray-400 group-hover/btn:text-red-500"
-        >
-          <svg class="w-5 h-5 ${inWishlist ? 'text-red-500 fill-current' : 'fill-none'}" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-          </svg>
-        </button>
       </a>
       
       <div class="p-4 flex flex-col flex-grow">
@@ -522,19 +511,6 @@ export function pageHome() {
           }, 2000)
         })
       }
-
-      // Wishlist toggle
-      on(root, 'click', '[data-wishlist]', (ev, btn) => {
-        ev.preventDefault()
-        ev.stopPropagation()
-        const productId = btn.dataset.wishlist
-        toggleWishlist(productId)
-        
-        // Animate heart
-        const svg = btn.querySelector('svg')
-        svg.classList.add('heart-pop')
-        setTimeout(() => svg.classList.remove('heart-pop'), 300)
-      })
 
       // Newsletter Logic (Page only)
       const form = qs(root, '#newsletter-form-page')

@@ -114,7 +114,7 @@ export function adminLogout() {
 }
 
 // ========== WISHLIST ==========
-export function toggleWishlist(productId) {
+export function toggleWishlist(productId, silent = false) {
   const idx = state.wishlist.indexOf(productId)
   if (idx === -1) {
     state.wishlist.push(productId)
@@ -122,7 +122,7 @@ export function toggleWishlist(productId) {
     state.wishlist.splice(idx, 1)
   }
   writeJson(STORAGE_KEYS.wishlist, state.wishlist)
-  emit()
+  if (!silent) emit()
 }
 
 export function isInWishlist(productId) {

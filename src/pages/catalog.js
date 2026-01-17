@@ -1,4 +1,4 @@
-import { addToCart, isInWishlist, toggleWishlist, searchProducts, setSearchQuery, getSearchQuery } from '../app/store.js'
+import { addToCart, searchProducts, setSearchQuery, getSearchQuery } from '../app/store.js'
 import { formatMoney } from '../app/format.js'
 import { on, qs } from '../app/dom.js'
 
@@ -37,7 +37,6 @@ function getBadgeColor(badge) {
 
 function productCard(p, idx) {
   const img = p.images?.[0] || 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400&h=500&fit=crop'
-  const inWishlist = isInWishlist(p.id)
   const sizeOpts = (p.sizes || []).map(s => `<option value="${s}">${s}</option>`).join('')
   const colorOpts = (p.colors || []).map(c => `<option value="${c}">${c}</option>`).join('')
 
@@ -50,11 +49,6 @@ function productCard(p, idx) {
           ${p.originalPrice ? `<span class="px-2 py-1 text-[10px] font-bold bg-red-500 text-white rounded shadow-sm">-${Math.round((1 - p.price / p.originalPrice) * 100)}%</span>` : ''}
           ${p.stock && p.stock <= 5 ? `<span class="px-2 py-1 text-[10px] font-bold bg-orange-500 text-white rounded shadow-sm badge-pulse">¡Últimas ${p.stock}!</span>` : ''}
         </div>
-        <button data-wishlist="${p.id}" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-sm hover:scale-110 transition-transform btn-scale z-10">
-          <svg class="w-4 h-4 ${inWishlist ? 'text-red-500' : 'text-gray-400'}" fill="${inWishlist ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-          </svg>
-        </button>
         <button data-quickview="${p.id}" class="absolute bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 bg-black/80 backdrop-blur text-white text-xs font-medium rounded-full">Vista rápida</button>
       </div>
       <div class="p-3">
@@ -92,33 +86,95 @@ function quickViewModal(p) {
   const img = p.images?.[0] || 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&h=750&fit=crop'
   const sizeOpts = (p.sizes || []).map(s => `<option value="${s}">${s}</option>`).join('')
   const colorOpts = (p.colors || []).map(c => `<option value="${c}">${c}</option>`).join('')
+  const discount = p.originalPrice ? Math.round((1 - p.price / p.originalPrice) * 100) : 0
 
   return `
-    <div id="quick-view-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center modal-backdrop">
-      <div class="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[90vh] overflow-auto animate-slide-up">
-        <div class="relative">
-          <img src="${img}" alt="${p.name}" class="w-full aspect-square object-cover"/>
-          <button id="close-quickview" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 backdrop-blur flex items-center justify-center text-white">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
-          ${p.badge ? `<span class="absolute top-4 left-4 px-3 py-1 text-xs font-bold ${getBadgeColor(p.badge)} text-white rounded">${p.badge.toUpperCase()}</span>` : ''}
-        </div>
-        <div class="p-5">
-          <h2 class="text-xl font-bold text-gray-900 mb-1">${p.name}</h2>
-          <p class="text-sm text-gray-500 mb-3">${p.type}</p>
-          <div class="flex items-center gap-3 mb-4">
-            <span class="text-2xl font-bold text-gray-900">${formatMoney(p.price)}</span>
-            ${p.originalPrice ? `<span class="text-lg text-gray-400 line-through">${formatMoney(p.originalPrice)}</span>` : ''}
+    <div id="quick-view-modal" class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm">
+      <!-- Mobile: slide from bottom, Desktop: centered modal -->
+      <div class="bg-white dark:bg-gray-900 w-full md:w-auto md:max-w-2xl md:mx-4 md:rounded-2xl rounded-t-3xl max-h-[92vh] overflow-hidden animate-slide-up shadow-2xl">
+        
+        <!-- Desktop: horizontal layout, Mobile: vertical -->
+        <div class="md:flex">
+          <!-- Image Section -->
+          <div class="relative md:w-72 lg:w-80 flex-shrink-0">
+            <img src="${img}" alt="${p.name}" class="w-full h-64 md:h-full object-cover"/>
+            
+            <!-- Close button -->
+            <button id="close-quickview" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur shadow-lg flex items-center justify-center text-gray-700 dark:text-white hover:bg-white dark:hover:bg-gray-700 transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            
+            <!-- Badges -->
+            <div class="absolute top-3 left-3 flex flex-col gap-1.5">
+              ${p.badge ? `<span class="px-2.5 py-1 text-[10px] font-bold ${getBadgeColor(p.badge)} text-white rounded-md shadow-sm">${p.badge.toUpperCase()}</span>` : ''}
+              ${discount > 0 ? `<span class="px-2.5 py-1 text-[10px] font-bold bg-red-500 text-white rounded-md shadow-sm">-${discount}%</span>` : ''}
+            </div>
           </div>
-          ${p.stock && p.stock <= 5 ? `<div class="flex items-center gap-2 mb-4 text-orange-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg><span class="text-sm font-medium">¡Solo quedan ${p.stock} unidades!</span></div>` : ''}
-          <div class="grid grid-cols-2 gap-3 mb-4">
-            <div><label class="block text-xs text-gray-500 mb-1">Talla</label><select id="qv-size" class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm">${sizeOpts}</select></div>
-            <div><label class="block text-xs text-gray-500 mb-1">Color</label><select id="qv-color" class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm">${colorOpts}</select></div>
+          
+          <!-- Content Section -->
+          <div class="p-5 md:p-6 flex flex-col md:w-72 lg:w-80">
+            <!-- Category -->
+            <span class="text-xs font-medium text-brand uppercase tracking-wider mb-1">${p.type}</span>
+            
+            <!-- Name -->
+            <h2 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-3 leading-tight">${p.name}</h2>
+            
+            <!-- Price -->
+            <div class="flex items-baseline gap-2 mb-4">
+              <span class="text-2xl md:text-3xl font-black text-gray-900 dark:text-white">${formatMoney(p.price)}</span>
+              ${p.originalPrice ? `<span class="text-base text-gray-400 line-through">${formatMoney(p.originalPrice)}</span>` : ''}
+            </div>
+            
+            <!-- Stock warning -->
+            ${p.stock && p.stock <= 5 ? `
+              <div class="flex items-center gap-2 mb-4 px-3 py-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                <svg class="w-4 h-4 text-orange-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <span class="text-sm font-medium text-orange-700 dark:text-orange-400">¡Solo quedan ${p.stock} unidades!</span>
+              </div>
+            ` : ''}
+            
+            <!-- Selectors -->
+            <div class="grid grid-cols-2 gap-3 mb-5">
+              <div>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Talla</label>
+                <div class="relative">
+                  <select id="qv-size" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:border-brand focus:ring-1 focus:ring-brand appearance-none">
+                    ${sizeOpts}
+                  </select>
+                  <svg class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Color</label>
+                <div class="relative">
+                  <select id="qv-color" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:border-brand focus:ring-1 focus:ring-brand appearance-none">
+                    ${colorOpts}
+                  </select>
+                  <svg class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Add to cart button -->
+            <button id="qv-add-to-cart" data-product-id="${p.id}" class="w-full flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3.5 text-sm font-bold text-white hover:bg-brand-dark active:scale-[0.98] transition-all shadow-lg shadow-brand/25">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+              Agregar al carrito
+            </button>
+            
+            <!-- Trust badges -->
+            <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+              <div class="flex items-center justify-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                <span class="flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  Calidad garantizada
+                </span>
+                <span class="flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  Envío rápido
+                </span>
+              </div>
+            </div>
           </div>
-          <button id="qv-add-to-cart" data-product-id="${p.id}" class="w-full flex items-center justify-center gap-2 rounded-lg bg-black px-4 py-3.5 text-sm font-semibold text-white hover:bg-gray-800 transition-colors btn-scale">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-            Agregar al carrito
-          </button>
         </div>
       </div>
     </div>
@@ -275,21 +331,6 @@ export function pageCatalog(state) {
 
       setTimeout(renderGrid, 100)
       on(root, 'change', 'select[name="type"],select[name="size"],select[name="color"],select[name="sort"],input[name="minPrice"],input[name="maxPrice"]', () => renderGrid())
-
-      on(root, 'click', '[data-wishlist]', (ev, btn) => {
-        ev.preventDefault()
-        ev.stopPropagation()
-        const productId = btn.dataset.wishlist
-        const wasIn = isInWishlist(productId)
-        toggleWishlist(productId)
-        const svg = btn.querySelector('svg')
-        svg.classList.add('heart-pop')
-        setTimeout(() => svg.classList.remove('heart-pop'), 300)
-        svg.classList.toggle('text-red-500', !wasIn)
-        svg.classList.toggle('text-gray-400', wasIn)
-        svg.setAttribute('fill', !wasIn ? 'currentColor' : 'none')
-        showToast(!wasIn ? 'Agregado a favoritos' : 'Eliminado de favoritos')
-      })
 
       on(root, 'click', '[data-quickview]', (ev, btn) => {
         const product = state.products.find(p => p.id === btn.dataset.quickview)
