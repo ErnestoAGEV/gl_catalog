@@ -147,45 +147,43 @@ export function pageAdminProducts(state) {
           <form id="product-form" class="p-5 space-y-5" novalidate>
             <input type="hidden" name="id" />
 
-            <!-- Image Upload -->
+            <!-- Image Upload (Multiple) -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
                 <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
-                Imagen del producto
+                Imágenes del producto (máx. 5)
               </label>
-              <div class="flex gap-3 items-start">
-                <div id="image-preview" class="w-24 h-24 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-200">
-                  <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                  </svg>
+              
+              <!-- Image Previews Gallery -->
+              <div id="image-previews" class="grid grid-cols-5 gap-2 mb-3"></div>
+              
+              <div class="space-y-3">
+                <!-- File Input (Multiple) -->
+                <div>
+                  <input type="file" id="file-input" accept="image/*" multiple class="block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-full file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-brand/10 file:text-brand
+                    hover:file:bg-brand/20
+                  "/>
+                  <p class="text-xs text-gray-500 mt-1">Sube hasta 5 imágenes desde tu dispositivo (JPG, PNG)</p>
                 </div>
-                <div class="flex-1 space-y-3">
-                  <!-- File Input -->
-                  <div>
-                    <input type="file" id="file-input" accept="image/*" class="block w-full text-sm text-gray-500
-                      file:mr-4 file:py-2 file:px-4
-                      file:rounded-full file:border-0
-                      file:text-sm file:font-semibold
-                      file:bg-brand/10 file:text-brand
-                      hover:file:bg-brand/20
-                    "/>
-                    <p class="text-xs text-gray-500 mt-1">Sube una imagen desde tu dispositivo (JPG, PNG)</p>
+                
+                <div class="relative">
+                  <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div class="w-full border-t border-gray-200"></div>
                   </div>
-                  
-                  <div class="relative">
-                    <div class="absolute inset-0 flex items-center" aria-hidden="true">
-                      <div class="w-full border-t border-gray-200"></div>
-                    </div>
-                    <div class="relative flex justify-center">
-                      <span class="bg-white px-2 text-xs text-gray-400">O pega una URL</span>
-                    </div>
+                  <div class="relative flex justify-center">
+                    <span class="bg-white px-2 text-xs text-gray-400">O pega URLs</span>
                   </div>
+                </div>
 
-                  <!-- URL Fallback -->
-                  <input name="imageUrl" type="url" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none transition-colors" placeholder="https://..." />
-                </div>
+                <!-- URL Fallback (Multiple URLs separated by commas) -->
+                <textarea name="imageUrls" rows="2" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none transition-colors resize-none" placeholder="https://..., https://..., https://... (separa con comas)"></textarea>
+                <p class="text-xs text-gray-500">Pega múltiples URLs separadas por comas. La primera imagen será la portada.</p>
               </div>
             </div>
 
@@ -340,12 +338,10 @@ export function pageAdminProducts(state) {
       const errorBox = qs(root, '#product-error')
       const errorText = qs(root, '#error-text')
       const cancelBtn = qs(root, '#product-cancel')
-      const imagePreview = qs(root, '#image-preview')
-      const imageInput = qs(root, 'input[name="imageUrl"]')
       const fileInput = qs(root, '#file-input')
 
       let isEditing = false
-      let selectedFile = null
+      let selectedFiles = [] // Changed from selectedFile to selectedFiles array
 
       const setError = (msg) => {
         if (!msg) {
@@ -402,15 +398,18 @@ export function pageAdminProducts(state) {
       }
 
       const hideForm = () => {
+        isEditing = false
         formSection.classList.add('hidden')
         toggleFormBtn.classList.remove('hidden')
         form.reset()
-        qs(root, 'input[name="id"]').value = ''
-        isEditing = false
-        selectedFile = null
-        if (fileInput) fileInput.value = ''
-        setError('')
-        updateImagePreview('')
+        selectedFiles = []
+        fileInput.value = ''
+        
+        // Clear image previews
+        const imagePreviewsContainer = qs(root, '#image-previews')
+        if (imagePreviewsContainer) imagePreviewsContainer.innerHTML = ''
+        
+        renderList()
       }
 
       const updateImagePreview = (url) => {
@@ -429,23 +428,16 @@ export function pageAdminProducts(state) {
         renderList(e.target.value.trim())
       })
 
-      // File input handle
+      // File input handle (multiple files)
       fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0]
-        if (file) {
-          selectedFile = file
-          const objectUrl = URL.createObjectURL(file)
-          updateImagePreview(objectUrl)
-          // Clear URL input so it doesn't conflict logic
-          imageInput.value = ''
+        selectedFiles = Array.from(e.target.files).slice(0, 5) // Max 5 images
+        if (selectedFiles.length > 0) {
+          // Clear URL input if files selected
+          const urlInput = qs(root, 'textarea[name="imageUrls"]')
+          if (urlInput) urlInput.value = ''
+          
+          // Show preview TODO: Update preview gallery
         }
-      })
-
-      // Image preview on URL change
-      imageInput.addEventListener('input', (e) => {
-        selectedFile = null // If user types URL, clear file
-        if (fileInput) fileInput.value = ''
-        updateImagePreview(e.target.value)
       })
 
       // Toggle form
@@ -474,7 +466,12 @@ export function pageAdminProducts(state) {
         const sizeCheckboxes = root.querySelectorAll('input[name="sizes"]:checked')
         const sizes = Array.from(sizeCheckboxes).map(cb => cb.value)
         const colors = parseList(qs(root, 'input[name="colors"]').value)
-        let imageUrl = qs(root, 'input[name="imageUrl"]').value.trim()
+        
+        // Get multiple image URLs from textarea (comma-separated)
+        const imageUrlsRaw = qs(root, 'textarea[name="imageUrls"]').value.trim()
+        let imageUrls = imageUrlsRaw 
+          ? imageUrlsRaw.split(',').map(url => url.trim()).filter(Boolean) 
+          : []
 
         if (!name) return setError('Ingresa el nombre del producto.')
         if (!type) return setError('Selecciona la categoría del producto.')
@@ -489,14 +486,17 @@ export function pageAdminProducts(state) {
         submitBtn.innerHTML = '<span class="animate-spin">⌛</span> Subiendo & Guardando...'
 
         try {
-            // New: Upload Image if selected
-            if (selectedFile) {
-                const { publicUrl, error: uploadError } = await uploadProductImage(selectedFile)
-                if (uploadError) throw new Error('Error al subir imagen: ' + uploadError.message)
-                imageUrl = publicUrl
+            // Upload multiple files if selected
+            if (selectedFiles && selectedFiles.length > 0) {
+                for (const file of selectedFiles) {
+                    const { publicUrl, error: uploadError } = await uploadProductImage(file)
+                    if (uploadError) throw new Error('Error al subir imagen: ' + uploadError.message)
+                    imageUrls.push(publicUrl)
+                }
             }
 
-            const images = imageUrl ? [imageUrl] : []
+            // Limit to 5 images max
+            const images = imageUrls.slice(0, 5)
             
             if (idInput.value) {
                // Update
@@ -520,26 +520,50 @@ export function pageAdminProducts(state) {
       on(root, 'click', '[data-edit]', (_ev, btn) => {
         const wrap = btn.closest('[data-product]')
         const id = wrap?.getAttribute('data-id')
-        const p = state.products.find((x) => x.id === id)
-        if (!p) return
+        if (!id) return
+
+        const product = state.products.find(p => p.id === id)
+        if (!product) return
 
         showForm(true)
-
-        qs(root, 'input[name="id"]').value = p.id
-        qs(root, 'input[name="name"]').value = p.name
-        qs(root, 'select[name="type"]').value = p.type
-        qs(root, 'input[name="price"]').value = String(p.price)
-        qs(root, 'input[name="originalPrice"]').value = p.originalPrice ? String(p.originalPrice) : ''
-        qs(root, 'input[name="stock"]').value = p.stock ? String(p.stock) : ''
-        qs(root, 'select[name="badge"]').value = p.badge || ''
-        // Set size checkboxes
-        const allSizeCheckboxes = root.querySelectorAll('input[name="sizes"]')
-        allSizeCheckboxes.forEach(cb => {
-          cb.checked = (p.sizes || []).includes(cb.value)
+        
+        // Populate form fields
+        qs(root, 'input[name="id"]').value = product.id
+        qs(root, 'input[name="name"]').value = product.name
+        qs(root, 'select[name="type"]').value = product.type
+        qs(root, 'input[name="price"]').value = product.price
+        if (product.originalPrice) qs(root, 'input[name="originalPrice"]').value = product.originalPrice
+        if (product.stock) qs(root, 'input[name="stock"]').value = product.stock
+        if (product.badge) qs(root, 'select[name="badge"]').value = product.badge
+        
+        // Populate image URLs textarea and show preview
+        const imageUrlsTextarea = qs(root, 'textarea[name="imageUrls"]')
+        const imagePreviewsContainer = qs(root, '#image-previews')
+        
+        if (product.images && product.images.length > 0) {
+          // Fill textarea with comma-separated URLs
+          imageUrlsTextarea.value = product.images.join(', ')
+          
+          // Show image previews
+          imagePreviewsContainer.innerHTML = product.images.map((url, i) => `
+            <div class="relative aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+              <img src="${url}" alt="Preview ${i+1}" class="w-full h-full object-cover"/>
+              <div class="absolute top-1 right-1 w-5 h-5 rounded-full bg-brand text-white text-[10px] font-bold flex items-center justify-center">${i+1}</div>
+            </div>
+          `).join('')
+        } else {
+          imageUrlsTextarea.value = ''
+          imagePreviewsContainer.innerHTML = ''
+        }
+        
+        // Populate sizes (checkboxes)
+        const sizeCheckboxes = root.querySelectorAll('input[name="sizes"]')
+        sizeCheckboxes.forEach(cb => {
+          cb.checked = (product.sizes || []).includes(cb.value)
         })
-        qs(root, 'input[name="colors"]').value = (p.colors || []).join(', ')
-        qs(root, 'input[name="imageUrl"]').value = p.images?.[0] || ''
-        updateImagePreview(p.images?.[0] || '')
+        
+        // Populate colors
+        qs(root, 'input[name="colors"]').value = (product.colors || []).join(', ')
 
         // Scroll to form
         formSection.scrollIntoView({ behavior: 'smooth', block: 'start' })

@@ -43,7 +43,10 @@ function mapRowToProduct(row) {
     category: row.category,
     sizes: row.sizes || [],
     colors: row.colors || [],
-    images: row.image_url ? [row.image_url] : [],
+    // Support both new 'images' array and old 'image_url' for backward compatibility
+    images: row.images && row.images.length > 0 
+      ? row.images 
+      : (row.image_url ? [row.image_url] : []),
     badge: row.badge,
   }
 }
@@ -55,7 +58,8 @@ function mapProductToRow(p) {
     price: p.price,
     type: p.type,
     category: p.category || 'General', // Fallback
-    image_url: p.images?.[0] || null,
+    images: p.images || [], // Store array of images
+    image_url: p.images?.[0] || null, // Keep first image for backward compatibility
     sizes: p.sizes,
     colors: p.colors,
     stock: p.stock,

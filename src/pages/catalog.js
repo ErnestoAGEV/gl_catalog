@@ -38,14 +38,43 @@ function getBadgeColor(badge) {
 }
 
 function productCard(p, idx) {
-  const img = p.images?.[0] || 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400&h=500&fit=crop'
+  const images = p.images && p.images.length > 0 
+    ? p.images 
+    : ['https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400&h=500&fit=crop']
+  
   const sizeOpts = (p.sizes || []).map(s => `<option value="${s}">${s}</option>`).join('')
   const colorOpts = (p.colors || []).map(c => `<option value="${c}">${c}</option>`).join('')
+
+  // Carousel HTML (only show controls if more than 1 image)
+  const carouselHTML = images.length > 1 ? `
+    <div class="carousel-container relative group" data-carousel>
+      <div class="carousel-track flex transition-transform duration-300" data-track>
+        ${images.map((img, i) => `
+          <img src="${img}" alt="${p.name}" class="w-full h-full object-cover flex-shrink-0" loading="lazy" data-slide="${i}"/>
+        `).join('')}
+      </div>
+      
+      <!-- Navigation Buttons (show on hover) -->
+      <button class="carousel-btn prev absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 backdrop-blur text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10" data-prev>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <button class="carousel-btn next absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 backdrop-blur text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10" data-next>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </button>
+      
+      <!-- Dots Indicator -->
+      <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10" data-dots>
+        ${images.map((_, i) => `<span class="w-1.5 h-1.5 rounded-full bg-white/60 ${i === 0 ? 'bg-white' : ''}" data-dot="${i}"></span>`).join('')}
+      </div>
+    </div>
+  ` : `
+    <img src="${images[0]}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy"/>
+  `
 
   return `
     <article class="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all" data-product-id="${p.id}">
       <div class="aspect-[3/4] overflow-hidden relative bg-gray-100">
-        <img src="${img}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy"/>
+        ${carouselHTML}
         <div class="absolute top-2 left-2 flex flex-col gap-1 z-20">
           ${p.badge ? `<span class="px-2 py-1 text-[10px] font-bold ${getBadgeColor(p.badge)} text-white rounded shadow-sm">${p.badge.toUpperCase()}</span>` : ''}
           ${p.originalPrice ? `<span class="px-2 py-1 text-[10px] font-bold bg-red-500 text-white rounded shadow-sm">-${Math.round((1 - p.price / p.originalPrice) * 100)}%</span>` : ''}
@@ -85,32 +114,91 @@ function productCard(p, idx) {
 }
 
 function quickViewModal(p) {
-  const img = p.images?.[0] || 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&h=750&fit=crop'
+  const images = p.images && p.images.length > 0 
+    ? p.images 
+    : ['https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&h=750&fit=crop']
+  
   const sizeOpts = (p.sizes || []).map(s => `<option value="${s}">${s}</option>`).join('')
   const colorOpts = (p.colors || []).map(c => `<option value="${c}">${c}</option>`).join('')
   const discount = p.originalPrice ? Math.round((1 - p.price / p.originalPrice) * 100) : 0
 
+  // Modal carousel HTML (larger version)
+  const modalCarouselHTML = images.length > 1 ? `
+    <div class="modal-carousel relative overflow-hidden bg-gray-100" data-modal-carousel>
+      <div class="modal-carousel-track flex transition-transform duration-300" data-modal-track>
+        ${images.map((img, i) => `
+          <img src="${img}" alt="${p.name}" class="w-full aspect-[4/5] md:h-full md:aspect-auto object-cover flex-shrink-0" data-modal-slide="${i}"/>
+        `).join('')}
+      </div>
+      
+      <!-- Navigation Buttons (Desktop only, minimal on mobile) -->
+      <button class="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur text-gray-800 dark:text-white shadow-lg items-center justify-center z-10 hover:bg-white dark:hover:bg-gray-700" data-modal-prev>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <button class="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur text-gray-800 dark:text-white shadow-lg items-center justify-center z-10 hover:bg-white dark:hover:bg-gray-700" data-modal-next>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </button>
+
+      <!-- Mobile Navigation Buttons (Smaller, always visible) -->
+      <button class="md:hidden absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 backdrop-blur text-gray-800 shadow-md flex items-center justify-center z-10" data-modal-prev>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <button class="md:hidden absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 backdrop-blur text-gray-800 shadow-md flex items-center justify-center z-10" data-modal-next>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </button>
+      
+      <!-- Dots (Mobile only) -->
+      <div class="md:hidden absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10" data-modal-dots>
+        ${images.map((_, i) => `<span class="w-1.5 h-1.5 rounded-full bg-white/60 ${i === 0 ? 'bg-white' : ''} shadow-sm" data-modal-dot="${i}"></span>`).join('')}
+      </div>
+      
+      <!-- Thumbnails (Desktop only) -->
+      <div class="hidden md:flex absolute bottom-3 left-1/2 -translate-x-1/2 gap-2 z-10" data-modal-thumbs>
+        ${images.map((img, i) => `
+          <button class="w-12 h-12 rounded-lg overflow-hidden border-2 ${i === 0 ? 'border-white' : 'border-white/40'} hover:border-white transition-colors input-focus" data-modal-thumb="${i}">
+            <img src="${img}" alt="Thumb ${i+1}" class="w-full h-full object-cover"/>
+          </button>
+        `).join('')}
+      </div>
+      
+      <!-- Close button (Responsive) -->
+      <button id="close-quickview" class="absolute top-3 right-3 w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur shadow-lg flex items-center justify-center text-gray-700 dark:text-white hover:bg-white dark:hover:bg-gray-700 transition-colors z-20">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+      
+      <!-- Badges -->
+      <div class="absolute top-3 left-3 flex flex-col gap-1.5 z-20">
+        ${p.badge ? `<span class="px-2.5 py-1 text-[10px] font-bold ${getBadgeColor(p.badge)} text-white rounded-md shadow-sm">${p.badge.toUpperCase()}</span>` : ''}
+        ${discount > 0 ? `<span class="px-2.5 py-1 text-[10px] font-bold bg-red-500 text-white rounded-md shadow-sm">-${discount}%</span>` : ''}
+      </div>
+    </div>
+  ` : `
+    <div class="relative bg-gray-100">
+      <img src="${images[0]}" alt="${p.name}" class="w-full aspect-[4/5] md:h-full md:aspect-auto object-cover"/>
+      
+      <!-- Close button -->
+      <button id="close-quickview" class="absolute top-3 right-3 w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur shadow-lg flex items-center justify-center text-gray-700 dark:text-white hover:bg-white dark:hover:bg-gray-700 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+      
+      <!-- Badges -->
+      <div class="absolute top-3 left-3 flex flex-col gap-1.5">
+        ${p.badge ? `<span class="px-2.5 py-1 text-[10px] font-bold ${getBadgeColor(p.badge)} text-white rounded-md shadow-sm">${p.badge.toUpperCase()}</span>` : ''}
+        ${discount > 0 ? `<span class="px-2.5 py-1 text-[10px] font-bold bg-red-500 text-white rounded-md shadow-sm">-${discount}%</span>` : ''}
+      </div>
+    </div>
+  `
+
   return `
     <div id="quick-view-modal" class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm">
       <!-- Mobile: slide from bottom, Desktop: centered modal -->
-      <div class="bg-white dark:bg-gray-900 w-full md:w-auto md:max-w-2xl md:mx-4 md:rounded-2xl rounded-t-3xl max-h-[92vh] overflow-hidden animate-slide-up shadow-2xl">
+      <div class="bg-white dark:bg-gray-900 w-full md:w-auto md:max-w-2xl md:mx-4 md:rounded-2xl rounded-t-3xl max-h-[90vh] overflow-y-auto md:overflow-hidden animate-slide-up shadow-2xl">
         
         <!-- Desktop: horizontal layout, Mobile: vertical -->
         <div class="md:flex">
           <!-- Image Section -->
           <div class="relative md:w-72 lg:w-80 flex-shrink-0">
-            <img src="${img}" alt="${p.name}" class="w-full h-64 md:h-full object-cover"/>
-            
-            <!-- Close button -->
-            <button id="close-quickview" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur shadow-lg flex items-center justify-center text-gray-700 dark:text-white hover:bg-white dark:hover:bg-gray-700 transition-colors">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-            
-            <!-- Badges -->
-            <div class="absolute top-3 left-3 flex flex-col gap-1.5">
-              ${p.badge ? `<span class="px-2.5 py-1 text-[10px] font-bold ${getBadgeColor(p.badge)} text-white rounded-md shadow-sm">${p.badge.toUpperCase()}</span>` : ''}
-              ${discount > 0 ? `<span class="px-2.5 py-1 text-[10px] font-bold bg-red-500 text-white rounded-md shadow-sm">-${discount}%</span>` : ''}
-            </div>
+            ${modalCarouselHTML}
           </div>
           
           <!-- Content Section -->
@@ -309,6 +397,54 @@ export function pageCatalog(state) {
           return
         }
         grid.innerHTML = visible.map((p, idx) => productCard(p, idx)).join('')
+        
+        // Initialize carousels for products with multiple images
+        const carousels = grid.querySelectorAll('[data-carousel]')
+        carousels.forEach(carousel => {
+          const track = carousel.querySelector('[data-track]')
+          const slides = carousel.querySelectorAll('[data-slide]')
+          const prevBtn = carousel.querySelector('[data-prev]')
+          const nextBtn = carousel.querySelector('[data-next]')
+          const dots = carousel.querySelectorAll('[data-dot]')
+          
+          let currentIndex = 0
+          
+          const updateCarousel = () => {
+            track.style.transform = `translateX(-${currentIndex * 100}%)`
+            dots.forEach((dot, i) => {
+              if (i === currentIndex) {
+                dot.classList.add('bg-white')
+                dot.classList.remove('bg-white/60')
+              } else {
+                dot.classList.remove('bg-white')
+                dot.classList.add('bg-white/60')
+              }
+            })
+          }
+          
+          prevBtn?.addEventListener('click', (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            currentIndex = (currentIndex - 1 + slides.length) % slides.length
+            updateCarousel()
+          })
+          
+          nextBtn?.addEventListener('click', (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            currentIndex = (currentIndex + 1) % slides.length
+            updateCarousel()
+          })
+          
+          dots.forEach((dot, i) => {
+            dot.addEventListener('click', (e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              currentIndex = i
+              updateCarousel()
+            })
+          })
+        })
       }
 
       // UPDATE GRID ON STORE CHANGE
@@ -387,6 +523,54 @@ export function pageCatalog(state) {
         modalContainer.querySelector('#close-quickview').addEventListener('click', closeModal)
         modalContainer.querySelector('#quick-view-modal').addEventListener('click', (e) => { if (e.target.id === 'quick-view-modal') closeModal() })
         
+        // Initialize modal carousel if multiple images
+        const modalCarousel = modalContainer.querySelector('[data-modal-carousel]')
+        if (modalCarousel) {
+          const track = modalCarousel.querySelector('[data-modal-track]')
+          const slides = modalCarousel.querySelectorAll('[data-modal-slide]')
+          const prevBtn = modalCarousel.querySelector('[data-modal-prev]')
+          const nextBtn = modalCarousel.querySelector('[data-modal-next]')
+          const thumbs = modalCarousel.querySelectorAll('[data-modal-thumb]')
+          
+          let currentIndex = 0
+          
+          const updateModalCarousel = () => {
+            track.style.transform = `translateX(-${currentIndex * 100}%)`
+            thumbs.forEach((thumb, i) => {
+              if (i === currentIndex) {
+                thumb.classList.remove('border-white/40')
+                thumb.classList.add('border-white')
+              } else {
+                thumb.classList.remove('border-white')
+                thumb.classList.add('border-white/40')
+              }
+            })
+          }
+          
+          prevBtn?.addEventListener('click', (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            currentIndex = (currentIndex - 1 + slides.length) % slides.length
+            updateModalCarousel()
+          })
+          
+          nextBtn?.addEventListener('click', (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            currentIndex = (currentIndex + 1) % slides.length
+            updateModalCarousel()
+          })
+          
+          thumbs.forEach((thumb, i) => {
+            thumb.addEventListener('click', (e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              currentIndex = i
+              updateModalCarousel()
+            })
+          })
+        }
+        
         const qvAddBtn = modalContainer.querySelector('#qv-add-to-cart')
         qvAddBtn.addEventListener('click', () => {
           if (qvAddBtn.disabled) return
@@ -397,18 +581,18 @@ export function pageCatalog(state) {
           addToCart({ productId: product.id, size, color, qty: 1 })
           
           // Update cart counter in header immediately
-          // Update cart counter in header immediately
           const count = cartCount()
           const cartBadge = document.querySelector('a[href="#/cart"] span')
           if (cartBadge) {
             cartBadge.textContent = count
           } else {
+            // Create badge if it doesn't exist
             const cartLink = document.querySelector('a[href="#/cart"]')
             if (cartLink) {
               const newBadge = document.createElement('span')
               newBadge.className = 'absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white'
               newBadge.textContent = count
-              cartLink.appendChild(newBadge)
+            cartLink.appendChild(newBadge)
             }
           }
           
