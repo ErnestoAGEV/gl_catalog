@@ -4,32 +4,46 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/gl_catalog/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>G&L | Mens clothing</title>
+    <title>G&L | Ropa de Hombre en México</title>
     <meta
       name="description"
-      content="G&L: ropa de hombre moderna y minimalista en México. Compra rápida: arma tu carrito y envía tu pedido directo por WhatsApp."
+      content="G&L: ropa de hombre moderna y minimalista en México. Compra rápida por WhatsApp."
     />
     <meta name="robots" content="index,follow" />
-    
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://gl-catalog.vercel.app/" />
+    <meta property="og:title" content="G&L | Ropa de Hombre en México" />
+    <meta
+      property="og:description"
+      content="Moda masculina minimalista. Elige tus prendas y pide directo por WhatsApp."
+    />
+    <meta property="og:image" content="/gl_catalog/logo.png" />
+
     <!-- PWA -->
     <link rel="manifest" href="/gl_catalog/manifest.json" />
     <meta name="theme-color" content="#000000" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
     <meta name="apple-mobile-web-app-title" content="G&L" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
-    <script type="module" crossorigin src="/gl_catalog/assets/index-k-xNHrrS.js"></script>
-    <link rel="stylesheet" crossorigin href="/gl_catalog/assets/index-Bk9qTLAi.css">
+    <script type="module" crossorigin src="/gl_catalog/assets/index-BIbuCpUW.js"></script>
+    <link rel="stylesheet" crossorigin href="/gl_catalog/assets/index-CsyZgXfa.css">
   </head>
   <body class="bg-black overflow-x-hidden">
     <div id="app" class="overflow-x-hidden"></div>
     <script>
       // Register Service Worker
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('SW registered:', reg.scope))
-            .catch(err => console.log('SW registration failed:', err));
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/sw.js")
+            .then((reg) => console.log("SW registered:", reg.scope))
+            .catch((err) => console.log("SW registration failed:", err));
         });
       }
     </script>
