@@ -117,9 +117,15 @@ export function layoutAdmin({ contentHtml, state }) {
   return `<div class="min-h-dvh overflow-x-hidden bg-gray-50 text-gray-900">
     <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-lg border-b border-gray-200 shadow-sm">
       <div class="mx-auto flex w-full max-w-screen-sm items-center justify-between px-4 py-3">
-        <div class="flex items-center gap-2">
-          <span class="text-lg font-bold text-gray-900">G&L</span>
-          <span class="text-xs px-2 py-0.5 rounded bg-brand/10 text-brand font-medium">Admin</span>
+        <div class="flex items-center gap-4">
+          <a href="#/" class="flex items-center gap-2 group" title="Ir a la tienda">
+            <span class="text-lg font-bold text-gray-900 group-hover:text-brand transition-colors">G&L</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-brand/10 text-brand font-medium">Admin</span>
+          </a>
+          <a href="#/" class="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            Ver Tienda
+          </a>
         </div>
         ${
           authed
@@ -130,6 +136,23 @@ export function layoutAdmin({ contentHtml, state }) {
         }
       </div>
     </header>
+
+    <!-- Local Mode Warning Banner -->
+    ${
+      authed
+        ? `<div class="bg-amber-50 border-b border-amber-200 px-4 py-2">
+            <div class="flex items-start gap-2 max-w-screen-sm mx-auto">
+              <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <div class="text-xs text-amber-800">
+                <p class="font-bold">⚠️ Modo Local (Demo)</p>
+                <p>Los cambios solo se guardan en este dispositivo. No visibles para clientes.</p>
+              </div>
+            </div>
+          </div>`
+        : ''
+    }
 
     <main class="mx-auto w-full max-w-screen-sm px-4 py-5">
       ${contentHtml}

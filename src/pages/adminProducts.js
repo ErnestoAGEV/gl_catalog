@@ -1,4 +1,4 @@
-import { adminLogout, saveProducts } from '../app/store.js'
+import { adminLogout, addProduct, updateProduct, deleteProduct, uploadProductImage } from '../app/store.js'
 import { navigate } from '../app/router.js'
 import { formatMoney } from '../app/format.js'
 import { on, qs } from '../app/dom.js'
@@ -147,7 +147,7 @@ export function pageAdminProducts(state) {
           <form id="product-form" class="p-5 space-y-5" novalidate>
             <input type="hidden" name="id" />
 
-            <!-- Image URL -->
+            <!-- Image Upload -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
                 <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,15 +155,38 @@ export function pageAdminProducts(state) {
                 </svg>
                 Imagen del producto
               </label>
-              <div class="flex gap-3">
-                <div id="image-preview" class="w-20 h-20 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+              <div class="flex gap-3 items-start">
+                <div id="image-preview" class="w-24 h-24 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0 border border-gray-200">
                   <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                   </svg>
                 </div>
-                <input name="imageUrl" type="url" class="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none transition-colors" placeholder="https://ejemplo.com/imagen.jpg" />
+                <div class="flex-1 space-y-3">
+                  <!-- File Input -->
+                  <div>
+                    <input type="file" id="file-input" accept="image/*" class="block w-full text-sm text-gray-500
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-full file:border-0
+                      file:text-sm file:font-semibold
+                      file:bg-brand/10 file:text-brand
+                      hover:file:bg-brand/20
+                    "/>
+                    <p class="text-xs text-gray-500 mt-1">Sube una imagen desde tu dispositivo (JPG, PNG)</p>
+                  </div>
+                  
+                  <div class="relative">
+                    <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                      <div class="w-full border-t border-gray-200"></div>
+                    </div>
+                    <div class="relative flex justify-center">
+                      <span class="bg-white px-2 text-xs text-gray-400">O pega una URL</span>
+                    </div>
+                  </div>
+
+                  <!-- URL Fallback -->
+                  <input name="imageUrl" type="url" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none transition-colors" placeholder="https://..." />
+                </div>
               </div>
-              <p class="text-xs text-gray-500 mt-1.5">Pega la URL de la imagen del producto</p>
             </div>
 
             <!-- Name -->
@@ -319,8 +342,10 @@ export function pageAdminProducts(state) {
       const cancelBtn = qs(root, '#product-cancel')
       const imagePreview = qs(root, '#image-preview')
       const imageInput = qs(root, 'input[name="imageUrl"]')
+      const fileInput = qs(root, '#file-input')
 
       let isEditing = false
+      let selectedFile = null
 
       const setError = (msg) => {
         if (!msg) {
@@ -382,6 +407,8 @@ export function pageAdminProducts(state) {
         form.reset()
         qs(root, 'input[name="id"]').value = ''
         isEditing = false
+        selectedFile = null
+        if (fileInput) fileInput.value = ''
         setError('')
         updateImagePreview('')
       }
@@ -402,8 +429,22 @@ export function pageAdminProducts(state) {
         renderList(e.target.value.trim())
       })
 
+      // File input handle
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0]
+        if (file) {
+          selectedFile = file
+          const objectUrl = URL.createObjectURL(file)
+          updateImagePreview(objectUrl)
+          // Clear URL input so it doesn't conflict logic
+          imageInput.value = ''
+        }
+      })
+
       // Image preview on URL change
       imageInput.addEventListener('input', (e) => {
+        selectedFile = null // If user types URL, clear file
+        if (fileInput) fileInput.value = ''
         updateImagePreview(e.target.value)
       })
 
@@ -418,7 +459,7 @@ export function pageAdminProducts(state) {
         navigate('/admin/login')
       })
 
-      form.addEventListener('submit', (ev) => {
+      form.addEventListener('submit', async (ev) => {
         ev.preventDefault()
         setError('')
 
@@ -433,7 +474,7 @@ export function pageAdminProducts(state) {
         const sizeCheckboxes = root.querySelectorAll('input[name="sizes"]:checked')
         const sizes = Array.from(sizeCheckboxes).map(cb => cb.value)
         const colors = parseList(qs(root, 'input[name="colors"]').value)
-        const imageUrl = qs(root, 'input[name="imageUrl"]').value.trim()
+        let imageUrl = qs(root, 'input[name="imageUrl"]').value.trim()
 
         if (!name) return setError('Ingresa el nombre del producto.')
         if (!type) return setError('Selecciona la categoría del producto.')
@@ -441,22 +482,39 @@ export function pageAdminProducts(state) {
         if (!sizes.length) return setError('Selecciona al menos una talla.')
         if (!colors.length) return setError('Ingresa al menos un color.')
 
-        const images = imageUrl ? [imageUrl] : []
+        // Disable button while saving to prevent double clicks (simple UI UX)
+        const submitBtn = qs(root, 'button[type="submit"]')
+        const originalBtnText = submitBtn.innerHTML
+        submitBtn.disabled = true
+        submitBtn.innerHTML = '<span class="animate-spin">⌛</span> Subiendo & Guardando...'
 
-        const next = [...state.products]
+        try {
+            // New: Upload Image if selected
+            if (selectedFile) {
+                const { publicUrl, error: uploadError } = await uploadProductImage(selectedFile)
+                if (uploadError) throw new Error('Error al subir imagen: ' + uploadError.message)
+                imageUrl = publicUrl
+            }
 
-        if (idInput.value) {
-          const idx = next.findIndex((p) => p.id === idInput.value)
-          if (idx === -1) return setError('No se encontró el producto a editar.')
-          next[idx] = { ...next[idx], name, type, price, originalPrice, stock, badge, sizes, colors, images }
-        } else {
-          const id = `p-${crypto.randomUUID()}`
-          next.unshift({ id, name, type, price, originalPrice, stock, badge, sizes, colors, images, rating: 4.5, reviews: 0 })
+            const images = imageUrl ? [imageUrl] : []
+            
+            if (idInput.value) {
+               // Update
+               const { error } = await updateProduct(idInput.value, { name, type, price, originalPrice, stock, badge, sizes, colors, images })
+               if (error) throw new Error('Error al actualizar: ' + error.message)
+            } else {
+               // Create
+               const { error } = await addProduct({ name, type, price, originalPrice, stock, badge, sizes, colors, images })
+               if (error) throw new Error('Error al crear: ' + error.message)
+            }
+            hideForm()
+        } catch (err) {
+            console.error(err)
+            setError(err.message || 'Error al guardar. Revisa la consola.')
+        } finally {
+            submitBtn.disabled = false
+            submitBtn.innerHTML = originalBtnText
         }
-
-        saveProducts(next)
-        hideForm()
-        navigate('/admin/products')
       })
 
       on(root, 'click', '[data-edit]', (_ev, btn) => {
@@ -487,15 +545,13 @@ export function pageAdminProducts(state) {
         formSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
       })
 
-      on(root, 'click', '[data-delete]', (_ev, btn) => {
+      on(root, 'click', '[data-delete]', async (_ev, btn) => {
         const wrap = btn.closest('[data-product]')
         const id = wrap?.getAttribute('data-id')
         if (!id) return
         
         if (confirm('¿Estás seguro de eliminar este producto?')) {
-          const next = state.products.filter((p) => p.id !== id)
-          saveProducts(next)
-          navigate('/admin/products')
+          await deleteProduct(id)
         }
       })
     },

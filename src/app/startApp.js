@@ -4,7 +4,7 @@ import { getState, isAdminAuthed, loadProducts, subscribe, toggleTheme, getTheme
 import { renderRoute } from './views.js'
 
 export function startApp(mountEl) {
-  ensureSeedData()
+  // ensureSeedData() // Disabled: Using Supabase
   loadProducts()
 
   // Apply initial theme
@@ -16,10 +16,18 @@ export function startApp(mountEl) {
   }
   applyTheme()
 
+  let currentCleanup = null
+
   const render = (path) => {
+    // Cleanup previous route if applicable
+    if (currentCleanup) {
+      currentCleanup()
+      currentCleanup = null
+    }
+
     const authed = isAdminAuthed()
 
-    if (authed && !path.startsWith('/admin')) {
+    if (authed && path === '/admin/login') {
       navigate('/admin/products')
       return
     }
@@ -32,7 +40,12 @@ export function startApp(mountEl) {
     const { title, html, onMount } = renderRoute(path, getState())
     document.title = title
     mountEl.innerHTML = html
-    onMount?.(mountEl)
+    
+    // Execute onMount and capture cleanup function
+    const cleanup = onMount?.(mountEl)
+    if (typeof cleanup === 'function') {
+      currentCleanup = cleanup
+    }
 
     // Setup global event listeners after render
     setupGlobalHandlers()
@@ -75,7 +88,7 @@ export function startApp(mountEl) {
   // Catalog handles its own updates to avoid full page reloads
   const unsub = subscribe(() => {
     const currentPath = getRoute()
-    const shouldRerender = ['/cart', '/wishlist', '/checkout'].some(p => currentPath.startsWith(p))
+    const shouldRerender = ['/cart', '/wishlist', '/checkout', '/admin/products'].some(p => currentPath.startsWith(p))
     if (shouldRerender) {
       render(currentPath)
     }

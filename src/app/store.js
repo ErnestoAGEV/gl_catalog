@@ -4,7 +4,8 @@ import { readJson, writeJson } from './storage.js'
 const subscribers = new Set()
 
 const state = {
-  products: readJson(STORAGE_KEYS.products, []),
+  products: [], // Empty initially, populated by Supabase
+  isLoading: true, // Loading state
   cart: readJson(STORAGE_KEYS.cart, []),
   adminSession: readJson(STORAGE_KEYS.adminSession, null),
   wishlist: readJson(STORAGE_KEYS.wishlist, []),
@@ -27,15 +28,160 @@ export function getState() {
   return structuredClone(state)
 }
 
-export function loadProducts() {
-  state.products = readJson(STORAGE_KEYS.products, [])
-  emit()
+import { supabase } from './supabase.js'
+
+// Helper to map DB row -> App Product
+function mapRowToProduct(row) {
+  return {
+    ...row,
+    id: row.id,
+    name: row.name,
+    price: Number(row.price),
+    originalPrice: row.originalPrice ? Number(row.originalPrice) : null,
+    stock: row.stock,
+    type: row.type,
+    category: row.category,
+    sizes: row.sizes || [],
+    colors: row.colors || [],
+    images: row.image_url ? [row.image_url] : [],
+    badge: row.badge,
+  }
 }
 
-export function saveProducts(products) {
-  state.products = products
-  writeJson(STORAGE_KEYS.products, products)
+// Helper to map App Product -> DB Row
+function mapProductToRow(p) {
+  return {
+    name: p.name,
+    price: p.price,
+    type: p.type,
+    category: p.category || 'General', // Fallback
+    image_url: p.images?.[0] || null,
+    sizes: p.sizes,
+    colors: p.colors,
+    stock: p.stock,
+    badge: p.badge,
+    // created_at is handled by DB
+  }
+}
+
+export async function loadProducts() {
+  // First load? Maybe show empty or verify if we want to show cached?
+  // For now, fetch fresh.
+  
+  if (!supabase) {
+    console.error('Supabase client not initialized')
+    state.isLoading = false
+    emit()
+    return
+  }
+
+  // Create timeout promise that rejects after 3 seconds
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Timeout: La conexión a Supabase tardó más de 3 segundos')), 3000)
+  })
+
+  try {
+    // Race between actual query and timeout
+    const result = await Promise.race([
+      supabase.from('products').select('*').order('created_at', { ascending: false }),
+      timeoutPromise
+    ])
+
+    const { data, error } = result
+
+    if (error) throw error
+
+    if (data) {
+      state.products = data.map(mapRowToProduct)
+      state.isLoading = false
+      
+      // Clean up cart: remove items that no longer exist in DB
+      const validProductIds = new Set(state.products.map(p => p.id))
+      const initialCartSize = state.cart.length
+      state.cart = state.cart.filter(item => validProductIds.has(item.productId))
+      
+      if (state.cart.length !== initialCartSize) {
+        writeJson(STORAGE_KEYS.cart, state.cart)
+      }
+
+      emit()
+    }
+  } catch (err) {
+    console.error('Error loading products:', err)
+    alert('ERROR DE RED: ' + err.message + '\n\nPosible causa: Firewall, antivirus, o red bloqueando Supabase.')
+    state.isLoading = false
+    emit()
+  }
+}
+
+// Reemplaza saveProducts con métodos granulares
+export async function addProduct(product) {
+  const row = mapProductToRow(product)
+  const { data, error } = await supabase.from('products').insert(row).select().single()
+  
+  if (error) {
+    console.error('Error creating product:', error)
+    return { error }
+  }
+
+  const newProduct = mapRowToProduct(data)
+  state.products.unshift(newProduct)
   emit()
+  return { success: true }
+}
+
+export async function updateProduct(id, updates) {
+  const row = mapProductToRow({ ...getProductById(id), ...updates })
+  const { error } = await supabase.from('products').update(row).eq('id', id)
+
+  if (error) {
+    console.error('Error updating product:', error)
+    return { error }
+  }
+
+  // Optimistic update locally
+  const idx = state.products.findIndex(p => p.id === id)
+  if (idx !== -1) {
+    state.products[idx] = { ...state.products[idx], ...updates }
+    emit()
+  }
+  return { success: true }
+}
+
+export async function deleteProduct(id) {
+  const { error } = await supabase.from('products').delete().eq('id', id)
+  
+  if (error) {
+    console.error('Error deleting product:', error)
+    return { error }
+  }
+
+  state.products = state.products.filter(p => p.id !== id)
+  emit()
+  return { success: true }
+}
+
+// Upload image to Supabase Storage
+export async function uploadProductImage(file) {
+  const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-').toLowerCase()}`
+  const { data, error } = await supabase.storage
+    .from('products')
+    .upload(fileName, file, {
+      cacheControl: '3600',
+      upsert: false
+    })
+
+  if (error) {
+    console.error('Error uploading image:', error)
+    return { error }
+  }
+
+  // Get public URL
+  const { data: { publicUrl } } = supabase.storage
+    .from('products')
+    .getPublicUrl(data.path)
+
+  return { publicUrl }
 }
 
 export function getProductById(id) {

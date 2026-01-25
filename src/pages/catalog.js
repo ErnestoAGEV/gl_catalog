@@ -1,6 +1,8 @@
-import { addToCart, searchProducts, setSearchQuery, getSearchQuery } from '../app/store.js'
+import { addToCart, searchProducts, setSearchQuery, getSearchQuery, cartCount, subscribe } from '../app/store.js'
 import { formatMoney } from '../app/format.js'
 import { on, qs } from '../app/dom.js'
+
+
 
 function uniqueSorted(values) {
   return Array.from(new Set(values)).filter(Boolean).sort((a, b) => String(a).localeCompare(String(b)))
@@ -41,7 +43,7 @@ function productCard(p, idx) {
   const colorOpts = (p.colors || []).map(c => `<option value="${c}">${c}</option>`).join('')
 
   return `
-    <article class="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all animate-fade-in" data-product-id="${p.id}" style="animation-delay: ${(idx % 4) * 50}ms">
+    <article class="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all" data-product-id="${p.id}">
       <div class="aspect-[3/4] overflow-hidden relative bg-gray-100">
         <img src="${img}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy"/>
         <div class="absolute top-2 left-2 flex flex-col gap-1 z-20">
@@ -230,7 +232,7 @@ export function pageCatalog(state) {
       </section>
 
       <section>
-        <div id="catalog-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 stagger-children"></div>
+        <div id="catalog-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4"></div>
       </section>
 
       <div id="modal-container"></div>
@@ -247,18 +249,44 @@ export function pageCatalog(state) {
       const modalContainer = qs(root, '#modal-container')
       const toastContainer = qs(root, '#toast-container')
 
-      const showToast = (message) => {
-        const toast = document.createElement('div')
-        toast.className = 'toast-enter bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium flex items-center gap-2'
-        toast.innerHTML = `<svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${message}`
-        toastContainer.appendChild(toast)
-        setTimeout(() => { toast.classList.add('toast-exit'); setTimeout(() => toast.remove(), 300) }, 2000)
-      }
-
       const renderGrid = () => {
         const filters = getFilterState(root)
         const searchQuery = getSearchQuery()
         
+        // Show loading state
+        if (state.isLoading) {
+          productCountEl.textContent = 'Cargando productos...'
+          grid.innerHTML = '<div class="col-span-full flex justify-center py-20"><div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand"></div></div>'
+          return
+        }
+
+        // Update filter options dynamically based on current products
+        const types = uniqueSorted(state.products.map((p) => p.type))
+        const sizes = uniqueSorted(state.products.flatMap((p) => p.sizes || []))
+        const colors = uniqueSorted(state.products.flatMap((p) => p.colors || []))
+        
+        const typeSelect = qs(root, 'select[name="type"]')
+        const sizeSelect = qs(root, 'select[name="size"]')
+        const colorSelect = qs(root, 'select[name="color"]')
+        
+        if (typeSelect) {
+          const currentType = typeSelect.value
+          typeSelect.innerHTML = `<option value="">Tipo</option>${types.map(x => `<option value="${x}">${x}</option>`).join('')}`
+          if (currentType && types.includes(currentType)) typeSelect.value = currentType
+        }
+        
+        if (sizeSelect) {
+          const currentSize = sizeSelect.value
+          sizeSelect.innerHTML = `<option value="">Talla</option>${sizes.map(x => `<option value="${x}">${x}</option>`).join('')}`
+          if (currentSize && sizes.includes(currentSize)) sizeSelect.value = currentSize
+        }
+        
+        if (colorSelect) {
+          const currentColor = colorSelect.value
+          colorSelect.innerHTML = `<option value="">Color</option>${colors.map(x => `<option value="${x}">${x}</option>`).join('')}`
+          if (currentColor && colors.includes(currentColor)) colorSelect.value = currentColor
+        }
+
         // Start with search results if there's a query, otherwise all products
         let baseProducts = searchQuery ? searchProducts(searchQuery) : state.products
         const visible = applyFilters(baseProducts, filters)
@@ -281,6 +309,18 @@ export function pageCatalog(state) {
           return
         }
         grid.innerHTML = visible.map((p, idx) => productCard(p, idx)).join('')
+      }
+
+      // UPDATE GRID ON STORE CHANGE
+      // This is crucial because products load asynchronously.
+      // We also update the product count here.
+      // Returns cleanup function to startApp.js
+      const showToast = (message) => {
+        const toast = document.createElement('div')
+        toast.className = 'toast-enter bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium flex items-center gap-2'
+        toast.innerHTML = `<svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${message}`
+        toastContainer.appendChild(toast)
+        setTimeout(() => { toast.classList.add('toast-exit'); setTimeout(() => toast.remove(), 300) }, 2000)
       }
 
       // Reset all filters button
@@ -329,6 +369,12 @@ export function pageCatalog(state) {
         })
       }
 
+      // Subscribe to store changes (crucial for reload scenario)
+      const unsubscribe = subscribe((newState) => {
+        state = newState
+        renderGrid()
+      })
+
       setTimeout(renderGrid, 100)
       on(root, 'change', 'select[name="type"],select[name="size"],select[name="color"],select[name="sort"],input[name="minPrice"],input[name="maxPrice"]', () => renderGrid())
 
@@ -351,16 +397,17 @@ export function pageCatalog(state) {
           addToCart({ productId: product.id, size, color, qty: 1 })
           
           // Update cart counter in header immediately
+          // Update cart counter in header immediately
+          const count = cartCount()
           const cartBadge = document.querySelector('a[href="#/cart"] span')
           if (cartBadge) {
-            const currentCount = parseInt(cartBadge.textContent) || 0
-            cartBadge.textContent = currentCount + 1
+            cartBadge.textContent = count
           } else {
             const cartLink = document.querySelector('a[href="#/cart"]')
             if (cartLink) {
               const newBadge = document.createElement('span')
               newBadge.className = 'absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white'
-              newBadge.textContent = '1'
+              newBadge.textContent = count
               cartLink.appendChild(newBadge)
             }
           }
@@ -385,17 +432,17 @@ export function pageCatalog(state) {
         addToCart({ productId: id, size, color, qty: 1 })
         
         // Update cart counter in header immediately
+        const count = cartCount()
         const cartBadge = document.querySelector('a[href="#/cart"] span')
         if (cartBadge) {
-          const currentCount = parseInt(cartBadge.textContent) || 0
-          cartBadge.textContent = currentCount + 1
+          cartBadge.textContent = count
         } else {
           // Create badge if it doesn't exist
           const cartLink = document.querySelector('a[href="#/cart"]')
           if (cartLink) {
             const newBadge = document.createElement('span')
             newBadge.className = 'absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white'
-            newBadge.textContent = '1'
+            newBadge.textContent = count
             cartLink.appendChild(newBadge)
           }
         }
@@ -412,6 +459,9 @@ export function pageCatalog(state) {
           btn.disabled = false
         }, 1500)
       })
+
+      // Return cleanup function
+      return unsubscribe
     },
   }
 }

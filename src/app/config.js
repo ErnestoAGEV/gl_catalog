@@ -1,12 +1,12 @@
 export const BRAND = {
-  name: 'G&L',
+  name: import.meta.env.VITE_BRAND_NAME || 'G&L',
   tagline: 'Ropa de hombre en México. Compra rápida por WhatsApp.',
-  whatsapp: '523121018263',
+  whatsapp: import.meta.env.VITE_WHATSAPP_NUMBER || '523121018263',
   freeShippingMin: 999,
 }
 
 // Formato internacional sin '+' (ej: 5255XXXXXXXX). Reemplazar por el número real.
-export const STORE_WHATSAPP_NUMBER = '523121018263'
+export const STORE_WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '523121018263'
 
 export const STORAGE_KEYS = {
   products: 'gl_products',
@@ -25,6 +25,6 @@ export const COUPONS = {
 }
 
 export const ADMIN_CREDENTIALS = {
-  user: 'admin',
-  pass: 'admin123',
+  user: import.meta.env.VITE_ADMIN_USER || 'admin',
+  pass: import.meta.env.VITE_ADMIN_PASS || 'admin123',
 }
