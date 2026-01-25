@@ -74,6 +74,7 @@ export async function loadProducts() {
   
   if (!supabase) {
     console.error('Supabase client not initialized')
+    alert('ERROR: No se pudo conectar a la base de datos. Verifica tu archivo .env y las credenciales (VITE_SUPABASE_URL).')
     state.isLoading = false
     emit()
     return

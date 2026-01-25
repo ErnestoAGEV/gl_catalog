@@ -86,7 +86,40 @@ export function startApp(mountEl) {
 
   // Only re-render on state changes for pages that need it (cart, wishlist, checkout)
   // Catalog handles its own updates to avoid full page reloads
-  const unsub = subscribe(() => {
+  const unsub = subscribe((state) => {
+    // 1. Global UI Updates (Header/Nav) without full re-render
+    const count = state.cart.reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
+    const cartLinks = document.querySelectorAll('a[href="#/cart"]')
+    
+    cartLinks.forEach(link => {
+      // Find relative container for badge (usually the link itself or a div inside)
+      const container = link.querySelector('.relative') || link
+      let badge = container.querySelector('.cart-count-badge')
+      
+      if (count > 0) {
+        if (!badge) {
+          badge = document.createElement('span')
+          // Common classes for both desktop and mobile
+          badge.className = 'cart-count-badge absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white border-2 border-white dark:border-black'
+          // Mobile specific adjustments if needed (handled by logic above usually)
+          if (link.closest('nav.md\\:hidden')) {
+             // Mobile nav specific positioning if different
+             badge.classList.remove('-top-1', '-right-1')
+             badge.classList.add('-top-1', '-right-2') 
+          }
+          container.appendChild(badge)
+        }
+        badge.textContent = count
+        // Add minimal animation
+        badge.classList.remove('animate-pop')
+        void badge.offsetWidth // Trigger reflow
+        badge.classList.add('animate-pop')
+      } else {
+        if (badge) badge.remove()
+      }
+    })
+
+    // 2. Route-specific re-renders
     const currentPath = getRoute()
     const shouldRerender = ['/cart', '/wishlist', '/checkout', '/admin/products'].some(p => currentPath.startsWith(p))
     if (shouldRerender) {

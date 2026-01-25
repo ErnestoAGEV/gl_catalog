@@ -4,9 +4,9 @@
 
 /* Brand Colors */
 @theme {
-  --color-brand: #2563EB;
-  --color-brand-light: #60A5FA;
-  --color-brand-dark: #1E40AF;
+  --color-brand: #2563eb;
+  --color-brand-light: #60a5fa;
+  --color-brand-dark: #1e40af;
 }
 
 html,
@@ -46,15 +46,22 @@ textarea {
 
 /* Smooth transitions */
 * {
-  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-property:
+    background-color, border-color, color, fill, stroke, opacity, box-shadow,
+    transform;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 }
 
 /* Skeleton loader animation */
 @keyframes skeleton-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 .skeleton {
@@ -64,8 +71,12 @@ textarea {
 }
 
 @keyframes skeleton-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .skeleton-shimmer {
@@ -83,8 +94,14 @@ img.loaded + .skeleton-shimmer {
 
 /* Fade in animation */
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fade-in {
@@ -97,19 +114,41 @@ img.loaded + .skeleton-shimmer {
   animation: fade-in 0.4s ease-out forwards;
 }
 
-.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
-.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
-.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
-.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
-.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
-.stagger-children > *:nth-child(7) { animation-delay: 300ms; }
-.stagger-children > *:nth-child(8) { animation-delay: 350ms; }
+.stagger-children > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stagger-children > *:nth-child(2) {
+  animation-delay: 50ms;
+}
+.stagger-children > *:nth-child(3) {
+  animation-delay: 100ms;
+}
+.stagger-children > *:nth-child(4) {
+  animation-delay: 150ms;
+}
+.stagger-children > *:nth-child(5) {
+  animation-delay: 200ms;
+}
+.stagger-children > *:nth-child(6) {
+  animation-delay: 250ms;
+}
+.stagger-children > *:nth-child(7) {
+  animation-delay: 300ms;
+}
+.stagger-children > *:nth-child(8) {
+  animation-delay: 350ms;
+}
 
 /* Slide up animation for modals */
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(100%); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-slide-up {
@@ -127,9 +166,15 @@ img.loaded + .skeleton-shimmer {
 
 /* Heart animation */
 @keyframes heart-pop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.3); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .heart-pop {
@@ -138,8 +183,13 @@ img.loaded + .skeleton-shimmer {
 
 /* Badge pulse */
 @keyframes badge-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 .badge-pulse {
@@ -148,8 +198,12 @@ img.loaded + .skeleton-shimmer {
 
 /* Carousel slide */
 @keyframes carousel-slide {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-100%); }
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
 }
 
 /* Hero carousel */
@@ -170,13 +224,25 @@ img.loaded + .skeleton-shimmer {
 
 /* Toast notification */
 @keyframes toast-in {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes toast-out {
-  from { opacity: 1; transform: translateY(0); }
-  to { opacity: 0; transform: translateY(-20px); }
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
 }
 
 .toast-enter {
@@ -236,8 +302,13 @@ body.dark {
 
 /* Parallax subtle effect on hero */
 @keyframes subtle-zoom {
-  0%, 100% { transform: scale(1.05); }
-  50% { transform: scale(1.08); }
+  0%,
+  100% {
+    transform: scale(1.05);
+  }
+  50% {
+    transform: scale(1.08);
+  }
 }
 
 .hero-bg-animate {
@@ -266,10 +337,29 @@ body.dark {
 
 /* Hover lift effect */
 .hover-lift {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .hover-lift:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Pop animation for cart badge */
+@keyframes pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.5);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-pop {
+  animation: pop 0.3s ease-out forwards;
 }

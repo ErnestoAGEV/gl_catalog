@@ -1,6 +1,7 @@
 import { addToCart, searchProducts, setSearchQuery, getSearchQuery, cartCount, subscribe } from '../app/store.js'
 import { formatMoney } from '../app/format.js'
 import { on, qs } from '../app/dom.js'
+import { showToast } from '../app/toast.js'
 
 
 
@@ -328,10 +329,11 @@ export function pageCatalog(state) {
         <div id="catalog-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4"></div>
       </section>
 
-      <div id="modal-container"></div>
-      <div id="toast-container" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50"></div>
 
-      <a href="#/cart" class="fixed bottom-6 right-6 flex items-center gap-2 rounded-full bg-brand text-white pl-4 pr-5 py-3 shadow-lg hover:bg-brand-dark hover:scale-105 active:scale-95 transition-all z-20 font-medium text-sm">
+
+      <div id="modal-container"></div>
+
+      <a href="#/cart" class="fixed bottom-24 right-4 md:bottom-6 md:right-6 flex items-center gap-2 rounded-full bg-brand text-white pl-4 pr-5 py-3 shadow-lg hover:bg-brand-dark hover:scale-105 active:scale-95 transition-all z-20 font-medium text-sm border-2 border-white dark:border-black">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
         Ver carrito
       </a>
@@ -340,7 +342,7 @@ export function pageCatalog(state) {
       const grid = qs(root, '#catalog-grid')
       const productCountEl = qs(root, '#product-count')
       const modalContainer = qs(root, '#modal-container')
-      const toastContainer = qs(root, '#toast-container')
+
 
       const renderGrid = () => {
         const filters = getFilterState(root)
@@ -452,17 +454,7 @@ export function pageCatalog(state) {
         })
       }
 
-      // UPDATE GRID ON STORE CHANGE
-      // This is crucial because products load asynchronously.
-      // We also update the product count here.
-      // Returns cleanup function to startApp.js
-      const showToast = (message) => {
-        const toast = document.createElement('div')
-        toast.className = 'toast-enter bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium flex items-center gap-2'
-        toast.innerHTML = `<svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${message}`
-        toastContainer.appendChild(toast)
-        setTimeout(() => { toast.classList.add('toast-exit'); setTimeout(() => toast.remove(), 300) }, 2000)
-      }
+
 
       // Reset all filters button
       const resetFiltersBtn = qs(root, '#reset-filters')
