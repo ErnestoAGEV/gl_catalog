@@ -21,11 +21,12 @@ export function layoutPublic({ contentHtml, state, showSearch = false }) {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
           <input 
+          <input 
             type="search" 
             id="global-search"
             placeholder="Buscar productos..." 
             value="${getSearchQuery() || ''}"
-            class="w-full pl-10 pr-4 py-2.5 rounded-full ${isDark ? 'bg-gray-900 border-gray-800 text-white placeholder:text-gray-500' : 'bg-gray-100 border-gray-200 text-gray-900 placeholder:text-gray-400'} border text-sm focus:outline-none focus:ring-2 focus:ring-brand/50"
+            class="w-full lg:w-96 pl-10 pr-4 py-2.5 rounded-full ${isDark ? 'bg-gray-900 border-gray-800 text-white placeholder:text-gray-500' : 'bg-gray-100 border-gray-200 text-gray-900 placeholder:text-gray-400'} border text-sm focus:outline-none focus:ring-2 focus:ring-brand/50 transition-all focus:w-full lg:focus:w-[28rem]"
           />
         </div>
       </div>
@@ -45,26 +46,26 @@ export function layoutPublic({ contentHtml, state, showSearch = false }) {
     <header class="sticky top-0 z-30 ${isDark ? 'bg-black/95' : 'bg-white/95'} backdrop-blur-lg border-b ${isDark ? 'border-gray-800/50' : 'border-gray-200'}">
       ${searchBarHtml}
       <!-- Navigation -->
-      <div class="mx-auto flex w-full max-w-screen-sm items-center justify-between px-4 py-3">
-        <a href="#/" class="flex items-center gap-2">
+      <div class="mx-auto flex w-full max-w-screen-xl items-center justify-between px-4 py-3">
+        <a href="#/" class="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
           <img src="logo.png" alt="G&L" class="h-10 w-auto object-contain" />
         </a>
-        <nav class="flex items-center gap-3">
-          <a class="text-sm ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors" href="#/catalog">
+        <nav class="hidden md:flex items-center gap-6">
+          <a class="text-sm font-medium ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-all hover:-translate-y-0.5 relative group" href="#/catalog">
             Tienda
+            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-brand transition-all group-hover:w-full"></span>
           </a>
 
           <!-- Cart -->
-          <a class="relative p-1.5 ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors" href="#/cart" title="Carrito">
+          <a class="relative p-1.5 ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-all hover:scale-110" href="#/cart" title="Carrito">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
             </svg>
             ${count > 0 ? `<span class="absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">${count}</span>` : ''}
           </a>
-          </a>
 
           <!-- Theme Toggle -->
-          <button id="theme-toggle" class="p-1.5 ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors" title="Cambiar tema">
+          <button id="theme-toggle" class="p-1.5 ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-all hover:scale-110 hover:rotate-12" title="Cambiar tema">
             ${isDark 
               ? `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>`
               : `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>`
@@ -74,11 +75,11 @@ export function layoutPublic({ contentHtml, state, showSearch = false }) {
       </div>
     </header>
 
-    <main class="mx-auto w-full max-w-screen-sm md:max-w-screen-md lg:max-w-screen-lg px-4 py-5 pb-24 overflow-x-hidden">
+    <main class="mx-auto w-full max-w-screen-xl px-4 py-5 pb-24 md:pb-24 overflow-x-hidden mb-16 md:mb-0">
       ${contentHtml}
     </main>
 
-    <footer class="${isDark ? 'bg-gray-950 border-gray-800/50' : 'bg-gray-100 border-gray-200'} border-t">
+    <footer class="${isDark ? 'bg-gray-950 border-gray-800/50' : 'bg-gray-100 border-gray-200'} border-t pb-20 md:pb-0">
       <div class="mx-auto w-full max-w-screen-sm px-4 py-8">
         <div class="flex flex-col items-center text-center">
           <span class="text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2">G&L</span>
@@ -109,6 +110,31 @@ export function layoutPublic({ contentHtml, state, showSearch = false }) {
         </div>
       </div>
     </footer>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 ${isDark ? 'bg-black/80' : 'bg-white/90'} backdrop-blur-xl border-t ${isDark ? 'border-gray-800' : 'border-gray-200'} pb-safe">
+      <div class="flex items-center justify-around h-16">
+        <a href="#/" class="flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-colors ${window.location.hash === '#/' || window.location.hash === '' ? 'text-brand' : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600')}">
+          <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          Inicio
+        </a>
+        <a href="#/catalog" class="flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-colors ${window.location.hash.startsWith('#/catalog') ? 'text-brand' : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600')}">
+          <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          Catálogo
+        </a>
+        <button onclick="document.getElementById('global-search')?.focus(); window.scrollTo(0,0)" class="flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-colors ${isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}">
+          <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          Buscar
+        </button>
+        <a href="#/cart" class="relative flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-colors ${window.location.hash.startsWith('#/cart') ? 'text-brand' : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600')}">
+          <div class="relative">
+             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+             ${count > 0 ? `<span class="absolute -top-1 -right-2 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-brand text-[9px] font-bold text-white border-2 border-white dark:border-black">${count}</span>` : ''}
+          </div>
+          Carrito
+        </a>
+      </div>
+    </nav>
   `, theme)
 }
 

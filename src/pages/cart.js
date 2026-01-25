@@ -21,25 +21,25 @@ function lineRow(item) {
             <h3 class="text-sm font-medium text-gray-900 dark:text-white truncate">${p.name}</h3>
             <p class="text-xs text-gray-500 mt-0.5">${item.size || ''} ${item.color ? `/ ${item.color}` : ''}</p>
           </div>
-          <button type="button" class="text-gray-400 hover:text-red-500 transition-colors p-1" data-remove>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button type="button" class="text-gray-400 hover:text-red-500 transition-colors p-2 -mr-2" data-remove aria-label="Eliminar">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
           </button>
         </div>
 
         <div class="flex items-center justify-between mt-2">
-          <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-md">
-            <button type="button" class="w-8 h-8 flex items-center justify-center text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" data-qty-minus>−</button>
+          <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg">
+            <button type="button" class="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:bg-gray-200 dark:active:bg-gray-700" data-qty-minus>−</button>
             <input
-              class="w-10 h-8 bg-transparent text-center text-sm text-gray-900 dark:text-white focus:outline-none"
+              class="w-12 h-10 md:w-10 md:h-8 bg-transparent text-center text-sm font-medium text-gray-900 dark:text-white focus:outline-none"
               type="number"
               min="1"
               inputmode="numeric"
               data-qty
               value="${item.qty}"
             />
-            <button type="button" class="w-8 h-8 flex items-center justify-center text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" data-qty-plus>+</button>
+            <button type="button" class="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:bg-gray-200 dark:active:bg-gray-700" data-qty-plus>+</button>
           </div>
           <div class="text-sm font-semibold text-gray-900 dark:text-white">${formatMoney(subtotal)}</div>
         </div>

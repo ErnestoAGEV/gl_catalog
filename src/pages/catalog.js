@@ -72,15 +72,20 @@ function productCard(p, idx) {
   `
 
   return `
-    <article class="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all" data-product-id="${p.id}">
-      <div class="aspect-[3/4] overflow-hidden relative bg-gray-100">
+    <article class="group bg-white dark:bg-gray-900 rounded-xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:ring-2 hover:ring-brand/20 dark:hover:ring-brand/40" data-product-id="${p.id}">
+      <div class="aspect-[3/4] overflow-hidden relative bg-gray-100 dark:bg-gray-800">
         ${carouselHTML}
         <div class="absolute top-2 left-2 flex flex-col gap-1 z-20">
-          ${p.badge ? `<span class="px-2 py-1 text-[10px] font-bold ${getBadgeColor(p.badge)} text-white rounded shadow-sm">${p.badge.toUpperCase()}</span>` : ''}
-          ${p.originalPrice ? `<span class="px-2 py-1 text-[10px] font-bold bg-red-500 text-white rounded shadow-sm">-${Math.round((1 - p.price / p.originalPrice) * 100)}%</span>` : ''}
-          ${p.stock && p.stock <= 5 ? `<span class="px-2 py-1 text-[10px] font-bold bg-orange-500 text-white rounded shadow-sm badge-pulse">¡Últimas ${p.stock}!</span>` : ''}
+          ${p.badge ? `<span class="px-2.5 py-1 text-[10px] font-bold tracking-wider ${getBadgeColor(p.badge)} text-white rounded-md shadow-sm uppercase">${p.badge}</span>` : ''}
+          ${p.originalPrice ? `<span class="px-2.5 py-1 text-[10px] font-bold tracking-wider bg-red-500 text-white rounded-md shadow-sm uppercase">-${Math.round((1 - p.price / p.originalPrice) * 100)}%</span>` : ''}
+          ${p.stock && p.stock <= 5 ? `<span class="px-2.5 py-1 text-[10px] font-bold tracking-wider bg-orange-500 text-white rounded-md shadow-sm badge-pulse uppercase">¡Últimas piezas!</span>` : ''}
         </div>
-        <button data-quickview="${p.id}" class="absolute bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 bg-black/80 backdrop-blur text-white text-xs font-medium rounded-full">Vista rápida</button>
+        
+        <!-- Enhanced Quick View Button -->
+        <button data-quickview="${p.id}" class="absolute bottom-4 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-300 bg-white dark:bg-gray-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black text-gray-900 dark:text-white text-xs font-bold rounded-full px-6 py-2.5 shadow-xl flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          Vista rápida
+        </button>
       </div>
       <div class="p-3">
         <h3 class="text-sm font-medium text-gray-900 truncate mb-1">${p.name}</h3>
