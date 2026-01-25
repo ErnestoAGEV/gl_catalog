@@ -339,6 +339,48 @@ export function pageAdminProducts(state) {
       const errorText = qs(root, '#error-text')
       const cancelBtn = qs(root, '#product-cancel')
       const fileInput = qs(root, '#file-input')
+      const imageUrlsTextarea = qs(root, 'textarea[name="imageUrls"]')
+      const imagePreviewsContainer = qs(root, '#image-previews')
+
+      // Image Preview Logic
+      const renderPreviews = () => {
+         const urlsStr = imageUrlsTextarea?.value.trim()
+         const urls = urlsStr ? urlsStr.split(',').map(u => u.trim()).filter(Boolean) : []
+         
+         if (imagePreviewsContainer) {
+           imagePreviewsContainer.innerHTML = urls.map((url, i) => `
+            <div class="relative aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200 group">
+              <img src="${url}" alt="Preview ${i+1}" class="w-full h-full object-cover"/>
+              <div class="absolute top-1 right-1 flex gap-1">
+                 <button type="button" class="w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm" data-remove-img="${i}" title="Eliminar imagen">
+                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                 </button>
+              </div>
+              <div class="absolute bottom-1 left-1 bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">
+                ${i === 0 ? 'Portada' : `#${i+1}`}
+              </div>
+            </div>
+          `).join('')
+         }
+      }
+
+      // Initial listeners
+      if (imageUrlsTextarea) imageUrlsTextarea.addEventListener('input', renderPreviews)
+      
+      if (imagePreviewsContainer) {
+        on(imagePreviewsContainer, 'click', '[data-remove-img]', (e, btn) => {
+           e.preventDefault()
+           const idx = Number(btn.dataset.removeImg)
+           const urlsStr = imageUrlsTextarea.value.trim()
+           const urls = urlsStr ? urlsStr.split(',').map(u => u.trim()).filter(Boolean) : []
+           
+           if (idx >= 0 && idx < urls.length) {
+              urls.splice(idx, 1)
+              imageUrlsTextarea.value = urls.join(', ')
+              renderPreviews()
+           }
+        })
+      }
 
       let isEditing = false
       let selectedFiles = [] // Changed from selectedFile to selectedFiles array
@@ -537,24 +579,13 @@ export function pageAdminProducts(state) {
         if (product.badge) qs(root, 'select[name="badge"]').value = product.badge
         
         // Populate image URLs textarea and show preview
-        const imageUrlsTextarea = qs(root, 'textarea[name="imageUrls"]')
-        const imagePreviewsContainer = qs(root, '#image-previews')
-        
+        // Populate image URLs textarea and show preview
         if (product.images && product.images.length > 0) {
-          // Fill textarea with comma-separated URLs
           imageUrlsTextarea.value = product.images.join(', ')
-          
-          // Show image previews
-          imagePreviewsContainer.innerHTML = product.images.map((url, i) => `
-            <div class="relative aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
-              <img src="${url}" alt="Preview ${i+1}" class="w-full h-full object-cover"/>
-              <div class="absolute top-1 right-1 w-5 h-5 rounded-full bg-brand text-white text-[10px] font-bold flex items-center justify-center">${i+1}</div>
-            </div>
-          `).join('')
         } else {
           imageUrlsTextarea.value = ''
-          imagePreviewsContainer.innerHTML = ''
         }
+        renderPreviews()
         
         // Populate sizes (checkboxes)
         const sizeCheckboxes = root.querySelectorAll('input[name="sizes"]')
