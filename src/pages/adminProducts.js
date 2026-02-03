@@ -342,48 +342,85 @@ export function pageAdminProducts(state) {
       const imageUrlsTextarea = qs(root, 'textarea[name="imageUrls"]')
       const imagePreviewsContainer = qs(root, '#image-previews')
 
-      // Image Preview Logic
+      // Image Preview Logic (combines URLs + archivos locales, permite mover portada y eliminar)
       const renderPreviews = () => {
-         const urlsStr = imageUrlsTextarea?.value.trim()
-         const urls = urlsStr ? urlsStr.split(',').map(u => u.trim()).filter(Boolean) : []
-         
-         if (imagePreviewsContainer) {
-           imagePreviewsContainer.innerHTML = urls.map((url, i) => `
+        const urlsStr = imageUrlsTextarea?.value.trim()
+        const urls = urlsStr ? urlsStr.split(',').map(u => u.trim()).filter(Boolean) : []
+
+        const urlItems = urls.map((url, i) => ({ kind: 'url', idx: i, src: url, label: `URL ${i + 1}` }))
+        const fileItems = (selectedFiles || []).map((file, i) => ({ kind: 'file', idx: i, src: URL.createObjectURL(file), label: file.name || `Archivo ${i + 1}` }))
+
+        // Mostrar máximo 5 combinando ambos
+        const items = [...urlItems, ...fileItems].slice(0, 5)
+
+        if (imagePreviewsContainer) {
+          imagePreviewsContainer.innerHTML = items.map((item, i) => `
             <div class="relative aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200 group">
-              <img src="${url}" alt="Preview ${i+1}" class="w-full h-full object-cover"/>
+              <img src="${item.src}" alt="Preview ${i + 1}" class="w-full h-full object-cover"/>
               <div class="absolute top-1 right-1 flex gap-1">
-                 <button type="button" class="w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm" data-remove-img="${i}" title="Eliminar imagen">
-                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                 </button>
+                <button type="button" class="w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm" data-remove-kind="${item.kind}" data-remove-idx="${item.idx}" title="Eliminar imagen">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
               </div>
-              <div class="absolute bottom-1 left-1 bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">
-                ${i === 0 ? 'Portada' : `#${i+1}`}
+              <div class="absolute bottom-1 left-1 flex items-center gap-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">
+                ${i === 0 ? '<span class="font-bold">Portada</span>' : `<button type="button" class="underline" data-cover-kind="${item.kind}" data-cover-idx="${item.idx}">Marcar portada</button>`}
               </div>
+              <div class="absolute bottom-1 right-1 bg-black/40 text-white text-[10px] px-1.5 py-0.5 rounded">${item.label}</div>
             </div>
           `).join('')
-         }
+        }
       }
 
       // Initial listeners
       if (imageUrlsTextarea) imageUrlsTextarea.addEventListener('input', renderPreviews)
       
       if (imagePreviewsContainer) {
-        on(imagePreviewsContainer, 'click', '[data-remove-img]', (e, btn) => {
-           e.preventDefault()
-           const idx = Number(btn.dataset.removeImg)
-           const urlsStr = imageUrlsTextarea.value.trim()
-           const urls = urlsStr ? urlsStr.split(',').map(u => u.trim()).filter(Boolean) : []
-           
-           if (idx >= 0 && idx < urls.length) {
+        // Eliminar imagen (URL o archivo local)
+        on(imagePreviewsContainer, 'click', '[data-remove-kind]', (e, btn) => {
+          e.preventDefault()
+          const kind = btn.dataset.removeKind
+          const idx = Number(btn.dataset.removeIdx)
+
+          if (kind === 'url') {
+            const urlsStr = imageUrlsTextarea.value.trim()
+            const urls = urlsStr ? urlsStr.split(',').map(u => u.trim()).filter(Boolean) : []
+            if (idx >= 0 && idx < urls.length) {
               urls.splice(idx, 1)
               imageUrlsTextarea.value = urls.join(', ')
-              renderPreviews()
-           }
+            }
+          } else if (kind === 'file') {
+            selectedFiles = selectedFiles.filter((_f, i) => i !== idx)
+            fileInput.value = '' // permite volver a seleccionar el mismo archivo si se desea
+          }
+          renderPreviews()
+        })
+
+        // Marcar como portada (mover al inicio de la lista)
+        on(imagePreviewsContainer, 'click', '[data-cover-kind]', (e, btn) => {
+          e.preventDefault()
+          const kind = btn.dataset.coverKind
+          const idx = Number(btn.dataset.coverIdx)
+
+          if (kind === 'url') {
+            const urlsStr = imageUrlsTextarea.value.trim()
+            const urls = urlsStr ? urlsStr.split(',').map(u => u.trim()).filter(Boolean) : []
+            if (idx >= 0 && idx < urls.length) {
+              const [item] = urls.splice(idx, 1)
+              urls.unshift(item)
+              imageUrlsTextarea.value = urls.join(', ')
+            }
+          } else if (kind === 'file') {
+            if (idx >= 0 && idx < selectedFiles.length) {
+              const item = selectedFiles[idx]
+              selectedFiles = [item, ...selectedFiles.filter((_f, i) => i !== idx)]
+            }
+          }
+          renderPreviews()
         })
       }
 
       let isEditing = false
-      let selectedFiles = [] // Changed from selectedFile to selectedFiles array
+      let selectedFiles = [] // Multiple archivos locales
 
       const setError = (msg) => {
         if (!msg) {
@@ -446,11 +483,8 @@ export function pageAdminProducts(state) {
         form.reset()
         selectedFiles = []
         fileInput.value = ''
-        
-        // Clear image previews
-        const imagePreviewsContainer = qs(root, '#image-previews')
-        if (imagePreviewsContainer) imagePreviewsContainer.innerHTML = ''
-        
+
+        renderPreviews()
         renderList()
       }
 
@@ -472,14 +506,17 @@ export function pageAdminProducts(state) {
 
       // File input handle (multiple files)
       fileInput.addEventListener('change', (e) => {
-        selectedFiles = Array.from(e.target.files).slice(0, 5) // Max 5 images
-        if (selectedFiles.length > 0) {
-          // Clear URL input if files selected
-          const urlInput = qs(root, 'textarea[name="imageUrls"]')
-          if (urlInput) urlInput.value = ''
-          
-          // Show preview TODO: Update preview gallery
+        const urlsStr = imageUrlsTextarea?.value.trim()
+        const urls = urlsStr ? urlsStr.split(',').map(u => u.trim()).filter(Boolean) : []
+        const remaining = Math.max(0, 5 - urls.length)
+        selectedFiles = Array.from(e.target.files).slice(0, remaining)
+
+        // Si no hay espacio, limpiar selección para evitar confusión
+        if (remaining === 0) {
+          fileInput.value = ''
         }
+
+        renderPreviews()
       })
 
       // Toggle form
@@ -528,17 +565,22 @@ export function pageAdminProducts(state) {
         submitBtn.innerHTML = '<span class="animate-spin">⌛</span> Subiendo & Guardando...'
 
         try {
-            // Upload multiple files if selected
-            if (selectedFiles && selectedFiles.length > 0) {
-                for (const file of selectedFiles) {
-                    const { publicUrl, error: uploadError } = await uploadProductImage(file)
-                    if (uploadError) throw new Error('Error al subir imagen: ' + uploadError.message)
-                    imageUrls.push(publicUrl)
-                }
-            }
+          // Upload multiple files if selected (respeta máximo total de 5)
+          if (selectedFiles && selectedFiles.length > 0) {
+            const urlsStr = imageUrlsTextarea?.value.trim()
+            const existingUrls = urlsStr ? urlsStr.split(',').map(u => u.trim()).filter(Boolean) : []
+            const remainingSlots = Math.max(0, 5 - existingUrls.length)
+            const filesToUpload = selectedFiles.slice(0, remainingSlots)
 
-            // Limit to 5 images max
-            const images = imageUrls.slice(0, 5)
+            for (const file of filesToUpload) {
+              const { publicUrl, error: uploadError } = await uploadProductImage(file)
+              if (uploadError) throw new Error('Error al subir imagen: ' + uploadError.message)
+              imageUrls.push(publicUrl)
+            }
+          }
+
+          // Limit to 5 images max (portada = primer elemento)
+          const images = imageUrls.slice(0, 5)
             
             if (idInput.value) {
                // Update
@@ -578,13 +620,13 @@ export function pageAdminProducts(state) {
         if (product.stock) qs(root, 'input[name="stock"]').value = product.stock
         if (product.badge) qs(root, 'select[name="badge"]').value = product.badge
         
-        // Populate image URLs textarea and show preview
-        // Populate image URLs textarea and show preview
+        // Populate imagenes existentes (URLs) y refrescar previews
         if (product.images && product.images.length > 0) {
           imageUrlsTextarea.value = product.images.join(', ')
         } else {
           imageUrlsTextarea.value = ''
         }
+        selectedFiles = []
         renderPreviews()
         
         // Populate sizes (checkboxes)
