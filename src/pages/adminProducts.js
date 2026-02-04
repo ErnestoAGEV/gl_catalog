@@ -35,6 +35,8 @@ const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 
 const PANTS_SIZE_OPTIONS = ['28', '30', '32', '34', '36', '38', '40', '42', '44', '46', '48', '50', '52']
 
+const PERFUME_SIZE_OPTIONS = ['80 ml', '100 ml', '125 ml', '150 ml', '200 ml']
+
 function getBadgeColor(badge) {
   const found = BADGE_OPTIONS.find(b => b.value === badge)
   return found?.color || 'bg-gray-500'
@@ -113,7 +115,7 @@ export function pageAdminProducts(state) {
     title: 'Productos | Admin G&L',
     html: `
       <!-- Header -->
-      <section class="mb-6">
+      <section id="admin-top" class="mb-6">
         <div class="flex items-center justify-between">
           <div>
             <h1 class="text-2xl font-bold text-gray-900">Panel de Administración</h1>
@@ -258,30 +260,45 @@ export function pageAdminProducts(state) {
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Tallas disponibles *
                 </label>
-                <p class="text-xs text-gray-500 mb-3">Tallas de ropa</p>
-                <div class="flex flex-wrap gap-2" id="sizes-container">
-                  ${SIZE_OPTIONS.map(size => `
-                    <label class="inline-flex items-center">
-                      <input type="checkbox" name="sizes" value="${size}" class="sr-only peer" />
-                      <span class="px-4 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm font-medium text-gray-600 cursor-pointer peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand hover:border-gray-300 transition-colors">${size}</span>
-                    </label>
-                  `).join('')}
+                <div id="sizes-clothing">
+                  <p class="text-xs text-gray-500 mb-3">Tallas de ropa</p>
+                  <div class="flex flex-wrap gap-2" id="sizes-container">
+                    ${SIZE_OPTIONS.map(size => `
+                      <label class="inline-flex items-center">
+                        <input type="checkbox" name="sizes" value="${size}" class="sr-only peer" data-size-group="clothing" />
+                        <span class="px-4 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm font-medium text-gray-600 cursor-pointer peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand hover:border-gray-300 transition-colors">${size}</span>
+                      </label>
+                    `).join('')}
+                  </div>
+                  <p class="text-xs text-gray-500 mt-3 mb-2">Tallas de pantalones</p>
+                  <div class="flex flex-wrap gap-2">
+                    ${PANTS_SIZE_OPTIONS.map(size => `
+                      <label class="inline-flex items-center">
+                        <input type="checkbox" name="sizes" value="${size}" class="sr-only peer" data-size-group="clothing" />
+                        <span class="px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm font-medium text-gray-600 cursor-pointer peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand hover-border-gray-300 transition-colors">${size}</span>
+                      </label>
+                    `).join('')}
+                  </div>
                 </div>
-                <p class="text-xs text-gray-500 mt-3 mb-2">Tallas de pantalones</p>
-                <div class="flex flex-wrap gap-2">
-                  ${PANTS_SIZE_OPTIONS.map(size => `
-                    <label class="inline-flex items-center">
-                      <input type="checkbox" name="sizes" value="${size}" class="sr-only peer" />
-                      <span class="px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm font-medium text-gray-600 cursor-pointer peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand hover:border-gray-300 transition-colors">${size}</span>
-                    </label>
-                  `).join('')}
+
+                <div id="sizes-perfume" class="hidden">
+                  <p class="text-xs text-gray-500 mb-3">Capacidad del perfume</p>
+                  <div class="flex flex-wrap gap-2">
+                    ${PERFUME_SIZE_OPTIONS.map(size => `
+                      <label class="inline-flex items-center">
+                        <input type="checkbox" name="sizes" value="${size}" class="sr-only peer" data-size-group="perfume" />
+                        <span class="px-4 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm font-medium text-gray-600 cursor-pointer peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand hover-border-gray-300 transition-colors">${size}</span>
+                      </label>
+                    `).join('')}
+                  </div>
                 </div>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Colores disponibles *
                 </label>
-                <input name="colors" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none transition-colors" placeholder="Negro, Blanco, Azul" />
+                <input name="colors" id="colors-input" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none transition-colors" placeholder="Negro, Blanco, Azul" />
+                <p class="text-xs text-gray-500 mt-2" id="colors-help">Para perfumes se deshabilita automáticamente.</p>
               </div>
             </div>
 
@@ -336,12 +353,80 @@ export function pageAdminProducts(state) {
       const submitText = qs(root, '#submit-text')
       const errorBox = qs(root, '#product-error')
       const errorText = qs(root, '#error-text')
+      const typeSelect = qs(root, 'select[name="type"]')
+      const colorsInput = qs(root, '#colors-input')
+      const colorsHelp = qs(root, '#colors-help')
+      const clothingSizesSection = qs(root, '#sizes-clothing')
+      const perfumeSizesSection = qs(root, '#sizes-perfume')
       const cancelBtn = qs(root, '#product-cancel')
       const fileInput = qs(root, '#file-input')
       const imageUrlsTextarea = qs(root, 'textarea[name="imageUrls"]')
       const imagePreviewsContainer = qs(root, '#image-previews')
       const dropzone = qs(root, '#dropzone')
       const clearImagesBtn = qs(root, '#clear-images')
+
+      let pendingDeleteId = null
+      let isDeleteModalOpen = false
+
+      const ensureDeleteModal = () => {
+        let modal = document.getElementById('delete-confirm-modal')
+        if (modal) return modal
+
+        modal = document.createElement('div')
+        modal.id = 'delete-confirm-modal'
+        modal.className = 'fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4'
+        modal.innerHTML = `
+          <div class="w-full max-w-sm rounded-2xl bg-white shadow-2xl border border-gray-100">
+            <div class="p-5">
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <h3 class="text-base font-semibold text-gray-900">¿Eliminar producto?</h3>
+                  <p class="text-sm text-gray-500 mt-1">Esta acción no se puede deshacer.</p>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center justify-end gap-2 px-5 pb-5">
+              <button type="button" id="delete-cancel" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100">Cancelar</button>
+              <button type="button" id="delete-confirm" class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-red-500 hover:bg-red-600">Eliminar</button>
+            </div>
+          </div>
+        `
+        document.body.appendChild(modal)
+
+        const cancelBtn = modal.querySelector('#delete-cancel')
+        const confirmBtn = modal.querySelector('#delete-confirm')
+
+        cancelBtn.addEventListener('click', () => {
+          pendingDeleteId = null
+          isDeleteModalOpen = false
+          modal.classList.add('hidden')
+        })
+
+        confirmBtn.addEventListener('click', async () => {
+          if (!pendingDeleteId) return
+          const idToDelete = pendingDeleteId
+          pendingDeleteId = null
+          isDeleteModalOpen = false
+          modal.classList.add('hidden')
+          await deleteProduct(idToDelete)
+        })
+
+        // Close when clicking backdrop
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            pendingDeleteId = null
+            isDeleteModalOpen = false
+            modal.classList.add('hidden')
+          }
+        })
+
+        return modal
+      }
 
       // Image Preview Logic (combines URLs + archivos locales, permite mover portada y eliminar)
       const renderPreviews = () => {
@@ -423,6 +508,33 @@ export function pageAdminProducts(state) {
       let isEditing = false
       let selectedFiles = [] // Multiple archivos locales
 
+      const handleTypeChange = () => {
+        const isPerfume = typeSelect?.value === 'Perfumes'
+
+        if (clothingSizesSection) clothingSizesSection.classList.toggle('hidden', isPerfume)
+        if (perfumeSizesSection) perfumeSizesSection.classList.toggle('hidden', !isPerfume)
+
+        const clothingSizeInputs = root.querySelectorAll('input[name="sizes"][data-size-group="clothing"]')
+        const perfumeSizeInputs = root.querySelectorAll('input[name="sizes"][data-size-group="perfume"]')
+
+        if (isPerfume) {
+          clothingSizeInputs.forEach(cb => { cb.checked = false })
+        } else {
+          perfumeSizeInputs.forEach(cb => { cb.checked = false })
+        }
+
+        if (colorsInput) {
+          colorsInput.disabled = isPerfume
+          colorsInput.placeholder = isPerfume ? 'No requerido para perfumes' : 'Negro, Blanco, Azul'
+          if (isPerfume) colorsInput.value = ''
+        }
+        if (colorsHelp) {
+          colorsHelp.textContent = isPerfume
+            ? 'Para perfumes el color no aplica.'
+            : 'Separar por comas: Negro, Blanco, Azul.'
+        }
+      }
+
       const handleFiles = (fileList) => {
         const urlsStr = imageUrlsTextarea?.value.trim()
         const urls = urlsStr ? urlsStr.split(',').map(u => u.trim()).filter(Boolean) : []
@@ -491,16 +603,33 @@ export function pageAdminProducts(state) {
         setError('')
       }
 
-      const hideForm = () => {
+      const hideForm = (scrollTop = false) => {
         isEditing = false
         formSection.classList.add('hidden')
         toggleFormBtn.classList.remove('hidden')
         form.reset()
+        handleTypeChange()
         selectedFiles = []
         fileInput.value = ''
 
         renderPreviews()
         renderList()
+
+        if (scrollTop) {
+          // Scroll al ancla superior y forzar scrollTop en todos los contenedores
+          const scroller = root?.closest('main') || document.scrollingElement || document.documentElement
+          const topAnchor = qs(root, '#admin-top')
+          const doScroll = () => {
+            if (topAnchor) topAnchor.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            scroller.scrollTop = 0
+            document.documentElement.scrollTop = 0
+            document.body.scrollTop = 0
+          }
+          doScroll()
+          requestAnimationFrame(doScroll)
+          setTimeout(doScroll, 120)
+          if (toggleFormBtn) toggleFormBtn.focus({ preventScroll: true })
+        }
       }
 
       const updateImagePreview = (url) => {
@@ -512,6 +641,11 @@ export function pageAdminProducts(state) {
       }
 
       renderList()
+
+      if (typeSelect) {
+        typeSelect.addEventListener('change', handleTypeChange)
+        handleTypeChange()
+      }
 
       // Search functionality
       const searchInput = qs(root, '#search-products')
@@ -582,6 +716,7 @@ export function pageAdminProducts(state) {
         const idInput = qs(root, 'input[name="id"]')
         const name = qs(root, 'input[name="name"]').value.trim()
         const type = qs(root, 'select[name="type"]').value
+        const isPerfume = type === 'Perfumes'
         const price = Number(qs(root, 'input[name="price"]').value || 0)
         const originalPrice = Number(qs(root, 'input[name="originalPrice"]').value || 0) || null
         const stock = Number(qs(root, 'input[name="stock"]').value || 0) || null
@@ -589,7 +724,7 @@ export function pageAdminProducts(state) {
         // Get checked sizes from checkboxes
         const sizeCheckboxes = root.querySelectorAll('input[name="sizes"]:checked')
         const sizes = Array.from(sizeCheckboxes).map(cb => cb.value)
-        const colors = parseList(qs(root, 'input[name="colors"]').value)
+        const colors = isPerfume ? [] : parseList(qs(root, 'input[name="colors"]').value)
         
         // Get multiple image URLs from textarea (comma-separated)
         const imageUrlsRaw = qs(root, 'textarea[name="imageUrls"]').value.trim()
@@ -600,8 +735,8 @@ export function pageAdminProducts(state) {
         if (!name) return setError('Ingresa el nombre del producto.')
         if (!type) return setError('Selecciona la categoría del producto.')
         if (!Number.isFinite(price) || price <= 0) return setError('Ingresa un precio válido mayor a 0.')
-        if (!sizes.length) return setError('Selecciona al menos una talla.')
-        if (!colors.length) return setError('Ingresa al menos un color.')
+        if (!sizes.length) return setError(isPerfume ? 'Selecciona una capacidad para el perfume.' : 'Selecciona al menos una talla.')
+        if (!isPerfume && !colors.length) return setError('Ingresa al menos un color.')
 
         // Disable button while saving to prevent double clicks (simple UI UX)
         const submitBtn = qs(root, 'button[type="submit"]')
@@ -628,15 +763,15 @@ export function pageAdminProducts(state) {
           const images = imageUrls.slice(0, 5)
             
             if (idInput.value) {
-               // Update
-               const { error } = await updateProduct(idInput.value, { name, type, price, originalPrice, stock, badge, sizes, colors, images })
-               if (error) throw new Error('Error al actualizar: ' + error.message)
+              // Update
+              const { error } = await updateProduct(idInput.value, { name, type, price, originalPrice, stock, badge, sizes, colors, images })
+              if (error) throw new Error('Error al actualizar: ' + error.message)
             } else {
-               // Create
-               const { error } = await addProduct({ name, type, price, originalPrice, stock, badge, sizes, colors, images })
-               if (error) throw new Error('Error al crear: ' + error.message)
+              // Create
+              const { error } = await addProduct({ name, type, price, originalPrice, stock, badge, sizes, colors, images })
+              if (error) throw new Error('Error al crear: ' + error.message)
             }
-            hideForm()
+            hideForm(true)
         } catch (err) {
             console.error(err)
             setError(err.message || 'Error al guardar. Revisa la consola.')
@@ -660,6 +795,7 @@ export function pageAdminProducts(state) {
         qs(root, 'input[name="id"]').value = product.id
         qs(root, 'input[name="name"]').value = product.name
         qs(root, 'select[name="type"]').value = product.type
+        handleTypeChange()
         qs(root, 'input[name="price"]').value = product.price
         if (product.originalPrice) qs(root, 'input[name="originalPrice"]').value = product.originalPrice
         if (product.stock) qs(root, 'input[name="stock"]').value = product.stock
@@ -691,10 +827,13 @@ export function pageAdminProducts(state) {
         const wrap = btn.closest('[data-product]')
         const id = wrap?.getAttribute('data-id')
         if (!id) return
-        
-        if (confirm('¿Estás seguro de eliminar este producto?')) {
-          await deleteProduct(id)
-        }
+
+        if (isDeleteModalOpen) return
+        isDeleteModalOpen = true
+        pendingDeleteId = id
+
+        const modal = ensureDeleteModal()
+        modal.classList.remove('hidden')
       })
     },
   }

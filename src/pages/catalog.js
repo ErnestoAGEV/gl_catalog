@@ -42,16 +42,19 @@ function productCard(p, idx) {
   const images = p.images && p.images.length > 0 
     ? p.images 
     : ['https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400&h=500&fit=crop']
+  const isPerfume = p.type === 'Perfumes'
+  const imageFitClass = isPerfume ? 'object-contain bg-white' : 'object-cover object-center'
+  const imageWrapClass = isPerfume ? 'bg-white' : 'bg-gray-100 dark:bg-gray-800'
   
   const sizeOpts = (p.sizes || []).map(s => `<option value="${s}">${s}</option>`).join('')
   const colorOpts = (p.colors || []).map(c => `<option value="${c}">${c}</option>`).join('')
 
   // Carousel HTML (only show controls if more than 1 image)
   const carouselHTML = images.length > 1 ? `
-    <div class="carousel-container relative group" data-carousel>
-      <div class="carousel-track flex transition-transform duration-300" data-track>
+    <div class="carousel-container relative group h-full" data-carousel>
+      <div class="carousel-track flex h-full transition-transform duration-300" data-track>
         ${images.map((img, i) => `
-          <img src="${img}" alt="${p.name}" class="w-full h-full object-cover flex-shrink-0" loading="lazy" data-slide="${i}"/>
+          <img src="${img}" alt="${p.name}" class="w-full h-full min-w-full ${imageFitClass} flex-shrink-0" loading="lazy" data-slide="${i}"/>
         `).join('')}
       </div>
       
@@ -69,12 +72,12 @@ function productCard(p, idx) {
       </div>
     </div>
   ` : `
-    <img src="${images[0]}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy"/>
+    <img src="${images[0]}" alt="${p.name}" class="w-full h-full ${imageFitClass} group-hover:scale-105 transition-transform duration-500" loading="lazy"/>
   `
 
   return `
     <article class="group bg-white dark:bg-gray-900 rounded-xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:ring-2 hover:ring-brand/20 dark:hover:ring-brand/40" data-product-id="${p.id}">
-      <div class="aspect-[3/4] overflow-hidden relative bg-gray-100 dark:bg-gray-800">
+      <div class="aspect-[3/4] overflow-hidden relative ${imageWrapClass}">
         ${carouselHTML}
         <div class="absolute top-2 left-2 flex flex-col gap-1 z-20">
           ${p.badge ? `<span class="px-2.5 py-1 text-[10px] font-bold tracking-wider ${getBadgeColor(p.badge)} text-white rounded-md shadow-sm uppercase">${p.badge}</span>` : ''}
@@ -123,6 +126,8 @@ function quickViewModal(p) {
   const images = p.images && p.images.length > 0 
     ? p.images 
     : ['https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&h=750&fit=crop']
+  const isPerfume = p.type === 'Perfumes'
+  const modalImageFitClass = isPerfume ? 'object-contain bg-white' : 'object-cover'
   
   const sizeOpts = (p.sizes || []).map(s => `<option value="${s}">${s}</option>`).join('')
   const colorOpts = (p.colors || []).map(c => `<option value="${c}">${c}</option>`).join('')
@@ -133,7 +138,7 @@ function quickViewModal(p) {
     <div class="modal-carousel relative overflow-hidden bg-gray-100" data-modal-carousel>
       <div class="modal-carousel-track flex transition-transform duration-300" data-modal-track>
         ${images.map((img, i) => `
-          <img src="${img}" alt="${p.name}" class="w-full aspect-[4/5] md:h-full md:aspect-auto object-cover flex-shrink-0" data-modal-slide="${i}"/>
+          <img src="${img}" alt="${p.name}" class="w-full aspect-[4/5] md:h-full md:aspect-auto ${modalImageFitClass} flex-shrink-0" data-modal-slide="${i}"/>
         `).join('')}
       </div>
       
@@ -179,8 +184,8 @@ function quickViewModal(p) {
       </div>
     </div>
   ` : `
-    <div class="relative bg-gray-100">
-      <img src="${images[0]}" alt="${p.name}" class="w-full aspect-[4/5] md:h-full md:aspect-auto object-cover"/>
+    <div class="relative ${isPerfume ? 'bg-white' : 'bg-gray-100'}">
+      <img src="${images[0]}" alt="${p.name}" class="w-full aspect-[4/5] md:h-full md:aspect-auto ${modalImageFitClass}"/>
       
       <!-- Close button -->
       <button id="close-quickview" class="absolute top-3 right-3 w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur shadow-lg flex items-center justify-center text-gray-700 dark:text-white hover:bg-white dark:hover:bg-gray-700 transition-colors">
