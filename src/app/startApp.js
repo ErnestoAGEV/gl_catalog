@@ -121,7 +121,9 @@ export function startApp(mountEl) {
 
     // 2. Route-specific re-renders
     const currentPath = getRoute()
-    const shouldRerender = ['/cart', '/wishlist', '/checkout', '/admin/products'].some(p => currentPath.startsWith(p))
+    const shouldRerender = ['/', '/cart', '/wishlist', '/checkout', '/admin/products'].some(p => 
+      p === '/' ? currentPath === '/' : currentPath.startsWith(p)
+    )
     if (shouldRerender) {
       render(currentPath)
     }

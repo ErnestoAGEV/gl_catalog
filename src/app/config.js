@@ -16,6 +16,7 @@ export const STORAGE_KEYS = {
   theme: 'gl_theme',
   coupon: 'gl_coupon',
   newsletter: 'gl_newsletter',
+  productViews: 'gl_product_views',
 }
 
 export const COUPONS = {

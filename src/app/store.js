@@ -357,3 +357,38 @@ export function searchProducts(query) {
     p.colors.some(c => c.toLowerCase().includes(q))
   )
 }
+
+// ========== PRODUCT VIEWS TRACKING ==========
+export function trackProductView(productId) {
+  const views = readJson(STORAGE_KEYS.productViews, {})
+  views[productId] = (views[productId] || 0) + 1
+  writeJson(STORAGE_KEYS.productViews, views)
+}
+
+export function getProductViewCounts() {
+  return readJson(STORAGE_KEYS.productViews, {})
+}
+
+export function getMostViewedProducts(limit = 4) {
+  const views = getProductViewCounts()
+  const products = state.products
+
+  // Sort products by view count descending
+  const sorted = [...products].sort((a, b) => {
+    const viewsA = views[a.id] || 0
+    const viewsB = views[b.id] || 0
+    return viewsB - viewsA
+  })
+
+  // If no views exist yet, return first N products as fallback
+  const hasViews = Object.keys(views).length > 0
+  if (!hasViews) return sorted.slice(0, limit)
+
+  // Only return products that have at least 1 view, padded with others if needed
+  const viewed = sorted.filter(p => (views[p.id] || 0) > 0)
+  if (viewed.length >= limit) return viewed.slice(0, limit)
+
+  // Pad with unviewed products
+  const unviewed = sorted.filter(p => !(views[p.id] || 0))
+  return [...viewed, ...unviewed].slice(0, limit)
+}

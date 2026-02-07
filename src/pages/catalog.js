@@ -1,7 +1,8 @@
-import { addToCart, searchProducts, setSearchQuery, getSearchQuery, cartCount, subscribe } from '../app/store.js'
+import { addToCart, searchProducts, setSearchQuery, getSearchQuery, cartCount, subscribe, trackProductView } from '../app/store.js'
 import { formatMoney } from '../app/format.js'
 import { on, qs } from '../app/dom.js'
 import { showToast } from '../app/toast.js'
+import { showMiniCart } from '../app/miniCart.js'
 
 
 
@@ -10,12 +11,18 @@ function uniqueSorted(values) {
 }
 
 function getFilterState(root) {
-  const type = qs(root, '[name="type"]')?.value || ''
-  const size = qs(root, '[name="size"]')?.value || ''
-  const color = qs(root, '[name="color"]')?.value || ''
-  const minPrice = qs(root, '[name="minPrice"]')?.value || ''
-  const maxPrice = qs(root, '[name="maxPrice"]')?.value || ''
-  const sort = qs(root, '[name="sort"]')?.value || ''
+  // With dual panels (desktop + mobile), gather the first non-empty value for each filter
+  const getVal = (name) => {
+    const els = root.querySelectorAll(`[name="${name}"]`)
+    for (const el of els) { if (el.value) return el.value }
+    return ''
+  }
+  const type = getVal('type')
+  const size = getVal('size')
+  const color = getVal('color')
+  const minPrice = getVal('minPrice')
+  const maxPrice = getVal('maxPrice')
+  const sort = getVal('sort')
 
   return { type, size, color, minPrice: minPrice ? Number(minPrice) : null, maxPrice: maxPrice ? Number(maxPrice) : null, sort }
 }
@@ -36,6 +43,24 @@ function applyFilters(products, filters) {
 
 function getBadgeColor(badge) {
   return { 'Nuevo': 'bg-blue-500', 'Oferta': 'bg-red-500', 'Popular': 'bg-amber-500', 'Premium': 'bg-purple-500' }[badge] || 'bg-gray-700'
+}
+
+function skeletonCard() {
+  return `
+    <article class="bg-white dark:bg-gray-900 rounded-xl md:rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800">
+      <div class="aspect-[3/4] skeleton-shimmer relative">
+        <div class="absolute bottom-2 right-2 w-9 h-9 md:w-8 md:h-8 rounded-full skeleton-shimmer border border-gray-200/30 dark:border-gray-700/30"></div>
+      </div>
+      <div class="p-2.5 md:p-4">
+        <div class="h-3.5 md:h-4 w-3/4 rounded-md skeleton-shimmer"></div>
+        <div class="h-4 md:h-5 w-1/3 rounded-md skeleton-shimmer mt-2 md:mt-2.5"></div>
+      </div>
+    </article>
+  `
+}
+
+function skeletonGrid(count = 8) {
+  return Array.from({ length: count }, () => skeletonCard()).join('')
 }
 
 function productCard(p, idx) {
@@ -76,47 +101,35 @@ function productCard(p, idx) {
   `
 
   return `
-    <article class="group bg-white dark:bg-gray-900 rounded-xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:ring-2 hover:ring-brand/20 dark:hover:ring-brand/40" data-product-id="${p.id}">
+    <article class="product-card group bg-white dark:bg-gray-900 rounded-xl md:rounded-2xl overflow-hidden transition-all duration-200 border border-gray-100 dark:border-gray-800 md:hover:shadow-lg md:hover:shadow-gray-900/[0.06] dark:md:hover:shadow-none md:hover:-translate-y-0.5 md:hover:border-gray-200 dark:md:hover:border-gray-700 active:scale-[0.98] md:active:scale-100" data-product-id="${p.id}">
       <div class="aspect-[3/4] overflow-hidden relative ${imageWrapClass}">
         ${carouselHTML}
         <div class="absolute top-2 left-2 flex flex-col gap-1 z-20">
-          ${p.badge ? `<span class="px-2.5 py-1 text-[10px] font-bold tracking-wider ${getBadgeColor(p.badge)} text-white rounded-md shadow-sm uppercase">${p.badge}</span>` : ''}
-          ${p.originalPrice ? `<span class="px-2.5 py-1 text-[10px] font-bold tracking-wider bg-red-500 text-white rounded-md shadow-sm uppercase">-${Math.round((1 - p.price / p.originalPrice) * 100)}%</span>` : ''}
-          ${p.stock && p.stock <= 5 ? `<span class="px-2.5 py-1 text-[10px] font-bold tracking-wider bg-orange-500 text-white rounded-md shadow-sm badge-pulse uppercase">¡Últimas piezas!</span>` : ''}
+          ${p.badge ? `<span class="px-2 py-0.5 text-[9px] md:text-[10px] font-bold tracking-wider ${getBadgeColor(p.badge)} text-white rounded-md uppercase">${p.badge}</span>` : ''}
+          ${p.originalPrice ? `<span class="px-2 py-0.5 text-[9px] md:text-[10px] font-bold tracking-wider bg-red-500 text-white rounded-md uppercase">-${Math.round((1 - p.price / p.originalPrice) * 100)}%</span>` : ''}
+          ${p.stock && p.stock <= 5 ? `<span class="px-2 py-0.5 text-[9px] md:text-[10px] font-bold tracking-wider bg-orange-500 text-white rounded-md badge-pulse uppercase">¡Últimas!</span>` : ''}
         </div>
         
-        <!-- Enhanced Quick View Button -->
-        <button data-quickview="${p.id}" class="absolute bottom-4 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-300 bg-white dark:bg-gray-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black text-gray-900 dark:text-white text-xs font-bold rounded-full px-6 py-2.5 shadow-xl flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+        <!-- Tap overlay for mobile (quickview on image tap) -->
+        <button data-quickview="${p.id}" class="absolute inset-0 z-10 md:hidden" aria-label="Vista rápida"></button>
+        <!-- Quick View (desktop hover) -->
+        <button data-quickview="${p.id}" class="hidden md:flex absolute bottom-3 left-1/2 -translate-x-1/2 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm hover:bg-gray-900 hover:text-white dark:hover:bg-white dark:hover:text-gray-900 text-gray-900 dark:text-white text-[11px] font-semibold rounded-full px-5 py-2 shadow-lg items-center gap-1.5 z-20">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
           Vista rápida
         </button>
-      </div>
-      <div class="p-3">
-        <h3 class="text-sm font-medium text-gray-900 truncate mb-1">${p.name}</h3>
-        <div class="flex items-center gap-2 mb-3">
-          <p class="text-base font-bold text-gray-900">${formatMoney(p.price)}</p>
-          ${p.originalPrice ? `<p class="text-xs text-gray-400 line-through">${formatMoney(p.originalPrice)}</p>` : ''}
-        </div>
-        <div class="flex flex-col gap-2 mb-3">
-          <div class="relative">
-            <select class="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2.5 pr-8 text-sm text-gray-700 focus:border-gray-400 focus:outline-none appearance-none" data-card-size>
-              <option value="" disabled>Talla</option>
-              ${sizeOpts}
-            </select>
-            <svg class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-          </div>
-          <div class="relative">
-            <select class="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2.5 pr-8 text-sm text-gray-700 focus:border-gray-400 focus:outline-none appearance-none" data-card-color>
-              <option value="" disabled>Color</option>
-              ${colorOpts}
-            </select>
-            <svg class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-          </div>
-        </div>
-        <button data-add-to-cart data-product-id="${p.id}" class="w-full flex items-center justify-center gap-2 rounded-lg bg-black px-4 py-2.5 text-xs font-semibold text-white hover:bg-gray-800 active:scale-[0.98] transition-all btn-scale" type="button">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-          Agregar
+        <!-- Quick Add (mobile: always visible, desktop: hover reveal) -->
+        <button data-quick-add="${p.id}" class="quick-add-btn absolute bottom-2 right-2 z-20 w-9 h-9 md:w-8 md:h-8 rounded-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm shadow-md flex items-center justify-center text-gray-800 dark:text-white md:opacity-0 md:translate-y-1 md:group-hover:opacity-100 md:group-hover:translate-y-0 transition-all duration-200 hover:bg-gray-900 hover:text-white dark:hover:bg-white dark:hover:text-gray-900 active:scale-90" type="button" aria-label="Agregar al carrito">
+          <svg class="quick-add-icon w-4.5 h-4.5 md:w-4 md:h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+          <svg class="quick-add-spinner hidden w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+          <svg class="quick-add-check hidden w-4.5 h-4.5 md:w-4 md:h-4 text-green-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
         </button>
+      </div>
+      <div class="p-2.5 md:p-4">
+        <h3 class="catalog-card-title text-[13px] md:text-sm font-semibold text-gray-900 dark:text-white truncate leading-snug">${p.name}</h3>
+        <div class="flex items-baseline gap-1.5 md:gap-2 mt-1 md:mt-1.5">
+          <p class="catalog-card-price text-[15px] md:text-lg font-bold text-gray-900 dark:text-white tracking-tight">${formatMoney(p.price)}</p>
+          ${p.originalPrice ? `<p class="text-[10px] md:text-xs text-gray-400 line-through">${formatMoney(p.originalPrice)}</p>` : ''}
+        </div>
       </div>
     </article>
   `
@@ -135,32 +148,24 @@ function quickViewModal(p) {
 
   // Modal carousel HTML (larger version)
   const modalCarouselHTML = images.length > 1 ? `
-    <div class="modal-carousel relative overflow-hidden bg-gray-100" data-modal-carousel>
+    <div class="modal-carousel relative overflow-hidden ${isPerfume ? 'bg-white' : 'bg-gray-100'}" data-modal-carousel>
       <div class="modal-carousel-track flex transition-transform duration-300" data-modal-track>
         ${images.map((img, i) => `
-          <img src="${img}" alt="${p.name}" class="w-full aspect-[4/5] md:h-full md:aspect-auto ${modalImageFitClass} flex-shrink-0" data-modal-slide="${i}"/>
+          <img src="${img}" alt="${p.name}" class="w-full aspect-square md:aspect-[4/5] ${modalImageFitClass} flex-shrink-0 min-w-full" data-modal-slide="${i}"/>
         `).join('')}
       </div>
       
-      <!-- Navigation Buttons (Desktop only, minimal on mobile) -->
-      <button class="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur text-gray-800 dark:text-white shadow-lg items-center justify-center z-10 hover:bg-white dark:hover:bg-gray-700" data-modal-prev>
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      <!-- Navigation Buttons -->
+      <button class="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur text-gray-800 dark:text-white shadow-lg flex items-center justify-center z-10" data-modal-prev>
+        <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
       </button>
-      <button class="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur text-gray-800 dark:text-white shadow-lg items-center justify-center z-10 hover:bg-white dark:hover:bg-gray-700" data-modal-next>
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-      </button>
-
-      <!-- Mobile Navigation Buttons (Smaller, always visible) -->
-      <button class="md:hidden absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 backdrop-blur text-gray-800 shadow-md flex items-center justify-center z-10" data-modal-prev>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      </button>
-      <button class="md:hidden absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 backdrop-blur text-gray-800 shadow-md flex items-center justify-center z-10" data-modal-next>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      <button class="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur text-gray-800 dark:text-white shadow-lg flex items-center justify-center z-10" data-modal-next>
+        <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
       </button>
       
-      <!-- Dots (Mobile only) -->
-      <div class="md:hidden absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10" data-modal-dots>
-        ${images.map((_, i) => `<span class="w-1.5 h-1.5 rounded-full bg-white/60 ${i === 0 ? 'bg-white' : ''} shadow-sm" data-modal-dot="${i}"></span>`).join('')}
+      <!-- Dots -->
+      <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 md:hidden" data-modal-dots>
+        ${images.map((_, i) => `<span class="w-2 h-2 rounded-full ${i === 0 ? 'bg-white shadow-md' : 'bg-white/50'} transition-all" data-modal-dot="${i}"></span>`).join('')}
       </div>
       
       <!-- Thumbnails (Desktop only) -->
@@ -172,7 +177,10 @@ function quickViewModal(p) {
         `).join('')}
       </div>
       
-      <!-- Close button (Responsive) -->
+      <!-- Image counter (Mobile) -->
+      <div class="md:hidden absolute top-3 right-14 bg-black/50 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded-full z-20" data-modal-counter>1 / ${images.length}</div>
+      
+      <!-- Close button -->
       <button id="close-quickview" class="absolute top-3 right-3 w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur shadow-lg flex items-center justify-center text-gray-700 dark:text-white hover:bg-white dark:hover:bg-gray-700 transition-colors z-20">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
@@ -185,15 +193,15 @@ function quickViewModal(p) {
     </div>
   ` : `
     <div class="relative ${isPerfume ? 'bg-white' : 'bg-gray-100'}">
-      <img src="${images[0]}" alt="${p.name}" class="w-full aspect-[4/5] md:h-full md:aspect-auto ${modalImageFitClass}"/>
+      <img src="${images[0]}" alt="${p.name}" class="w-full aspect-square md:aspect-[4/5] ${modalImageFitClass}"/>
       
       <!-- Close button -->
-      <button id="close-quickview" class="absolute top-3 right-3 w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur shadow-lg flex items-center justify-center text-gray-700 dark:text-white hover:bg-white dark:hover:bg-gray-700 transition-colors">
+      <button id="close-quickview" class="absolute top-3 right-3 w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur shadow-lg flex items-center justify-center text-gray-700 dark:text-white hover:bg-white dark:hover:bg-gray-700 transition-colors z-20">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
       
       <!-- Badges -->
-      <div class="absolute top-3 left-3 flex flex-col gap-1.5">
+      <div class="absolute top-3 left-3 flex flex-col gap-1.5 z-20">
         ${p.badge ? `<span class="px-2.5 py-1 text-[10px] font-bold ${getBadgeColor(p.badge)} text-white rounded-md shadow-sm">${p.badge.toUpperCase()}</span>` : ''}
         ${discount > 0 ? `<span class="px-2.5 py-1 text-[10px] font-bold bg-red-500 text-white rounded-md shadow-sm">-${discount}%</span>` : ''}
       </div>
@@ -203,7 +211,7 @@ function quickViewModal(p) {
   return `
     <div id="quick-view-modal" class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm">
       <!-- Mobile: slide from bottom, Desktop: centered modal -->
-      <div class="bg-white dark:bg-gray-900 w-full md:w-auto md:max-w-2xl md:mx-4 md:rounded-2xl rounded-t-3xl max-h-[90vh] overflow-y-auto md:overflow-hidden animate-slide-up shadow-2xl">
+      <div class="bg-white dark:bg-gray-900 w-full md:w-auto md:max-w-2xl md:mx-4 md:rounded-2xl rounded-t-3xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto animate-slide-up shadow-2xl overscroll-contain">
         
         <!-- Desktop: horizontal layout, Mobile: vertical -->
         <div class="md:flex">
@@ -289,64 +297,125 @@ export function pageCatalog(state) {
 
   const options = (items, label) => [`<option value="">${label}</option>`, ...items.map((x) => `<option value="${x}">${x}</option>`)].join('')
 
+  const isDark = state.theme === 'dark'
+
   return {
     title: 'Catálogo | G&L',
-    showSearch: true,
     html: `
-      <section class="mb-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <a href="#/" class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-1">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-              Inicio
-            </a>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Catálogo</h1>
-          </div>
-          <span id="product-count" class="text-sm text-gray-500 dark:text-gray-400">${state.products.length} productos</span>
-        </div>
-      </section>
+      <!-- Sticky Catalog Control Bar -->
+      <div id="catalog-control-bar" class="catalog-control-bar ${isDark ? 'bg-black/95 border-gray-800/60' : 'bg-white/95 border-gray-200/60'}">
+        <div class="mx-auto w-full max-w-screen-xl px-3 md:px-4">
 
-      <section class="mb-5 space-y-3">
-        <div class="flex items-center gap-2 flex-wrap">
-          <span class="text-xs text-gray-500">Ordenar:</span>
-          <select name="sort" class="rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2 text-xs text-gray-900 dark:text-white focus:border-gray-400 dark:focus:border-gray-500 focus:outline-none">
-            <option value="">Relevancia</option>
-            <option value="price-asc">Menor precio</option>
-            <option value="price-desc">Mayor precio</option>
-          </select>
-          <button id="reset-filters" class="ml-auto rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            Limpiar filtros
-          </button>
-        </div>
-        <div class="overflow-x-auto pb-2 -mx-4 px-4 hide-scrollbar">
-          <div class="flex gap-2 min-w-max">
-            <select name="type" class="rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2 text-xs text-gray-900 dark:text-white focus:border-gray-400 dark:focus:border-gray-500 focus:outline-none">${options(types, 'Tipo')}</select>
-            <select name="size" class="rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2 text-xs text-gray-900 dark:text-white focus:border-gray-400 dark:focus:border-gray-500 focus:outline-none">${options(sizes, 'Talla')}</select>
-            <select name="color" class="rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2 text-xs text-gray-900 dark:text-white focus:border-gray-400 dark:focus:border-gray-500 focus:outline-none">${options(colors, 'Color')}</select>
-            <input name="minPrice" inputmode="numeric" type="number" min="0" class="w-24 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-gray-400 dark:focus:border-gray-500 focus:outline-none" placeholder="Min $" />
-            <input name="maxPrice" inputmode="numeric" type="number" min="0" class="w-24 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-gray-400 dark:focus:border-gray-500 focus:outline-none" placeholder="Max $" />
+          <!-- Row 1: Search + actions -->
+          <div class="flex items-center gap-2 py-2.5 md:py-3">
+            <!-- Back -->
+            <a href="#/" class="flex-shrink-0 p-1 -ml-1 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-white transition-colors md:hidden" aria-label="Inicio">
+              <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </a>
+            <!-- Search -->
+            <div class="relative flex-1">
+              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'} pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <input
+                type="search"
+                id="catalog-search"
+                placeholder="Buscar productos..."
+                value="${getSearchQuery() || ''}"
+                class="w-full pl-10 pr-4 py-2 md:py-2 rounded-full ${isDark ? 'bg-gray-900 border-gray-800 text-white placeholder:text-gray-500' : 'bg-gray-100 border-gray-200 text-gray-900 placeholder:text-gray-400'} border text-sm focus:outline-none focus:ring-2 focus:ring-brand/40 transition-all"
+                aria-label="Buscar productos"
+              />
+            </div>
+            <!-- Filter toggle (mobile) -->
+            <button id="toggle-filters" class="md:hidden flex-shrink-0 flex items-center gap-1 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 active:bg-gray-50 dark:active:bg-gray-800 transition-colors">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+              <span id="filter-count-badge" class="hidden min-w-[18px] h-[18px] rounded-full bg-brand text-white text-[10px] font-bold items-center justify-center"></span>
+            </button>
+            <!-- Desktop: inline sort -->
+            <select name="sort" class="hidden md:block flex-shrink-0 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all cursor-pointer">
+              <option value="">Ordenar</option>
+              <option value="price-asc">Menor precio</option>
+              <option value="price-desc">Mayor precio</option>
+            </select>
           </div>
+
+          <!-- Desktop: inline filter row -->
+          <div id="filter-controls-desktop" class="hidden md:flex items-center gap-2 pb-2.5">
+            <div class="flex gap-2 overflow-x-auto hide-scrollbar flex-1">
+              <select name="type" class="rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all cursor-pointer">${options(types, 'Tipo')}</select>
+              <select name="size" class="rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all cursor-pointer">${options(sizes, 'Talla')}</select>
+              <select name="color" class="rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all cursor-pointer">${options(colors, 'Color')}</select>
+              <input name="minPrice" inputmode="numeric" type="number" min="0" class="w-24 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 hover:border-gray-300 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all" placeholder="Min $" />
+              <input name="maxPrice" inputmode="numeric" type="number" min="0" class="w-24 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 hover:border-gray-300 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all" placeholder="Max $" />
+            </div>
+            <span id="product-count" class="flex-shrink-0 text-xs font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap">${state.products.length} productos</span>
+            <button id="reset-filters" class="hidden flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all items-center gap-1">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              Limpiar
+            </button>
+          </div>
+
+          <!-- Mobile: collapsible filter drawer -->
+          <div id="filter-controls-mobile" class="md:hidden hidden">
+            <div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 p-3 mb-2 animate-fade-in">
+              <div class="grid grid-cols-2 gap-2 mb-2">
+                <select name="type" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all cursor-pointer">${options(types, 'Tipo')}</select>
+                <select name="size" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all cursor-pointer">${options(sizes, 'Talla')}</select>
+                <select name="color" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all cursor-pointer">${options(colors, 'Color')}</select>
+                <select name="sort" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all cursor-pointer">
+                  <option value="">Ordenar</option>
+                  <option value="price-asc">Menor precio</option>
+                  <option value="price-desc">Mayor precio</option>
+                </select>
+              </div>
+              <div class="flex gap-2">
+                <input name="minPrice" inputmode="numeric" type="number" min="0" class="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all" placeholder="Precio mín." />
+                <input name="maxPrice" inputmode="numeric" type="number" min="0" class="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all" placeholder="Precio máx." />
+              </div>
+              <button id="reset-filters-mobile" class="hidden w-full mt-2 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors text-center">Limpiar filtros</button>
+            </div>
+          </div>
+
+          <!-- Active filter chips -->
+          <div id="active-chips" class="hidden flex-wrap gap-1.5 pb-2"></div>
         </div>
-      </section>
+      </div>
+
+      <!-- Spacer for product count (mobile) + grid -->
+      <div class="md:hidden flex items-center justify-between mb-1 mt-1">
+        <span id="product-count-mobile" class="text-[11px] font-medium text-gray-400 dark:text-gray-500">${state.products.length} productos</span>
+      </div>
 
       <section>
-        <div id="catalog-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4"></div>
+        <div id="catalog-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4"></div>
       </section>
 
 
 
       <div id="modal-container"></div>
 
-      <a href="#/cart" class="fixed bottom-24 right-4 md:bottom-6 md:right-6 flex items-center gap-2 rounded-full bg-brand text-white pl-4 pr-5 py-3 shadow-lg hover:bg-brand-dark hover:scale-105 active:scale-95 transition-all z-20 font-medium text-sm border-2 border-white dark:border-black">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+      <a href="#/cart" class="fixed bottom-24 right-4 md:bottom-6 md:right-6 flex items-center gap-2 rounded-full bg-gray-900/80 dark:bg-white/80 backdrop-blur-md text-white dark:text-gray-900 pl-4 pr-5 py-2.5 shadow-lg hover:bg-gray-900 dark:hover:bg-white hover:scale-105 active:scale-95 transition-all z-20 text-xs font-medium">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
         Ver carrito
       </a>
     `,
     onMount(root) {
       const grid = qs(root, '#catalog-grid')
       const productCountEl = qs(root, '#product-count')
+      const productCountMobile = qs(root, '#product-count-mobile')
       const modalContainer = qs(root, '#modal-container')
+
+      // Sticky shadow detection via IntersectionObserver
+      const controlBar = qs(root, '#catalog-control-bar')
+      if (controlBar) {
+        const sentinel = document.createElement('div')
+        sentinel.className = 'catalog-sticky-sentinel'
+        sentinel.setAttribute('aria-hidden', 'true')
+        controlBar.before(sentinel)
+        const observer = new IntersectionObserver(
+          ([entry]) => controlBar.classList.toggle('is-stuck', !entry.isIntersecting),
+          { threshold: 0 }
+        )
+        observer.observe(sentinel)
+      }
 
 
       const renderGrid = () => {
@@ -355,8 +424,9 @@ export function pageCatalog(state) {
         
         // Show loading state
         if (state.isLoading) {
-          productCountEl.textContent = 'Cargando productos...'
-          grid.innerHTML = '<div class="col-span-full flex justify-center py-20"><div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand"></div></div>'
+          if (productCountEl) productCountEl.textContent = ''
+          if (productCountMobile) productCountMobile.textContent = 'Cargando...'
+          grid.innerHTML = skeletonGrid(8)
           return
         }
 
@@ -365,34 +435,34 @@ export function pageCatalog(state) {
         const sizes = uniqueSorted(state.products.flatMap((p) => p.sizes || []))
         const colors = uniqueSorted(state.products.flatMap((p) => p.colors || []))
         
-        const typeSelect = qs(root, 'select[name="type"]')
-        const sizeSelect = qs(root, 'select[name="size"]')
-        const colorSelect = qs(root, 'select[name="color"]')
-        
-        if (typeSelect) {
-          const currentType = typeSelect.value
-          typeSelect.innerHTML = `<option value="">Tipo</option>${types.map(x => `<option value="${x}">${x}</option>`).join('')}`
-          if (currentType && types.includes(currentType)) typeSelect.value = currentType
-        }
-        
-        if (sizeSelect) {
-          const currentSize = sizeSelect.value
-          sizeSelect.innerHTML = `<option value="">Talla</option>${sizes.map(x => `<option value="${x}">${x}</option>`).join('')}`
-          if (currentSize && sizes.includes(currentSize)) sizeSelect.value = currentSize
-        }
-        
-        if (colorSelect) {
-          const currentColor = colorSelect.value
-          colorSelect.innerHTML = `<option value="">Color</option>${colors.map(x => `<option value="${x}">${x}</option>`).join('')}`
-          if (currentColor && colors.includes(currentColor)) colorSelect.value = currentColor
-        }
+        // Sync all select elements (both desktop and mobile panels)
+        root.querySelectorAll('select[name="type"]').forEach(sel => {
+          const curr = sel.value
+          sel.innerHTML = `<option value="">Tipo</option>${types.map(x => `<option value="${x}">${x}</option>`).join('')}`
+          if (curr && types.includes(curr)) sel.value = curr
+        })
+        root.querySelectorAll('select[name="size"]').forEach(sel => {
+          const curr = sel.value
+          sel.innerHTML = `<option value="">Talla</option>${sizes.map(x => `<option value="${x}">${x}</option>`).join('')}`
+          if (curr && sizes.includes(curr)) sel.value = curr
+        })
+        root.querySelectorAll('select[name="color"]').forEach(sel => {
+          const curr = sel.value
+          sel.innerHTML = `<option value="">Color</option>${colors.map(x => `<option value="${x}">${x}</option>`).join('')}`
+          if (curr && colors.includes(curr)) sel.value = curr
+        })
 
         // Start with search results if there's a query, otherwise all products
         let baseProducts = searchQuery ? searchProducts(searchQuery) : state.products
         const visible = applyFilters(baseProducts, filters)
         
         const searchLabel = searchQuery ? ` para "${searchQuery}"` : ''
-        productCountEl.textContent = `${visible.length} productos${searchLabel}`
+        const countText = `${visible.length} productos${searchLabel}`
+        if (productCountEl) productCountEl.textContent = countText
+        if (productCountMobile) productCountMobile.textContent = countText
+
+        // Update filter chips and badges
+        updateFilterUI()
 
         if (visible.length === 0) {
           grid.innerHTML = `<div class="col-span-full text-center py-16"><div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center"><svg class="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div><h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No encontramos productos</h3><p class="text-gray-500 dark:text-gray-400 text-sm">${searchQuery ? `No hay resultados para "${searchQuery}". ` : ''}Intenta con otros filtros</p>${searchQuery ? `<button id="clear-search" class="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded-lg text-sm text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-700">Limpiar búsqueda</button>` : ''}</div>`
@@ -401,8 +471,8 @@ export function pageCatalog(state) {
           if (clearBtn) {
             clearBtn.addEventListener('click', () => {
               setSearchQuery('')
-              const searchInput = document.getElementById('global-search')
-              if (searchInput) searchInput.value = ''
+              const si = qs(root, '#catalog-search')
+              if (si) si.value = ''
               renderGrid()
             })
           }
@@ -461,33 +531,105 @@ export function pageCatalog(state) {
 
 
 
-      // Reset all filters button
-      const resetFiltersBtn = qs(root, '#reset-filters')
-      if (resetFiltersBtn) {
-        resetFiltersBtn.addEventListener('click', () => {
-          // Reset all filter selects
-          const selects = root.querySelectorAll('select[name="type"], select[name="size"], select[name="color"], select[name="sort"]')
-          selects.forEach(sel => sel.selectedIndex = 0)
-          
-          // Reset price inputs
-          const minPrice = qs(root, 'input[name="minPrice"]')
-          const maxPrice = qs(root, 'input[name="maxPrice"]')
-          if (minPrice) minPrice.value = ''
-          if (maxPrice) maxPrice.value = ''
-          
-          // Clear search query
-          setSearchQuery('')
-          const searchInput = document.getElementById('global-search')
-          if (searchInput) searchInput.value = ''
-          
-          renderGrid()
+      // ── Filter panel & chip logic ──
+      const toggleFiltersBtn = qs(root, '#toggle-filters')
+      const filterCountBadge = qs(root, '#filter-count-badge')
+      const mobilePanel = qs(root, '#filter-controls-mobile')
+      const resetBtn = qs(root, '#reset-filters')
+      const resetBtnMobile = qs(root, '#reset-filters-mobile')
+      const chipsContainer = qs(root, '#active-chips')
+
+      // Toggle mobile filter drawer
+      if (toggleFiltersBtn && mobilePanel) {
+        toggleFiltersBtn.addEventListener('click', () => {
+          const open = !mobilePanel.classList.contains('hidden')
+          mobilePanel.classList.toggle('hidden', open)
+          toggleFiltersBtn.classList.toggle('border-brand', !open)
+          toggleFiltersBtn.classList.toggle('text-brand', !open)
         })
       }
 
-      // Listen for search input changes
-      const searchInput = document.getElementById('global-search')
+      // Active filter chip labels
+      const chipLabels = { type: 'Tipo', size: 'Talla', color: 'Color', minPrice: 'Mín', maxPrice: 'Máx', sort: 'Orden' }
+      const sortLabels = { 'price-asc': 'Menor precio', 'price-desc': 'Mayor precio' }
+
+      function updateFilterUI() {
+        const f = getFilterState(root)
+        const activeCount = [f.type, f.size, f.color, f.minPrice, f.maxPrice, f.sort].filter(Boolean).length
+
+        // Badge on mobile toggle button
+        if (filterCountBadge) {
+          if (activeCount > 0) {
+            filterCountBadge.classList.remove('hidden')
+            filterCountBadge.classList.add('inline-flex')
+            filterCountBadge.textContent = activeCount
+          } else {
+            filterCountBadge.classList.add('hidden')
+            filterCountBadge.classList.remove('inline-flex')
+          }
+        }
+
+        // Contextual reset buttons (show only when filters active)
+        if (resetBtn) resetBtn.classList.toggle('hidden', activeCount === 0)
+        if (resetBtn) resetBtn.classList.toggle('flex', activeCount > 0)
+        if (resetBtnMobile) resetBtnMobile.classList.toggle('hidden', activeCount === 0)
+
+        // Active filter chips
+        if (chipsContainer) {
+          const chips = []
+          if (f.type) chips.push({ key: 'type', label: f.type })
+          if (f.size) chips.push({ key: 'size', label: `Talla ${f.size}` })
+          if (f.color) chips.push({ key: 'color', label: f.color })
+          if (f.minPrice) chips.push({ key: 'minPrice', label: `Desde $${f.minPrice}` })
+          if (f.maxPrice) chips.push({ key: 'maxPrice', label: `Hasta $${f.maxPrice}` })
+          if (f.sort) chips.push({ key: 'sort', label: sortLabels[f.sort] || f.sort })
+
+          if (chips.length > 0) {
+            chipsContainer.classList.remove('hidden')
+            chipsContainer.classList.add('flex')
+            chipsContainer.innerHTML = chips.map(c => `
+              <button data-remove-filter="${c.key}" class="inline-flex items-center gap-1 rounded-full bg-brand/10 dark:bg-brand/20 text-brand text-[11px] font-medium px-2.5 py-1 hover:bg-brand/20 dark:hover:bg-brand/30 transition-colors">
+                ${c.label}
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            `).join('')
+          } else {
+            chipsContainer.classList.add('hidden')
+            chipsContainer.classList.remove('flex')
+            chipsContainer.innerHTML = ''
+          }
+        }
+      }
+
+      // Dismiss individual filter chip
+      on(root, 'click', '[data-remove-filter]', (ev, btn) => {
+        const key = btn.dataset.removeFilter
+        // Clear matching controls in both desktop and mobile panels
+        root.querySelectorAll(`select[name="${key}"]`).forEach(s => s.selectedIndex = 0)
+        root.querySelectorAll(`input[name="${key}"]`).forEach(i => { i.value = '' })
+        renderGrid()
+      })
+
+      // Reset all filters
+      function resetAllFilters() {
+        root.querySelectorAll('select[name="type"], select[name="size"], select[name="color"], select[name="sort"]').forEach(sel => sel.selectedIndex = 0)
+        root.querySelectorAll('input[name="minPrice"], input[name="maxPrice"]').forEach(inp => { inp.value = '' })
+        setSearchQuery('')
+        const si = qs(root, '#catalog-search')
+        if (si) si.value = ''
+        // Close mobile panel
+        if (mobilePanel) mobilePanel.classList.add('hidden')
+        if (toggleFiltersBtn) {
+          toggleFiltersBtn.classList.remove('border-brand', 'text-brand')
+        }
+        renderGrid()
+      }
+      if (resetBtn) resetBtn.addEventListener('click', resetAllFilters)
+      if (resetBtnMobile) resetBtnMobile.addEventListener('click', resetAllFilters)
+
+      // Listen for search input changes (catalog-local search bar)
+      const searchInput = qs(root, '#catalog-search')
       if (searchInput) {
-        // Handle Enter key
         searchInput.addEventListener('keypress', (e) => {
           if (e.key === 'Enter') {
             e.preventDefault()
@@ -495,8 +637,6 @@ export function pageCatalog(state) {
             renderGrid()
           }
         })
-        
-        // Handle search on input (debounced)
         let searchTimeout
         searchInput.addEventListener('input', (e) => {
           clearTimeout(searchTimeout)
@@ -514,11 +654,29 @@ export function pageCatalog(state) {
       })
 
       setTimeout(renderGrid, 100)
-      on(root, 'change', 'select[name="type"],select[name="size"],select[name="color"],select[name="sort"],input[name="minPrice"],input[name="maxPrice"]', () => renderGrid())
+
+      // Auto-open quick view if navigated from home
+      const pendingQv = sessionStorage.getItem('gl_pending_quickview')
+      if (pendingQv) {
+        sessionStorage.removeItem('gl_pending_quickview')
+        setTimeout(() => {
+          const btn = root.querySelector(`[data-quickview="${pendingQv}"]`)
+          if (btn) btn.click()
+        }, 200)
+      }
+
+      on(root, 'change', 'select[name="type"],select[name="size"],select[name="color"],select[name="sort"],input[name="minPrice"],input[name="maxPrice"]', (ev, el) => {
+        // Sync the same filter across desktop and mobile panels
+        const name = el.getAttribute('name')
+        const val = el.value
+        root.querySelectorAll(`[name="${name}"]`).forEach(s => { if (s !== el) s.value = val })
+        renderGrid()
+      })
 
       on(root, 'click', '[data-quickview]', (ev, btn) => {
         const product = state.products.find(p => p.id === btn.dataset.quickview)
         if (!product) return
+        trackProductView(product.id)
         modalContainer.innerHTML = quickViewModal(product)
         document.body.style.overflow = 'hidden'
         const closeModal = () => { modalContainer.innerHTML = ''; document.body.style.overflow = '' }
@@ -533,11 +691,14 @@ export function pageCatalog(state) {
           const prevBtn = modalCarousel.querySelector('[data-modal-prev]')
           const nextBtn = modalCarousel.querySelector('[data-modal-next]')
           const thumbs = modalCarousel.querySelectorAll('[data-modal-thumb]')
+          const dots = modalCarousel.querySelectorAll('[data-modal-dot]')
+          const counter = modalCarousel.querySelector('[data-modal-counter]')
           
           let currentIndex = 0
           
           const updateModalCarousel = () => {
             track.style.transform = `translateX(-${currentIndex * 100}%)`
+            // Update thumbnails
             thumbs.forEach((thumb, i) => {
               if (i === currentIndex) {
                 thumb.classList.remove('border-white/40')
@@ -547,6 +708,18 @@ export function pageCatalog(state) {
                 thumb.classList.add('border-white/40')
               }
             })
+            // Update dots
+            dots.forEach((dot, i) => {
+              if (i === currentIndex) {
+                dot.classList.remove('bg-white/50')
+                dot.classList.add('bg-white', 'shadow-md')
+              } else {
+                dot.classList.remove('bg-white', 'shadow-md')
+                dot.classList.add('bg-white/50')
+              }
+            })
+            // Update counter
+            if (counter) counter.textContent = `${currentIndex + 1} / ${slides.length}`
           }
           
           prevBtn?.addEventListener('click', (e) => {
@@ -571,6 +744,40 @@ export function pageCatalog(state) {
               updateModalCarousel()
             })
           })
+
+          // Touch swipe support for mobile
+          let touchStartX = 0
+          let touchStartY = 0
+          let isSwiping = false
+
+          modalCarousel.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX
+            touchStartY = e.touches[0].clientY
+            isSwiping = false
+          }, { passive: true })
+
+          modalCarousel.addEventListener('touchmove', (e) => {
+            const diffX = Math.abs(e.touches[0].clientX - touchStartX)
+            const diffY = Math.abs(e.touches[0].clientY - touchStartY)
+            if (diffX > diffY && diffX > 10) {
+              isSwiping = true
+              e.preventDefault()
+            }
+          }, { passive: false })
+
+          modalCarousel.addEventListener('touchend', (e) => {
+            if (!isSwiping) return
+            const touchEndX = e.changedTouches[0].clientX
+            const diff = touchStartX - touchEndX
+            if (Math.abs(diff) > 40) {
+              if (diff > 0 && currentIndex < slides.length - 1) {
+                currentIndex++
+              } else if (diff < 0 && currentIndex > 0) {
+                currentIndex--
+              }
+              updateModalCarousel()
+            }
+          }, { passive: true })
         }
         
         const qvAddBtn = modalContainer.querySelector('#qv-add-to-cart')
@@ -603,47 +810,50 @@ export function pageCatalog(state) {
         })
       })
 
-      on(root, 'click', '[data-add-to-cart]', (ev, btn) => {
+      on(root, 'click', '[data-quick-add]', (ev, btn) => {
         ev.preventDefault()
         ev.stopPropagation()
-        
-        // Prevent double clicks
-        if (btn.disabled) return
-        btn.disabled = true
-        
-        const id = btn.getAttribute('data-product-id')
-        const card = btn.closest('article')
-        const size = card?.querySelector('select[data-card-size]')?.value || ''
-        const color = card?.querySelector('select[data-card-color]')?.value || ''
-        addToCart({ productId: id, size, color, qty: 1 })
-        
-        // Update cart counter in header immediately
+        if (btn.dataset.busy) return
+        btn.dataset.busy = '1'
+
+        const id = btn.dataset.quickAdd
+        addToCart({ productId: id, size: '', color: '', qty: 1 })
+
+        // Update cart badge
         const count = cartCount()
         const cartBadge = document.querySelector('a[href="#/cart"] span')
         if (cartBadge) {
           cartBadge.textContent = count
         } else {
-          // Create badge if it doesn't exist
           const cartLink = document.querySelector('a[href="#/cart"]')
           if (cartLink) {
-            const newBadge = document.createElement('span')
-            newBadge.className = 'absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white'
-            newBadge.textContent = count
-            cartLink.appendChild(newBadge)
+            const b = document.createElement('span')
+            b.className = 'absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white'
+            b.textContent = count
+            cartLink.appendChild(b)
           }
         }
-        
-        const originalHtml = btn.innerHTML
-        btn.innerHTML = '✓ Agregado'
-        btn.classList.add('bg-brand')
-        btn.classList.remove('bg-black')
-        showToast('Producto agregado al carrito')
-        setTimeout(() => { 
-          btn.innerHTML = originalHtml
-          btn.classList.remove('bg-brand')
-          btn.classList.add('bg-black')
-          btn.disabled = false
-        }, 1500)
+
+        // Transition: icon → spinner → check
+        const icon = btn.querySelector('.quick-add-icon')
+        const spinner = btn.querySelector('.quick-add-spinner')
+        const check = btn.querySelector('.quick-add-check')
+        icon.classList.add('hidden')
+        spinner.classList.remove('hidden')
+
+        setTimeout(() => {
+          spinner.classList.add('hidden')
+          check.classList.remove('hidden')
+          btn.classList.add('!bg-green-500', '!text-white')
+          showMiniCart(id)
+
+          setTimeout(() => {
+            check.classList.add('hidden')
+            icon.classList.remove('hidden')
+            btn.classList.remove('!bg-green-500', '!text-white')
+            delete btn.dataset.busy
+          }, 1200)
+        }, 350)
       })
 
       // Return cleanup function

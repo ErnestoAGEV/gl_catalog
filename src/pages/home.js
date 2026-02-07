@@ -1,7 +1,9 @@
 import { BRAND } from '../app/config.js'
 import { formatMoney } from '../app/format.js'
-import { getState, subscribeNewsletter, isSubscribedNewsletter } from '../app/store.js'
-import { qs } from '../app/dom.js'
+import { getState, subscribeNewsletter, isSubscribedNewsletter, getMostViewedProducts, trackProductView, addToCart, cartCount } from '../app/store.js'
+import { on, qs } from '../app/dom.js'
+import { showToast } from '../app/toast.js'
+import { showMiniCart } from '../app/miniCart.js'
 
 // Hero slides for carousel
 const heroSlides = [
@@ -53,6 +55,20 @@ function getBadgeColor(badge) {
   return colors[badge] || 'bg-gray-700'
 }
 
+function homeSkeletonCard() {
+  return `
+    <article class="bg-white dark:bg-gray-900 rounded-xl md:rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 h-full flex flex-col">
+      <div class="aspect-[3/4] md:aspect-[4/5] skeleton-shimmer"></div>
+      <div class="p-2.5 md:p-4 flex flex-col flex-grow">
+        <div class="h-3.5 md:h-4 w-4/5 rounded-md skeleton-shimmer"></div>
+        <div class="mt-auto pt-1.5 md:pt-2">
+          <div class="h-4 md:h-5 w-1/3 rounded-md skeleton-shimmer"></div>
+        </div>
+      </div>
+    </article>
+  `
+}
+
 
 function renderStars(rating) {
   const fullStars = Math.floor(rating)
@@ -72,34 +88,42 @@ function renderStars(rating) {
 
 function featuredProductCard(p, idx) {
   const img = p.images?.[0] || 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400&h=500&fit=crop'
+  const isPerfume = p.type === 'Perfumes'
+  const imageFitClass = isPerfume ? 'object-contain p-4' : 'object-cover'
+  const imageBgClass = isPerfume ? 'bg-white' : 'bg-gray-100 dark:bg-gray-800'
   
   return `
-    <article class="group relative bg-white dark:bg-gray-900 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 animate-fade-in h-full flex flex-col" style="animation-delay: ${idx * 50}ms">
-      <a href="#/catalog" class="block relative aspect-[4/5] overflow-hidden bg-gray-100 dark:bg-gray-800">
+    <article class="product-card group relative bg-white dark:bg-gray-900 rounded-xl md:rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 transition-all duration-200 md:hover:shadow-lg md:hover:shadow-gray-900/[0.06] dark:md:hover:shadow-none md:hover:-translate-y-0.5 md:hover:border-gray-200 dark:md:hover:border-gray-700 active:scale-[0.98] md:active:scale-100 animate-fade-in h-full flex flex-col cursor-pointer" style="animation-delay: ${idx * 40}ms" data-home-qv="${p.id}">
+      <div class="relative aspect-[3/4] md:aspect-[4/5] overflow-hidden ${imageBgClass}">
         <img 
           src="${img}" 
           alt="${p.name}"
-          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+          class="w-full h-full ${imageFitClass} group-hover:scale-[1.03] transition-transform duration-500 ease-out"
           loading="lazy"
         />
         
         <!-- Badges -->
-        <div class="absolute top-3 left-3 flex flex-col gap-1.5 z-20">
-          ${p.badge ? `<span class="inline-flex px-2.5 py-1 text-[10px] font-bold tracking-wider ${getBadgeColor(p.badge)} text-white uppercase rounded-md shadow-sm">${p.badge}</span>` : ''}
-          ${p.stock <= 5 && p.stock > 0 ? `<span class="inline-flex px-2.5 py-1 text-[10px] font-bold tracking-wider bg-orange-500 text-white uppercase rounded-md shadow-sm">¡Últimas piezas!</span>` : ''}
+        <div class="absolute top-2 left-2 md:top-3 md:left-3 flex flex-col gap-1 z-20">
+          ${p.badge ? `<span class="inline-flex px-2 py-0.5 md:px-2.5 md:py-1 text-[9px] md:text-[10px] font-bold tracking-wider ${getBadgeColor(p.badge)} text-white uppercase rounded-md">${p.badge}</span>` : ''}
+          ${p.stock <= 5 && p.stock > 0 ? `<span class="inline-flex px-2 py-0.5 md:px-2.5 md:py-1 text-[9px] md:text-[10px] font-bold tracking-wider bg-orange-500 text-white uppercase rounded-md">¡Últimas!</span>` : ''}
         </div>
-      </a>
+        <!-- Quick Add -->
+        <button data-quick-add="${p.id}" class="quick-add-btn absolute bottom-2 right-2 z-30 w-9 h-9 md:w-8 md:h-8 rounded-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm shadow-md flex items-center justify-center text-gray-800 dark:text-white md:opacity-0 md:translate-y-1 md:group-hover:opacity-100 md:group-hover:translate-y-0 transition-all duration-200 hover:bg-gray-900 hover:text-white dark:hover:bg-white dark:hover:text-gray-900 active:scale-90" type="button" aria-label="Agregar al carrito">
+          <svg class="quick-add-icon w-4.5 h-4.5 md:w-4 md:h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+          <svg class="quick-add-spinner hidden w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+          <svg class="quick-add-check hidden w-4.5 h-4.5 md:w-4 md:h-4 text-green-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        </button>
+      </div>
       
-      <div class="p-4 flex flex-col flex-grow">
+      <div class="p-2.5 md:p-4 flex flex-col flex-grow">
+        <h3 class="text-[13px] md:text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 leading-snug">${p.name}</h3>
         
-        <h3 class="text-sm font-bold text-gray-900 dark:text-white line-clamp-2 mb-1 group-hover:text-brand transition-colors">${p.name}</h3>
-        
-        <div class="mt-auto pt-2">
-            <div class="flex items-baseline flex-wrap gap-x-2 gap-y-1">
-              <p class="text-lg font-black text-gray-900 dark:text-white">${formatMoney(p.price)}</p>
-              ${p.originalPrice ? `<p class="text-sm text-gray-400 line-through">${formatMoney(p.originalPrice)}</p>` : ''}
-              ${p.originalPrice ? `<span class="text-xs font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-1.5 py-0.5 rounded">-${Math.round((1 - p.price/p.originalPrice)*100)}%</span>` : ''}
-            </div>
+        <div class="mt-auto pt-1.5 md:pt-2">
+          <div class="flex items-baseline gap-1.5 md:gap-2">
+            <p class="text-[15px] md:text-lg font-bold text-gray-900 dark:text-white tracking-tight">${formatMoney(p.price)}</p>
+            ${p.originalPrice ? `<p class="text-[10px] md:text-sm text-gray-400 line-through">${formatMoney(p.originalPrice)}</p>` : ''}
+            ${p.originalPrice ? `<span class="text-[9px] md:text-xs font-bold text-green-600 dark:text-green-400">-${Math.round((1 - p.price/p.originalPrice)*100)}%</span>` : ''}
+          </div>
         </div>
       </div>
     </article>
@@ -113,10 +137,8 @@ export function pageHome() {
   const featured = [...state.products]
     .slice(0, 4)
   
-  // Best sellers (most reviews)
-  const bestSellers = [...state.products]
-    .sort((a, b) => (b.reviews || 0) - (a.reviews || 0))
-    .slice(0, 4)
+  // Best sellers (most viewed by customers)
+  const bestSellers = getMostViewedProducts(4)
 
   // New arrivals (with "Nuevo" badge)
   const newArrivals = state.products.filter(p => p.badge === 'Nuevo').slice(0, 4)
@@ -233,47 +255,16 @@ export function pageHome() {
         </div>
         
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          ${bestSellers.map((p, i) => featuredProductCard(p, i)).join('')}
+          ${bestSellers.length > 0 
+            ? bestSellers.map((p, i) => featuredProductCard(p, i)).join('') 
+            : Array.from({ length: 4 }, () => homeSkeletonCard()).join('')
+          }
         </div>
         
          <div class="mt-8 text-center md:hidden">
             <a href="#/catalog" class="inline-flex items-center justify-center w-full px-6 py-3 bg-gray-100 dark:bg-gray-800 rounded-xl text-sm font-bold text-gray-900 dark:text-white hover:bg-gray-200 transition-colors">
                 Ver más productos
             </a>
-        </div>
-      </section>
-
-      <!-- Promo Banner -->
-      <section class="mb-16 relative rounded-[2rem] overflow-hidden shadow-2xl group min-h-[18rem] md:min-h-[20rem] flex items-center">
-        <img 
-          src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&h=600&fit=crop"
-          alt="Promo"
-          class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
-        />
-        <div class="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent"></div>
-        <div class="relative z-10 w-full p-6 md:p-12">
-          <div class="max-w-md animate-slide-up">
-            <div class="inline-flex items-center gap-2 px-3 py-1 bg-brand text-white rounded-full mb-4 shadow-lg shadow-brand/20">
-              <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-              <span class="text-[10px] font-black uppercase tracking-wider">Oferta Exclusiva</span>
-            </div>
-            
-            <h2 class="text-3xl md:text-5xl font-black text-white leading-tight mb-2">10% OFF</h2>
-            <p class="text-base md:text-lg text-gray-200 mb-6 font-medium">Obtén un descuento especial en tu primera compra.</p>
-            
-            <div class="flex flex-col sm:flex-row items-start gap-3 w-full sm:w-auto">
-              <div class="relative group/code w-full sm:w-auto">
-                 <code class="block px-6 py-3 bg-white/10 backdrop-blur border border-white/20 rounded-xl text-white font-mono text-lg tracking-widest text-center">WELCOME10</code>
-                 <button id="copy-coupon" class="absolute inset-0 w-full h-full flex items-center justify-center bg-brand/90 opacity-0 group-hover/code:opacity-100 transition-opacity rounded-xl cursor-copy text-white font-bold text-xs gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                    Copiar
-                 </button>
-              </div>
-              <a href="#/catalog" class="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-900 rounded-xl font-bold hover:bg-gray-100 transition-colors w-full sm:w-auto">
-                Usar cupón
-              </a>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -294,7 +285,10 @@ export function pageHome() {
           </a>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 stagger-children">
-          ${newArrivals.map((p, i) => featuredProductCard(p, i)).join('')}
+          ${newArrivals.length > 0 
+            ? newArrivals.map((p, i) => featuredProductCard(p, i)).join('')
+            : Array.from({ length: 4 }, () => homeSkeletonCard()).join('')
+          }
         </div>
       </section>
       ` : ''}
@@ -382,27 +376,37 @@ export function pageHome() {
         </div>
       </section>
 
-      <!-- Instagram Feed -->
-      <section class="mb-16">
-        <div class="flex items-center justify-between mb-8">
-          <div>
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Síguenos en Instagram</h2>
-            <p class="text-gray-500 dark:text-gray-400 mt-1">Únete a nuestra comunidad @gyl.mx</p>
-          </div>
-          <a href="https://www.instagram.com/glboutiquecol/" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 rounded-full text-white text-sm font-bold shadow-lg shadow-pink-500/30 hover:shadow-pink-500/50 hover:-translate-y-0.5 transition-all">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-            Seguir
-          </a>
-        </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          ${instagramPosts.map((img, i) => `
-            <a href="https://instagram.com" target="_blank" class="aspect-square rounded-2xl overflow-hidden group relative shadow-md hover:shadow-xl transition-all">
-              <img src="${img}" alt="Instagram" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"/>
-              <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                <svg class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+      <!-- Promo Banners -->
+      <section class="mb-16 grid md:grid-cols-1 gap-6">
+        <div class="relative rounded-[2rem] overflow-hidden shadow-2xl group min-h-[18rem] flex items-center">
+          <img 
+            src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&h=600&fit=crop"
+            alt="Promo"
+            class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
+          />
+          <div class="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent"></div>
+          <div class="relative z-10 w-full p-6 md:p-10">
+            <div class="max-w-md">
+              <div class="inline-flex items-center gap-2 px-3 py-1 bg-brand text-white rounded-full mb-4 shadow-lg shadow-brand/20">
+                <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                <span class="text-[10px] font-black uppercase tracking-wider">Oferta Exclusiva</span>
               </div>
-            </a>
-          `).join('')}
+              <h2 class="text-3xl md:text-4xl font-black text-white leading-tight mb-2">10% OFF</h2>
+              <p class="text-base md:text-lg text-gray-200 mb-6 font-medium">Obtén un descuento especial en tu primera compra.</p>
+              <div class="flex flex-col sm:flex-row items-start gap-3 w-full sm:w-auto">
+                <div class="relative group/code w-full sm:w-auto">
+                   <code class="block px-6 py-3 bg-white/10 backdrop-blur border border-white/20 rounded-xl text-white font-mono text-lg tracking-widest text-center">WELCOME10</code>
+                   <button id="copy-coupon" class="absolute inset-0 w-full h-full flex items-center justify-center bg-brand/90 opacity-0 group-hover/code:opacity-100 transition-opacity rounded-xl cursor-copy text-white font-bold text-xs gap-1">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                      Copiar
+                   </button>
+                </div>
+                <a href="#/catalog" class="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-900 rounded-xl font-bold hover:bg-gray-100 transition-colors w-full sm:w-auto">
+                  Usar cupón
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -500,6 +504,65 @@ export function pageHome() {
 
     `,
     onMount(root) {
+      // Quick Add to Cart from home cards
+      on(root, 'click', '[data-quick-add]', (ev, btn) => {
+        ev.preventDefault()
+        ev.stopPropagation()
+        if (btn.dataset.busy) return
+        btn.dataset.busy = '1'
+
+        const id = btn.dataset.quickAdd
+        addToCart({ productId: id, size: '', color: '', qty: 1 })
+
+        // Update cart badge
+        const count = cartCount()
+        const cartBadge = document.querySelector('a[href="#/cart"] span')
+        if (cartBadge) {
+          cartBadge.textContent = count
+        } else {
+          const cartLink = document.querySelector('a[href="#/cart"]')
+          if (cartLink) {
+            const b = document.createElement('span')
+            b.className = 'absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white'
+            b.textContent = count
+            cartLink.appendChild(b)
+          }
+        }
+
+        const icon = btn.querySelector('.quick-add-icon')
+        const spinner = btn.querySelector('.quick-add-spinner')
+        const check = btn.querySelector('.quick-add-check')
+        icon.classList.add('hidden')
+        spinner.classList.remove('hidden')
+
+        setTimeout(() => {
+          spinner.classList.add('hidden')
+          check.classList.remove('hidden')
+          btn.classList.add('!bg-green-500', '!text-white')
+          showMiniCart(id)
+
+          setTimeout(() => {
+            check.classList.add('hidden')
+            icon.classList.remove('hidden')
+            btn.classList.remove('!bg-green-500', '!text-white')
+            delete btn.dataset.busy
+          }, 1200)
+        }, 350)
+      })
+
+      // Product card click -> navigate to catalog quick view
+      root.querySelectorAll('[data-home-qv]').forEach(card => {
+        card.addEventListener('click', (e) => {
+          // Don't navigate if Quick Add was clicked
+          if (e.target.closest('[data-quick-add]')) return
+          e.preventDefault()
+          const productId = card.dataset.homeQv
+          trackProductView(productId)
+          sessionStorage.setItem('gl_pending_quickview', productId)
+          window.location.hash = '#/catalog'
+        })
+      })
+
       // Copy coupon code
       const copyBtn = qs(root, '#copy-coupon')
       if (copyBtn) {
