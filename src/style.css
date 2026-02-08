@@ -451,42 +451,170 @@ body.dark {
 }
 
 /* ─── Sticky Catalog Control Bar ─── */
-.catalog-control-bar {
-  position: sticky;
-  z-index: 20;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid transparent;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  /* Negative margins pull bar to edges, countering main padding */
-  margin-left: -0.75rem;
-  margin-right: -0.75rem;
-  margin-top: -0.75rem;
+
+.search-pill {
+  position: relative;
 }
+.search-pill input {
+  height: 44px;
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #f5f6f7;
+  padding: 0 16px 0 40px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: #1f2937;
+}
+.search-pill svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: #9ca3af;
+}
+.dark .search-pill input {
+  background: #0f172a;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #e5e7eb;
+}
+.dark .search-pill svg {
+  color: #6b7280;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.toolbar-btn {
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fff;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.toolbar-btn svg {
+  width: 16px;
+  height: 16px;
+}
+.toolbar-btn:active {
+  transform: translateY(1px);
+}
+.dark .toolbar-btn {
+  background: #0b1020;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #e5e7eb;
+}
+.toolbar-btn .count-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--color-brand);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbar-controls {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: max-height 0.2s ease, opacity 0.2s ease;
+}
+
+.toolbar-controls .filters-inline {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  flex: 1;
+}
+.toolbar-controls select,
+.toolbar-controls input[type="number"] {
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.08);
+  padding: 0 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.dark .toolbar-controls select,
+.dark .toolbar-controls input[type="number"] {
+  border-color: rgba(255,255,255,0.1);
+}
+
+.filters-inline input[name="minPrice"] { border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: 0; }
+.filters-inline input[name="maxPrice"] { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+
+#product-count {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ca3af;
+}
+.dark #product-count { color: #9ca3af; }
+
+/* Bottom sheets for mobile */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 40;
+}
+.sheet-backdrop.open { opacity: 1; pointer-events: auto; }
+
+.bottom-sheet {
+  position: fixed;
+  inset: auto 0 0 0;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  padding: 16px;
+  box-shadow: 0 -10px 30px rgba(0,0,0,0.18);
+  transform: translateY(100%);
+  transition: transform 0.25s ease;
+  z-index: 41;
+}
+.bottom-sheet.open { transform: translateY(0%); }
+.bottom-sheet h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+.bottom-sheet .sheet-actions { display: flex; gap: 8px; }
+.bottom-sheet .sheet-actions button {
+  flex: 1;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.1);
+  font-weight: 600;
+}
+.dark .bottom-sheet { background: #0b1020; }
+.dark .bottom-sheet button { border-color: rgba(255,255,255,0.1); color: #e5e7eb; }
+
 @media (min-width: 769px) {
-  .catalog-control-bar {
-    /* Desktop header ≈ 65px (banner + nav). Adjust as needed. */
-    top: 65px;
-    margin-left: -1rem;
-    margin-right: -1rem;
-    margin-top: -1.25rem;
-  }
+  .sheet-backdrop, .bottom-sheet { display: none !important; }
 }
-@media (max-width: 768px) {
-  .catalog-control-bar {
-    /* Mobile header ≈ 56px */
-    top: 56px;
-    margin-top: -0.75rem;
-  }
-}
-.catalog-control-bar.is-stuck {
-  border-bottom-color: var(--color-gray-200, rgba(0,0,0,0.08));
-  box-shadow: 0 2px 12px -2px rgba(0,0,0,0.06);
-}
-.dark .catalog-control-bar.is-stuck {
-  border-bottom-color: rgba(255,255,255,0.06);
-  box-shadow: 0 2px 12px -2px rgba(0,0,0,0.25);
-}
+
+/* Collapse state hides secondary row */
+.catalog-control-bar.collapsed .toolbar-controls { display: none; }
+
+/* Sentinel for IntersectionObserver */
 .catalog-sticky-sentinel {
   position: absolute;
   top: 0;

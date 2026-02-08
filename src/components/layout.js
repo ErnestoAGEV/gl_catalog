@@ -8,7 +8,7 @@ function container(children, theme = 'dark') {
   </div>`
 }
 
-export function layoutPublic({ contentHtml, state, showSearch = false }) {
+export function layoutPublic({ contentHtml, state, showSearch = false, noPaddingTop = false, toolbarHtml = '' }) {
   const count = (state.cart || []).reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
   const theme = state.theme || 'dark'
   const isDark = theme === 'dark'
@@ -74,7 +74,9 @@ export function layoutPublic({ contentHtml, state, showSearch = false }) {
       </div>
     </header>
 
-    <main class="mx-auto w-full max-w-screen-xl px-3 md:px-4 py-3 md:py-5 pb-24 md:pb-24 overflow-x-hidden mb-16 md:mb-0">
+    ${toolbarHtml}
+
+    <main class="mx-auto w-full max-w-screen-xl px-3 md:px-4 ${noPaddingTop ? 'pt-0' : 'pt-3 md:pt-5'} pb-24 md:pb-24 overflow-x-hidden mb-16 md:mb-0" id="main-content">
       ${contentHtml}
     </main>
 

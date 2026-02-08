@@ -299,92 +299,98 @@ export function pageCatalog(state) {
 
   const isDark = state.theme === 'dark'
 
-  return {
-    title: 'Catálogo | G&L',
-    html: `
-      <!-- Sticky Catalog Control Bar -->
-      <div id="catalog-control-bar" class="catalog-control-bar ${isDark ? 'bg-black/95 border-gray-800/60' : 'bg-white/95 border-gray-200/60'}">
-        <div class="mx-auto w-full max-w-screen-xl px-3 md:px-4">
-
-          <!-- Row 1: Search + actions -->
-          <div class="flex items-center gap-2 py-2.5 md:py-3">
-            <!-- Back -->
-            <a href="#/" class="flex-shrink-0 p-1 -ml-1 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-white transition-colors md:hidden" aria-label="Inicio">
-              <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-            </a>
-            <!-- Search -->
-            <div class="relative flex-1">
-              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'} pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              <input
-                type="search"
-                id="catalog-search"
-                placeholder="Buscar productos..."
-                value="${getSearchQuery() || ''}"
-                class="w-full pl-10 pr-4 py-2 md:py-2 rounded-full ${isDark ? 'bg-gray-900 border-gray-800 text-white placeholder:text-gray-500' : 'bg-gray-100 border-gray-200 text-gray-900 placeholder:text-gray-400'} border text-sm focus:outline-none focus:ring-2 focus:ring-brand/40 transition-all"
-                aria-label="Buscar productos"
-              />
+  const toolbarHtml = `
+    <!-- Sticky Catalog Control Bar -->
+    <div id="catalog-control-bar" class="sticky top-[65px] z-30 bg-white dark:bg-black border-b border-black/5 dark:border-white/5 backdrop-blur-md">
+      <div class="mx-auto w-full max-w-screen-xl px-3 md:px-4 py-2.5 md:py-3">
+        <div class="flex flex-col gap-2.5">
+          <!-- Search row -->
+          <div class="flex items-center gap-2">
+            <div class="search-pill flex-1">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <input type="search" id="catalog-search" placeholder="Buscar productos..." value="${getSearchQuery() || ''}" aria-label="Buscar productos" />
             </div>
-            <!-- Filter toggle (mobile) -->
-            <button id="toggle-filters" class="md:hidden flex-shrink-0 flex items-center gap-1 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 active:bg-gray-50 dark:active:bg-gray-800 transition-colors">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
-              <span id="filter-count-badge" class="hidden min-w-[18px] h-[18px] rounded-full bg-brand text-white text-[10px] font-bold items-center justify-center"></span>
-            </button>
-            <!-- Desktop: inline sort -->
-            <select name="sort" class="hidden md:block flex-shrink-0 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all cursor-pointer">
-              <option value="">Ordenar</option>
-              <option value="price-asc">Menor precio</option>
-              <option value="price-desc">Mayor precio</option>
-            </select>
+            <div class="toolbar-actions">
+              <button id="open-filters" class="toolbar-btn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M7 12h10m-6 8h2"/></svg>
+                <span class="label hidden md:inline">Filtros</span>
+                <span id="filters-count" class="count-badge hidden"></span>
+              </button>
+              <button id="open-sort" class="toolbar-btn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7l4-4 4 4M8 17l4 4 4-4"/></svg>
+                <span id="sort-label" class="label hidden md:inline">Relevancia</span>
+              </button>
+            </div>
           </div>
 
-          <!-- Desktop: inline filter row -->
-          <div id="filter-controls-desktop" class="hidden md:flex items-center gap-2 pb-2.5">
-            <div class="flex gap-2 overflow-x-auto hide-scrollbar flex-1">
-              <select name="type" class="rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all cursor-pointer">${options(types, 'Tipo')}</select>
-              <select name="size" class="rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all cursor-pointer">${options(sizes, 'Talla')}</select>
-              <select name="color" class="rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all cursor-pointer">${options(colors, 'Color')}</select>
-              <input name="minPrice" inputmode="numeric" type="number" min="0" class="w-24 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 hover:border-gray-300 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all" placeholder="Min $" />
-              <input name="maxPrice" inputmode="numeric" type="number" min="0" class="w-24 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 hover:border-gray-300 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all" placeholder="Max $" />
+          <!-- Filters row (desktop) -->
+          <div class="toolbar-controls hidden md:flex" id="toolbar-controls">
+            <div class="filters-inline hide-scrollbar">
+              <select name="type">${options(types, 'Tipo')}</select>
+              <select name="size">${options(sizes, 'Talla')}</select>
+              <select name="color">${options(colors, 'Color')}</select>
+              <input name="minPrice" inputmode="numeric" type="number" min="0" placeholder="Min $" />
+              <input name="maxPrice" inputmode="numeric" type="number" min="0" placeholder="Max $" />
             </div>
-            <span id="product-count" class="flex-shrink-0 text-xs font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap">${state.products.length} productos</span>
-            <button id="reset-filters" class="hidden flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all items-center gap-1">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            <span id="product-count" class="ml-auto text-xs font-semibold text-gray-400">${state.products.length} productos</span>
+            <button id="reset-filters" class="hidden toolbar-btn" style="height:36px;padding:0 12px;font-size:12px;font-weight:600;">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
               Limpiar
             </button>
           </div>
-
-          <!-- Mobile: collapsible filter drawer -->
-          <div id="filter-controls-mobile" class="md:hidden hidden">
-            <div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 p-3 mb-2 animate-fade-in">
-              <div class="grid grid-cols-2 gap-2 mb-2">
-                <select name="type" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all cursor-pointer">${options(types, 'Tipo')}</select>
-                <select name="size" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all cursor-pointer">${options(sizes, 'Talla')}</select>
-                <select name="color" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all cursor-pointer">${options(colors, 'Color')}</select>
-                <select name="sort" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all cursor-pointer">
-                  <option value="">Ordenar</option>
-                  <option value="price-asc">Menor precio</option>
-                  <option value="price-desc">Mayor precio</option>
-                </select>
-              </div>
-              <div class="flex gap-2">
-                <input name="minPrice" inputmode="numeric" type="number" min="0" class="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all" placeholder="Precio mín." />
-                <input name="maxPrice" inputmode="numeric" type="number" min="0" class="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-all" placeholder="Precio máx." />
-              </div>
-              <button id="reset-filters-mobile" class="hidden w-full mt-2 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors text-center">Limpiar filtros</button>
-            </div>
-          </div>
-
-          <!-- Active filter chips -->
-          <div id="active-chips" class="hidden flex-wrap gap-1.5 pb-2"></div>
         </div>
       </div>
+    </div>
+  `
+
+  return {
+    title: 'Catálogo | G&L',
+    noPaddingTop: true,
+    toolbarHtml,
+    html: `
+      <div id="filter-controls-mobile" class="md:hidden bottom-sheet">
+        <h3>Filtros</h3>
+        <div class="grid grid-cols-2 gap-2 mb-2">
+          <select name="type">${options(types, 'Tipo')}</select>
+          <select name="size">${options(sizes, 'Talla')}</select>
+          <select name="color">${options(colors, 'Color')}</select>
+          <select name="sort">
+            <option value="">Relevancia</option>
+            <option value="price-asc">Precio ↑</option>
+            <option value="price-desc">Precio ↓</option>
+          </select>
+        </div>
+        <div class="flex gap-2 mb-2">
+          <input name="minPrice" inputmode="numeric" type="number" min="0" placeholder="Precio mín." />
+          <input name="maxPrice" inputmode="numeric" type="number" min="0" placeholder="Precio máx." />
+        </div>
+        <div class="sheet-actions">
+          <button id="close-filters" type="button">Cerrar</button>
+          <button id="reset-filters-mobile" type="button">Limpiar</button>
+        </div>
+      </div>
+
+      <div id="sort-sheet" class="md:hidden bottom-sheet">
+        <h3>Ordenar</h3>
+        <div class="sheet-actions" style="flex-direction:column; gap:8px;">
+          <button data-sort-value="">Relevancia</button>
+          <button data-sort-value="price-asc">Precio ↑</button>
+          <button data-sort-value="price-desc">Precio ↓</button>
+          <button id="close-sort" type="button">Cerrar</button>
+        </div>
+      </div>
+
+      <div id="sheet-backdrop" class="sheet-backdrop md:hidden"></div>
+
+      <!-- Active filter chips -->
+      <div id="active-chips" class="hidden flex-wrap gap-1.5 pb-2 px-3 md:px-0"></div>
 
       <!-- Spacer for product count (mobile) + grid -->
       <div class="md:hidden flex items-center justify-between mb-1 mt-1">
         <span id="product-count-mobile" class="text-[11px] font-medium text-gray-400 dark:text-gray-500">${state.products.length} productos</span>
       </div>
 
-      <section>
+      <section class="catalog-grid-wrapper">
         <div id="catalog-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4"></div>
       </section>
 
@@ -532,22 +538,45 @@ export function pageCatalog(state) {
 
 
       // ── Filter panel & chip logic ──
-      const toggleFiltersBtn = qs(root, '#toggle-filters')
-      const filterCountBadge = qs(root, '#filter-count-badge')
+      const openFiltersBtn = qs(root, '#open-filters')
+      const filtersCount = qs(root, '#filters-count')
       const mobilePanel = qs(root, '#filter-controls-mobile')
       const resetBtn = qs(root, '#reset-filters')
       const resetBtnMobile = qs(root, '#reset-filters-mobile')
+      const closeFilters = qs(root, '#close-filters')
+      const openSortBtn = qs(root, '#open-sort')
+      const sortSheet = qs(root, '#sort-sheet')
+      const sortLabelEl = qs(root, '#sort-label')
+      const closeSortBtn = qs(root, '#close-sort')
+      const sheetBackdrop = qs(root, '#sheet-backdrop')
       const chipsContainer = qs(root, '#active-chips')
+      const toolbar = qs(root, '#catalog-control-bar')
+      const toolbarControls = qs(root, '#toolbar-controls')
 
-      // Toggle mobile filter drawer
-      if (toggleFiltersBtn && mobilePanel) {
-        toggleFiltersBtn.addEventListener('click', () => {
-          const open = !mobilePanel.classList.contains('hidden')
-          mobilePanel.classList.toggle('hidden', open)
-          toggleFiltersBtn.classList.toggle('border-brand', !open)
-          toggleFiltersBtn.classList.toggle('text-brand', !open)
-        })
+      const openSheet = (sheet) => {
+        if (!sheet) return
+        sheet.classList.add('open')
+        sheetBackdrop?.classList.add('open')
+        document.body.style.overflow = 'hidden'
       }
+      const closeSheet = (sheet) => {
+        if (!sheet) return
+        sheet.classList.remove('open')
+        const anyOpen = [...root.querySelectorAll('.bottom-sheet')].some((s) => s.classList.contains('open'))
+        if (!anyOpen) {
+          sheetBackdrop?.classList.remove('open')
+          document.body.style.overflow = ''
+        }
+      }
+
+      openFiltersBtn?.addEventListener('click', () => openSheet(mobilePanel))
+      closeFilters?.addEventListener('click', () => closeSheet(mobilePanel))
+      openSortBtn?.addEventListener('click', () => openSheet(sortSheet))
+      closeSortBtn?.addEventListener('click', () => closeSheet(sortSheet))
+      sheetBackdrop?.addEventListener('click', () => {
+        closeSheet(mobilePanel)
+        closeSheet(sortSheet)
+      })
 
       // Active filter chip labels
       const chipLabels = { type: 'Tipo', size: 'Talla', color: 'Color', minPrice: 'Mín', maxPrice: 'Máx', sort: 'Orden' }
@@ -557,16 +586,18 @@ export function pageCatalog(state) {
         const f = getFilterState(root)
         const activeCount = [f.type, f.size, f.color, f.minPrice, f.maxPrice, f.sort].filter(Boolean).length
 
-        // Badge on mobile toggle button
-        if (filterCountBadge) {
+        if (filtersCount) {
           if (activeCount > 0) {
-            filterCountBadge.classList.remove('hidden')
-            filterCountBadge.classList.add('inline-flex')
-            filterCountBadge.textContent = activeCount
+            filtersCount.classList.remove('hidden')
+            filtersCount.textContent = activeCount
           } else {
-            filterCountBadge.classList.add('hidden')
-            filterCountBadge.classList.remove('inline-flex')
+            filtersCount.classList.add('hidden')
+            filtersCount.textContent = ''
           }
+        }
+
+        if (sortLabelEl) {
+          sortLabelEl.textContent = sortLabels[f.sort] || 'Relevancia'
         }
 
         // Contextual reset buttons (show only when filters active)
@@ -618,10 +649,7 @@ export function pageCatalog(state) {
         const si = qs(root, '#catalog-search')
         if (si) si.value = ''
         // Close mobile panel
-        if (mobilePanel) mobilePanel.classList.add('hidden')
-        if (toggleFiltersBtn) {
-          toggleFiltersBtn.classList.remove('border-brand', 'text-brand')
-        }
+        if (mobilePanel) closeSheet(mobilePanel)
         renderGrid()
       }
       if (resetBtn) resetBtn.addEventListener('click', resetAllFilters)
