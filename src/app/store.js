@@ -80,9 +80,9 @@ export async function loadProducts() {
     return
   }
 
-  // Create timeout promise that rejects after 3 seconds
+  // Create timeout promise that rejects after 10 seconds
   const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error('Timeout: La conexión a Supabase tardó más de 3 segundos')), 3000)
+    setTimeout(() => reject(new Error('Timeout: La conexión a Supabase tardó más de 10 segundos')), 10000)
   })
 
   try {

@@ -8,7 +8,7 @@ function container(children, theme = 'dark') {
   </div>`
 }
 
-export function layoutPublic({ contentHtml, state, showSearch = false, noPaddingTop = false, toolbarHtml = '' }) {
+export function layoutPublic({ contentHtml, state, showSearch = false, noPaddingTop = false }) {
   const count = (state.cart || []).reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
   const theme = state.theme || 'dark'
   const isDark = theme === 'dark'
@@ -34,18 +34,18 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
   return container(`
     <!-- Free Shipping Banner -->
     <div class="bg-brand text-white text-center py-2 px-4">
-      <p class="text-xs font-medium flex items-center justify-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
-        </svg>
-        <span>Envío GRATIS en compras +$${BRAND.freeShippingMin} MXN</span>
-      </p>
-    </div>
+        <p class="text-xs font-medium flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+          </svg>
+          <span>Envío GRATIS en compras +$${BRAND.freeShippingMin} MXN</span>
+        </p>
+      </div>
 
-    <header class="sticky top-0 z-30 ${isDark ? 'bg-black/95' : 'bg-white/95'} backdrop-blur-lg border-b ${isDark ? 'border-gray-800/50' : 'border-gray-200'}">
-      ${searchBarHtml}
-      <!-- Navigation -->
-      <div class="mx-auto flex w-full max-w-screen-xl items-center justify-between px-4 py-3">
+    <header class="sticky top-0 z-40 ${isDark ? 'bg-black/95' : 'bg-white/95'} backdrop-blur-lg border-b ${isDark ? 'border-gray-800/50' : 'border-gray-200'}">
+        ${searchBarHtml}
+        <!-- Navigation -->
+        <div class="mx-auto flex w-full max-w-screen-xl items-center justify-between px-4 py-3">
         <a href="#/" class="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
           <img src="logo.png" alt="G&L" class="h-10 w-auto object-contain" />
         </a>
@@ -73,8 +73,6 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
         </nav>
       </div>
     </header>
-
-    ${toolbarHtml}
 
     <main class="mx-auto w-full max-w-screen-xl px-3 md:px-4 ${noPaddingTop ? 'pt-0' : 'pt-3 md:pt-5'} pb-24 md:pb-24 overflow-x-hidden mb-16 md:mb-0" id="main-content">
       ${contentHtml}

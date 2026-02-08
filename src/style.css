@@ -452,6 +452,14 @@ body.dark {
 
 /* ─── Sticky Catalog Control Bar ─── */
 
+#catalog-control-bar.is-fixed {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 50 !important;
+}
+
 .search-pill {
   position: relative;
 }

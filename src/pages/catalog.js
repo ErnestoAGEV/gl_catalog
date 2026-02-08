@@ -290,7 +290,8 @@ function quickViewModal(p) {
   `
 }
 
-export function pageCatalog(state) {
+export function pageCatalog(initialState) {
+  let state = initialState
   const types = uniqueSorted(state.products.map((p) => p.type))
   const sizes = uniqueSorted(state.products.flatMap((p) => p.sizes || []))
   const colors = uniqueSorted(state.products.flatMap((p) => p.colors || []))
@@ -299,10 +300,12 @@ export function pageCatalog(state) {
 
   const isDark = state.theme === 'dark'
 
-  const toolbarHtml = `
-    <!-- Sticky Catalog Control Bar -->
-    <div id="catalog-control-bar" class="sticky top-[65px] z-30 bg-white dark:bg-black border-b border-black/5 dark:border-white/5 backdrop-blur-md">
-      <div class="mx-auto w-full max-w-screen-xl px-3 md:px-4 py-2.5 md:py-3">
+  return {
+    title: 'Catálogo | G&L',
+    noPaddingTop: true,
+    html: `
+      <!-- Catalog Control Bar -->
+      <div id="catalog-control-bar" class="bg-white dark:bg-black border-b border-black/5 dark:border-white/5 -mx-3 md:-mx-4 px-3 md:px-4 py-2.5 md:py-3">
         <div class="flex flex-col gap-2.5">
           <!-- Search row -->
           <div class="flex items-center gap-2">
@@ -311,15 +314,15 @@ export function pageCatalog(state) {
               <input type="search" id="catalog-search" placeholder="Buscar productos..." value="${getSearchQuery() || ''}" aria-label="Buscar productos" />
             </div>
             <div class="toolbar-actions">
-              <button id="open-filters" class="toolbar-btn">
+              <button id="open-filters" class="toolbar-btn md:hidden">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M7 12h10m-6 8h2"/></svg>
-                <span class="label hidden md:inline">Filtros</span>
                 <span id="filters-count" class="count-badge hidden"></span>
               </button>
-              <button id="open-sort" class="toolbar-btn">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7l4-4 4 4M8 17l4 4 4-4"/></svg>
-                <span id="sort-label" class="label hidden md:inline">Relevancia</span>
-              </button>
+              <select name="sort" id="sort-select" class="toolbar-btn appearance-none cursor-pointer pr-6 bg-no-repeat bg-right" style="background-image: url('data:image/svg+xml;utf8,<svg fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M19 9l-7 7-7-7\"/></svg>'); background-size: 12px; background-position: right 8px center;">
+                <option value="">Ordenar</option>
+                <option value="price-asc">Precio ↑</option>
+                <option value="price-desc">Precio ↓</option>
+              </select>
             </div>
           </div>
 
@@ -340,25 +343,13 @@ export function pageCatalog(state) {
           </div>
         </div>
       </div>
-    </div>
-  `
 
-  return {
-    title: 'Catálogo | G&L',
-    noPaddingTop: true,
-    toolbarHtml,
-    html: `
       <div id="filter-controls-mobile" class="md:hidden bottom-sheet">
         <h3>Filtros</h3>
         <div class="grid grid-cols-2 gap-2 mb-2">
           <select name="type">${options(types, 'Tipo')}</select>
           <select name="size">${options(sizes, 'Talla')}</select>
           <select name="color">${options(colors, 'Color')}</select>
-          <select name="sort">
-            <option value="">Relevancia</option>
-            <option value="price-asc">Precio ↑</option>
-            <option value="price-desc">Precio ↓</option>
-          </select>
         </div>
         <div class="flex gap-2 mb-2">
           <input name="minPrice" inputmode="numeric" type="number" min="0" placeholder="Precio mín." />
@@ -367,16 +358,6 @@ export function pageCatalog(state) {
         <div class="sheet-actions">
           <button id="close-filters" type="button">Cerrar</button>
           <button id="reset-filters-mobile" type="button">Limpiar</button>
-        </div>
-      </div>
-
-      <div id="sort-sheet" class="md:hidden bottom-sheet">
-        <h3>Ordenar</h3>
-        <div class="sheet-actions" style="flex-direction:column; gap:8px;">
-          <button data-sort-value="">Relevancia</button>
-          <button data-sort-value="price-asc">Precio ↑</button>
-          <button data-sort-value="price-desc">Precio ↓</button>
-          <button id="close-sort" type="button">Cerrar</button>
         </div>
       </div>
 
@@ -409,24 +390,11 @@ export function pageCatalog(state) {
       const productCountMobile = qs(root, '#product-count-mobile')
       const modalContainer = qs(root, '#modal-container')
 
-      // Sticky shadow detection via IntersectionObserver
-      const controlBar = qs(root, '#catalog-control-bar')
-      if (controlBar) {
-        const sentinel = document.createElement('div')
-        sentinel.className = 'catalog-sticky-sentinel'
-        sentinel.setAttribute('aria-hidden', 'true')
-        controlBar.before(sentinel)
-        const observer = new IntersectionObserver(
-          ([entry]) => controlBar.classList.toggle('is-stuck', !entry.isIntersecting),
-          { threshold: 0 }
-        )
-        observer.observe(sentinel)
-      }
-
-
       const renderGrid = () => {
         const filters = getFilterState(root)
         const searchQuery = getSearchQuery()
+        
+        console.log('renderGrid called', { isLoading: state.isLoading, productsCount: state.products.length })
         
         // Show loading state
         if (state.isLoading) {
@@ -484,6 +452,7 @@ export function pageCatalog(state) {
           }
           return
         }
+        console.log('Rendering products:', visible.length, visible.slice(0, 2))
         grid.innerHTML = visible.map((p, idx) => productCard(p, idx)).join('')
         
         // Initialize carousels for products with multiple images
@@ -544,14 +513,11 @@ export function pageCatalog(state) {
       const resetBtn = qs(root, '#reset-filters')
       const resetBtnMobile = qs(root, '#reset-filters-mobile')
       const closeFilters = qs(root, '#close-filters')
-      const openSortBtn = qs(root, '#open-sort')
-      const sortSheet = qs(root, '#sort-sheet')
-      const sortLabelEl = qs(root, '#sort-label')
-      const closeSortBtn = qs(root, '#close-sort')
       const sheetBackdrop = qs(root, '#sheet-backdrop')
       const chipsContainer = qs(root, '#active-chips')
       const toolbar = qs(root, '#catalog-control-bar')
       const toolbarControls = qs(root, '#toolbar-controls')
+      const sortLabelEl = root.querySelector('#sort-label')
 
       const openSheet = (sheet) => {
         if (!sheet) return
@@ -571,11 +537,8 @@ export function pageCatalog(state) {
 
       openFiltersBtn?.addEventListener('click', () => openSheet(mobilePanel))
       closeFilters?.addEventListener('click', () => closeSheet(mobilePanel))
-      openSortBtn?.addEventListener('click', () => openSheet(sortSheet))
-      closeSortBtn?.addEventListener('click', () => closeSheet(sortSheet))
       sheetBackdrop?.addEventListener('click', () => {
         closeSheet(mobilePanel)
-        closeSheet(sortSheet)
       })
 
       // Active filter chip labels

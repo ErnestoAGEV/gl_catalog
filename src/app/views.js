@@ -36,7 +36,7 @@ export function renderRoute(path, state) {
 
   return {
     title,
-    html: layoutPublic({ title, contentHtml: view.html, state, showSearch: view.showSearch, noPaddingTop: view.noPaddingTop, toolbarHtml: view.toolbarHtml || '' }),
+    html: layoutPublic({ title, contentHtml: view.html, state, showSearch: view.showSearch, noPaddingTop: view.noPaddingTop }),
     onMount: view.onMount,
   }
 }
