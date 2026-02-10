@@ -148,10 +148,10 @@ function quickViewModal(p) {
 
   // Modal carousel HTML (larger version)
   const modalCarouselHTML = images.length > 1 ? `
-    <div class="modal-carousel relative overflow-hidden ${isPerfume ? 'bg-white' : 'bg-gray-100'}" data-modal-carousel>
+    <div class="modal-carousel relative overflow-hidden ${isPerfume ? 'bg-white' : 'bg-gray-100'} cursor-zoom-in" data-modal-carousel>
       <div class="modal-carousel-track flex transition-transform duration-300" data-modal-track>
         ${images.map((img, i) => `
-          <img src="${img}" alt="${p.name}" class="w-full aspect-square md:aspect-[4/5] ${modalImageFitClass} flex-shrink-0 min-w-full" data-modal-slide="${i}"/>
+          <img src="${img}" alt="${p.name}" class="modal-img-zoomable w-full aspect-square md:aspect-[4/5] ${modalImageFitClass} flex-shrink-0 min-w-full transition-transform duration-200" data-modal-slide="${i}"/>
         `).join('')}
       </div>
       
@@ -192,8 +192,8 @@ function quickViewModal(p) {
       </div>
     </div>
   ` : `
-    <div class="relative ${isPerfume ? 'bg-white' : 'bg-gray-100'}">
-      <img src="${images[0]}" alt="${p.name}" class="w-full aspect-square md:aspect-[4/5] ${modalImageFitClass}"/>
+    <div class="relative overflow-hidden ${isPerfume ? 'bg-white' : 'bg-gray-100'} cursor-zoom-in" data-modal-single>
+      <img src="${images[0]}" alt="${p.name}" class="modal-img-zoomable w-full aspect-square md:aspect-[4/5] ${modalImageFitClass} transition-transform duration-200"/>
       
       <!-- Close button -->
       <button id="close-quickview" class="absolute top-3 right-3 w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur shadow-lg flex items-center justify-center text-gray-700 dark:text-white hover:bg-white dark:hover:bg-gray-700 transition-colors z-20">
@@ -243,25 +243,39 @@ function quickViewModal(p) {
             ` : ''}
             
             <!-- Selectors -->
-            <div class="grid grid-cols-2 gap-3 mb-5">
-              <div>
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Talla</label>
-                <div class="relative">
-                  <select id="qv-size" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:border-brand focus:ring-1 focus:ring-brand appearance-none">
-                    ${sizeOpts}
-                  </select>
-                  <svg class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            <div class="mb-5">
+              <!-- Size Buttons -->
+              ${(p.sizes && p.sizes.length > 0) ? `
+                <div class="mb-4">
+                  <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Talla</label>
+                  <div class="grid grid-cols-4 gap-2" id="qv-size-buttons">
+                    ${p.sizes.map(size => `
+                      <button 
+                        class="qv-size-btn py-2.5 px-2 rounded-lg border-2 transition-all text-sm font-medium
+                               border-gray-200 hover:border-brand hover:text-brand
+                               dark:border-gray-700 dark:hover:border-brand dark:hover:text-brand
+                               active:scale-95 text-gray-700 dark:text-gray-300" 
+                        data-size="${size}"
+                        type="button">
+                        ${size}
+                      </button>
+                    `).join('')}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Color</label>
-                <div class="relative">
-                  <select id="qv-color" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:border-brand focus:ring-1 focus:ring-brand appearance-none">
-                    ${colorOpts}
-                  </select>
-                  <svg class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              ` : ''}
+              
+              <!-- Color Dropdown -->
+              ${(p.colors && p.colors.length > 0) ? `
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Color</label>
+                  <div class="relative">
+                    <select id="qv-color" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:border-brand focus:ring-1 focus:ring-brand appearance-none">
+                      ${colorOpts}
+                    </select>
+                    <svg class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                  </div>
                 </div>
-              </div>
+              ` : ''}
             </div>
             
             <!-- Add to cart button -->
@@ -703,7 +717,27 @@ export function pageCatalog(initialState) {
         trackProductView(product.id)
         modalContainer.innerHTML = quickViewModal(product)
         document.body.style.overflow = 'hidden'
-        const closeModal = () => { modalContainer.innerHTML = ''; document.body.style.overflow = '' }
+        
+        const closeModal = () => { 
+          // Reset size button selections
+          modalContainer.querySelectorAll('.qv-size-btn').forEach(btn => {
+            btn.classList.remove('qv-size-selected', 'border-brand', 'bg-brand', 'text-white', '!border-brand', '!bg-brand', '!text-white')
+          })
+          
+          // Reset zoom state
+          modalContainer.querySelectorAll('.modal-img-zoomable').forEach(img => {
+            img.style.transform = ''
+            img.style.transformOrigin = ''
+          })
+          
+          // Reset container cursor styles
+          const containers = modalContainer.querySelectorAll('[data-modal-carousel], [data-modal-single]')
+          containers.forEach(c => { c.style.cursor = '' })
+          
+          // Clear modal and restore scroll
+          modalContainer.innerHTML = ''
+          document.body.style.overflow = ''
+        }
         modalContainer.querySelector('#close-quickview').addEventListener('click', closeModal)
         modalContainer.querySelector('#quick-view-modal').addEventListener('click', (e) => { if (e.target.id === 'quick-view-modal') closeModal() })
         
@@ -804,13 +838,171 @@ export function pageCatalog(initialState) {
           }, { passive: true })
         }
         
+        // Image zoom functionality
+        const zoomableImages = modalContainer.querySelectorAll('.modal-img-zoomable')
+        const imageContainers = [
+          modalContainer.querySelector('[data-modal-carousel]'),
+          modalContainer.querySelector('[data-modal-single]')
+        ].filter(Boolean)
+        
+        imageContainers.forEach(container => {
+          if (!container) return
+          
+          let isZoomLocked = false
+          
+          // Desktop: hover + mousemove zoom
+          const handleMouseMove = (e) => {
+            const img = container.querySelector('.modal-img-zoomable')
+            if (!img) return
+            
+            const rect = container.getBoundingClientRect()
+            const x = ((e.clientX - rect.left) / rect.width) * 100
+            const y = ((e.clientY - rect.top) / rect.height) * 100
+            
+            img.style.transformOrigin = `${x}% ${y}%`
+            
+            if (!isZoomLocked) {
+              img.style.transform = 'scale(1.5)'
+              container.style.cursor = 'zoom-out'
+            }
+          }
+          
+          const handleMouseLeave = () => {
+            const img = container.querySelector('.modal-img-zoomable')
+            if (!img || isZoomLocked) return
+            
+            img.style.transform = 'scale(1)'
+            img.style.transformOrigin = 'center'
+            container.style.cursor = 'zoom-in'
+          }
+          
+          const handleClick = (e) => {
+            // Don't zoom if clicking navigation buttons or thumbnails
+            if (e.target.closest('[data-modal-prev], [data-modal-next], [data-modal-thumb]')) return
+            
+            const img = container.querySelector('.modal-img-zoomable')
+            if (!img) return
+            
+            isZoomLocked = !isZoomLocked
+            
+            if (isZoomLocked) {
+              container.style.cursor = 'grab'
+            } else {
+              img.style.transform = 'scale(1)'
+              img.style.transformOrigin = 'center'
+              container.style.cursor = 'zoom-in'
+            }
+          }
+          
+          // Only add desktop zoom on larger screens
+          if (window.innerWidth >= 768) {
+            container.addEventListener('mousemove', handleMouseMove)
+            container.addEventListener('mouseleave', handleMouseLeave)
+            container.addEventListener('click', handleClick)
+          }
+          
+          // Mobile: pinch-to-zoom
+          let initialDistance = 0
+          let initialScale = 1
+          
+          container.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+              e.preventDefault()
+              const touch1 = e.touches[0]
+              const touch2 = e.touches[1]
+              initialDistance = Math.hypot(
+                touch2.clientX - touch1.clientX,
+                touch2.clientY - touch1.clientY
+              )
+              
+              const img = container.querySelector('.modal-img-zoomable')
+              if (img) {
+                const currentTransform = img.style.transform
+                const match = currentTransform.match(/scale\(([^)]+)\)/)
+                initialScale = match ? parseFloat(match[1]) : 1
+              }
+            }
+          }, { passive: false })
+          
+          container.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+              e.preventDefault()
+              e.stopPropagation()
+              
+              const touch1 = e.touches[0]
+              const touch2 = e.touches[1]
+              const currentDistance = Math.hypot(
+                touch2.clientX - touch1.clientX,
+                touch2.clientY - touch1.clientY
+              )
+              
+              const scale = Math.max(1, Math.min(3, initialScale * (currentDistance / initialDistance)))
+              
+              const img = container.querySelector('.modal-img-zoomable')
+              if (img) {
+                img.style.transform = `scale(${scale})`
+                
+                // Update cursor based on zoom level
+                if (scale > 1) {
+                  container.style.cursor = 'zoom-out'
+                } else {
+                  container.style.cursor = 'zoom-in'
+                }
+              }
+            }
+          }, { passive: false })
+          
+          container.addEventListener('touchend', (e) => {
+            if (e.touches.length < 2) {
+              initialDistance = 0
+            }
+          }, { passive: true })
+        })
+        
+        // Size button selection logic
+        const sizeButtons = modalContainer.querySelectorAll('.qv-size-btn')
+        sizeButtons.forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            // Remove selection from all buttons
+            sizeButtons.forEach(b => {
+              b.classList.remove('qv-size-selected', 'border-brand', 'bg-brand', 'text-white', '!border-brand', '!bg-brand', '!text-white')
+              b.classList.add('border-gray-200', 'dark:border-gray-700', 'text-gray-700', 'dark:text-gray-300')
+            })
+            // Add selection to clicked button
+            btn.classList.add('qv-size-selected', '!border-brand', '!bg-brand', '!text-white')
+            btn.classList.remove('border-gray-200', 'dark:border-gray-700', 'text-gray-700', 'dark:text-gray-300', 'hover:text-brand')
+            
+            // Enable add-to-cart button
+            const qvAddBtn = modalContainer.querySelector('#qv-add-to-cart')
+            if (qvAddBtn) {
+              qvAddBtn.disabled = false
+              qvAddBtn.classList.remove('opacity-50', 'cursor-not-allowed')
+            }
+          })
+        })
+        
         const qvAddBtn = modalContainer.querySelector('#qv-add-to-cart')
+        
+        // Disable button initially if product has sizes but none selected
+        if (product.sizes && product.sizes.length > 0) {
+          qvAddBtn.disabled = true
+          qvAddBtn.classList.add('opacity-50', 'cursor-not-allowed')
+        }
+        
         qvAddBtn.addEventListener('click', () => {
           if (qvAddBtn.disabled) return
           qvAddBtn.disabled = true
           
-          const size = modalContainer.querySelector('#qv-size').value
-          const color = modalContainer.querySelector('#qv-color').value
+          // Get selected size from button
+          const selectedSizeBtn = modalContainer.querySelector('.qv-size-selected')
+          const size = selectedSizeBtn ? selectedSizeBtn.dataset.size : ''
+          
+          // Get color from dropdown if it exists
+          const colorSelect = modalContainer.querySelector('#qv-color')
+          const color = colorSelect ? colorSelect.value : ''
+          
           addToCart({ productId: product.id, size, color, qty: 1 })
           
           // Update cart counter in header immediately

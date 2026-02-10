@@ -8,7 +8,7 @@ import { showMiniCart } from '../app/miniCart.js'
 // Hero slides for carousel
 const heroSlides = [
   {
-    image: 'https://images.unsplash.com/photo-1507680434567-5739c80be1ac?w=800&h=600&fit=crop',
+    image: '/gl_catalog/bannergl.jpg',
     badge: 'NUEVA COLECCIÓN 2026',
     title: 'Estilo<br/>sin esfuerzo',
     subtitle: 'Descubre tu estilo con nosotros.',
