@@ -1,4 +1,4 @@
-import { addToCart, searchProducts, setSearchQuery, getSearchQuery, cartCount, subscribe, trackProductView } from '../app/store.js'
+import { addToCart, searchProducts, setSearchQuery, getSearchQuery, cartCount, subscribe, trackProductView, getState } from '../app/store.js'
 import { formatMoney } from '../app/format.js'
 import { on, qs } from '../app/dom.js'
 import { showToast } from '../app/toast.js'
@@ -283,6 +283,39 @@ function quickViewModal(p) {
                 </span>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+function sizeSelectionModal(p) {
+  const sizes = p.sizes || []
+  
+  return `
+    <div id="quick-add-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+      <div class="bg-white dark:bg-gray-900 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-slide-up border border-gray-100 dark:border-gray-800">
+        <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3">
+          <div class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0">
+            <img src="${p.images?.[0] || ''}" alt="${p.name}" class="w-full h-full object-cover">
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Selecciona tu talla</p>
+            <h3 class="font-bold text-gray-900 dark:text-white truncate text-sm">${p.name}</h3>
+          </div>
+          <button id="close-quick-add" class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+        
+        <div class="p-5">
+          <div class="grid grid-cols-3 gap-2">
+            ${sizes.map(size => `
+              <button class="size-select-btn py-2.5 px-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-brand hover:text-brand dark:hover:border-brand dark:hover:text-brand active:bg-brand/5 transition-all text-sm font-medium text-gray-700 dark:text-gray-300" data-size="${size}">
+                ${size}
+              </button>
+            `).join('')}
           </div>
         </div>
       </div>
@@ -805,46 +838,90 @@ export function pageCatalog(initialState) {
         ev.preventDefault()
         ev.stopPropagation()
         if (btn.dataset.busy) return
-        btn.dataset.busy = '1'
 
         const id = btn.dataset.quickAdd
-        addToCart({ productId: id, size: '', color: '', qty: 1 })
+        const currentState = getState()
+        const product = currentState.products.find(p => p.id === id)
+        
+        // Helper to perform the actual cart push
+        const doAddToCart = (size = '') => {
+          if (btn.dataset.busy) return
+          btn.dataset.busy = '1'
 
-        // Update cart badge
-        const count = cartCount()
-        const cartBadge = document.querySelector('a[href="#/cart"] span')
-        if (cartBadge) {
-          cartBadge.textContent = count
-        } else {
-          const cartLink = document.querySelector('a[href="#/cart"]')
-          if (cartLink) {
-            const b = document.createElement('span')
-            b.className = 'absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white'
-            b.textContent = count
-            cartLink.appendChild(b)
+          addToCart({ productId: id, size, color: '', qty: 1 })
+
+          // Update cart badge
+          const count = cartCount()
+          const cartBadge = document.querySelector('a[href="#/cart"] span')
+          if (cartBadge) {
+            cartBadge.textContent = count
+          } else {
+            const cartLink = document.querySelector('a[href="#/cart"]')
+            if (cartLink) {
+              const b = document.createElement('span')
+              b.className = 'absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white'
+              b.textContent = count
+              cartLink.appendChild(b)
+            }
           }
-        }
 
-        // Transition: icon → spinner → check
-        const icon = btn.querySelector('.quick-add-icon')
-        const spinner = btn.querySelector('.quick-add-spinner')
-        const check = btn.querySelector('.quick-add-check')
-        icon.classList.add('hidden')
-        spinner.classList.remove('hidden')
-
-        setTimeout(() => {
-          spinner.classList.add('hidden')
-          check.classList.remove('hidden')
-          btn.classList.add('!bg-green-500', '!text-white')
-          showMiniCart(id)
+          // Transition: icon → spinner → check
+          const icon = btn.querySelector('.quick-add-icon')
+          const spinner = btn.querySelector('.quick-add-spinner')
+          const check = btn.querySelector('.quick-add-check')
+          icon.classList.add('hidden')
+          spinner.classList.remove('hidden')
 
           setTimeout(() => {
-            check.classList.add('hidden')
-            icon.classList.remove('hidden')
-            btn.classList.remove('!bg-green-500', '!text-white')
-            delete btn.dataset.busy
-          }, 1200)
-        }, 350)
+            spinner.classList.add('hidden')
+            check.classList.remove('hidden')
+            btn.classList.add('!bg-green-500', '!text-white')
+            showMiniCart(id)
+
+            setTimeout(() => {
+              check.classList.add('hidden')
+              icon.classList.remove('hidden')
+              btn.classList.remove('!bg-green-500', '!text-white')
+              delete btn.dataset.busy
+            }, 1200)
+          }, 350)
+        }
+
+        // Check if product has sizes
+        if (product && product.sizes && product.sizes.length > 0) {
+          // Open Size Selection Modal
+          modalContainer.innerHTML = sizeSelectionModal(product)
+          
+          // Setup listeners for the modal
+          const closeModal = () => { modalContainer.innerHTML = '' }
+          
+          const closeBtn = modalContainer.querySelector('#close-quick-add')
+          if (closeBtn) closeBtn.addEventListener('click', closeModal)
+          
+          // Dismiss on backdrop click
+          const modalEl = modalContainer.querySelector('#quick-add-modal')
+          if (modalEl) {
+            modalEl.addEventListener('click', (e) => { 
+              if (e.target.id === 'quick-add-modal') closeModal() 
+            })
+          }
+
+          // Handle size click
+          const sizeButtons = modalContainer.querySelectorAll('.size-select-btn')
+          sizeButtons.forEach(sizeBtn => {
+            sizeBtn.addEventListener('click', (e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              const selectedSize = sizeBtn.dataset.size
+              closeModal()
+              doAddToCart(selectedSize)
+            })
+          })
+
+        } else {
+          // No sizes, just add immediately
+          doAddToCart('')
+        }
       })
 
       // Return cleanup function

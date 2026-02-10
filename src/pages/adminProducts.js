@@ -104,6 +104,10 @@ function productCard(p) {
 
 export function pageAdminProducts(state) {
   const productCount = state.products.length
+  
+  // Extract unique colors from all products
+  const allColors = [...new Set(state.products.flatMap(p => p.colors || []).map(c => c.trim()))].sort()
+
   const badgeOptions = BADGE_OPTIONS.map(b => 
     `<option value="${b.value}">${b.label}</option>`
   ).join('')
@@ -297,8 +301,23 @@ export function pageAdminProducts(state) {
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Colores disponibles *
                 </label>
-                <input name="colors" id="colors-input" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none transition-colors" placeholder="Negro, Blanco, Azul" />
-                <p class="text-xs text-gray-500 mt-2" id="colors-help">Para perfumes se deshabilita automáticamente.</p>
+                
+                <!-- Existing colors selection -->
+                <div id="existing-colors-container" class="mb-3">
+                  <p class="text-xs text-gray-500 mb-2">Colores frecuentes (clic para seleccionar)</p>
+                  <div class="flex flex-wrap gap-2">
+                    ${allColors.length > 0 ? allColors.map(color => `
+                      <button type="button" class="px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50 text-sm font-medium text-gray-600 hover:border-gray-300 transition-colors" data-color-badge="${color}">
+                        ${color}
+                      </button>
+                    `).join('') : '<span class="text-xs text-gray-400 italic">No hay colores registrados aún</span>'}
+                  </div>
+                </div>
+
+                <div class="relative">
+                  <input name="customColors" id="colors-input" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none transition-colors" placeholder="Otros colores... (separar por comas)" />
+                  <p class="text-xs text-gray-500 mt-2" id="colors-help">Puedes seleccionar de arriba o escribir nuevos.</p>
+                </div>
               </div>
             </div>
 
@@ -364,9 +383,11 @@ export function pageAdminProducts(state) {
       const imagePreviewsContainer = qs(root, '#image-previews')
       const dropzone = qs(root, '#dropzone')
       const clearImagesBtn = qs(root, '#clear-images')
+      const existingColorsContainer = qs(root, '#existing-colors-container')
 
       let pendingDeleteId = null
       let isDeleteModalOpen = false
+      let selectedColorBadges = new Set()
 
       const ensureDeleteModal = () => {
         let modal = document.getElementById('delete-confirm-modal')
@@ -505,6 +526,35 @@ export function pageAdminProducts(state) {
         })
       }
 
+      // Color Badges Logic
+      const updateColorBadges = () => {
+        if (!existingColorsContainer) return
+        const badges = existingColorsContainer.querySelectorAll('[data-color-badge]')
+        badges.forEach(badge => {
+          const color = badge.dataset.colorBadge
+          if (selectedColorBadges.has(color)) {
+            badge.classList.remove('bg-gray-50', 'text-gray-600', 'border-gray-200')
+            badge.classList.add('bg-brand', 'text-white', 'border-brand')
+          } else {
+            badge.classList.add('bg-gray-50', 'text-gray-600', 'border-gray-200')
+            badge.classList.remove('bg-brand', 'text-white', 'border-brand')
+          }
+        })
+      }
+
+      if (existingColorsContainer) {
+        on(existingColorsContainer, 'click', '[data-color-badge]', (e, btn) => {
+          e.preventDefault()
+          const color = btn.dataset.colorBadge
+          if (selectedColorBadges.has(color)) {
+            selectedColorBadges.delete(color)
+          } else {
+            selectedColorBadges.add(color)
+          }
+          updateColorBadges()
+        })
+      }
+
       let isEditing = false
       let selectedFiles = [] // Multiple archivos locales
 
@@ -525,13 +575,17 @@ export function pageAdminProducts(state) {
 
         if (colorsInput) {
           colorsInput.disabled = isPerfume
-          colorsInput.placeholder = isPerfume ? 'No requerido para perfumes' : 'Negro, Blanco, Azul'
-          if (isPerfume) colorsInput.value = ''
+          colorsInput.placeholder = isPerfume ? 'No requerido para perfumes' : 'Otros colores... (separar por comas)'
+          if (isPerfume) {
+            colorsInput.value = ''
+            selectedColorBadges.clear()
+            updateColorBadges()
+          }
         }
         if (colorsHelp) {
           colorsHelp.textContent = isPerfume
             ? 'Para perfumes el color no aplica.'
-            : 'Separar por comas: Negro, Blanco, Azul.'
+            : 'Puedes seleccionar de arriba o escribir nuevos.'
         }
       }
 
@@ -608,9 +662,13 @@ export function pageAdminProducts(state) {
         formSection.classList.add('hidden')
         toggleFormBtn.classList.remove('hidden')
         form.reset()
-        handleTypeChange()
         selectedFiles = []
         fileInput.value = ''
+        selectedColorBadges.clear()
+        
+        // Reset colors logic
+        handleTypeChange()
+        updateColorBadges()
 
         renderPreviews()
         renderList()
@@ -724,7 +782,11 @@ export function pageAdminProducts(state) {
         // Get checked sizes from checkboxes
         const sizeCheckboxes = root.querySelectorAll('input[name="sizes"]:checked')
         const sizes = Array.from(sizeCheckboxes).map(cb => cb.value)
-        const colors = isPerfume ? [] : parseList(qs(root, 'input[name="colors"]').value)
+        
+        // Colores: Combinar Badges + Input Custom
+        const customColorsParts = parseList(qs(root, 'input[name="customColors"]').value)
+        const colorsCombined = new Set([...selectedColorBadges, ...customColorsParts])
+        const colors = isPerfume ? [] : Array.from(colorsCombined)
         
         // Get multiple image URLs from textarea (comma-separated)
         const imageUrlsRaw = qs(root, 'textarea[name="imageUrls"]').value.trim()
@@ -785,7 +847,7 @@ export function pageAdminProducts(state) {
         const wrap = btn.closest('[data-product]')
         const id = wrap?.getAttribute('data-id')
         if (!id) return
-
+        
         const product = state.products.find(p => p.id === id)
         if (!product) return
 
@@ -816,8 +878,31 @@ export function pageAdminProducts(state) {
           cb.checked = (product.sizes || []).includes(cb.value)
         })
         
-        // Populate colors
-        qs(root, 'input[name="colors"]').value = (product.colors || []).join(', ')
+        // Populate colors (Existing Badge vs Custom Input)
+        selectedColorBadges.clear()
+        const allColorNames = (product.colors || [])
+        const customParts = []
+
+        // Como `allColors` se calculó en base a `state.products`, TODOS los colores del producto
+        // deberían estar en la lista de badges, EXCEPTUANDO si el filtro de duplicados/trim falló.
+        // Pero asumimos que coincidirán.
+        // Para robustez manual: revisamos si existe el badge en el DOM de `existingColorsContainer`
+        // O más fácil: revisamos si está en `allColors` (que tenemos en closure scope, pero no en update...)
+        // Espera, `allColors` está en `pageAdminProducts` scope, no en `onMount` scope?
+        // Ah, `onMount` es propiedad del objeto retornado por `pageAdminProducts`.
+        // `allColors` vive en `pageAdminProducts` scope. JS Closures funcionan.
+        // Sí, `onMount` tiene acceso a `allColors`.
+
+        allColorNames.forEach(c => {
+          if (allColors.includes(c)) {
+            selectedColorBadges.add(c)
+          } else {
+            customParts.push(c)
+          }
+        })
+        
+        updateColorBadges()
+        qs(root, 'input[name="customColors"]').value = customParts.join(', ')
 
         // Scroll to form
         formSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
