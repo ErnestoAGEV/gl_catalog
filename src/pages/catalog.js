@@ -315,7 +315,7 @@ function sizeSelectionModal(p) {
             <img src="${p.images?.[0] || ''}" alt="${p.name}" class="w-full h-full object-cover">
           </div>
           <div class="min-w-0 flex-1">
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Selecciona tu talla</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">${sizes.length > 0 ? 'Selecciona tu talla' : 'Agregar al carrito'}</p>
             <h3 class="font-bold text-gray-900 dark:text-white truncate text-sm">${p.name}</h3>
           </div>
           <button id="close-quick-add" class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">
@@ -324,13 +324,19 @@ function sizeSelectionModal(p) {
         </div>
         
         <div class="p-5">
-          <div class="grid grid-cols-3 gap-2">
-            ${sizes.map(size => `
-              <button class="size-select-btn py-2.5 px-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-brand hover:text-brand dark:hover:border-brand dark:hover:text-brand active:bg-brand/5 transition-all text-sm font-medium text-gray-700 dark:text-gray-300" data-size="${size}">
-                ${size}
-              </button>
-            `).join('')}
-          </div>
+          ${sizes.length > 0 ? `
+            <div class="grid grid-cols-3 gap-2">
+              ${sizes.map(size => `
+                <button class="size-select-btn py-2.5 px-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-brand hover:text-brand dark:hover:border-brand dark:hover:text-brand active:bg-brand/5 transition-all text-sm font-medium text-gray-700 dark:text-gray-300" data-size="${size}">
+                  ${size}
+                </button>
+              `).join('')}
+            </div>
+          ` : `
+            <button class="size-select-btn w-full py-3 rounded-lg bg-brand hover:bg-brand-dark text-white font-semibold transition-colors" data-size="">
+              Agregar al carrito
+            </button>
+          `}
         </div>
       </div>
     </div>
@@ -1079,41 +1085,34 @@ export function pageCatalog(initialState) {
           }, 350)
         }
 
-        // Check if product has sizes
-        if (product && product.sizes && product.sizes.length > 0) {
-          // Open Size Selection Modal
-          modalContainer.innerHTML = sizeSelectionModal(product)
-          
-          // Setup listeners for the modal
-          const closeModal = () => { modalContainer.innerHTML = '' }
-          
-          const closeBtn = modalContainer.querySelector('#close-quick-add')
-          if (closeBtn) closeBtn.addEventListener('click', closeModal)
-          
-          // Dismiss on backdrop click
-          const modalEl = modalContainer.querySelector('#quick-add-modal')
-          if (modalEl) {
-            modalEl.addEventListener('click', (e) => { 
-              if (e.target.id === 'quick-add-modal') closeModal() 
-            })
-          }
-
-          // Handle size click
-          const sizeButtons = modalContainer.querySelectorAll('.size-select-btn')
-          sizeButtons.forEach(sizeBtn => {
-            sizeBtn.addEventListener('click', (e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              const selectedSize = sizeBtn.dataset.size
-              closeModal()
-              doAddToCart(selectedSize)
-            })
+        // Always open Size Selection Modal (even if no sizes available)
+        modalContainer.innerHTML = sizeSelectionModal(product)
+        
+        // Setup listeners for the modal
+        const closeModal = () => { modalContainer.innerHTML = '' }
+        
+        const closeBtn = modalContainer.querySelector('#close-quick-add')
+        if (closeBtn) closeBtn.addEventListener('click', closeModal)
+        
+        // Dismiss on backdrop click
+        const modalEl = modalContainer.querySelector('#quick-add-modal')
+        if (modalEl) {
+          modalEl.addEventListener('click', (e) => { 
+            if (e.target.id === 'quick-add-modal') closeModal() 
           })
-
-        } else {
-          // No sizes, just add immediately
-          doAddToCart('')
         }
+
+        // Handle size click
+        const sizeButtons = modalContainer.querySelectorAll('.size-select-btn')
+        sizeButtons.forEach(sizeBtn => {
+          sizeBtn.addEventListener('click', (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            const selectedSize = sizeBtn.dataset.size
+            closeModal()
+            doAddToCart(selectedSize)
+          })
+        })
       })
 
       // Return cleanup function
