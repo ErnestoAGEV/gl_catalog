@@ -69,14 +69,45 @@ function mapProductToRow(p) {
 }
 
 export async function loadProducts() {
-  // First load? Maybe show empty or verify if we want to show cached?
-  // For now, fetch fresh.
+  // Check for cached products first
+  const CACHE_KEY = 'gl_products_cache'
+  const CACHE_TIMESTAMP_KEY = 'gl_products_cache_timestamp'
+  const CACHE_TTL = 60 * 60 * 1000 // 1 hour in milliseconds
   
+  try {
+    const cachedProducts = localStorage.getItem(CACHE_KEY)
+    const cacheTimestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY)
+    
+    if (cachedProducts && cacheTimestamp) {
+      const age = Date.now() - parseInt(cacheTimestamp, 10)
+      
+      if (age < CACHE_TTL) {
+        // Cache is still fresh, use it
+        state.products = JSON.parse(cachedProducts)
+        state.isLoading = false
+        emit()
+        
+        // Still fetch in background to update cache
+        loadProductsFromSupabase(true)
+        return
+      }
+    }
+  } catch (err) {
+    console.warn('Cache read error:', err)
+  }
+  
+  // No cache or expired, load from Supabase
+  await loadProductsFromSupabase(false)
+}
+
+async function loadProductsFromSupabase(isBackgroundUpdate = false) {
   if (!supabase) {
     console.error('Supabase client not initialized')
-    alert('ERROR: No se pudo conectar a la base de datos. Verifica tu archivo .env y las credenciales (VITE_SUPABASE_URL).')
-    state.isLoading = false
-    emit()
+    if (!isBackgroundUpdate) {
+      alert('ERROR: No se pudo conectar a la base de datos. Verifica tu archivo .env y las credenciales (VITE_SUPABASE_URL).')
+      state.isLoading = false
+      emit()
+    }
     return
   }
 
@@ -100,6 +131,14 @@ export async function loadProducts() {
       state.products = data.map(mapRowToProduct)
       state.isLoading = false
       
+      // Save to cache
+      try {
+        localStorage.setItem('gl_products_cache', JSON.stringify(state.products))
+        localStorage.setItem('gl_products_cache_timestamp', Date.now().toString())
+      } catch (cacheError) {
+        console.warn('Failed to cache products:', cacheError)
+      }
+      
       // Clean up cart: remove items that no longer exist in DB
       const validProductIds = new Set(state.products.map(p => p.id))
       const initialCartSize = state.cart.length
@@ -109,13 +148,17 @@ export async function loadProducts() {
         writeJson(STORAGE_KEYS.cart, state.cart)
       }
 
-      emit()
+      if (!isBackgroundUpdate) {
+        emit()
+      }
     }
   } catch (err) {
     console.error('Error loading products:', err)
-    alert('ERROR DE RED: ' + err.message + '\n\nPosible causa: Firewall, antivirus, o red bloqueando Supabase.')
-    state.isLoading = false
-    emit()
+    if (!isBackgroundUpdate) {
+      alert('ERROR DE RED: ' + err.message + '\n\nPosible causa: Firewall, antivirus, o red bloqueando Supabase.')
+      state.isLoading = false
+      emit()
+    }
   }
 }
 

@@ -155,6 +155,7 @@ export function pageHome() {
               src="${heroSlides[0].image}"
               alt="Nueva Colección"
               class="absolute inset-0 w-full h-full object-cover object-center animate-fade-in"
+              loading="lazy"
             />
             <div class="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/60 to-transparent"></div>
             <div class="absolute inset-0 flex items-center p-6 md:p-12">
@@ -194,7 +195,7 @@ export function pageHome() {
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           <!-- Camisas -->
           <a href="#/catalog" class="relative aspect-[3/4] rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block">
-            <img src="https://i.pinimg.com/736x/f0/cc/e5/f0cce55c3da63f81343dd530422c7558.jpg" alt="Camisas" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"/>
+            <img src="https://i.pinimg.com/736x/f0/cc/e5/f0cce55c3da63f81343dd530422c7558.jpg" alt="Camisas" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy"/>
             <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-500"></div>
             <div class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
               <span class="inline-block px-3 py-1 bg-white/10 backdrop-blur rounded-full text-[10px] font-bold text-white uppercase tracking-widest mb-3 border border-white/20 shadow-sm">Casual</span>
@@ -205,7 +206,7 @@ export function pageHome() {
           
           <!-- Playeras -->
           <a href="#/catalog" class="relative aspect-[3/4] rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block">
-            <img src="https://i.pinimg.com/736x/9d/b5/3a/9db53ac193e070ec32bfc55102d5cadb.jpg" alt="Playeras" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"/>
+            <img src="https://i.pinimg.com/736x/9d/b5/3a/9db53ac193e070ec32bfc55102d5cadb.jpg" alt="Playeras" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy"/>
             <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-500"></div>
              <div class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
               <span class="inline-block px-3 py-1 bg-white/10 backdrop-blur rounded-full text-[10px] font-bold text-white uppercase tracking-widest mb-3 border border-white/20 shadow-sm">Básicos</span>
@@ -216,7 +217,7 @@ export function pageHome() {
           
           <!-- Pantalones -->
           <a href="#/catalog" class="relative aspect-[3/4] rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block">
-            <img src="https://i.pinimg.com/736x/8a/e5/6c/8ae56c59aba6c6a1f88e579b133a0104.jpg" alt="Pantalones" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"/>
+            <img src="https://i.pinimg.com/736x/8a/e5/6c/8ae56c59aba6c6a1f88e579b133a0104.jpg" alt="Pantalones" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy"/>
             <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-500"></div>
              <div class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
               <span class="inline-block px-3 py-1 bg-white/10 backdrop-blur rounded-full text-[10px] font-bold text-white uppercase tracking-widest mb-3 border border-white/20 shadow-sm">Denim</span>
@@ -227,7 +228,7 @@ export function pageHome() {
 
           <!-- Perfumes -->
           <a href="#/catalog" class="relative aspect-[3/4] rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block">
-            <img src="https://i.pinimg.com/736x/2c/f3/45/2cf345c33502c764d0a39389f18fce93.jpg" alt="Perfumes" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"/>
+            <img src="https://i.pinimg.com/736x/2c/f3/45/2cf345c33502c764d0a39389f18fce93.jpg" alt="Perfumes" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy"/>
             <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-500"></div>
              <div class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
               <span class="inline-block px-3 py-1 bg-white/10 backdrop-blur rounded-full text-[10px] font-bold text-white uppercase tracking-widest mb-3 border border-white/20 shadow-sm">Fragancias</span>
@@ -361,7 +362,7 @@ export function pageHome() {
                 </div>
                 <p class="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed italic flex-grow">"${t.text}"</p>
                 <div class="flex items-center gap-3 pt-4 border-t border-gray-50 dark:border-gray-800">
-                  <img src="${t.avatar}" alt="${t.name}" class="w-10 h-10 rounded-full object-cover ring-2 ring-white dark:ring-gray-700 shadow-sm"/>
+                  <img src="${t.avatar}" alt="${t.name}" class="w-10 h-10 rounded-full object-cover ring-2 ring-white dark:ring-gray-700 shadow-sm" loading="lazy"/>
                   <div>
                     <h4 class="text-sm font-bold text-gray-900 dark:text-white">${t.name}</h4>
                     <span class="inline-flex items-center gap-1 text-[10px] text-green-600 dark:text-green-400 font-medium bg-green-50 dark:bg-green-900/30 px-1.5 py-0.5 rounded">
@@ -383,6 +384,7 @@ export function pageHome() {
             src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&h=600&fit=crop"
             alt="Promo"
             class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
+            loading="lazy"
           />
           <div class="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent"></div>
           <div class="relative z-10 w-full p-6 md:p-10">

@@ -426,6 +426,15 @@ export function pageCatalog(initialState) {
 
       <section class="catalog-grid-wrapper">
         <div id="catalog-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4"></div>
+        
+        <!-- Load More Button -->
+        <div id="load-more-container" class="hidden mt-8 text-center">
+          <button id="load-more-btn" class="inline-flex items-center gap-2 px-8 py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full font-semibold hover:bg-gray-800 dark:hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:scale-95">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            Cargar más productos
+          </button>
+          <p id="showing-count" class="mt-3 text-sm text-gray-500 dark:text-gray-400"></p>
+        </div>
       </section>
 
 
@@ -442,6 +451,15 @@ export function pageCatalog(initialState) {
       const productCountEl = qs(root, '#product-count')
       const productCountMobile = qs(root, '#product-count-mobile')
       const modalContainer = qs(root, '#modal-container')
+      const loadMoreContainer = qs(root, '#load-more-container')
+      const loadMoreBtn = qs(root, '#load-more-btn')
+      const showingCount = qs(root, '#showing-count')
+
+      // Pagination state
+      const PRODUCTS_PER_PAGE = 20
+      let currentPage = 1
+      let allFilteredProducts = []
+      let lastFilters = null
 
       const renderGrid = () => {
         const filters = getFilterState(root)
@@ -454,6 +472,7 @@ export function pageCatalog(initialState) {
           if (productCountEl) productCountEl.textContent = ''
           if (productCountMobile) productCountMobile.textContent = 'Cargando...'
           grid.innerHTML = skeletonGrid(8)
+          loadMoreContainer.classList.add('hidden')
           return
         }
 
@@ -479,20 +498,31 @@ export function pageCatalog(initialState) {
           if (curr && colors.includes(curr)) sel.value = curr
         })
 
+        // Check if filters actually changed
+        const currentFilters = JSON.stringify({ ...filters, searchQuery })
+        const filtersChanged = lastFilters !== currentFilters
+        lastFilters = currentFilters
+        
         // Start with search results if there's a query, otherwise all products
         let baseProducts = searchQuery ? searchProducts(searchQuery) : state.products
-        const visible = applyFilters(baseProducts, filters)
+        allFilteredProducts = applyFilters(baseProducts, filters)
+        
+        // Only reset to page 1 when filters/search actually change
+        if (filtersChanged) {
+          currentPage = 1
+        }
         
         const searchLabel = searchQuery ? ` para "${searchQuery}"` : ''
-        const countText = `${visible.length} productos${searchLabel}`
+        const countText = `${allFilteredProducts.length} productos${searchLabel}`
         if (productCountEl) productCountEl.textContent = countText
         if (productCountMobile) productCountMobile.textContent = countText
 
         // Update filter chips and badges
         updateFilterUI()
 
-        if (visible.length === 0) {
+        if (allFilteredProducts.length === 0) {
           grid.innerHTML = `<div class="col-span-full text-center py-16"><div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center"><svg class="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div><h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No encontramos productos</h3><p class="text-gray-500 dark:text-gray-400 text-sm">${searchQuery ? `No hay resultados para "${searchQuery}". ` : ''}Intenta con otros filtros</p>${searchQuery ? `<button id="clear-search" class="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded-lg text-sm text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-700">Limpiar búsqueda</button>` : ''}</div>`
+          loadMoreContainer.classList.add('hidden')
           
           const clearBtn = grid.querySelector('#clear-search')
           if (clearBtn) {
@@ -505,8 +535,23 @@ export function pageCatalog(initialState) {
           }
           return
         }
+        
+        // Calculate how many products to show
+        const productsToShow = currentPage * PRODUCTS_PER_PAGE
+        const visible = allFilteredProducts.slice(0, productsToShow)
+        const hasMore = productsToShow < allFilteredProducts.length
+        
         console.log('Rendering products:', visible.length, visible.slice(0, 2))
         grid.innerHTML = visible.map((p, idx) => productCard(p, idx)).join('')
+        
+        // Show/hide load more button
+        if (hasMore) {
+          loadMoreContainer.classList.remove('hidden')
+          const remaining = allFilteredProducts.length - visible.length
+          showingCount.textContent = `Mostrando ${visible.length} de ${allFilteredProducts.length} productos`
+        } else {
+          loadMoreContainer.classList.add('hidden')
+        }
         
         // Initialize carousels for products with multiple images
         const carousels = grid.querySelectorAll('[data-carousel]')
@@ -688,6 +733,77 @@ export function pageCatalog(initialState) {
             setSearchQuery(e.target.value.trim())
             renderGrid()
           }, 300)
+        })
+      }
+
+      // Load More button click handler
+      if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', () => {
+          currentPage++
+          
+          // Calculate products to show
+          const productsToShow = currentPage * PRODUCTS_PER_PAGE
+          const visible = allFilteredProducts.slice(0, productsToShow)
+          const hasMore = productsToShow < allFilteredProducts.length
+          
+          // Append new products to grid
+          const newProducts = allFilteredProducts.slice((currentPage - 1) * PRODUCTS_PER_PAGE, productsToShow)
+          grid.insertAdjacentHTML('beforeend', newProducts.map((p, idx) => productCard(p, (currentPage - 1) * PRODUCTS_PER_PAGE + idx)).join(''))
+          
+          // Update counter and button visibility
+          if (hasMore) {
+            showingCount.textContent = `Mostrando ${visible.length} de ${allFilteredProducts.length} productos`
+          } else {
+            loadMoreContainer.classList.add('hidden')
+          }
+          
+          // Re-initialize carousels for newly added products
+          const newCarousels = grid.querySelectorAll('[data-carousel]')
+          newCarousels.forEach(carousel => {
+            const track = carousel.querySelector('[data-track]')
+            const slides = carousel.querySelectorAll('[data-slide]')
+            const prevBtn = carousel.querySelector('[data-prev]')
+            const nextBtn = carousel.querySelector('[data-next]')
+            const dots = carousel.querySelectorAll('[data-dot]')
+            
+            let currentIndex = 0
+            
+            const updateCarousel = () => {
+              track.style.transform = `translateX(-${currentIndex * 100}%)`
+              dots.forEach((dot, i) => {
+                if (i === currentIndex) {
+                  dot.classList.add('bg-white')
+                  dot.classList.remove('bg-white/60')
+                } else {
+                  dot.classList.remove('bg-white')
+                  dot.classList.add('bg-white/60')
+                }
+              })
+            }
+            
+            prevBtn?.addEventListener('click', (e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              currentIndex = (currentIndex - 1 + slides.length) % slides.length
+              updateCarousel()
+            })
+            
+            nextBtn?.addEventListener('click', (e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              currentIndex = (currentIndex + 1) % slides.length
+              updateCarousel()
+            })
+            
+            dots.forEach((dot, i) => {
+              dot.addEventListener('click', (e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                currentIndex = i
+                updateCarousel()
+              })
+            })
+          })
         })
       }
 
