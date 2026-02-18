@@ -505,7 +505,16 @@ export function pageCatalog(initialState) {
         
         // Start with search results if there's a query, otherwise all products
         let baseProducts = searchQuery ? searchProducts(searchQuery) : state.products
-        allFilteredProducts = applyFilters(baseProducts, filters)
+        
+        // Check for multi-type filter (set when navigating from home category cards)
+        const multiTypeFilter = grid.dataset.multiTypeFilter
+        if (multiTypeFilter) {
+          const allowedTypes = multiTypeFilter.split(',')
+          baseProducts = baseProducts.filter(p => allowedTypes.includes(p.type))
+          allFilteredProducts = applyFilters(baseProducts, { ...filters, type: '' })
+        } else {
+          allFilteredProducts = applyFilters(baseProducts, filters)
+        }
         
         // Only reset to page 1 when filters/search actually change
         if (filtersChanged) {
@@ -825,11 +834,32 @@ export function pageCatalog(initialState) {
         }, 200)
       }
 
+      // Apply category filter if navigated from home category cards
+      const pendingTypeFilter = sessionStorage.getItem('gl_pending_type_filter')
+      if (pendingTypeFilter) {
+        sessionStorage.removeItem('gl_pending_type_filter')
+        const types = pendingTypeFilter.split(',').map(t => t.trim())
+        if (types.length === 1) {
+          // Single type: set the select directly
+          root.querySelectorAll('select[name="type"]').forEach(sel => {
+            sel.value = types[0]
+          })
+          renderGrid()
+        } else {
+          // Multiple types (e.g. Playeras + Polos): override applyFilters for this render
+          // Store the multi-type filter in a custom attribute on the grid
+          grid.dataset.multiTypeFilter = types.join(',')
+          renderGrid()
+        }
+      }
+
       on(root, 'change', 'select[name="type"],select[name="size"],select[name="color"],select[name="sort"],input[name="minPrice"],input[name="maxPrice"]', (ev, el) => {
         // Sync the same filter across desktop and mobile panels
         const name = el.getAttribute('name')
         const val = el.value
         root.querySelectorAll(`[name="${name}"]`).forEach(s => { if (s !== el) s.value = val })
+        // Clear multi-type filter when user manually changes filters
+        delete grid.dataset.multiTypeFilter
         renderGrid()
       })
 

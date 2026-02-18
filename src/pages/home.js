@@ -201,7 +201,7 @@ export function pageHome() {
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
           <!-- Camisas -->
-          <a href="#/catalog" class="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block active:scale-95">
+          <button data-category-filter="Camisas" class="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block active:scale-95 w-full text-left cursor-pointer">
             <img src="https://i.pinimg.com/736x/f0/cc/e5/f0cce55c3da63f81343dd530422c7558.jpg" alt="Camisas" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy"/>
             <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-500"></div>
             <div class="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-6 text-center md:transform md:translate-y-4 md:group-hover:translate-y-0 transition-transform duration-500">
@@ -209,10 +209,10 @@ export function pageHome() {
               <h3 class="text-lg md:text-2xl font-black text-white mb-1 md:mb-2 leading-tight drop-shadow-lg">Camisas</h3>
               <p class="hidden md:block text-gray-200 text-xs font-medium max-w-[160px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 translate-y-2 group-hover:translate-y-0">Estilo y confort para cualquier ocasión.</p>
             </div>
-          </a>
+          </button>
           
           <!-- Playeras -->
-          <a href="#/catalog" class="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block active:scale-95">
+          <button data-category-filter="Playeras,Polos" class="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block active:scale-95 w-full text-left cursor-pointer">
             <img src="https://i.pinimg.com/736x/9d/b5/3a/9db53ac193e070ec32bfc55102d5cadb.jpg" alt="Playeras" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy"/>
             <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-500"></div>
              <div class="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-6 text-center md:transform md:translate-y-4 md:group-hover:translate-y-0 transition-transform duration-500">
@@ -220,10 +220,10 @@ export function pageHome() {
               <h3 class="text-lg md:text-2xl font-black text-white mb-1 md:mb-2 leading-tight drop-shadow-lg">Playeras</h3>
               <p class="hidden md:block text-gray-200 text-xs font-medium max-w-[160px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 translate-y-2 group-hover:translate-y-0">Algodón pima de alta calidad.</p>
             </div>
-          </a>
+          </button>
           
           <!-- Pantalones -->
-          <a href="#/catalog" class="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block active:scale-95">
+          <button data-category-filter="Pantalones" class="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block active:scale-95 w-full text-left cursor-pointer">
             <img src="https://i.pinimg.com/736x/8a/e5/6c/8ae56c59aba6c6a1f88e579b133a0104.jpg" alt="Pantalones" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy"/>
             <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-500"></div>
              <div class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
@@ -231,10 +231,10 @@ export function pageHome() {
               <h3 class="text-xl md:text-2xl font-black text-white mb-2 leading-tight drop-shadow-lg">Jeans & Chinos</h3>
               <p class="text-gray-200 text-xs font-medium max-w-[160px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 translate-y-2 group-hover:translate-y-0">Corte perfecto y durabilidad.</p>
             </div>
-          </a>
+          </button>
 
           <!-- Perfumes -->
-          <a href="#/catalog" class="relative aspect-[3/4] rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block">
+          <button data-category-filter="Perfumes" class="relative aspect-[3/4] rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block w-full text-left cursor-pointer">
             <img src="https://i.pinimg.com/736x/2c/f3/45/2cf345c33502c764d0a39389f18fce93.jpg" alt="Perfumes" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy"/>
             <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-500"></div>
              <div class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
@@ -242,7 +242,7 @@ export function pageHome() {
               <h3 class="text-xl md:text-2xl font-black text-white mb-2 leading-tight drop-shadow-lg">Perfumes</h3>
               <p class="text-gray-200 text-xs font-medium max-w-[160px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 translate-y-2 group-hover:translate-y-0">Las mejores fragancias para él.</p>
             </div>
-          </a>
+          </button>
         </div>
       </section>
 
@@ -513,6 +513,15 @@ export function pageHome() {
 
     `,
     onMount(root) {
+      // Category filter navigation
+      root.querySelectorAll('[data-category-filter]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const types = btn.dataset.categoryFilter // e.g. "Camisas" or "Playeras,Polos"
+          sessionStorage.setItem('gl_pending_type_filter', types)
+          window.location.hash = '#/catalog'
+        })
+      })
+
       // Quick Add to Cart from home cards
       on(root, 'click', '[data-quick-add]', (ev, btn) => {
         ev.preventDefault()
