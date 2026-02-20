@@ -8,9 +8,9 @@ let supabase = null
 if (supabaseUrl && supabaseKey) {
   supabase = createClient(supabaseUrl, supabaseKey, {
     auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false
+      persistSession: true,       // Supabase guarda el JWT en localStorage de forma segura
+      autoRefreshToken: true,     // Renueva el token antes de que expire
+      detectSessionInUrl: false,
     }
   })
 } else {

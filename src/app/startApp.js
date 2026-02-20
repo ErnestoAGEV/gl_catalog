@@ -1,10 +1,14 @@
 import { ensureSeedData } from './seed.js'
 import { getRoute, onRouteChange, startRouter, navigate } from './router.js'
-import { getState, isAdminAuthed, loadProducts, subscribe, toggleTheme, getTheme, setSearchQuery } from './store.js'
+import { getState, isAdminAuthed, loadProducts, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession } from './store.js'
 import { renderRoute } from './views.js'
 
-export function startApp(mountEl) {
+export async function startApp(mountEl) {
   // ensureSeedData() // Disabled: Using Supabase
+
+  // Restore admin session from Supabase BEFORE first render so route guards work
+  await initAdminSession()
+
   loadProducts()
 
   // Apply initial theme

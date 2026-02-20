@@ -1,4 +1,4 @@
-import { STORAGE_KEYS, ADMIN_CREDENTIALS, COUPONS } from './config.js'
+import { STORAGE_KEYS, COUPONS } from './config.js'
 import { readJson, writeJson } from './storage.js'
 
 const subscribers = new Set()
@@ -7,7 +7,7 @@ const state = {
   products: [], // Empty initially, populated by Supabase
   isLoading: true, // Loading state
   cart: readJson(STORAGE_KEYS.cart, []),
-  adminSession: readJson(STORAGE_KEYS.adminSession, null),
+  isAdminAuthed: false, // Driven by Supabase session, not localStorage flag
   wishlist: readJson(STORAGE_KEYS.wishlist, []),
   theme: 'light', // Always start in light mode
   coupon: readJson(STORAGE_KEYS.coupon, null),
@@ -290,20 +290,34 @@ export function cartTotal() {
 }
 
 export function isAdminAuthed() {
-  return Boolean(state.adminSession && state.adminSession.ok)
+  return state.isAdminAuthed
 }
 
-export function adminLogin(user, pass) {
-  const ok = user === ADMIN_CREDENTIALS.user && pass === ADMIN_CREDENTIALS.pass
-  state.adminSession = ok ? { ok: true, at: Date.now() } : null
-  writeJson(STORAGE_KEYS.adminSession, state.adminSession)
+// Initialize admin session from Supabase on app startup (restores JWT if not expired)
+export async function initAdminSession() {
+  if (!supabase) return
+  const { data: { session } } = await supabase.auth.getSession()
+  state.isAdminAuthed = Boolean(session)
+  // Listen for future auth changes (token refresh, logout from another tab)
+  supabase.auth.onAuthStateChange((_event, session) => {
+    state.isAdminAuthed = Boolean(session)
+    emit()
+  })
   emit()
-  return ok
 }
 
-export function adminLogout() {
-  state.adminSession = null
-  writeJson(STORAGE_KEYS.adminSession, null)
+export async function adminLogin(email, pass) {
+  if (!supabase) return { error: 'No hay conexión con la base de datos.' }
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass })
+  if (error) return { error: error.message }
+  state.isAdminAuthed = Boolean(data.session)
+  emit()
+  return { ok: true }
+}
+
+export async function adminLogout() {
+  if (supabase) await supabase.auth.signOut()
+  state.isAdminAuthed = false
   emit()
 }
 

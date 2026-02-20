@@ -762,8 +762,8 @@ export function pageAdminProducts(state) {
 
       // Logout button
       const logoutBtn = qs(root, '#admin-logout-btn')
-      logoutBtn.addEventListener('click', () => {
-        adminLogout()
+      logoutBtn.addEventListener('click', async () => {
+        await adminLogout()
         navigate('/admin/login')
       })
 

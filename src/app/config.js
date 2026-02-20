@@ -11,7 +11,6 @@ export const STORE_WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '52
 export const STORAGE_KEYS = {
   products: 'gl_products',
   cart: 'gl_cart',
-  adminSession: 'gl_admin_session',
   wishlist: 'gl_wishlist',
   theme: 'gl_theme',
   coupon: 'gl_coupon',
@@ -25,7 +24,3 @@ export const COUPONS = {
   'ENVIOGRATIS': { discount: 0, freeShipping: true, label: 'Envío gratis' },
 }
 
-export const ADMIN_CREDENTIALS = {
-  user: import.meta.env.VITE_ADMIN_USER || 'admin',
-  pass: import.meta.env.VITE_ADMIN_PASS || 'admin123',
-}

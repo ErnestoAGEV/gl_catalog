@@ -134,7 +134,7 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
 }
 
 export function layoutAdmin({ contentHtml, state }) {
-  const authed = Boolean(state?.adminSession?.ok)
+  const authed = Boolean(state?.isAdminAuthed)
   return `<div class="min-h-dvh overflow-x-hidden bg-gray-50 text-gray-900">
     <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-lg border-b border-gray-200 shadow-sm">
       <div class="mx-auto flex w-full max-w-screen-sm items-center justify-between px-4 py-3">
