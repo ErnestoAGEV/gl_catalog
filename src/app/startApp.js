@@ -88,50 +88,54 @@ export async function startApp(mountEl) {
   // Ensure first paint even if hash doesn't change.
   render(getRoute())
 
-  // Only re-render on state changes for pages that need it (cart, wishlist, checkout)
-  // Catalog handles its own updates to avoid full page reloads
+  // ─── Smart re-render: only re-render a page when its relevant state slice changes ───
+  // Catalog manages its own updates via its own subscribe, so we skip it here.
+  const routeRelevantKeys = {
+    '/':              (s) => `${s.products.length}|${s.isLoading}`,
+    '/cart':          (s) => `${JSON.stringify(s.cart)}|${JSON.stringify(s.coupon)}`,
+    '/wishlist':      (s) => JSON.stringify(s.wishlist),
+    '/checkout':      (s) => `${JSON.stringify(s.cart)}|${JSON.stringify(s.coupon)}`,
+    '/admin/products':(s) => JSON.stringify(s.products),
+  }
+
+  let prevSignatures = {}
+
   const unsub = subscribe((state) => {
-    // 1. Global UI Updates (Header/Nav) without full re-render
+    // 1. Global badge update — always runs, no full re-render
     const count = state.cart.reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
-    const cartLinks = document.querySelectorAll('a[href="#/cart"]')
-    
-    cartLinks.forEach(link => {
-      // Find relative container for badge (usually the link itself or a div inside)
+    document.querySelectorAll('a[href="#/cart"]').forEach(link => {
       const container = link.querySelector('.relative') || link
       let badge = container.querySelector('.cart-count-badge')
-      
       if (count > 0) {
         if (!badge) {
           badge = document.createElement('span')
-          // Common classes for both desktop and mobile
           badge.className = 'cart-count-badge absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white border-2 border-white dark:border-black'
-          // Mobile specific adjustments if needed (handled by logic above usually)
           if (link.closest('nav.md\\:hidden')) {
-             // Mobile nav specific positioning if different
-             badge.classList.remove('-top-1', '-right-1')
-             badge.classList.add('-top-1', '-right-2') 
+            badge.classList.remove('-top-1', '-right-1')
+            badge.classList.add('-top-1', '-right-2')
           }
           container.appendChild(badge)
         }
         badge.textContent = count
-        // Add minimal animation
         badge.classList.remove('animate-pop')
-        void badge.offsetWidth // Trigger reflow
+        void badge.offsetWidth
         badge.classList.add('animate-pop')
       } else {
         if (badge) badge.remove()
       }
     })
 
-    // 2. Route-specific re-renders
+    // 2. Selective page re-render
     const currentPath = getRoute()
-    const shouldRerender = ['/', '/cart', '/wishlist', '/checkout', '/admin/products'].some(p => 
-      p === '/' ? currentPath === '/' : currentPath.startsWith(p)
-    )
-    if (shouldRerender) {
-      render(currentPath)
-    }
+    const keyFn = routeRelevantKeys[currentPath]
+    if (!keyFn) return  // catalog and other self-managed pages → skip
+
+    const sig = keyFn(state)
+    if (prevSignatures[currentPath] === sig) return  // nothing relevant changed
+    prevSignatures[currentPath] = sig
+    render(currentPath)
   })
+
 
   // First render is triggered by router, but store subscribe keeps it synced.
   // Cleanup function in case you ever want to unmount.
