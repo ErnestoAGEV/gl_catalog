@@ -60,7 +60,7 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
             </svg>
-            ${count > 0 ? `<span class="absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">${count}</span>` : ''}
+            ${count > 0 ? `<span class="cart-count-badge absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">${count}</span>` : ''}
           </a>
 
           <!-- Theme Toggle -->
@@ -124,7 +124,7 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
         <a href="#/cart" class="relative flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-colors ${window.location.hash.startsWith('#/cart') ? 'text-brand' : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600')}">
           <div class="relative">
              <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-             ${count > 0 ? `<span class="absolute -top-1 -right-2 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-brand text-[9px] font-bold text-white border-2 border-white dark:border-black">${count}</span>` : ''}
+             ${count > 0 ? `<span class="cart-count-badge absolute -top-1 -right-2 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-brand text-[9px] font-bold text-white border-2 border-white dark:border-black">${count}</span>` : ''}
           </div>
           Carrito
         </a>

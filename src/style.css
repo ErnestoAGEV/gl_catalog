@@ -659,15 +659,15 @@ body.dark {
   pointer-events: none;
 }
 
-/* Desktop: top-right popover below header */
+/* Desktop: bottom-right, above floating cart button */
 @media (min-width: 769px) {
   .mini-cart-preview {
-    top: 70px;
-    right: max(1rem, calc((100vw - 1280px) / 2 + 0.5rem));
+    bottom: 6rem;
+    right: 1.5rem;
   }
   .mini-cart-inner {
     opacity: 0;
-    transform: translateY(-8px) scale(0.97);
+    transform: translateY(10px) scale(0.97);
     transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .mini-cart-visible .mini-cart-inner {
@@ -676,7 +676,7 @@ body.dark {
   }
   .mini-cart-exit .mini-cart-inner {
     opacity: 0;
-    transform: translateY(-6px) scale(0.97);
+    transform: translateY(8px) scale(0.97);
   }
 }
 

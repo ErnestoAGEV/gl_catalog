@@ -1,5 +1,5 @@
 import { formatMoney } from '../app/format.js'
-import { getProductById, removeCartItem, setCartItemQty, cartTotal } from '../app/store.js'
+import { getProductById, removeCartItem, setCartItemQty, cartTotal, getState } from '../app/store.js'
 import { on, qs } from '../app/dom.js'
 
 function lineRow(item) {
@@ -106,7 +106,8 @@ export function pageCart(state) {
       const totalFinalEl = root.querySelector('#cart-total-final')
 
       const render = () => {
-        if (!state.cart.length) {
+        const liveCart = getState().cart
+        if (!liveCart.length) {
           list.innerHTML = `
             <div class="text-center py-16">
               <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
@@ -122,7 +123,7 @@ export function pageCart(state) {
             </div>
           `
         } else {
-          list.innerHTML = state.cart.map(lineRow).join('')
+          list.innerHTML = liveCart.map(lineRow).join('')
         }
         const total = cartTotal()
         totalEl.textContent = formatMoney(total)
@@ -137,6 +138,7 @@ export function pageCart(state) {
         const key = getKey(btn)
         if (!key) return
         removeCartItem(key)
+        render()
       })
 
       on(root, 'click', '[data-qty-minus]', (_ev, btn) => {
@@ -146,6 +148,7 @@ export function pageCart(state) {
         if (!key || !(input instanceof HTMLInputElement)) return
         const next = Math.max(1, Number(input.value || 1) - 1)
         setCartItemQty(key, next)
+        render()
       })
 
       on(root, 'click', '[data-qty-plus]', (_ev, btn) => {
@@ -155,6 +158,7 @@ export function pageCart(state) {
         if (!key || !(input instanceof HTMLInputElement)) return
         const next = Math.max(1, Number(input.value || 1) + 1)
         setCartItemQty(key, next)
+        render()
       })
 
       on(root, 'change', '[data-qty]', (_ev, inputEl) => {
@@ -162,6 +166,7 @@ export function pageCart(state) {
         const key = wrap?.getAttribute('data-key')
         if (!key || !(inputEl instanceof HTMLInputElement)) return
         setCartItemQty(key, Number(inputEl.value || 1))
+        render()
       })
     },
   }
