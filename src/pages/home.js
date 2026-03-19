@@ -85,12 +85,12 @@ export function pageHome() {
           </button>
           
           <!-- Playeras -->
-          <button data-category-filter="Playeras,Polos" class="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block active:scale-95 w-full text-left cursor-pointer">
-            <img src="https://i.pinimg.com/736x/9d/b5/3a/9db53ac193e070ec32bfc55102d5cadb.jpg" alt="Playeras" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy"/>
+          <button data-category-filter="Polos" class="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block active:scale-95 w-full text-left cursor-pointer">
+            <img src="https://i.pinimg.com/1200x/b2/de/7a/b2de7a76b7037ee02ba7394cfb874849.jpg" alt="Polos" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy"/>
             <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-500"></div>
              <div class="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-6 text-center md:transform md:translate-y-4 md:group-hover:translate-y-0 transition-transform duration-500">
               <span class="inline-block px-2 py-0.5 md:px-3 md:py-1 bg-white/10 backdrop-blur rounded-full text-[9px] md:text-[10px] font-bold text-white uppercase tracking-widest mb-2 md:mb-3 border border-white/20 shadow-sm">Básicos</span>
-              <h3 class="text-lg md:text-2xl font-black text-white mb-1 md:mb-2 leading-tight drop-shadow-lg">Playeras</h3>
+              <h3 class="text-lg md:text-2xl font-black text-white mb-1 md:mb-2 leading-tight drop-shadow-lg">Polos</h3>
               <p class="hidden md:block text-gray-200 text-xs font-medium max-w-[160px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 translate-y-2 group-hover:translate-y-0">Algodón pima de alta calidad.</p>
             </div>
           </button>
@@ -427,24 +427,51 @@ export function pageHome() {
       }
 
       // Newsletter Logic (Page only)
-      const form = qs(root, '#newsletter-form-page')
+      const form = root.querySelector('#newsletter-form-page')
       if (form) {
-        form.addEventListener('submit', (ev) => {
+        form.addEventListener('submit', async (ev) => {
           ev.preventDefault()
           const emailInput = form.querySelector('input[type="email"]')
+          const submitBtn  = form.querySelector('button[type="submit"]')
           const email = emailInput ? emailInput.value.trim() : ''
-          
-          if (email) {
-            subscribeNewsletter(email)
+
+          if (!email) return
+
+          // Loading state
+          const originalBtnHTML = submitBtn.innerHTML
+          submitBtn.disabled = true
+          submitBtn.innerHTML = `
+            <span class="flex items-center justify-center gap-2">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"/>
+              </svg>
+              Enviando...
+            </span>`
+
+          // Remove previous error if any
+          const prevErr = form.querySelector('.newsletter-error')
+          if (prevErr) prevErr.remove()
+
+          const result = await subscribeNewsletter(email)
+
+          if (result.ok) {
             form.innerHTML = `
-                  <div class="flex flex-col items-center justify-center gap-2 text-white py-4 text-center animate-fade-in">
-                    <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg mb-2">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                    </div>
-                    <span class="text-sm font-bold">¡Suscripción exitosa!</span>
-                    <p class="text-xs text-blue-200">Revisa tu correo para tu cupón.</p>
-                  </div>
-            `
+              <div class="flex flex-col items-center justify-center gap-2 text-white py-4 text-center animate-fade-in">
+                <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg mb-2">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <span class="text-sm font-bold">¡Suscripción exitosa!</span>
+                <p class="text-xs text-blue-200">Gracias por unirte al Club G&L.</p>
+              </div>`
+          } else {
+            // Restore button + show error
+            submitBtn.disabled = false
+            submitBtn.innerHTML = originalBtnHTML
+            const errEl = document.createElement('p')
+            errEl.className = 'newsletter-error text-xs text-red-300 text-center mt-2'
+            errEl.textContent = result.error || 'Ocurrió un error. Intenta de nuevo.'
+            form.appendChild(errEl)
           }
         })
       }

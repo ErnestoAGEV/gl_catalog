@@ -384,11 +384,30 @@ export function getDiscountedTotal() {
 }
 
 // ========== NEWSLETTER ==========
-export function subscribeNewsletter(email) {
-  state.newsletter = { email, subscribedAt: Date.now() }
+export async function subscribeNewsletter(email) {
+  const normalizedEmail = email.trim().toLowerCase()
+
+  // Always persist locally so UI shows "subscribed" immediately on reload
+  state.newsletter = { email: normalizedEmail, subscribedAt: Date.now() }
   writeJson(STORAGE_KEYS.newsletter, state.newsletter)
   emit()
-  return true
+
+  // Persist to Supabase if available
+  if (supabase) {
+    const { error } = await supabase
+      .from('newsletter_subscribers')
+      .insert({ email: normalizedEmail, source: 'home_page' })
+
+    if (error) {
+      // 23505 = unique_violation (email already registered) → treat as success
+      if (error.code === '23505') return { ok: true }
+
+      console.error('Newsletter Supabase error:', error)
+      return { ok: false, error: 'No se pudo guardar tu suscripción. Intenta de nuevo.' }
+    }
+  }
+
+  return { ok: true }
 }
 
 export function isSubscribedNewsletter() {
