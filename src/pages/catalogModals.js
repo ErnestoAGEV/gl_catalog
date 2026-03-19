@@ -13,10 +13,10 @@ export function quickViewModal(p) {
 
   // Modal carousel HTML (larger version)
   const modalCarouselHTML = images.length > 1 ? `
-    <div class="modal-carousel relative overflow-hidden ${isPerfume ? 'bg-white' : 'bg-gray-100'} cursor-zoom-in" data-modal-carousel>
-      <div class="modal-carousel-track flex transition-transform duration-300" data-modal-track>
+    <div class="modal-carousel relative overflow-hidden ${isPerfume ? 'bg-white' : 'bg-gray-100'} cursor-zoom-in md:flex-1 md:min-h-0" data-modal-carousel>
+      <div class="modal-carousel-track flex transition-transform duration-300 h-full" data-modal-track>
         ${images.map((img, i) => `
-          <img src="${img}" alt="${p.name}" class="modal-img-zoomable w-full aspect-square md:aspect-[4/5] ${modalImageFitClass} flex-shrink-0 min-w-full transition-transform duration-200" data-modal-slide="${i}"/>
+          <img src="${img}" alt="${p.name}" class="modal-img-zoomable w-full aspect-square md:h-full md:w-auto md:aspect-auto ${modalImageFitClass} flex-shrink-0 min-w-full transition-transform duration-200" data-modal-slide="${i}"/>
         `).join('')}
       </div>
       
@@ -57,8 +57,8 @@ export function quickViewModal(p) {
       </div>
     </div>
   ` : `
-    <div class="relative overflow-hidden ${isPerfume ? 'bg-white' : 'bg-gray-100'} cursor-zoom-in" data-modal-single>
-      <img src="${images[0]}" alt="${p.name}" class="modal-img-zoomable w-full aspect-square md:aspect-[4/5] ${modalImageFitClass} transition-transform duration-200"/>
+    <div class="relative overflow-hidden ${isPerfume ? 'bg-white' : 'bg-gray-100'} cursor-zoom-in md:flex-1 md:min-h-0" data-modal-single>
+      <img src="${images[0]}" alt="${p.name}" class="modal-img-zoomable w-full h-full aspect-square md:aspect-auto ${modalImageFitClass} transition-transform duration-200"/>
       
       <!-- Close button -->
       <button id="close-quickview" class="absolute top-3 right-3 w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur shadow-lg flex items-center justify-center text-gray-700 dark:text-white hover:bg-white dark:hover:bg-gray-700 transition-colors z-20">
@@ -79,9 +79,9 @@ export function quickViewModal(p) {
       <div class="bg-white dark:bg-gray-900 w-full md:w-auto md:max-w-2xl md:mx-4 md:rounded-2xl rounded-t-3xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto animate-slide-up shadow-2xl overscroll-contain">
         
         <!-- Desktop: horizontal layout, Mobile: vertical -->
-        <div class="md:flex">
+        <div class="md:flex md:items-stretch">
           <!-- Image Section -->
-          <div class="relative md:w-72 lg:w-80 flex-shrink-0">
+          <div class="relative md:w-72 lg:w-80 flex-shrink-0 md:self-stretch md:flex md:flex-col">
             ${modalCarouselHTML}
           </div>
           

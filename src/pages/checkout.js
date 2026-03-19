@@ -5,6 +5,25 @@ import { on, qs } from '../app/dom.js'
 import { formatMoney } from '../app/format.js'
 import { checkoutHTML, couponAppliedHTML, couponInputHTML } from './checkoutView.js'
 
+// ── Helpers de validación ──
+const WHATSAPP_RE = /^[+]?[0-9\s\-().]{7,20}$/
+const ZIPCODE_RE  = /^[0-9]{4,6}$/
+
+function setFieldError(field, hasError) {
+  if (!field) return
+  if (hasError) {
+    field.classList.add('!border-red-500', '!ring-red-500/30', '!ring-1')
+  } else {
+    field.classList.remove('!border-red-500', '!ring-red-500/30', '!ring-1')
+  }
+}
+
+function clearFieldErrors(root) {
+  root.querySelectorAll('.\\!border-red-500').forEach(el => {
+    el.classList.remove('!border-red-500', '!ring-red-500/30', '!ring-1')
+  })
+}
+
 function needsAddress(_payment, deliveryMethod) {
   return deliveryMethod === 'Envío a domicilio'
 }
@@ -40,13 +59,20 @@ export function pageCheckout(state) {
         if (applyBtn && couponInput) {
           const doApply = () => {
             const code = couponInput.value.trim().toUpperCase()
-            if (!code) return
+            if (!code) {
+              if (couponError) {
+                couponError.textContent = 'Ingresa un código de cupón.'
+                couponError.classList.remove('hidden')
+              }
+              return
+            }
             const result = applyCoupon(code, true)
             if (result.success) {
+              if (couponError) couponError.classList.add('hidden')
               updateCouponUI(getCoupon())
             } else {
               if (couponError) {
-                couponError.textContent = result.message || 'Cupón inválido'
+                couponError.textContent = result.error || 'Cupón inválido'
                 couponError.classList.remove('hidden')
               }
             }
@@ -94,61 +120,117 @@ export function pageCheckout(state) {
         addressWrap.classList.toggle('hidden', !needsAddress(payment, delivery))
       }
 
-      const setError = (msg) => {
-        if (!msg) { errorBox.classList.add('hidden'); errorBox.textContent = ''; return }
+      const setError = (msg, fieldEl = null) => {
+        if (!msg) {
+          errorBox.classList.add('hidden')
+          errorBox.textContent = ''
+          return
+        }
         errorBox.textContent = msg
         errorBox.classList.remove('hidden')
+        // Resaltar campo con error
+        if (fieldEl) setFieldError(fieldEl, true)
+        // Scroll suave al cuadro de error
+        errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' })
       }
 
       refreshConditional()
       on(root, 'change', 'select[name="paymentMethod"],select[name="deliveryMethod"]', () => {
         setError('')
+        clearFieldErrors(root)
         refreshConditional()
       })
 
+      // Limpiar error de campo al escribir
+      form.addEventListener('input', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+          setFieldError(e.target, false)
+        }
+      })
+
       // ── Form Submit ──
+      const submitBtns = root.querySelectorAll('button[type="submit"]')
+
+      const setSubmitting = (loading) => {
+        submitBtns.forEach(btn => {
+          btn.disabled = loading
+          btn.dataset.original = btn.dataset.original || btn.innerHTML
+          if (loading) {
+            btn.innerHTML = `<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"/></svg> Enviando...`
+            btn.classList.add('opacity-70', 'cursor-not-allowed')
+          } else {
+            btn.innerHTML = btn.dataset.original
+            btn.classList.remove('opacity-70', 'cursor-not-allowed')
+          }
+        })
+      }
+
       form.addEventListener('submit', (ev) => {
         ev.preventDefault()
         setError('')
+        clearFieldErrors(root)
 
+        // ── Carrito vacío ──
         if (!state.cart.length) {
           setError('Tu carrito está vacío. Volvé al catálogo para agregar productos.')
           return
         }
 
-        const name = qs(root, 'input[name="name"]').value.trim()
-        const whatsapp = qs(root, 'input[name="whatsapp"]').value.trim()
-        const paymentMethod = qs(root, 'select[name="paymentMethod"]').value
-        const deliveryMethod = qs(root, 'select[name="deliveryMethod"]').value
+        const nameEl      = qs(root, 'input[name="name"]')
+        const whatsappEl  = qs(root, 'input[name="whatsapp"]')
+        const paymentEl   = qs(root, 'select[name="paymentMethod"]')
+        const deliveryEl  = qs(root, 'select[name="deliveryMethod"]')
 
-        if (!name) return setError('Ingresa tu nombre.')
-        if (!whatsapp) return setError('Ingresa tu WhatsApp.')
-        if (!paymentMethod) return setError('Selecciona un método de pago.')
-        if (!deliveryMethod) return setError('Selecciona un método de entrega.')
+        const name           = nameEl.value.trim()
+        const whatsapp       = whatsappEl.value.trim()
+        const paymentMethod  = paymentEl.value
+        const deliveryMethod = deliveryEl.value
 
+        // ── Validaciones de contacto ──
+        if (!name) return setError('Ingresa tu nombre completo.', nameEl)
+        if (name.length < 3) return setError('El nombre debe tener al menos 3 caracteres.', nameEl)
+
+        if (!whatsapp) return setError('Ingresa tu número de WhatsApp.', whatsappEl)
+        if (!WHATSAPP_RE.test(whatsapp)) return setError('El número de WhatsApp no parece válido. Ej: +52 312 123 4567.', whatsappEl)
+
+        if (!paymentMethod) return setError('Selecciona un método de pago.', paymentEl)
+        if (!deliveryMethod) return setError('Selecciona un método de entrega.', deliveryEl)
+
+        // ── Validaciones de dirección ──
         const requireAddress = needsAddress(paymentMethod, deliveryMethod)
         let fullAddress = ''
 
         if (requireAddress) {
-          const street = root.querySelector('input[name="street"]')?.value.trim() || ''
-          const numExt = root.querySelector('input[name="numExt"]')?.value.trim() || ''
-          const numInt = root.querySelector('input[name="numInt"]')?.value.trim() || ''
-          const neighborhood = root.querySelector('input[name="neighborhood"]')?.value.trim() || ''
-          const city = root.querySelector('input[name="city"]')?.value.trim() || ''
-          const zipCode = root.querySelector('input[name="zipCode"]')?.value.trim() || ''
-          const stateVal = root.querySelector('input[name="state"]')?.value.trim() || ''
-          const references = root.querySelector('textarea[name="references"]')?.value.trim() || ''
+          const streetEl       = root.querySelector('input[name="street"]')
+          const numExtEl       = root.querySelector('input[name="numExt"]')
+          const numIntEl       = root.querySelector('input[name="numInt"]')
+          const neighborhoodEl = root.querySelector('input[name="neighborhood"]')
+          const cityEl         = root.querySelector('input[name="city"]')
+          const zipCodeEl      = root.querySelector('input[name="zipCode"]')
+          const stateEl        = root.querySelector('input[name="state"]')
+          const referencesEl   = root.querySelector('textarea[name="references"]')
 
-          if (!street) return setError('Ingresa la calle.')
-          if (!numExt) return setError('Ingresa el número exterior.')
-          if (!neighborhood) return setError('Ingresa la colonia.')
-          if (!city) return setError('Ingresa la ciudad.')
-          if (!zipCode) return setError('Ingresa el código postal.')
-          if (!stateVal) return setError('Ingresa el estado.')
+          const street       = streetEl?.value.trim()       || ''
+          const numExt       = numExtEl?.value.trim()       || ''
+          const numInt       = numIntEl?.value.trim()       || ''
+          const neighborhood = neighborhoodEl?.value.trim() || ''
+          const city         = cityEl?.value.trim()         || ''
+          const zipCode      = zipCodeEl?.value.trim()      || ''
+          const stateVal     = stateEl?.value.trim()        || ''
+          const references   = referencesEl?.value.trim()  || ''
+
+          if (!street)                              return setError('Ingresa la calle.', streetEl)
+          if (!numExt)                              return setError('Ingresa el número exterior.', numExtEl)
+          if (!neighborhood)                        return setError('Ingresa la colonia / asentamiento.', neighborhoodEl)
+          if (!city)                                return setError('Ingresa la ciudad.', cityEl)
+          if (!zipCode)                             return setError('Ingresa el código postal.', zipCodeEl)
+          if (!ZIPCODE_RE.test(zipCode))            return setError('El código postal debe ser de 4 a 6 dígitos numéricos.', zipCodeEl)
+          if (!stateVal)                            return setError('Ingresa el estado.', stateEl)
 
           fullAddress = `${street} #${numExt}${numInt ? ' Int. ' + numInt : ''}, Col. ${neighborhood}, ${city}, ${stateVal}, C.P. ${zipCode}${references ? ' | Ref: ' + references : ''}`
         }
 
+        // ── Construir y enviar el pedido ──
         const cartLines = state.cart
           .map((i) => {
             const p = getProductById(i.productId)
@@ -159,10 +241,15 @@ export function pageCheckout(state) {
           })
           .filter(Boolean)
 
+        if (!cartLines.length) {
+          setError('Algunos productos de tu carrito ya no están disponibles. Volvé al catálogo.')
+          return
+        }
+
         const currentSubtotal = cartTotal()
-        const appliedCoupon = getCoupon()
+        const appliedCoupon   = getCoupon()
         const currentDiscount = appliedCoupon ? currentSubtotal * (appliedCoupon.discount || 0) : 0
-        const currentTotal = currentSubtotal - currentDiscount
+        const currentTotal    = currentSubtotal - currentDiscount
 
         const message = buildOrderMessage({
           customer: { name, whatsapp, paymentMethod, deliveryMethod, address: requireAddress ? fullAddress : '' },
@@ -173,7 +260,17 @@ export function pageCheckout(state) {
           total: currentTotal,
         })
 
-        openWhatsAppWithMessage(message)
+        setSubmitting(true)
+        // Pequeño delay para que el usuario vea el estado de carga antes de salir
+        setTimeout(() => {
+          try {
+            openWhatsAppWithMessage(message)
+          } catch (err) {
+            setError('No se pudo abrir WhatsApp. Asegúrate de tenerlo instalado o usa WhatsApp Web.')
+          } finally {
+            setSubmitting(false)
+          }
+        }, 400)
       })
     },
   }
