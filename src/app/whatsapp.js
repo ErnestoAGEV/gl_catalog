@@ -61,5 +61,9 @@ export function buildOrderMessage({ customer, cartLines, subtotal, discount, cou
 export function openWhatsAppWithMessage(message) {
   const encoded = encodeURIComponent(message)
   const url = `https://wa.me/${STORE_WHATSAPP_NUMBER}?text=${encoded}`
-  window.location.assign(url)
+  
+  // Intenta abrir en nueva pestaña para no perder la página de éxito
+  window.open(url, '_blank')
+  
+  return url
 }

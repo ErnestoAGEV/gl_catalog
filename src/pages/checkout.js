@@ -1,9 +1,9 @@
-import { getProductById, cartTotal, getCoupon, applyCoupon, removeCoupon } from '../app/store.js'
+import { getProductById, cartTotal, getCoupon, applyCoupon, removeCoupon, saveOrder, clearCart } from '../app/store.js'
 import { BRAND } from '../app/config.js'
 import { buildOrderMessage, openWhatsAppWithMessage } from '../app/whatsapp.js'
 import { on, qs } from '../app/dom.js'
 import { formatMoney } from '../app/format.js'
-import { checkoutHTML, couponAppliedHTML, couponInputHTML } from './checkoutView.js'
+import { checkoutHTML, couponAppliedHTML, couponInputHTML, checkoutSuccessHTML } from './checkoutView.js'
 
 // ── Helpers de validación ──
 const WHATSAPP_RE = /^[+]?[0-9\s\-().]{7,20}$/
@@ -260,17 +260,43 @@ export function pageCheckout(state) {
           total: currentTotal,
         })
 
+        const orderData = {
+          customer_name: name,
+          customer_whatsapp: whatsapp,
+          payment_method: paymentMethod,
+          delivery_method: deliveryMethod,
+          address: requireAddress ? fullAddress : null,
+          cart_items: cartLines,
+          subtotal: currentSubtotal,
+          discount: currentDiscount,
+          coupon_code: appliedCoupon?.code || null,
+          total: currentTotal,
+          status: 'pendientedepago'
+        }
+
         setSubmitting(true)
-        // Pequeño delay para que el usuario vea el estado de carga antes de salir
-        setTimeout(() => {
-          try {
-            openWhatsAppWithMessage(message)
-          } catch (err) {
-            setError('No se pudo abrir WhatsApp. Asegúrate de tenerlo instalado o usa WhatsApp Web.')
-          } finally {
+        
+        saveOrder(orderData).then(({ error }) => {
+          if (error) {
+            setError('No se pudo registrar tu pedido. Intenta de nuevo por favor.')
             setSubmitting(false)
+            return
           }
-        }, 400)
+
+          let waUrl = ''
+          try {
+            waUrl = openWhatsAppWithMessage(message)
+          } catch (err) {
+            console.error('WhatsApp failed to open', err)
+          }
+
+          clearCart()
+          root.innerHTML = checkoutSuccessHTML({ name, waUrl })
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        }).catch(err => {
+          setError('Ocurrió un error inesperado al conectar con el servidor.')
+          setSubmitting(false)
+        })
       })
     },
   }

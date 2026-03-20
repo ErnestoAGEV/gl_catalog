@@ -240,6 +240,12 @@ export function getProductById(id) {
   return state.products.find((p) => p.id === id) || null
 }
 
+export async function saveOrder(orderData) {
+  if (!supabase) return { error: 'No hay conexión a la base de datos' }
+  const { data, error } = await supabase.from('orders').insert(orderData).select().single()
+  return { data, error }
+}
+
 export function addToCart({ productId, size, color, qty }) {
   const quantity = Math.max(1, Number(qty || 1))
   const key = `${productId}__${size || ''}__${color || ''}`
