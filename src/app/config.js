@@ -17,10 +17,3 @@ export const STORAGE_KEYS = {
   newsletter: 'gl_newsletter',
   productViews: 'gl_product_views',
 }
-
-export const COUPONS = {
-  'WELCOME10': { discount: 0.10, label: '10% de descuento' },
-  'VERANO20': { discount: 0.20, label: '20% de descuento' },
-  'ENVIOGRATIS': { discount: 0, freeShipping: true, label: 'Envío gratis' },
-}
-

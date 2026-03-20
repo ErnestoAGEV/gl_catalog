@@ -66,16 +66,17 @@ export function pageCheckout(state) {
               }
               return
             }
-            const result = applyCoupon(code, true)
-            if (result.success) {
-              if (couponError) couponError.classList.add('hidden')
-              updateCouponUI(getCoupon())
-            } else {
-              if (couponError) {
-                couponError.textContent = result.error || 'Cupón inválido'
-                couponError.classList.remove('hidden')
+            applyCoupon(code, true).then(result => {
+              if (result.success) {
+                if (couponError) couponError.classList.add('hidden')
+                updateCouponUI(getCoupon())
+              } else {
+                if (couponError) {
+                  couponError.textContent = result.error || 'Cupón inválido'
+                  couponError.classList.remove('hidden')
+                }
               }
-            }
+            })
           }
           applyBtn.addEventListener('click', doApply)
           couponInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); doApply() } })
@@ -237,7 +238,16 @@ export function pageCheckout(state) {
             if (!p) return null
             const qty = Number(i.qty) || 0
             const price = Number(p.price) || 0
-            return { name: p.name, type: p.type, size: i.size, color: i.color, qty, price, subtotal: qty * price }
+            return { 
+              productId: i.productId, // CRITICO PARA EL TRIGGER DE STOCK
+              name: p.name, 
+              type: p.type, 
+              size: i.size, 
+              color: i.color, 
+              qty, 
+              price, 
+              subtotal: qty * price 
+            }
           })
           .filter(Boolean)
 

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Evitar que se rastree contenido del panel de admin (por si cambias a urls reales después)
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: https://gl-catalog.vercel.app/sitemap.xml

@@ -1,4 +1,4 @@
-import { STORAGE_KEYS, COUPONS } from './config.js'
+import { STORAGE_KEYS } from './config.js'
 import { readJson, writeJson } from './storage.js'
 
 const subscribers = new Set()
@@ -364,16 +364,35 @@ export function toggleTheme() {
 }
 
 // ========== COUPONS ==========
-export function applyCoupon(code, silent = false) {
+export async function applyCoupon(code, silent = false) {
   const normalizedCode = code.toUpperCase().trim()
-  const coupon = COUPONS[normalizedCode]
-  if (coupon) {
-    state.coupon = { code: normalizedCode, ...coupon }
-    writeJson(STORAGE_KEYS.coupon, state.coupon)
-    if (!silent) emit()
-    return { success: true, coupon: state.coupon }
+  
+  if (!supabase) return { success: false, error: 'Sin conexión a base de datos' }
+
+  // Search un Supabase table "coupons"
+  const { data: coupon, error } = await supabase
+    .from('coupons')
+    .select('*')
+    .eq('code', normalizedCode)
+    .eq('active', true)
+    .single()
+
+  if (error || !coupon) {
+    return { success: false, error: 'Cupón no válido o expirado' }
   }
-  return { success: false, error: 'Cupón no válido' }
+
+  // Format valid coupon
+  state.coupon = { 
+    code: coupon.code, 
+    discount: Number(coupon.discount), 
+    freeShipping: coupon.free_shipping,
+    label: coupon.label 
+  }
+  
+  writeJson(STORAGE_KEYS.coupon, state.coupon)
+  if (!silent) emit()
+  
+  return { success: true, coupon: state.coupon }
 }
 
 export function removeCoupon(silent = false) {

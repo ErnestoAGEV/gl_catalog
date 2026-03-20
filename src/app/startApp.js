@@ -96,9 +96,9 @@ export async function startApp(mountEl) {
   // Catalog manages its own updates via its own subscribe, so we skip it here.
   const routeRelevantKeys = {
     '/':              (s) => `${s.products.length}|${s.isLoading}`,
-    '/cart':          (s) => `${JSON.stringify(s.cart)}|${JSON.stringify(s.coupon)}`,
+    '/cart':          (s) => `${JSON.stringify(s.cart)}|${JSON.stringify(s.coupon)}|${s.products.length}`,
     '/wishlist':      (s) => JSON.stringify(s.wishlist),
-    '/checkout':      (s) => `${JSON.stringify(s.cart)}|${JSON.stringify(s.coupon)}`,
+    '/checkout':      (s) => `${JSON.stringify(s.cart)}|${JSON.stringify(s.coupon)}|${s.products.length}`,
     '/admin/products':(s) => JSON.stringify(s.products),
   }
 

@@ -238,7 +238,6 @@ export function couponInputHTML() {
       <button id="apply-coupon" class="px-4 py-2.5 bg-brand text-white text-sm font-semibold rounded-lg hover:bg-brand-dark transition-colors">Aplicar</button>
     </div>
     <p id="coupon-error" class="hidden text-xs text-red-500 mt-2"></p>
-    <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">Prueba: <span class="font-medium text-brand">WELCOME10</span>, <span class="font-medium text-brand">VERANO20</span></p>
   `
 }
 
