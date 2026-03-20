@@ -3,6 +3,9 @@ import { getState, subscribeNewsletter, isSubscribedNewsletter, getMostViewedPro
 import { on, qs } from '../app/dom.js'
 import { showMiniCart } from '../app/miniCart.js'
 import { featuredProductCard, homeSkeletonCard, testimonialsSection } from './homeCards.js'
+import { quickViewModal } from './catalogModals.js'
+import { initModalCarousel, initModalZoom } from './catalogCarousels.js'
+import { showToast } from '../app/toast.js'
 
 export function pageHome() {
   const state = getState()
@@ -344,6 +347,7 @@ export function pageHome() {
         </div>
       </section>
 
+      <div id="home-modal-container"></div>
     `,
     onMount(root) {
       // Category filter navigation
@@ -401,16 +405,95 @@ export function pageHome() {
         }, 350)
       })
 
-      // Product card click -> navigate to catalog quick view
+      // Product card click -> open quick view modal directly on home
+      const homeModalContainer = qs(root, '#home-modal-container')
+
+      const openHomeModal = (product) => {
+        trackProductView(product.id)
+        homeModalContainer.innerHTML = quickViewModal(product)
+        document.body.style.overflow = 'hidden'
+
+        const closeModal = () => {
+          homeModalContainer.querySelectorAll('.qv-size-btn').forEach(b => {
+            b.classList.remove('qv-size-selected', 'border-brand', 'bg-brand', 'text-white', '!border-brand', '!bg-brand', '!text-white')
+          })
+          homeModalContainer.querySelectorAll('.modal-img-zoomable').forEach(img => {
+            img.style.transform = ''
+            img.style.transformOrigin = ''
+          })
+          const containers = homeModalContainer.querySelectorAll('[data-modal-carousel], [data-modal-single]')
+          containers.forEach(c => { c.style.cursor = '' })
+          homeModalContainer.innerHTML = ''
+          document.body.style.overflow = ''
+        }
+
+        homeModalContainer.querySelector('#close-quickview').addEventListener('click', closeModal)
+        homeModalContainer.querySelector('#quick-view-modal').addEventListener('click', (e) => {
+          if (e.target.id === 'quick-view-modal') closeModal()
+        })
+
+        initModalCarousel(homeModalContainer.querySelector('[data-modal-carousel]'))
+        initModalZoom(homeModalContainer)
+
+        // Size button selection
+        const sizeButtons = homeModalContainer.querySelectorAll('.qv-size-btn')
+        sizeButtons.forEach(sizeBtn => {
+          sizeBtn.addEventListener('click', (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            sizeButtons.forEach(b => {
+              b.classList.remove('qv-size-selected', 'border-brand', 'bg-brand', 'text-white', '!border-brand', '!bg-brand', '!text-white')
+              b.classList.add('border-gray-200', 'dark:border-gray-700', 'text-gray-700', 'dark:text-gray-300')
+            })
+            sizeBtn.classList.add('qv-size-selected', '!border-brand', '!bg-brand', '!text-white')
+            sizeBtn.classList.remove('border-gray-200', 'dark:border-gray-700', 'text-gray-700', 'dark:text-gray-300', 'hover:text-brand')
+            const qvBtn = homeModalContainer.querySelector('#qv-add-to-cart')
+            if (qvBtn) {
+              qvBtn.disabled = false
+              qvBtn.classList.remove('opacity-50', 'cursor-not-allowed')
+            }
+          })
+        })
+
+        const qvAddBtn = homeModalContainer.querySelector('#qv-add-to-cart')
+        if (product.sizes && product.sizes.length > 0) {
+          qvAddBtn.disabled = true
+          qvAddBtn.classList.add('opacity-50', 'cursor-not-allowed')
+        }
+
+        qvAddBtn.addEventListener('click', () => {
+          if (qvAddBtn.disabled) return
+          qvAddBtn.disabled = true
+          const selectedSizeBtn = homeModalContainer.querySelector('.qv-size-selected')
+          const size = selectedSizeBtn ? selectedSizeBtn.dataset.size : ''
+          const colorSelect = homeModalContainer.querySelector('#qv-color')
+          const color = colorSelect ? colorSelect.value : ''
+          addToCart({ productId: product.id, size, color, qty: 1 })
+          const count = cartCount()
+          const cartBadge = document.querySelector('a[href="#/cart"] span')
+          if (cartBadge) {
+            cartBadge.textContent = count
+          } else {
+            const cartLink = document.querySelector('a[href="#/cart"]')
+            if (cartLink) {
+              const newBadge = document.createElement('span')
+              newBadge.className = 'absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white'
+              newBadge.textContent = count
+              cartLink.appendChild(newBadge)
+            }
+          }
+          showToast('Producto agregado al carrito')
+          closeModal()
+        })
+      }
+
       root.querySelectorAll('[data-home-qv]').forEach(card => {
         card.addEventListener('click', (e) => {
-          // Don't navigate if Quick Add was clicked
           if (e.target.closest('[data-quick-add]')) return
           e.preventDefault()
-          const productId = card.dataset.homeQv
-          trackProductView(productId)
-          sessionStorage.setItem('gl_pending_quickview', productId)
-          window.location.hash = '#/catalog'
+          const state = getState()
+          const product = state.products.find(p => p.id === card.dataset.homeQv)
+          if (product) openHomeModal(product)
         })
       })
 

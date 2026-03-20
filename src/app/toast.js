@@ -1,4 +1,4 @@
-export function showToast(message, type = 'success') {
+export function showToast(message, type = 'success', duration = null) {
   let container = document.getElementById('toast-container')
   
   // Ensure container exists
@@ -25,10 +25,14 @@ export function showToast(message, type = 'success') {
   
   // Icon
   const icon = type === 'error'
-    ? `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
-    : `<svg class="w-4 h-4 text-brand-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`
+    ? `<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
+    : `<svg class="w-4 h-4 flex-shrink-0 text-brand-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`
 
-  toast.innerHTML = `${icon}<span>${message}</span>`
+  const retryBtn = type === 'error'
+    ? `<button onclick="location.reload()" class="ml-2 text-xs underline underline-offset-2 opacity-80 hover:opacity-100 flex-shrink-0">Recargar</button>`
+    : ''
+
+  toast.innerHTML = `${icon}<span class="flex-1">${message}</span>${retryBtn}`
 
   container.appendChild(toast)
 
@@ -37,7 +41,8 @@ export function showToast(message, type = 'success') {
     toast.classList.remove('translate-y-8', 'opacity-0')
   })
 
-  // Remove after delay
+  // Remove after delay (errors stay longer)
+  const delay = duration ?? (type === 'error' ? 6000 : 2500)
   setTimeout(() => {
     toast.classList.add('translate-y-8', 'opacity-0')
     setTimeout(() => toast.remove(), 300)

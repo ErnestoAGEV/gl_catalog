@@ -100,11 +100,15 @@ export async function loadProducts() {
   await loadProductsFromSupabase(false)
 }
 
+function dispatchError(message) {
+  window.dispatchEvent(new CustomEvent('gl:error', { detail: { message } }))
+}
+
 async function loadProductsFromSupabase(isBackgroundUpdate = false) {
   if (!supabase) {
     console.error('Supabase client not initialized')
     if (!isBackgroundUpdate) {
-      alert('ERROR: No se pudo conectar a la base de datos. Verifica tu archivo .env y las credenciales (VITE_SUPABASE_URL).')
+      dispatchError('No se pudo conectar al catálogo. Verifica tu conexión e intenta de nuevo.')
       state.isLoading = false
       emit()
     }
@@ -155,7 +159,7 @@ async function loadProductsFromSupabase(isBackgroundUpdate = false) {
   } catch (err) {
     console.error('Error loading products:', err)
     if (!isBackgroundUpdate) {
-      alert('ERROR DE RED: ' + err.message + '\n\nPosible causa: Firewall, antivirus, o red bloqueando Supabase.')
+      dispatchError('No se pudo cargar el catálogo. Revisa tu conexión a internet e intenta recargar la página.')
       state.isLoading = false
       emit()
     }

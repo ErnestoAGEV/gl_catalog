@@ -1,13 +1,17 @@
-import { ensureSeedData } from './seed.js'
 import { getRoute, onRouteChange, startRouter, navigate } from './router.js'
 import { getState, isAdminAuthed, loadProducts, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession } from './store.js'
 import { renderRoute } from './views.js'
+import { showToast } from './toast.js'
 
 export async function startApp(mountEl) {
-  // ensureSeedData() // Disabled: Using Supabase
-
   // Restore admin session from Supabase BEFORE first render so route guards work
   await initAdminSession()
+
+  // Listen for Supabase errors dispatched by store.js — show elegant toast instead of alert()
+  window.addEventListener('gl:error', (e) => {
+    const msg = e.detail?.message || 'Ocurrió un error inesperado.'
+    showToast(msg, 'error')
+  })
 
   loadProducts()
 

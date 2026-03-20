@@ -2,7 +2,7 @@
 
 export const heroSlides = [
   {
-    image: '/gl_catalog/bannergl.jpg',
+    image: '/bannergl.webp',
     badge: 'NUEVA COLECCIÓN 2026',
     title: 'Estilo<br/>sin esfuerzo',
     subtitle: 'Descubre tu estilo con nosotros.',
