@@ -242,8 +242,8 @@ export function getProductById(id) {
 
 export async function saveOrder(orderData) {
   if (!supabase) return { error: 'No hay conexión a la base de datos' }
-  const { data, error } = await supabase.from('orders').insert(orderData).select().single()
-  return { data, error }
+  const { error } = await supabase.from('orders').insert(orderData)
+  return { error }
 }
 
 export function addToCart({ productId, size, color, qty }) {
