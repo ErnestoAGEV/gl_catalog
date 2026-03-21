@@ -6,17 +6,17 @@ export function quickViewModal(p) {
     ? p.images 
     : ['https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&h=750&fit=crop']
   const isPerfume = p.type === 'Perfumes'
-  const modalImageFitClass = isPerfume ? 'object-contain bg-white' : 'object-cover'
+  const modalImageFitClass = isPerfume ? 'object-contain bg-white' : 'object-contain md:object-cover object-center'
   
   const colorOpts = (p.colors || []).map(c => `<option value="${c}">${c}</option>`).join('')
   const discount = p.originalPrice ? Math.round((1 - p.price / p.originalPrice) * 100) : 0
 
   // Modal carousel HTML (larger version)
   const modalCarouselHTML = images.length > 1 ? `
-    <div class="modal-carousel relative overflow-hidden ${isPerfume ? 'bg-white' : 'bg-gray-100'} cursor-zoom-in md:flex-1 md:min-h-0" data-modal-carousel>
-      <div class="modal-carousel-track flex transition-transform duration-300 h-full" data-modal-track>
+    <div class="modal-carousel relative overflow-hidden ${isPerfume ? 'bg-white' : 'bg-gray-100 dark:bg-gray-800'} cursor-zoom-in md:flex-1 md:min-h-0 aspect-[4/3] md:aspect-auto flex items-center" data-modal-carousel>
+      <div class="modal-carousel-track flex transition-transform duration-300 h-full w-full" data-modal-track>
         ${images.map((img, i) => `
-          <img src="${img}" alt="${p.name}" class="modal-img-zoomable w-full aspect-[4/3] md:h-full md:w-auto md:aspect-auto ${modalImageFitClass} flex-shrink-0 min-w-full transition-transform duration-200" data-modal-slide="${i}"/>
+          <img src="${img}" alt="${p.name}" class="modal-img-zoomable w-full h-full md:w-full md:h-full ${modalImageFitClass} flex-shrink-0 min-w-full transition-transform duration-200" data-modal-slide="${i}"/>
         `).join('')}
       </div>
       
@@ -43,12 +43,7 @@ export function quickViewModal(p) {
       </div>
       
       <!-- Image counter (Mobile) -->
-      <div class="md:hidden absolute top-3 right-14 bg-black/50 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded-full z-20" data-modal-counter>1 / ${images.length}</div>
-      
-      <!-- Close button -->
-      <button id="close-quickview" class="absolute top-3 right-3 w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur shadow-lg flex items-center justify-center text-gray-700 dark:text-white hover:bg-white dark:hover:bg-gray-700 transition-colors z-20">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
+      <div class="md:hidden absolute top-3 right-3 bg-black/50 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded-full z-20" data-modal-counter>1 / ${images.length}</div>
       
       <!-- Badges -->
       <div class="absolute top-3 left-3 flex flex-col gap-1.5 z-20">
@@ -57,13 +52,8 @@ export function quickViewModal(p) {
       </div>
     </div>
   ` : `
-    <div class="relative overflow-hidden ${isPerfume ? 'bg-white' : 'bg-gray-100'} cursor-zoom-in md:flex-1 md:min-h-0" data-modal-single>
-      <img src="${images[0]}" alt="${p.name}" class="modal-img-zoomable w-full aspect-[4/3] md:h-full md:w-auto md:aspect-auto ${modalImageFitClass} transition-transform duration-200"/>
-      
-      <!-- Close button -->
-      <button id="close-quickview" class="absolute top-3 right-3 w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur shadow-lg flex items-center justify-center text-gray-700 dark:text-white hover:bg-white dark:hover:bg-gray-700 transition-colors z-20">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
+    <div class="relative overflow-hidden ${isPerfume ? 'bg-white' : 'bg-gray-100 dark:bg-gray-800'} cursor-zoom-in md:flex-1 md:min-h-0 flex items-center justify-center aspect-[4/3] md:aspect-auto" data-modal-single>
+      <img src="${images[0]}" alt="${p.name}" class="modal-img-zoomable w-full h-full md:w-full md:h-full ${modalImageFitClass} transition-transform duration-200"/>
       
       <!-- Badges -->
       <div class="absolute top-3 left-3 flex flex-col gap-1.5 z-20">
@@ -74,18 +64,23 @@ export function quickViewModal(p) {
   `
 
   return `
-    <div id="quick-view-modal" class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div id="quick-view-modal" class="fixed inset-0 z-[70] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm">
       <!-- Mobile: slide from bottom, Desktop: centered modal -->
-      <div class="bg-white dark:bg-gray-900 w-full md:w-auto md:max-w-2xl md:mx-4 md:rounded-2xl rounded-t-3xl animate-slide-up shadow-2xl">
+      <div class="bg-white dark:bg-gray-900 w-full md:w-auto md:max-w-2xl md:mx-4 md:rounded-2xl rounded-t-3xl animate-slide-up shadow-2xl max-h-[92dvh] flex flex-col relative">
+
+        <!-- Close button (Fixed globally to modal) -->
+        <button id="close-quickview" class="absolute top-3 right-3 w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/50 dark:bg-gray-800/50 backdrop-blur-md shadow-sm border border-gray-200/50 dark:border-gray-700/50 flex items-center justify-center text-gray-700 dark:text-white hover:bg-white dark:hover:bg-gray-700 transition-colors z-[80]">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
 
         <!-- Drag handle (mobile only) -->
-        <div class="md:hidden flex justify-center pt-3 pb-1">
+        <div class="md:hidden flex flex-shrink-0 justify-center pt-3 pb-1">
           <div class="w-10 h-1 rounded-full bg-gray-200 dark:bg-gray-700"></div>
         </div>
 
         <!-- Mobile layout: stacked image top + info below, compact -->
         <!-- Desktop: horizontal side-by-side -->
-        <div class="md:flex md:items-stretch">
+        <div class="md:flex md:items-stretch overflow-y-auto flex-1">
 
           <!-- Image Section -->
           <div class="relative md:w-72 lg:w-80 flex-shrink-0 md:self-stretch md:flex md:flex-col">
