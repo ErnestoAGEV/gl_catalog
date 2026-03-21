@@ -461,8 +461,24 @@ export function pageCatalog(initialState) {
           modalContainer.innerHTML = ''
           document.body.style.overflow = ''
         }
-        modalContainer.querySelector('#close-quickview').addEventListener('click', closeModal)
-        modalContainer.querySelector('#quick-view-modal').addEventListener('click', (e) => { if (e.target.id === 'quick-view-modal') closeModal() })
+        modalContainer.querySelector('#close-quickview')?.addEventListener('click', closeModal)
+        modalContainer.querySelector('#quick-view-modal')?.addEventListener('click', (e) => { if (e.target.id === 'quick-view-modal') closeModal() })
+        
+        const shareBtn = modalContainer.querySelector('#share-quickview')
+        if (shareBtn) {
+          shareBtn.addEventListener('click', () => {
+            if (navigator.share) {
+              navigator.share({
+                title: product.name,
+                text: '¡Mira este producto en G&L!',
+                url: window.location.href
+              }).catch(console.error)
+            } else {
+              navigator.clipboard.writeText(window.location.href)
+              showToast('Enlace copiado al portapapeles')
+            }
+          })
+        }
         
         // Initialize modal carousel and zoom (extracted modules)
         initModalCarousel(modalContainer.querySelector('[data-modal-carousel]'))

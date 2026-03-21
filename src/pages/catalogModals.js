@@ -6,17 +6,17 @@ export function quickViewModal(p) {
     ? p.images 
     : ['https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&h=750&fit=crop']
   const isPerfume = p.type === 'Perfumes'
-  const modalImageFitClass = isPerfume ? 'object-contain bg-white' : 'object-contain md:object-cover object-center'
+  const modalImageFitClass = isPerfume ? 'object-contain bg-transparent' : 'object-contain md:object-cover object-center bg-transparent'
   
   const colorOpts = (p.colors || []).map(c => `<option value="${c}">${c}</option>`).join('')
   const discount = p.originalPrice ? Math.round((1 - p.price / p.originalPrice) * 100) : 0
 
   // Modal carousel HTML (larger version)
   const modalCarouselHTML = images.length > 1 ? `
-    <div class="modal-carousel relative overflow-hidden ${isPerfume ? 'bg-white' : 'bg-gray-100 dark:bg-gray-800'} cursor-zoom-in md:flex-1 md:min-h-0 aspect-[4/3] md:aspect-auto flex items-center" data-modal-carousel>
+    <div class="modal-carousel relative overflow-hidden bg-transparent cursor-zoom-in w-full h-full flex items-center" data-modal-carousel>
       <div class="modal-carousel-track flex transition-transform duration-300 h-full w-full" data-modal-track>
         ${images.map((img, i) => `
-          <img src="${img}" alt="${p.name}" class="modal-img-zoomable w-full h-full md:w-full md:h-full ${modalImageFitClass} flex-shrink-0 min-w-full transition-transform duration-200" data-modal-slide="${i}"/>
+          <img src="${img}" alt="${p.name}" class="modal-img-zoomable w-full h-full object-contain object-center bg-transparent flex-shrink-0 min-w-full transition-transform duration-200" data-modal-slide="${i}"/>
         `).join('')}
       </div>
       
@@ -45,87 +45,77 @@ export function quickViewModal(p) {
       <!-- Image counter (Mobile) -->
       <div class="md:hidden absolute top-3 right-3 bg-black/50 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded-full z-20" data-modal-counter>1 / ${images.length}</div>
       
-      <!-- Badges -->
-      <div class="absolute top-3 left-3 flex flex-col gap-1.5 z-20">
-        ${p.badge ? `<span class="px-2.5 py-1 text-[10px] font-bold ${getBadgeColor(p.badge)} text-white rounded-md shadow-sm">${p.badge.toUpperCase()}</span>` : ''}
-        ${discount > 0 ? `<span class="px-2.5 py-1 text-[10px] font-bold bg-red-500 text-white rounded-md shadow-sm">-${discount}%</span>` : ''}
-      </div>
+      <!-- Sin badges en el modal -->
     </div>
   ` : `
-    <div class="relative overflow-hidden ${isPerfume ? 'bg-white' : 'bg-gray-100 dark:bg-gray-800'} cursor-zoom-in md:flex-1 md:min-h-0 flex items-center justify-center aspect-[4/3] md:aspect-auto" data-modal-single>
-      <img src="${images[0]}" alt="${p.name}" class="modal-img-zoomable w-full h-full md:w-full md:h-full ${modalImageFitClass} transition-transform duration-200"/>
+    <div class="relative overflow-hidden bg-transparent cursor-zoom-in w-full h-full flex items-center justify-center" data-modal-single>
+      <img src="${images[0]}" alt="${p.name}" class="modal-img-zoomable w-full h-full object-contain object-center bg-transparent transition-transform duration-200"/>
       
-      <!-- Badges -->
-      <div class="absolute top-3 left-3 flex flex-col gap-1.5 z-20">
-        ${p.badge ? `<span class="px-2.5 py-1 text-[10px] font-bold ${getBadgeColor(p.badge)} text-white rounded-md shadow-sm">${p.badge.toUpperCase()}</span>` : ''}
-        ${discount > 0 ? `<span class="px-2.5 py-1 text-[10px] font-bold bg-red-500 text-white rounded-md shadow-sm">-${discount}%</span>` : ''}
-      </div>
+      <!-- Sin badges en el modal -->
     </div>
   `
 
   return `
-    <div id="quick-view-modal" class="fixed inset-0 z-[70] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm">
-      <!-- Mobile: slide from bottom, Desktop: centered modal -->
-      <div class="bg-white dark:bg-gray-900 w-full md:w-auto md:max-w-2xl md:mx-4 md:rounded-2xl rounded-t-3xl animate-slide-up shadow-2xl max-h-[92dvh] flex flex-col relative">
+    <div id="quick-view-modal" class="fixed inset-0 z-[70] flex flex-col md:items-center md:justify-center bg-white dark:bg-gray-900 md:bg-black/60 md:backdrop-blur-sm animate-fade-in">
+      <!-- Mobile: full screen, Desktop: centered modal -->
+      <div class="bg-white dark:bg-gray-900 w-full h-[100dvh] md:h-auto md:max-h-[92dvh] md:w-auto md:max-w-3xl md:mx-4 md:rounded-2xl md:shadow-2xl flex flex-col relative animate-slide-up">
 
-        <!-- Close button (Fixed globally to modal) -->
-        <button id="close-quickview" class="absolute top-3 right-3 w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/50 dark:bg-gray-800/50 backdrop-blur-md shadow-sm border border-gray-200/50 dark:border-gray-700/50 flex items-center justify-center text-gray-700 dark:text-white hover:bg-white dark:hover:bg-gray-700 transition-colors z-[80]">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-
-        <!-- Drag handle (mobile only) -->
-        <div class="md:hidden flex flex-shrink-0 justify-center pt-3 pb-1">
-          <div class="w-10 h-1 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+        <!-- Top Navigation (Fixed inside modal) -->
+        <div class="absolute top-4 left-4 right-4 flex justify-between z-[80] pointer-events-none">
+          <!-- Back button (Close) -->
+          <button id="close-quickview" class="w-10 h-10 rounded-full bg-white/90 dark:bg-gray-800/90 shadow-[0_2px_8px_rgba(0,0,0,0.08)] flex items-center justify-center text-gray-700 dark:text-gray-300 hover:scale-105 transition-transform pointer-events-auto">
+            <svg class="w-5 h-5 pr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          
+          <!-- Share button -->
+          <button id="share-quickview" class="w-10 h-10 rounded-full bg-white/90 dark:bg-gray-800/90 shadow-[0_2px_8px_rgba(0,0,0,0.08)] flex items-center justify-center text-gray-700 dark:text-gray-300 hover:scale-105 transition-transform pointer-events-auto">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          </button>
         </div>
 
         <!-- Mobile layout: stacked image top + info below, compact -->
         <!-- Desktop: horizontal side-by-side -->
-        <div class="md:flex md:items-stretch overflow-y-auto flex-1">
+        <div class="flex flex-col md:flex-row md:items-stretch w-full flex-1 min-h-0">
 
           <!-- Image Section -->
-          <div class="relative md:w-72 lg:w-80 flex-shrink-0 md:self-stretch md:flex md:flex-col">
-            ${modalCarouselHTML}
+          <div class="relative w-full flex-1 min-h-0 md:w-80 lg:w-[400px] md:self-stretch bg-[#f4f4f4] dark:bg-gray-800/30">
+            <div class="absolute inset-0">
+              ${modalCarouselHTML}
+            </div>
           </div>
 
           <!-- Content Section -->
-          <div class="px-4 pt-3 pb-6 md:p-6 flex flex-col md:w-72 lg:w-80 md:overflow-y-auto">
+          <div class="px-5 py-4 pb-6 md:p-8 flex flex-col flex-none md:flex-1 md:w-80 lg:w-[380px] md:overflow-y-auto bg-white dark:bg-gray-900 z-10 shadow-[0_-8px_20px_rgba(0,0,0,0.03)] md:shadow-none -mt-4 rounded-t-[20px] md:mt-0 md:rounded-t-none">
 
-            <!-- Mobile: top row with name + close affordance -->
-            <div class="flex items-start justify-between gap-2 mb-1">
-              <span class="text-[10px] font-bold text-brand uppercase tracking-widest">${p.type}</span>
-              ${discount > 0 ? `<span class="text-[10px] font-bold bg-red-500 text-white px-2 py-0.5 rounded-full">-${discount}%</span>` : ''}
+            <!-- Category -->
+            <div class="mb-0.5">
+              <span class="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">${p.type}</span>
             </div>
 
             <!-- Name -->
-            <h2 class="text-base md:text-2xl font-bold text-gray-900 dark:text-white mb-2 leading-snug line-clamp-2">${p.name}</h2>
+            <h2 class="text-[22px] md:text-3xl font-extrabold text-gray-900 dark:text-white leading-tight mb-1.5 tracking-tight line-clamp-2">${p.name}</h2>
 
             <!-- Price row -->
-            <div class="flex items-baseline gap-2 mb-3">
-              <span class="text-xl md:text-3xl font-black text-gray-900 dark:text-white">${formatMoney(p.price)}</span>
-              ${p.originalPrice ? `<span class="text-sm text-gray-400 line-through">${formatMoney(p.originalPrice)}</span>` : ''}
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-xl md:text-2xl font-black text-gray-900 dark:text-white">${formatMoney(p.price)}</span>
+              ${p.originalPrice ? `<span class="text-[13px] font-medium text-gray-400 line-through">${formatMoney(p.originalPrice)}</span>` : ''}
+              ${discount > 0 ? `<span class="text-[10px] font-bold bg-red-50 text-red-600 px-1.5 py-0.5 rounded">-${discount}%</span>` : ''}
             </div>
-
-            <!-- Stock warning -->
-            ${p.stock && p.stock <= 5 ? `
-              <div class="flex items-center gap-2 mb-3 px-3 py-1.5 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
-                <svg class="w-3.5 h-3.5 text-orange-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                <span class="text-xs font-medium text-orange-700 dark:text-orange-400">¡Solo quedan ${p.stock} unidades!</span>
-              </div>
-            ` : ''}
 
             <!-- Selectors -->
             <div class="mb-4">
               <!-- Size Buttons -->
               ${(p.sizes && p.sizes.length > 0) ? `
                 <div class="mb-3">
-                  <label class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Talla</label>
-                  <div class="flex flex-wrap gap-1.5" id="qv-size-buttons">
+                  <div class="flex items-center justify-between mb-1.5">
+                    <label class="text-[11px] font-bold text-gray-900 dark:text-gray-300 uppercase tracking-wider">Talla</label>
+                  </div>
+                  <!-- Horizontal scrolling list of sizes -->
+                  <div class="flex overflow-x-auto gap-2 pb-1 hide-scrollbar" id="qv-size-buttons">
                     ${p.sizes.map(size => `
                       <button
-                        class="qv-size-btn min-w-[2.6rem] h-9 px-2 rounded-lg border-2 transition-all text-sm font-semibold
-                               border-gray-200 hover:border-brand hover:text-brand
-                               dark:border-gray-700 dark:hover:border-brand dark:hover:text-brand
-                               active:scale-95 text-gray-700 dark:text-gray-300"
+                        class="qv-size-btn flex-shrink-0 h-9 px-4 rounded-full border border-gray-200 dark:border-gray-700 transition-all text-[13px] font-semibold
+                               hover:border-brand dark:hover:border-brand text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 active:scale-95"
                         data-size="${size}"
                         type="button">
                         ${size}
@@ -137,13 +127,13 @@ export function quickViewModal(p) {
 
               <!-- Color Dropdown -->
               ${(p.colors && p.colors.length > 0) ? `
-                <div>
-                  <label class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Color</label>
+                <div class="mb-3">
+                  <label class="text-[11px] font-bold text-gray-900 dark:text-gray-300 uppercase tracking-wider mb-1.5 block">Color</label>
                   <div class="relative">
-                    <select id="qv-color" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:border-brand focus:ring-1 focus:ring-brand appearance-none">
+                    <select id="qv-color" class="w-full h-10 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 text-[13px] font-medium text-gray-900 dark:text-white focus:border-brand focus:ring-1 focus:ring-brand appearance-none outline-none">
                       ${colorOpts}
                     </select>
-                    <svg class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    <svg class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                   </div>
                 </div>
               ` : ''}
@@ -151,24 +141,10 @@ export function quickViewModal(p) {
 
             <!-- Add to cart button -->
             <button id="qv-add-to-cart" data-product-id="${p.id}"
-              class="w-full flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3.5 text-sm font-bold text-white hover:bg-brand-dark active:scale-[0.98] transition-all shadow-md shadow-brand/20 min-h-[48px]">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+              class="w-full flex items-center justify-center gap-2 rounded-full bg-brand px-4 py-3.5 mt-auto text-[15px] font-bold text-white hover:opacity-90 active:scale-[0.98] transition-all shadow-md shadow-brand/20">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
               Agregar al carrito
             </button>
-
-            <!-- Trust badges (hidden on mobile to save space) -->
-            <div class="hidden md:block mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-              <div class="flex items-center justify-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                <span class="flex items-center gap-1">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                  Calidad garantizada
-                </span>
-                <span class="flex items-center gap-1">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                  Envío rápido
-                </span>
-              </div>
-            </div>
           </div>
         </div>
       </div>
