@@ -290,6 +290,93 @@ export function initModalZoom(modalContainer) {
     container.addEventListener('touchend', (e) => {
       if (e.touches.length < 2) initialDistance = 0
     }, { passive: true })
+
+    // Mobile: Tap to open fullscreen viewer
+    if (window.innerWidth < 768) {
+      container.addEventListener('click', (e) => {
+        if (e.target.closest('[data-modal-prev], [data-modal-next], [data-modal-thumb], [data-modal-dot], [data-modal-counter]')) return
+        openFullscreenViewer(container, allImgs)
+      })
+    }
   })
+}
+
+// ── Fullscreen Mobile Viewer ────────────────────────────────────────────────
+
+function openFullscreenViewer(container, allImgs) {
+  const srcs = Array.from(allImgs).map(img => img.src)
+  if (srcs.length === 0) return
+
+  let currentIndex = 0
+  const track = container.querySelector('[data-modal-track]')
+  if (track) {
+    const match = track.style.transform.match(/translateX\(-?([0-9.]+)%\)/)
+    if (match) currentIndex = Math.round(parseFloat(match[1]) / 100)
+  }
+
+  const viewerHTML = `
+    <div id="fs-viewer" class="fixed inset-0 z-[100] bg-white dark:bg-gray-900 flex flex-col animate-fade-in">
+      <div class="absolute top-0 left-0 right-0 p-4 flex justify-end z-[110]">
+        <button id="fs-close" class="w-10 h-10 rounded-full bg-gray-100/90 dark:bg-gray-800/90 backdrop-blur shadow-sm text-gray-800 dark:text-white flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      ${srcs.length > 1 ? `<div class="absolute top-5 left-1/2 -translate-x-1/2 bg-gray-100/90 dark:bg-gray-800/90 backdrop-blur shadow-sm text-gray-800 dark:text-white text-xs font-bold px-3 py-1.5 rounded-full z-[110]" id="fs-counter">${currentIndex + 1} / ${srcs.length}</div>` : ''}
+
+      <div class="relative w-full h-full flex items-center overflow-x-auto snap-x snap-mandatory hide-scrollbar touch-pan-x" id="fs-track">
+        ${srcs.map(src => `
+          <div class="min-w-full h-full flex items-center justify-center flex-shrink-0 snap-center pb-12 pt-20 px-4">
+            <img src="${src}" class="w-full h-full object-contain" />
+          </div>
+        `).join('')}
+      </div>
+
+      ${srcs.length > 1 ? `
+        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-[110]" id="fs-dots">
+          ${srcs.map((_, i) => `<span class="w-2 h-2 rounded-full transition-all ${i === currentIndex ? 'bg-gray-900 dark:bg-white scale-110' : 'bg-gray-300 dark:bg-gray-600'}" data-fs-dot="${i}"></span>`).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `
+
+  document.body.insertAdjacentHTML('beforeend', viewerHTML)
+  const viewer = document.getElementById('fs-viewer')
+  const fsTrack = viewer.querySelector('#fs-track')
+  const fsClose = viewer.querySelector('#fs-close')
+  const fsCounter = viewer.querySelector('#fs-counter')
+  const fsDots = viewer.querySelectorAll('[data-fs-dot]')
+
+  document.body.style.overflow = 'hidden' // Prevenir body scroll debajo
+
+  fsClose.addEventListener('click', () => {
+    viewer.classList.replace('animate-fade-in', 'animate-fade-out')
+    setTimeout(() => {
+      viewer.remove()
+      // Si se cerró el modal principal mientras tanto, no restaurar overflow aquí, pero el closeModal del main modal lo hará.
+      if (!document.getElementById('quick-view-modal')) document.body.style.overflow = ''
+    }, 200)
+  })
+
+  if (srcs.length > 1 && fsTrack) {
+    requestAnimationFrame(() => {
+      fsTrack.scrollLeft = currentIndex * fsTrack.clientWidth
+    })
+
+    fsTrack.addEventListener('scroll', () => {
+      const calculatedIdx = Math.round(fsTrack.scrollLeft / fsTrack.clientWidth)
+      // Prevenir bug visual de rubber-banding en iOS donde idx < 0 o idx >= length
+      const idx = Math.max(0, Math.min(srcs.length - 1, calculatedIdx))
+      
+      if (fsCounter) fsCounter.textContent = `${idx + 1} / ${srcs.length}`
+      fsDots.forEach((dot, i) => {
+        if (i === idx) {
+          dot.className = 'w-2 h-2 rounded-full transition-all bg-gray-900 dark:bg-white scale-110'
+        } else {
+          dot.className = 'w-2 h-2 rounded-full transition-all bg-gray-300 dark:bg-gray-600'
+        }
+      })
+    })
+  }
 }
 
