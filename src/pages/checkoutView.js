@@ -247,7 +247,7 @@ function whatsappButton(extraClass) {
     <button
       type="submit"
       form="checkout-form"
-      class="${extraClass} items-center justify-center gap-2 w-full rounded-xl bg-green-500 hover:bg-green-600 px-4 py-4 text-sm font-semibold text-white transition-colors shadow-lg shadow-green-500/20"
+      class="${extraClass} flex items-center justify-center gap-2 w-full rounded-xl bg-green-500 hover:bg-green-600 px-4 py-4 text-sm font-semibold text-white transition-colors shadow-lg shadow-green-500/20"
     >
       ${waIcon}
       Enviar pedido por WhatsApp
