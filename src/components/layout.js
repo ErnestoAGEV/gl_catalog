@@ -135,30 +135,85 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
 
 export function layoutAdmin({ contentHtml, state }) {
   const authed = Boolean(state?.isAdminAuthed)
-  return `<div class="min-h-dvh overflow-x-hidden bg-gray-50 text-gray-900">
-    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-lg border-b border-gray-200 shadow-sm">
-      <div class="mx-auto flex w-full max-w-screen-sm items-center justify-between px-4 py-3">
-        <div class="flex items-center gap-4">
-          <a href="#/" class="flex items-center gap-2 group" title="Ir a la tienda">
-            <span class="text-lg font-bold text-gray-900 group-hover:text-brand transition-colors">G&L</span>
-            <span class="text-xs px-2 py-0.5 rounded bg-brand/10 text-brand font-medium">Admin</span>
+  const currentPath = window.location.hash.split('?')[0] || ''
+
+  if (!authed) {
+    return `<div class="min-h-dvh flex items-center justify-center bg-[#F8F9FA] text-[#191C1D]">
+      ${contentHtml}
+    </div>`
+  }
+
+  const links = [
+    { path: '#/admin/dashboard', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/>', label: 'Dashboard' },
+    { path: '#/admin/orders', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>', label: 'Órdenes' },
+    { path: '#/admin/products', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>', label: 'Productos' },
+    { path: '#/admin/coupons', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>', label: 'Cupones' },
+    { path: '#/admin/newsletter', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>', label: 'Newsletter' },
+  ]
+
+  const navHtml = links.map(l => {
+    const active = currentPath === l.path || (currentPath === '#/admin' && l.path === '#/admin/dashboard')
+    return `
+      <a href="${l.path}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${active ? 'bg-brand/10 text-brand font-semibold relative before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-8 before:bg-brand before:rounded-r-md' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">${l.icon}</svg>
+        ${l.label}
+      </a>
+    `
+  }).join('')
+
+  return `
+    <div class="min-h-screen bg-[#F8F9FA] text-[#191C1D] flex flex-col md:flex-row font-inter">
+      
+      <!-- Mobile Header -->
+      <header class="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-100 sticky top-0 z-30">
+        <a href="#/" class="flex items-center gap-2 group">
+          <span class="text-xl font-bold font-manrope">G&L</span>
+          <span class="text-[10px] tracking-wider uppercase px-2 py-0.5 rounded bg-brand text-white font-bold">Admin</span>
+        </a>
+        <button id="admin-mobile-menu" class="p-2 text-gray-500 hover:text-gray-900">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+      </header>
+
+      <!-- Sidebar Desktop / Drawer Mobile -->
+      <aside id="admin-sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-100 transition-transform -translate-x-full md:translate-x-0 md:static md:flex md:flex-col">
+        <div class="p-6 flex items-center justify-between">
+          <a href="#/" class="flex items-center gap-2 group">
+             <span class="text-2xl font-bold font-manrope">G&L</span>
+             <span class="text-[10px] tracking-wider uppercase px-2 py-0.5 rounded bg-brand text-white font-bold">Admin</span>
           </a>
-          <a href="#/" class="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          <button id="close-admin-sidebar" class="md:hidden p-2 text-gray-500">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+        
+        <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+          <div class="mb-6 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Menú Principal</div>
+          ${navHtml}
+        </nav>
+
+        <div class="p-4 border-t border-gray-100">
+          <a href="#/" class="flex items-center gap-3 w-full px-4 py-3 mb-2 text-sm font-medium text-gray-500 hover:text-brand hover:bg-brand/5 rounded-xl transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
             Ver Tienda
           </a>
+          <button id="admin-logout" class="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            Cerrar Sesión
+          </button>
         </div>
-        ${
-          authed
-            ? `<button id="admin-logout" class="text-sm text-gray-500 hover:text-brand transition-colors">
-                Salir
-              </button>`
-            : ''
-        }
-      </div>
-    </header>
-    <main class="mx-auto w-full max-w-screen-sm px-4 py-5">
-      ${contentHtml}
-    </main>
-  </div>`
+      </aside>
+
+      <!-- Overlay Mobile -->
+      <div id="admin-sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden backdrop-blur-sm animate-fade-in"></div>
+
+      <!-- Main Content -->
+      <main class="flex-1 min-h-[calc(100vh-64px)] md:min-h-screen relative overflow-x-hidden">
+        <div class="max-w-7xl mx-auto p-4 md:p-8 lg:p-12">
+          ${contentHtml}
+        </div>
+      </main>
+
+    </div>
+  `
 }

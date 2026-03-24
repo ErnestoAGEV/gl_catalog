@@ -497,3 +497,67 @@ export function getMostViewedProducts(limit = 4) {
   const unviewed = sorted.filter(p => !(views[p.id] || 0))
   return [...viewed, ...unviewed].slice(0, limit)
 }
+
+// ========== ADMIN QUERIES ==========
+export async function getAdminOrders() {
+  if (!state.isAdminAuthed) return []
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data || []
+  } catch (err) {
+    console.error('Error fetching admin orders:', err)
+    return []
+  }
+}
+
+export async function getAdminCoupons() {
+  if (!state.isAdminAuthed) return []
+  try {
+    const { data, error } = await supabase
+      .from('coupons')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data || []
+  } catch (err) {
+    console.error('Error fetching admin coupons:', err)
+    return []
+  }
+}
+
+export async function getAdminSubscribers() {
+  if (!state.isAdminAuthed) return []
+  try {
+    const { data, error } = await supabase
+      .from('newsletter_subscribers')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data || []
+  } catch (err) {
+    console.error('Error fetching admin subscribers:', err)
+    return []
+  }
+}
+
+export async function updateAdminOrderStatus(orderId, newStatus) {
+  if (!state.isAdminAuthed) return { error: 'No autorizado' }
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ status: newStatus })
+      .eq('id', orderId)
+      .select()
+      .single()
+      
+    if (error) throw error
+    return { data, error: null }
+  } catch (err) {
+    console.error('Error updating order status:', err)
+    return { error: err.message }
+  }
+}

@@ -15,18 +15,10 @@ export function pageAdminProducts(state) {
     title: 'Productos | Admin G&L',
     html: `
       <!-- Header -->
-      <section id="admin-top" class="mb-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-bold text-gray-900">Panel de Administración</h1>
-            <p class="text-sm text-gray-500 mt-1">${productCount} productos en catálogo</p>
-          </div>
-          <button type="button" id="admin-logout-btn" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-red-500 hover:bg-red-50 transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-            </svg>
-            Cerrar sesión
-          </button>
+      <section id="admin-top" class="mb-6 flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-manrope font-bold text-gray-900 dark:text-white">Productos</h1>
+          <p class="text-sm text-gray-500 mt-1">Gestiona tu catálogo (${productCount} en total)</p>
         </div>
       </section>
 
@@ -55,7 +47,24 @@ export function pageAdminProducts(state) {
           <input id="search-products" type="text" class="w-full rounded-xl border border-gray-200 bg-white pl-12 pr-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none transition-colors" placeholder="Buscar por nombre, categoría o badge..." />
         </div>
         
-        <div id="products-list" class="grid gap-4 md:grid-cols-2"></div>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden mb-6">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600 dark:text-gray-400">
+              <thead class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 text-xs uppercase tracking-wider">
+                <tr>
+                  <th scope="col" class="px-6 py-4 font-semibold min-w-[250px]">Producto</th>
+                  <th scope="col" class="px-6 py-4 font-semibold min-w-[120px]">Categoría</th>
+                  <th scope="col" class="px-6 py-4 font-semibold min-w-[100px]">Precio</th>
+                  <th scope="col" class="px-6 py-4 font-semibold min-w-[140px]">Stock</th>
+                  <th scope="col" class="px-6 py-4 font-semibold min-w-[140px]">Estado</th>
+                  <th scope="col" class="px-6 py-4 font-semibold text-center min-w-[120px]">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="products-list" class="divide-y divide-gray-100 dark:divide-gray-800">
+              </tbody>
+            </table>
+          </div>
+        </div>
       </section>
     `,
     onMount(root) {
@@ -69,7 +78,7 @@ export function pageAdminProducts(state) {
       const errorText = qs(root, '#error-text')
       const typeSelect = qs(root, 'select[name="type"]')
       const colorsInput = qs(root, '#colors-input')
-      const colorsHelp = qs(root, '#colors-help')
+      const colorsHelp = root.querySelector('#colors-help')
       const clothingSizesSection = qs(root, '#sizes-clothing')
       const perfumeSizesSection = qs(root, '#sizes-perfume')
       const cancelBtn = qs(root, '#product-cancel')
@@ -300,16 +309,18 @@ export function pageAdminProducts(state) {
       const showForm = (editing = false) => {
         isEditing = editing
         formSection.classList.remove('hidden')
-        toggleFormBtn.classList.add('hidden')
-        formTitle.textContent = editing ? 'Editar producto' : 'Nuevo producto'
-        submitText.textContent = editing ? 'Guardar cambios' : 'Guardar producto'
+        formSection.classList.add('flex')
+        document.body.style.overflow = 'hidden'
+        formTitle.textContent = editing ? 'Editar producto' : 'Añadir a la Colección'
+        submitText.textContent = editing ? 'Guardar cambios' : 'Guardar en Colección'
         setError('')
       }
 
-      const hideForm = (scrollTop = false) => {
+      const hideForm = () => {
         isEditing = false
         formSection.classList.add('hidden')
-        toggleFormBtn.classList.remove('hidden')
+        formSection.classList.remove('flex')
+        document.body.style.overflow = ''
         form.reset()
         selectedFiles = []
         fileInput.value = ''
@@ -318,21 +329,6 @@ export function pageAdminProducts(state) {
         updateColorBadges()
         renderPreviews()
         renderList()
-
-        if (scrollTop) {
-          const scroller = root?.closest('main') || document.scrollingElement || document.documentElement
-          const topAnchor = qs(root, '#admin-top')
-          const doScroll = () => {
-            if (topAnchor) topAnchor.scrollIntoView({ behavior: 'smooth', block: 'start' })
-            scroller.scrollTop = 0
-            document.documentElement.scrollTop = 0
-            document.body.scrollTop = 0
-          }
-          doScroll()
-          requestAnimationFrame(doScroll)
-          setTimeout(doScroll, 120)
-          if (toggleFormBtn) toggleFormBtn.focus({ preventScroll: true })
-        }
       }
 
       // ── Init ──
@@ -369,10 +365,14 @@ export function pageAdminProducts(state) {
       toggleFormBtn.addEventListener('click', () => showForm(false))
       cancelBtn.addEventListener('click', hideForm)
 
-      qs(root, '#admin-logout-btn').addEventListener('click', async () => {
-        await adminLogout()
-        navigate('/admin/login')
+      const modalCloseTop = root.querySelector('#modal-close-top')
+      if (modalCloseTop) modalCloseTop.addEventListener('click', hideForm)
+
+      formSection.addEventListener('click', (e) => {
+        if (e.target === formSection) hideForm()
       })
+
+      // Logout está ahora manejado globalmente por layout.js
 
       // ── Form Submit ──
       form.addEventListener('submit', async (ev) => {
@@ -465,8 +465,6 @@ export function pageAdminProducts(state) {
         })
         updateColorBadges()
         qs(root, 'input[name="customColors"]').value = customParts.join(', ')
-
-        formSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
       })
 
       // ── Delete Product ──
