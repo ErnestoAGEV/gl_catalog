@@ -109,6 +109,9 @@ export async function startApp(mountEl) {
     const count = state.cart.reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
     document.querySelectorAll('a[href="#/cart"]').forEach(link => {
       const container = link.querySelector('.relative') || link
+      if (container === link && !['absolute', 'relative', 'fixed'].some(cls => link.classList.contains(cls))) {
+        link.classList.add('relative')
+      }
       let badge = container.querySelector('.cart-count-badge')
       if (count > 0) {
         if (!badge) {

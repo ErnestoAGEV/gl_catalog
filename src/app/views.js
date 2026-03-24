@@ -19,9 +19,10 @@ const adminRoutes = {
 }
 
 export function renderRoute(path, state) {
-  const isAdmin = path.startsWith('/admin')
+  const [basePath] = path.split('?') // Ignore query params for routing
+  const isAdmin = basePath.startsWith('/admin')
   const routes = isAdmin ? adminRoutes : publicRoutes
-  const page = routes[path] || (isAdmin ? pageAdminLogin : pageHome)
+  const page = routes[basePath] || (isAdmin ? pageAdminLogin : pageHome)
 
   const view = page(state)
   const title = view.title

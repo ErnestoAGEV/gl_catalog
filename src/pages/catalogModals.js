@@ -42,8 +42,7 @@ export function quickViewModal(p) {
         `).join('')}
       </div>
       
-      <!-- Image counter (Mobile) -->
-      <div class="md:hidden absolute top-3 right-3 bg-black/50 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded-full z-20" data-modal-counter>1 / ${images.length}</div>
+      <!-- El contador de imágenes ha sido removido de la vista móvil -->
       
       <!-- Sin badges en el modal -->
     </div>
@@ -78,7 +77,7 @@ export function quickViewModal(p) {
         <div class="flex flex-col md:flex-row md:items-stretch w-full flex-1 min-h-0">
 
           <!-- Image Section -->
-          <div class="relative w-full flex-1 min-h-0 md:w-80 lg:w-[400px] md:self-stretch bg-[#f4f4f4] dark:bg-gray-800/30">
+          <div class="relative w-full flex-1 min-h-0 md:w-80 lg:w-[400px] md:self-stretch bg-white">
             <div class="absolute inset-0">
               ${modalCarouselHTML}
             </div>

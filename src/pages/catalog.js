@@ -405,6 +405,21 @@ export function pageCatalog(initialState) {
         }, 200)
       }
 
+      // Auto-open via URL parameter (Deeps Linking Share)
+      const hashParts = window.location.hash.split('?')
+      if (hashParts.length > 1) {
+        const params = new URLSearchParams(hashParts[1])
+        const pId = params.get('p')
+        if (pId) {
+          setTimeout(() => {
+            const btn = root.querySelector(`[data-quickview="${pId}"]`)
+            if (btn) btn.click()
+            // Clean up the URL quietly without triggering a router reload
+            history.replaceState(null, '', window.location.pathname + '#/catalog')
+          }, 300)
+        }
+      }
+
       // Apply category filter if navigated from home category cards
       const pendingTypeFilter = sessionStorage.getItem('gl_pending_type_filter')
       if (pendingTypeFilter) {
@@ -467,14 +482,15 @@ export function pageCatalog(initialState) {
         const shareBtn = modalContainer.querySelector('#share-quickview')
         if (shareBtn) {
           shareBtn.addEventListener('click', () => {
+            const shareUrl = window.location.origin + window.location.pathname + '#/catalog?p=' + product.id
             if (navigator.share) {
               navigator.share({
                 title: product.name,
                 text: '¡Mira este producto en G&L!',
-                url: window.location.href
+                url: shareUrl
               }).catch(console.error)
             } else {
-              navigator.clipboard.writeText(window.location.href)
+              navigator.clipboard.writeText(shareUrl)
               showToast('Enlace copiado al portapapeles')
             }
           })
@@ -530,23 +546,7 @@ export function pageCatalog(initialState) {
           
           addToCart({ productId: product.id, size, color, qty: 1 })
           
-          // Update cart counter in header immediately
-          const count = cartCount()
-          const cartBadge = document.querySelector('a[href="#/cart"] span')
-          if (cartBadge) {
-            cartBadge.textContent = count
-          } else {
-            // Create badge if it doesn't exist
-            const cartLink = document.querySelector('a[href="#/cart"]')
-            if (cartLink) {
-              const newBadge = document.createElement('span')
-              newBadge.className = 'absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white'
-              newBadge.textContent = count
-            cartLink.appendChild(newBadge)
-            }
-          }
-          
-          showToast('Producto agregado al carrito')
+          // El contador del carrito se actualiza globalmente desde store.js -> startApp.js
           closeModal()
         })
       })

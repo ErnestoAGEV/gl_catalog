@@ -6,6 +6,7 @@ import { featuredProductCard, homeSkeletonCard, testimonialsSection } from './ho
 import { quickViewModal } from './catalogModals.js'
 import { initModalCarousel, initModalZoom } from './catalogCarousels.js'
 import { showToast } from '../app/toast.js'
+import { handleQuickAdd } from './catalogQuickAdd.js'
 
 export function pageHome() {
   const state = getState()
@@ -359,54 +360,13 @@ export function pageHome() {
         })
       })
 
+      // Contenedor global de modales del Home
+      const homeModalContainer = qs(root, '#home-modal-container')
+
       // Quick Add to Cart from home cards
-      on(root, 'click', '[data-quick-add]', (ev, btn) => {
-        ev.preventDefault()
-        ev.stopPropagation()
-        if (btn.dataset.busy) return
-        btn.dataset.busy = '1'
-
-        const id = btn.dataset.quickAdd
-        addToCart({ productId: id, size: '', color: '', qty: 1 })
-
-        // Update cart badge
-        const count = cartCount()
-        const cartBadge = document.querySelector('a[href="#/cart"] span')
-        if (cartBadge) {
-          cartBadge.textContent = count
-        } else {
-          const cartLink = document.querySelector('a[href="#/cart"]')
-          if (cartLink) {
-            const b = document.createElement('span')
-            b.className = 'absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white'
-            b.textContent = count
-            cartLink.appendChild(b)
-          }
-        }
-
-        const icon = btn.querySelector('.quick-add-icon')
-        const spinner = btn.querySelector('.quick-add-spinner')
-        const check = btn.querySelector('.quick-add-check')
-        icon.classList.add('hidden')
-        spinner.classList.remove('hidden')
-
-        setTimeout(() => {
-          spinner.classList.add('hidden')
-          check.classList.remove('hidden')
-          btn.classList.add('!bg-green-500', '!text-white')
-          showMiniCart(id)
-
-          setTimeout(() => {
-            check.classList.add('hidden')
-            icon.classList.remove('hidden')
-            btn.classList.remove('!bg-green-500', '!text-white')
-            delete btn.dataset.busy
-          }, 1200)
-        }, 350)
-      })
+      on(root, 'click', '[data-quick-add]', (ev, btn) => handleQuickAdd(ev, btn, homeModalContainer))
 
       // Product card click -> open quick view modal directly on home
-      const homeModalContainer = qs(root, '#home-modal-container')
 
       const openHomeModal = (product) => {
         trackProductView(product.id)
@@ -469,20 +429,7 @@ export function pageHome() {
           const colorSelect = homeModalContainer.querySelector('#qv-color')
           const color = colorSelect ? colorSelect.value : ''
           addToCart({ productId: product.id, size, color, qty: 1 })
-          const count = cartCount()
-          const cartBadge = document.querySelector('a[href="#/cart"] span')
-          if (cartBadge) {
-            cartBadge.textContent = count
-          } else {
-            const cartLink = document.querySelector('a[href="#/cart"]')
-            if (cartLink) {
-              const newBadge = document.createElement('span')
-              newBadge.className = 'absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white'
-              newBadge.textContent = count
-              cartLink.appendChild(newBadge)
-            }
-          }
-          showToast('Producto agregado al carrito')
+          // El contador del carrito se actualiza globalmente desde store.js -> startApp.js
           closeModal()
         })
       }
