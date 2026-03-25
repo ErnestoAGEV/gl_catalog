@@ -57,7 +57,7 @@ export function productCard(p, idx) {
   `
 
   return `
-    <article class="product-card group bg-white dark:bg-gray-900 rounded-xl md:rounded-2xl overflow-hidden transition-all duration-200 border border-gray-100 dark:border-gray-800 md:hover:shadow-lg md:hover:shadow-gray-900/[0.06] dark:md:hover:shadow-none md:hover:-translate-y-0.5 md:hover:border-gray-200 dark:md:hover:border-gray-700 active:scale-[0.98] md:active:scale-100" data-product-id="${p.id}">
+    <article class="product-card group bg-white dark:bg-gray-900 rounded-xl md:rounded-2xl overflow-hidden transition-all duration-300 border border-gray-100 dark:border-gray-800 md:hover:shadow-xl md:hover:shadow-gray-900/[0.08] dark:md:hover:shadow-none md:hover:-translate-y-1 md:hover:border-gray-200 dark:md:hover:border-gray-700 active:scale-[0.98] md:active:scale-100" data-product-id="${p.id}">
       <div class="aspect-[3/4] overflow-hidden relative ${imageWrapClass}">
         ${carouselHTML}
         <div class="absolute top-2 left-2 flex flex-col gap-1 z-20">

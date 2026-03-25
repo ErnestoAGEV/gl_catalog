@@ -16,7 +16,7 @@ export function quickViewModal(p) {
     <div class="modal-carousel relative overflow-hidden bg-transparent cursor-zoom-in w-full h-full flex items-center" data-modal-carousel>
       <div class="modal-carousel-track flex transition-transform duration-300 h-full w-full" data-modal-track>
         ${images.map((img, i) => `
-          <img src="${img}" alt="${p.name}" class="modal-img-zoomable w-full h-full object-contain object-center bg-transparent flex-shrink-0 min-w-full transition-transform duration-200" data-modal-slide="${i}"/>
+          <img src="${img}" alt="${p.name}" class="modal-img-zoomable w-full h-full ${modalImageFitClass} flex-shrink-0 min-w-full transition-transform duration-200" data-modal-slide="${i}"/>
         `).join('')}
       </div>
       
@@ -48,7 +48,7 @@ export function quickViewModal(p) {
     </div>
   ` : `
     <div class="relative overflow-hidden bg-transparent cursor-zoom-in w-full h-full flex items-center justify-center" data-modal-single>
-      <img src="${images[0]}" alt="${p.name}" class="modal-img-zoomable w-full h-full object-contain object-center bg-transparent transition-transform duration-200"/>
+      <img src="${images[0]}" alt="${p.name}" class="modal-img-zoomable w-full h-full ${modalImageFitClass} transition-transform duration-200" ${filterStyle}/>
       
       <!-- Sin badges en el modal -->
     </div>
@@ -155,33 +155,37 @@ export function sizeSelectionModal(p) {
   const sizes = p.sizes || []
   
   return `
-    <div id="quick-add-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-      <div class="bg-white dark:bg-gray-900 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-slide-up border border-gray-100 dark:border-gray-800">
-        <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3">
-          <div class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0">
+    <div id="quick-add-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 sm:p-6 animate-fade-in">
+      <div class="bg-white dark:bg-gray-900 w-full max-w-lg rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] overflow-hidden animate-slide-up border border-gray-100 dark:border-gray-800">
+        <!-- Header -->
+        <div class="p-5 sm:p-6 border-b border-gray-100 dark:border-gray-800 flex items-start gap-4 relative">
+          <div class="w-16 h-16 rounded-2xl bg-gray-50 dark:bg-gray-800 overflow-hidden flex-shrink-0 shadow-sm">
             <img src="${p.images?.[0] || ''}" alt="${p.name}" class="w-full h-full object-cover">
           </div>
-          <div class="min-w-0 flex-1">
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">${sizes.length > 0 ? 'Selecciona tu talla' : 'Agregar al carrito'}</p>
-            <h3 class="font-bold text-gray-900 dark:text-white truncate text-sm">${p.name}</h3>
+          <div class="min-w-0 flex-1 pt-1 pr-8">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">${sizes.length > 0 ? 'Selecciona tu talla' : 'Agregar al carrito'}</p>
+            <h3 class="font-manrope font-bold text-gray-900 dark:text-white text-lg leading-tight">${p.name}</h3>
           </div>
-          <button id="close-quick-add" class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">
+          <!-- Close Button -->
+          <button id="close-quick-add" class="absolute top-5 right-5 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" aria-label="Cerrar modal">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
         
-        <div class="p-5">
+        <!-- Body -->
+        <div class="p-5 sm:p-6 bg-gray-50/50 dark:bg-gray-900/50 flex justify-center">
           ${sizes.length > 0 ? `
-            <div class="grid grid-cols-3 gap-2">
+            <!-- Horizontal wrapping list of sizes -->
+            <div class="flex flex-wrap justify-center gap-2.5">
               ${sizes.map(size => `
-                <button class="size-select-btn py-2.5 px-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-brand hover:text-brand dark:hover:border-brand dark:hover:text-brand active:bg-brand/5 transition-all text-sm font-medium text-gray-700 dark:text-gray-300" data-size="${size}">
+                <button class="size-select-btn flex-shrink-0 min-w-[3.5rem] h-10 px-4 rounded-full border border-gray-200 dark:border-gray-700 transition-all text-[13px] font-semibold hover:border-brand dark:hover:border-brand hover:text-brand text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 active:scale-95 shadow-sm hover:shadow" data-size="${size}">
                   ${size}
                 </button>
               `).join('')}
             </div>
           ` : `
-            <button class="size-select-btn w-full py-3 rounded-lg bg-brand hover:bg-brand-dark text-white font-semibold transition-colors" data-size="">
-              Agregar al carrito
+            <button class="size-select-btn w-full py-3.5 rounded-xl bg-gray-900 dark:bg-white hover:bg-black dark:hover:bg-gray-100 text-white dark:text-gray-900 text-sm font-bold tracking-wide active:scale-[0.98] transition-all shadow-lg hover:shadow-xl" data-size="">
+              Agregar a la bolsa
             </button>
           `}
         </div>
