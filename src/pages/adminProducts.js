@@ -64,6 +64,9 @@ export function pageAdminProducts(state) {
               </tbody>
             </table>
           </div>
+          <!-- Pagination Controls -->
+          <div id="pagination-controls" class="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 min-h-[60px]">
+          </div>
         </div>
       </section>
     `,
@@ -94,6 +97,10 @@ export function pageAdminProducts(state) {
       let selectedColorBadges = new Set()
       let isEditing = false
       let selectedFiles = []
+
+      let currentPage = 1
+      const itemsPerPage = 50
+      let currentSearchTerm = ''
 
       // ── Delete Confirm Modal ──
       const ensureDeleteModal = () => {
@@ -272,37 +279,74 @@ export function pageAdminProducts(state) {
       }
 
       // ── Product List ──
-      const renderList = (searchTerm = '') => {
-        const filtered = searchTerm
+      const renderList = (searchTerm = null, page = null) => {
+        if (searchTerm !== null) currentSearchTerm = searchTerm
+        if (page !== null) currentPage = page
+        
+        const term = currentSearchTerm.toLowerCase()
+        const filtered = term
           ? state.products.filter(p =>
-              p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              p.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              (p.badge && p.badge.toLowerCase().includes(searchTerm.toLowerCase()))
+              p.name.toLowerCase().includes(term) ||
+              p.type.toLowerCase().includes(term) ||
+              (p.badge && p.badge.toLowerCase().includes(term))
             )
           : state.products
 
         const countEl = qs(root, '#products-count')
         if (countEl) {
-          countEl.textContent = searchTerm
-            ? `${filtered.length} de ${state.products.length} productos`
-            : `${state.products.length} en total`
+          countEl.textContent = term
+            ? `${filtered.length} de ${state.products.length} (Pág ${currentPage})`
+            : `${state.products.length} en total (Pág ${currentPage})`
         }
+
+        const paginationContainer = qs(root, '#pagination-controls')
 
         if (!filtered.length) {
           list.innerHTML = `
-            <div class="col-span-full text-center py-16">
+            <tr><td colspan="6">
+            <div class="text-center py-16">
               <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                 <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                 </svg>
               </div>
-              <h3 class="text-lg font-semibold text-gray-900 mb-2">${searchTerm ? 'Sin resultados' : 'No hay productos'}</h3>
-              <p class="text-sm text-gray-500">${searchTerm ? 'Intenta con otro término de búsqueda' : 'Agrega tu primer producto usando el botón de arriba'}</p>
+              <h3 class="text-lg font-semibold text-gray-900 mb-2">${term ? 'Sin resultados' : 'No hay productos'}</h3>
+              <p class="text-sm text-gray-500">${term ? 'Intenta con otro término de búsqueda' : 'Agrega tu primer producto usando el botón de arriba'}</p>
             </div>
+            </td></tr>
           `
+          if (paginationContainer) paginationContainer.innerHTML = ''
           return
         }
-        list.innerHTML = filtered.map(productCard).join('')
+
+        const totalPages = Math.ceil(filtered.length / itemsPerPage)
+        if (currentPage > totalPages) currentPage = totalPages
+        if (currentPage < 1) currentPage = 1
+
+        const startIdx = (currentPage - 1) * itemsPerPage
+        const paginated = filtered.slice(startIdx, startIdx + itemsPerPage)
+
+        list.innerHTML = paginated.map(productCard).join('')
+
+        if (paginationContainer) {
+          if (totalPages > 1) {
+            paginationContainer.innerHTML = `
+              <div class="text-sm text-gray-500 mb-4 sm:mb-0">
+                Mostrando <span class="font-medium text-gray-900 dark:text-gray-100">${startIdx + 1}</span> a <span class="font-medium text-gray-900 dark:text-gray-100">${Math.min(startIdx + itemsPerPage, filtered.length)}</span> de <span class="font-medium text-gray-900 dark:text-gray-100">${filtered.length}</span> resultados
+              </div>
+              <div class="flex gap-2">
+                <button type="button" id="btn-prev-page" class="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 active:scale-95 transition-all disabled:opacity-40 disabled:active:scale-100 disabled:cursor-not-allowed shadow-sm" ${currentPage === 1 ? 'disabled' : ''}>
+                  Anterior
+                </button>
+                <button type="button" id="btn-next-page" class="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 active:scale-95 transition-all disabled:opacity-40 disabled:active:scale-100 disabled:cursor-not-allowed shadow-sm" ${currentPage === totalPages ? 'disabled' : ''}>
+                  Siguiente
+                </button>
+              </div>
+            `
+          } else {
+            paginationContainer.innerHTML = ''
+          }
+        }
       }
 
       // ── Form Show/Hide ──
@@ -316,7 +360,7 @@ export function pageAdminProducts(state) {
         setError('')
       }
 
-      const hideForm = () => {
+      const hideForm = (resetPage = false) => {
         isEditing = false
         formSection.classList.add('hidden')
         formSection.classList.remove('flex')
@@ -328,7 +372,7 @@ export function pageAdminProducts(state) {
         handleTypeChange()
         updateColorBadges()
         renderPreviews()
-        renderList()
+        renderList(null, resetPage === true ? 1 : null)
       }
 
       // ── Init ──
@@ -336,7 +380,20 @@ export function pageAdminProducts(state) {
 
       if (typeSelect) { typeSelect.addEventListener('change', handleTypeChange); handleTypeChange() }
 
-      qs(root, '#search-products').addEventListener('input', (e) => renderList(e.target.value.trim()))
+      qs(root, '#search-products').addEventListener('input', (e) => renderList(e.target.value.trim(), 1))
+
+      const paginationContainerObj = qs(root, '#pagination-controls')
+      if (paginationContainerObj) {
+        paginationContainerObj.addEventListener('click', (e) => {
+          const btnPrev = e.target.closest('#btn-prev-page')
+          const btnNext = e.target.closest('#btn-next-page')
+          if (btnPrev && !btnPrev.disabled) {
+            renderList(null, currentPage - 1)
+          } else if (btnNext && !btnNext.disabled) {
+            renderList(null, currentPage + 1)
+          }
+        })
+      }
 
       fileInput.addEventListener('change', (e) => handleFiles(e.target.files))
 

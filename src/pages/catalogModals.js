@@ -48,7 +48,7 @@ export function quickViewModal(p) {
     </div>
   ` : `
     <div class="relative overflow-hidden bg-transparent cursor-zoom-in w-full h-full flex items-center justify-center" data-modal-single>
-      <img src="${images[0]}" alt="${p.name}" class="modal-img-zoomable w-full h-full ${modalImageFitClass} transition-transform duration-200" ${filterStyle}/>
+      <img src="${images[0]}" alt="${p.name}" class="modal-img-zoomable w-full h-full ${modalImageFitClass} transition-transform duration-200"/>
       
       <!-- Sin badges en el modal -->
     </div>
