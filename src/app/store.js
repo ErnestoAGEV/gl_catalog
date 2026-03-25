@@ -455,10 +455,9 @@ export function getSearchQuery() {
 
 export function searchProducts(query) {
   const q = query.toLowerCase().trim()
-  if (!q) return state.products
-  return state.products.filter(p => 
-    p.name.toLowerCase().includes(q) || 
-    p.type.toLowerCase().includes(q) ||
+    const activeProducts = state.products.filter(p => p.badge !== 'Borrador')
+    if (!q) return activeProducts
+    return activeProducts.filter(p =>
     p.colors.some(c => c.toLowerCase().includes(q))
   )
 }
@@ -476,7 +475,7 @@ export function getProductViewCounts() {
 
 export function getMostViewedProducts(limit = 4) {
   const views = getProductViewCounts()
-  const products = state.products
+    const products = state.products.filter(p => p.badge !== 'Borrador')
 
   // Sort products by view count descending
   const sorted = [...products].sort((a, b) => {

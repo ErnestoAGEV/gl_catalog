@@ -1,9 +1,12 @@
 import { adminLogout, addProduct, updateProduct, deleteProduct, uploadProductImage } from '../app/store.js'
 import { navigate } from '../app/router.js'
 import { on, qs } from '../app/dom.js'
+import { showToast } from '../app/toast.js'
 import { parseList } from './adminProductsData.js'
 import { productCard } from './adminProductCard.js'
 import { productFormHTML } from './adminProductForm.js'
+
+const TOGGLE_PUBLISH_HANDLER_KEY = '__glAdminTogglePublishHandler'
 
 export function pageAdminProducts(state) {
   const productCount = state.products.length
@@ -533,6 +536,40 @@ export function pageAdminProducts(state) {
         const modal = ensureDeleteModal()
         modal.classList.remove('hidden')
       })
+
+      // ── Toggle Status (single listener, avoids duplicate toasts) ──
+      const prevToggleHandler = root[TOGGLE_PUBLISH_HANDLER_KEY]
+      if (typeof prevToggleHandler === 'function') {
+        root.removeEventListener('change', prevToggleHandler)
+      }
+
+      const togglePublishHandler = async (e) => {
+        const target = e.target
+        if (!(target instanceof Element)) return
+        const input = target.closest('input[data-toggle-publish]')
+        if (!input) return
+
+        const id = input.closest('[data-product]')?.getAttribute('data-id')
+        if (!id) return
+
+        const isPublished = input.checked
+        const badge = isPublished ? '' : 'Borrador'
+
+        try {
+          const { error } = await updateProduct(id, { badge })
+          if (error) throw new Error(error.message)
+
+          const statusLabel = input.closest('.flex')?.querySelector('span')
+          if (statusLabel) statusLabel.textContent = isPublished ? 'Publicado' : 'Borrador'
+          showToast('Estado actualizado', 'success')
+        } catch (_err) {
+          input.checked = !isPublished
+          showToast('Error al actualizar estado', 'error')
+        }
+      }
+
+      root[TOGGLE_PUBLISH_HANDLER_KEY] = togglePublishHandler
+      root.addEventListener('change', togglePublishHandler)
     },
   }
 }

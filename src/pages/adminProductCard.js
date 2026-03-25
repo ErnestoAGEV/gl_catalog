@@ -51,8 +51,7 @@ export function productCard(p) {
       <td class="px-6 py-4">
         <div class="flex items-center gap-2">
           <label class="relative inline-flex items-center cursor-pointer">
-            <!-- Interfaz visual solamente por el momento -->
-            <input type="checkbox" class="sr-only peer" ${isPublished ? 'checked' : ''} disabled>
+            <input type="checkbox" class="sr-only peer" data-toggle-publish ${isPublished ? 'checked' : ''}>
             <div class="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600 peer-checked:bg-brand"></div>
           </label>
           <span class="text-xs font-medium text-gray-700 dark:text-gray-300">${isPublished ? 'Publicado' : 'Borrador'}</span>

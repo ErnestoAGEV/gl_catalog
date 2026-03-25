@@ -10,17 +10,17 @@ import { handleQuickAdd } from './catalogQuickAdd.js'
 
 export function pageHome() {
   const state = getState()
-  
-  // Get featured products
-  const featured = [...state.products].slice(0, 4)
-  
-  // Best sellers (most viewed by customers)
+  const isSubscribed = isSubscribedNewsletter()
+  const publicProducts = state.products.filter(p => p.badge !== 'Borrador')
+
+    // Get featured products
+  const featured = [...publicProducts].slice(0, 4)
+
+    // Best sellers (most viewed by customers)
   const bestSellers = getMostViewedProducts(4)
 
-  // New arrivals (with "Nuevo" badge)
-  const newArrivals = state.products.filter(p => p.badge === 'Nuevo').slice(0, 4)
-
-  const isSubscribed = isSubscribedNewsletter()
+    // New arrivals (with "Nuevo" badge)
+  const newArrivals = publicProducts.filter(p => p.badge === 'Nuevo').slice(0, 4)
 
   return {
     title: `${BRAND.name} | Men´s Cloting`,
@@ -439,7 +439,7 @@ export function pageHome() {
           if (e.target.closest('[data-quick-add]')) return
           e.preventDefault()
           const state = getState()
-          const product = state.products.find(p => p.id === card.dataset.homeQv)
+            const product = publicProducts.find(p => p.id === card.dataset.homeQv)
           if (product) openHomeModal(product)
         })
       })

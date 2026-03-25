@@ -9,9 +9,10 @@ import { handleQuickAdd } from './catalogQuickAdd.js'
 
 export function pageCatalog(initialState) {
   let state = initialState
-  const types = uniqueSorted(state.products.map((p) => p.type))
-  const sizes = uniqueSorted(state.products.flatMap((p) => p.sizes || []))
-  const colors = uniqueSorted(state.products.flatMap((p) => p.colors || []))
+  let publicProducts = state.products.filter(p => p.badge !== 'Borrador')
+  const types = uniqueSorted(publicProducts.map((p) => p.type))
+  const sizes = uniqueSorted(publicProducts.flatMap((p) => p.sizes || []))
+  const colors = uniqueSorted(publicProducts.flatMap((p) => p.colors || []))
 
   const options = (items, label) => [`<option value="">${label}</option>`, ...items.map((x) => `<option value="${x}">${x}</option>`)].join('')
 
@@ -52,7 +53,7 @@ export function pageCatalog(initialState) {
               <input name="minPrice" inputmode="numeric" type="number" min="0" placeholder="Min $" />
               <input name="maxPrice" inputmode="numeric" type="number" min="0" placeholder="Max $" />
             </div>
-            <span id="product-count" class="ml-auto text-xs font-semibold text-gray-400">${state.products.length} productos</span>
+            <span id="product-count" class="ml-auto text-xs font-semibold text-gray-400">${publicProducts.length} productos</span>
             <button id="reset-filters" class="hidden toolbar-btn" style="height:36px;padding:0 12px;font-size:12px;font-weight:600;">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
               Limpiar
@@ -85,7 +86,7 @@ export function pageCatalog(initialState) {
 
       <!-- Spacer for product count (mobile) + grid -->
       <div class="md:hidden flex items-center justify-between mb-1 mt-1">
-        <span id="product-count-mobile" class="text-[11px] font-medium text-gray-400 dark:text-gray-500">${state.products.length} productos</span>
+        <span id="product-count-mobile" class="text-[11px] font-medium text-gray-400 dark:text-gray-500">${publicProducts.length} productos</span>
       </div>
 
       <section class="catalog-grid-wrapper">
@@ -139,10 +140,9 @@ export function pageCatalog(initialState) {
         }
 
         // Update filter options dynamically based on current products
-        const types = uniqueSorted(state.products.map((p) => p.type))
-        const sizes = uniqueSorted(state.products.flatMap((p) => p.sizes || []))
-        const colors = uniqueSorted(state.products.flatMap((p) => p.colors || []))
-        
+          const types = uniqueSorted(publicProducts.map((p) => p.type))
+          const sizes = uniqueSorted(publicProducts.flatMap((p) => p.sizes || []))
+          const colors = uniqueSorted(publicProducts.flatMap((p) => p.colors || []))
         // Sync all select elements (both desktop and mobile panels)
         root.querySelectorAll('select[name="type"]').forEach(sel => {
           const curr = sel.value
@@ -166,8 +166,7 @@ export function pageCatalog(initialState) {
         lastFilters = currentFilters
         
         // Start with search results if there's a query, otherwise all products
-        let baseProducts = searchQuery ? searchProducts(searchQuery) : state.products
-        
+          let baseProducts = searchQuery ? searchProducts(searchQuery) : publicProducts
         // Check for multi-type filter (set when navigating from home category cards)
         const multiTypeFilter = grid.dataset.multiTypeFilter
         if (multiTypeFilter) {
@@ -390,6 +389,7 @@ export function pageCatalog(initialState) {
       // Subscribe to store changes (crucial for reload scenario)
       const unsubscribe = subscribe((newState) => {
         state = newState
+        publicProducts = state.products.filter(p => p.badge !== 'Borrador')
         renderGrid()
       })
 
@@ -450,7 +450,7 @@ export function pageCatalog(initialState) {
       })
 
       on(root, 'click', '[data-quickview]', (ev, btn) => {
-        const product = state.products.find(p => p.id === btn.dataset.quickview)
+        const product = publicProducts.find(p => p.id === btn.dataset.quickview)
         if (!product) return
         trackProductView(product.id)
         modalContainer.innerHTML = quickViewModal(product)
