@@ -4,6 +4,7 @@ import { buildOrderMessage, openWhatsAppWithMessage } from '../app/whatsapp.js'
 import { on, qs } from '../app/dom.js'
 import { formatMoney } from '../app/format.js'
 import { checkoutHTML, couponAppliedHTML, couponInputHTML, checkoutSuccessHTML } from './checkoutView.js'
+import { sanitizeText, sanitizeCouponCode } from '../app/sanitize.js'
 
 // ── Helpers de validación ──
 const WHATSAPP_RE = /^[+]?[0-9\s\-().]{7,20}$/
@@ -58,7 +59,7 @@ export function pageCheckout(state) {
 
         if (applyBtn && couponInput) {
           const doApply = () => {
-            const code = couponInput.value.trim().toUpperCase()
+            const code = sanitizeCouponCode(couponInput.value)
             if (!code) {
               if (couponError) {
                 couponError.textContent = 'Ingresa un código de cupón.'
@@ -182,7 +183,7 @@ export function pageCheckout(state) {
         const paymentEl   = qs(root, 'select[name="paymentMethod"]')
         const deliveryEl  = qs(root, 'select[name="deliveryMethod"]')
 
-        const name           = nameEl.value.trim()
+        const name           = sanitizeText(nameEl.value)
         const whatsapp       = whatsappEl.value.trim()
         const paymentMethod  = paymentEl.value
         const deliveryMethod = deliveryEl.value
@@ -211,14 +212,14 @@ export function pageCheckout(state) {
           const stateEl        = root.querySelector('input[name="state"]')
           const referencesEl   = root.querySelector('textarea[name="references"]')
 
-          const street       = streetEl?.value.trim()       || ''
-          const numExt       = numExtEl?.value.trim()       || ''
-          const numInt       = numIntEl?.value.trim()       || ''
-          const neighborhood = neighborhoodEl?.value.trim() || ''
-          const city         = cityEl?.value.trim()         || ''
-          const zipCode      = zipCodeEl?.value.trim()      || ''
-          const stateVal     = stateEl?.value.trim()        || ''
-          const references   = referencesEl?.value.trim()  || ''
+          const street       = sanitizeText(streetEl?.value)       || ''
+          const numExt       = sanitizeText(numExtEl?.value)       || ''
+          const numInt       = sanitizeText(numIntEl?.value)       || ''
+          const neighborhood = sanitizeText(neighborhoodEl?.value) || ''
+          const city         = sanitizeText(cityEl?.value)         || ''
+          const zipCode      = (zipCodeEl?.value || '').trim()     || ''
+          const stateVal     = sanitizeText(stateEl?.value)        || ''
+          const references   = sanitizeText(referencesEl?.value)  || ''
 
           if (!street)                              return setError('Ingresa la calle.', streetEl)
           if (!numExt)                              return setError('Ingresa el número exterior.', numExtEl)

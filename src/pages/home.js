@@ -7,6 +7,7 @@ import { quickViewModal } from './catalogModals.js'
 import { initModalCarousel, initModalZoom } from './catalogCarousels.js'
 import { showToast } from '../app/toast.js'
 import { handleQuickAdd } from './catalogQuickAdd.js'
+import { sanitizeEmail } from '../app/sanitize.js'
 
 export function pageHome() {
   const state = getState()
@@ -463,9 +464,19 @@ export function pageHome() {
           ev.preventDefault()
           const emailInput = form.querySelector('input[type="email"]')
           const submitBtn  = form.querySelector('button[type="submit"]')
-          const email = emailInput ? emailInput.value.trim() : ''
+          const { value: email, valid: emailValid } = sanitizeEmail(emailInput ? emailInput.value : '')
 
           if (!email) return
+          if (!emailValid) {
+            const prevErr = form.querySelector('.newsletter-error')
+            if (prevErr) prevErr.remove()
+            const errEl = document.createElement('p')
+            errEl.className = 'newsletter-error text-xs text-red-300 text-center mt-2'
+            errEl.textContent = 'Ingresa un correo electrónico válido.'
+            form.appendChild(errEl)
+            return
+          }
+
 
           // Loading state
           const originalBtnHTML = submitBtn.innerHTML

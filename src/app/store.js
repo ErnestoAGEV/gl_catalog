@@ -1,5 +1,6 @@
 import { STORAGE_KEYS } from './config.js'
 import { readJson, writeJson } from './storage.js'
+import { sanitizeEmail, sanitizeCouponCode } from './sanitize.js'
 
 const subscribers = new Set()
 
@@ -365,9 +366,8 @@ export function toggleTheme() {
 
 // ========== COUPONS ==========
 export async function applyCoupon(code, silent = false) {
-  const normalizedCode = code.toUpperCase().trim()
-  
-  if (!supabase) return { success: false, error: 'Sin conexión a base de datos' }
+  const normalizedCode = sanitizeCouponCode(code)
+  if (!normalizedCode) return { success: false, error: 'Código de cupón inválido' }
 
   // Search un Supabase table "coupons"
   const { data: coupon, error } = await supabase
@@ -414,7 +414,8 @@ export function getDiscountedTotal() {
 
 // ========== NEWSLETTER ==========
 export async function subscribeNewsletter(email) {
-  const normalizedEmail = email.trim().toLowerCase()
+  const { value: normalizedEmail, valid } = sanitizeEmail(email)
+  if (!valid) return { ok: false, error: 'El correo electrónico no es válido.' }
 
   // Always persist locally so UI shows "subscribed" immediately on reload
   state.newsletter = { email: normalizedEmail, subscribedAt: Date.now() }

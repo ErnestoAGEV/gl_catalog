@@ -1,6 +1,7 @@
 import { adminLogin } from '../app/store.js'
 import { navigate } from '../app/router.js'
 import { on, qs } from '../app/dom.js'
+import { sanitizeEmail } from '../app/sanitize.js'
 
 export function pageAdminLogin() {
   return {
@@ -65,8 +66,8 @@ export function pageAdminLogin() {
         ev.preventDefault()
         setError('')
 
-        const email = qs(root, 'input[name="user"]').value.trim()
-        const pass = qs(root, 'input[name="pass"]').value
+        const { value: email } = sanitizeEmail(qs(root, 'input[name="user"]').value)
+        const pass = qs(root, 'input[name="pass"]').value.trim()
 
         if (!email || !pass) {
           setError('Completá email y contraseña.')
