@@ -529,6 +529,46 @@ export async function getAdminCoupons() {
   }
 }
 
+export async function createCoupon(payload) {
+  if (!state.isAdminAuthed) return { error: 'No autorizado' }
+  const { data, error } = await supabase
+    .from('coupons')
+    .insert(payload)
+    .select()
+    .single()
+  if (error) {
+    if (import.meta.env.DEV) console.error('Error creating coupon:', error)
+    return { error }
+  }
+  return { data }
+}
+
+export async function updateCoupon(code, payload) {
+  if (!state.isAdminAuthed) return { error: 'No autorizado' }
+  const { error } = await supabase
+    .from('coupons')
+    .update(payload)
+    .eq('code', code)
+  if (error) {
+    if (import.meta.env.DEV) console.error('Error updating coupon:', error)
+    return { error }
+  }
+  return { error: null }
+}
+
+export async function deleteCoupon(code) {
+  if (!state.isAdminAuthed) return { error: 'No autorizado' }
+  const { error } = await supabase
+    .from('coupons')
+    .delete()
+    .eq('code', code)
+  if (error) {
+    if (import.meta.env.DEV) console.error('Error deleting coupon:', error)
+    return { error }
+  }
+  return { error: null }
+}
+
 export async function getAdminSubscribers() {
   if (!state.isAdminAuthed) return []
   try {

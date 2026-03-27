@@ -114,7 +114,7 @@ export function pageAdminLogin() {
         // Login exitoso
         failCount = 0
         clearTimeout(lockTimer)
-        navigate('/admin/products')
+        navigate('/admin/dashboard')
       })
 
       // Safety: if someone clicks the (hidden) logout button via cached layout.
