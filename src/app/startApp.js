@@ -26,7 +26,7 @@ export async function startApp(mountEl) {
 
   let currentCleanup = null
 
-  const render = (path) => {
+  const render = async (path) => {
     // Cleanup previous route if applicable
     if (currentCleanup) {
       currentCleanup()
@@ -45,7 +45,7 @@ export async function startApp(mountEl) {
       return
     }
 
-    const { title, html, onMount } = renderRoute(path, getState())
+    const { title, html, onMount } = await renderRoute(path, getState())
     document.title = title
     mountEl.innerHTML = html
     

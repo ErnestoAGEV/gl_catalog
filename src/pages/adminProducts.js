@@ -6,6 +6,10 @@ import { parseList } from './adminProductsData.js'
 import { productCard } from './adminProductCard.js'
 import { productFormHTML } from './adminProductForm.js'
 
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+const MAX_IMAGE_SIZE_MB   = 5
+const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024
+
 const TOGGLE_PUBLISH_HANDLER_KEY = '__glAdminTogglePublishHandler'
 
 export function pageAdminProducts(state) {
@@ -269,7 +273,24 @@ export function pageAdminProducts(state) {
         const urlsStr = imageUrlsTextarea?.value.trim()
         const urls = urlsStr ? urlsStr.split(',').map(u => u.trim()).filter(Boolean) : []
         const remaining = Math.max(0, 5 - urls.length)
-        selectedFiles = Array.from(fileList || []).slice(0, remaining)
+
+        const validFiles = []
+        const invalid = []
+        Array.from(fileList || []).forEach(file => {
+          if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+            invalid.push(`${file.name}: tipo no permitido`)
+          } else if (file.size > MAX_IMAGE_SIZE_BYTES) {
+            invalid.push(`${file.name}: supera ${MAX_IMAGE_SIZE_MB} MB`)
+          } else {
+            validFiles.push(file)
+          }
+        })
+
+        if (invalid.length) {
+          showToast(invalid.join(' | '), 'error')
+        }
+
+        selectedFiles = validFiles.slice(0, remaining)
         if (remaining === 0) fileInput.value = ''
         renderPreviews()
       }

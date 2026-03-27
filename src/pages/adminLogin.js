@@ -57,14 +57,40 @@ export function pageAdminLogin() {
         errorBox.classList.remove('hidden')
       }
 
-      const setLoading = (loading) => {
+      const setLoading = (loading, label = 'Ingresar') => {
         submitBtn.disabled = loading
-        submitBtn.textContent = loading ? 'Ingresando…' : 'Ingresar'
+        submitBtn.textContent = loading ? 'Ingresando…' : label
+      }
+
+      // ── Anti-brute force: bloqueo progresivo ──
+      let failCount = 0
+      let lockUntil = 0
+      let lockTimer = null
+
+      const startLockdown = () => {
+        const waitSec = Math.min(3 * Math.pow(2, failCount - 1), 30) // 3s, 6s, 12s, 24s, 30s máx
+        lockUntil = Date.now() + waitSec * 1000
+        submitBtn.disabled = true
+
+        const tick = () => {
+          const remaining = Math.ceil((lockUntil - Date.now()) / 1000)
+          if (remaining > 0) {
+            submitBtn.textContent = `Espera ${remaining}s…`
+            lockTimer = setTimeout(tick, 1000)
+          } else {
+            submitBtn.disabled = false
+            submitBtn.textContent = 'Ingresar'
+          }
+        }
+        tick()
       }
 
       form.addEventListener('submit', async (ev) => {
         ev.preventDefault()
         setError('')
+
+        // Verificar bloqueo activo
+        if (Date.now() < lockUntil) return
 
         const { value: email } = sanitizeEmail(qs(root, 'input[name="user"]').value)
         const pass = qs(root, 'input[name="pass"]').value.trim()
@@ -79,10 +105,15 @@ export function pageAdminLogin() {
         setLoading(false)
 
         if (result.error) {
+          failCount++
           setError('Credenciales inválidas.')
+          startLockdown()
           return
         }
 
+        // Login exitoso
+        failCount = 0
+        clearTimeout(lockTimer)
         navigate('/admin/products')
       })
 

@@ -1,16 +1,11 @@
 import { layoutAdmin, layoutPublic } from '../components/layout.js'
-import { adminLogout } from './store.js'
+import { adminLogout, isAdminAuthed } from './store.js'
 import { navigate } from './router.js'
 import { pageHome } from '../pages/home.js'
 import { pageCatalog } from '../pages/catalog.js'
 import { pageCart } from '../pages/cart.js'
 import { pageCheckout } from '../pages/checkout.js'
 import { pageAdminLogin } from '../pages/adminLogin.js'
-import { pageAdminProducts } from '../pages/adminProducts.js'
-import { pageAdminDashboard } from '../pages/adminDashboard.js'
-import { pageAdminOrders } from '../pages/adminOrders.js'
-import { pageAdminCoupons } from '../pages/adminCoupons.js'
-import { pageAdminNewsletter } from '../pages/adminNewsletter.js'
 
 const publicRoutes = {
   '/': pageHome,
@@ -19,21 +14,38 @@ const publicRoutes = {
   '/checkout': pageCheckout,
 }
 
-const adminRoutes = {
-  '/admin': pageAdminDashboard,
-  '/admin/login': pageAdminLogin,
-  '/admin/dashboard': pageAdminDashboard,
-  '/admin/products': pageAdminProducts,
-  '/admin/orders': pageAdminOrders,
-  '/admin/coupons': pageAdminCoupons,
-  '/admin/newsletter': pageAdminNewsletter,
+// Lazy-loaded admin pages — solo se descargan cuando el usuario visita el panel
+const lazyAdminRoutes = {
+  '/admin':            () => import('../pages/adminDashboard.js').then(m => m.pageAdminDashboard),
+  '/admin/dashboard':  () => import('../pages/adminDashboard.js').then(m => m.pageAdminDashboard),
+  '/admin/products':   () => import('../pages/adminProducts.js').then(m => m.pageAdminProducts),
+  '/admin/orders':     () => import('../pages/adminOrders.js').then(m => m.pageAdminOrders),
+  '/admin/coupons':    () => import('../pages/adminCoupons.js').then(m => m.pageAdminCoupons),
+  '/admin/newsletter': () => import('../pages/adminNewsletter.js').then(m => m.pageAdminNewsletter),
 }
 
-export function renderRoute(path, state) {
+export async function renderRoute(path, state) {
   const [basePath] = path.split('?') // Ignore query params for routing
   const isAdmin = basePath.startsWith('/admin')
-  const routes = isAdmin ? adminRoutes : publicRoutes
-  const page = routes[basePath] || (isAdmin ? pageAdminLogin : pageHome)
+
+  // ── Guard de autenticación admin ──
+  const isProtectedAdmin = isAdmin && basePath !== '/admin/login'
+  if (isProtectedAdmin && !state.isAdminAuthed && !isAdminAuthed()) {
+    return renderRoute('/admin/login', state)
+  }
+
+  let page
+  if (isAdmin) {
+    if (basePath === '/admin/login') {
+      page = pageAdminLogin
+    } else {
+      // Lazy load: solo descarga el módulo admin cuando se necesita
+      const loader = lazyAdminRoutes[basePath] || lazyAdminRoutes['/admin']
+      page = await loader()
+    }
+  } else {
+    page = publicRoutes[basePath] || pageHome
+  }
 
   const view = page(state)
   const title = view.title
