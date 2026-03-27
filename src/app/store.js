@@ -107,7 +107,7 @@ function dispatchError(message) {
 
 async function loadProductsFromSupabase(isBackgroundUpdate = false) {
   if (!supabase) {
-    console.error('Supabase client not initialized')
+    if (import.meta.env.DEV) console.error('Supabase client not initialized')
     if (!isBackgroundUpdate) {
       dispatchError('No se pudo conectar al catálogo. Verifica tu conexión e intenta de nuevo.')
       state.isLoading = false
@@ -158,7 +158,7 @@ async function loadProductsFromSupabase(isBackgroundUpdate = false) {
       }
     }
   } catch (err) {
-    console.error('Error loading products:', err)
+    if (import.meta.env.DEV) console.error('Error loading products:', err)
     if (!isBackgroundUpdate) {
       dispatchError('No se pudo cargar el catálogo. Revisa tu conexión a internet e intenta recargar la página.')
       state.isLoading = false
@@ -173,7 +173,7 @@ export async function addProduct(product) {
   const { data, error } = await supabase.from('products').insert(row).select().single()
   
   if (error) {
-    console.error('Error creating product:', error)
+    if (import.meta.env.DEV) console.error('Error creating product:', error)
     return { error }
   }
 
@@ -188,7 +188,7 @@ export async function updateProduct(id, updates) {
   const { error } = await supabase.from('products').update(row).eq('id', id)
 
   if (error) {
-    console.error('Error updating product:', error)
+    if (import.meta.env.DEV) console.error('Error updating product:', error)
     return { error }
   }
 
@@ -205,7 +205,7 @@ export async function deleteProduct(id) {
   const { error } = await supabase.from('products').delete().eq('id', id)
   
   if (error) {
-    console.error('Error deleting product:', error)
+    if (import.meta.env.DEV) console.error('Error deleting product:', error)
     return { error }
   }
 
@@ -225,7 +225,7 @@ export async function uploadProductImage(file) {
     })
 
   if (error) {
-    console.error('Error uploading image:', error)
+    if (import.meta.env.DEV) console.error('Error uploading image:', error)
     return { error }
   }
 
@@ -432,7 +432,7 @@ export async function subscribeNewsletter(email) {
       // 23505 = unique_violation (email already registered) → treat as success
       if (error.code === '23505') return { ok: true }
 
-      console.error('Newsletter Supabase error:', error)
+      if (import.meta.env.DEV) console.error('Newsletter Supabase error:', error)
       return { ok: false, error: 'No se pudo guardar tu suscripción. Intenta de nuevo.' }
     }
   }
@@ -509,7 +509,7 @@ export async function getAdminOrders() {
     if (error) throw error
     return data || []
   } catch (err) {
-    console.error('Error fetching admin orders:', err)
+    if (import.meta.env.DEV) console.error('Error fetching admin orders:', err)
     return []
   }
 }
@@ -524,7 +524,7 @@ export async function getAdminCoupons() {
     if (error) throw error
     return data || []
   } catch (err) {
-    console.error('Error fetching admin coupons:', err)
+    if (import.meta.env.DEV) console.error('Error fetching admin coupons:', err)
     return []
   }
 }
@@ -539,7 +539,7 @@ export async function getAdminSubscribers() {
     if (error) throw error
     return data || []
   } catch (err) {
-    console.error('Error fetching admin subscribers:', err)
+    if (import.meta.env.DEV) console.error('Error fetching admin subscribers:', err)
     return []
   }
 }
@@ -557,7 +557,7 @@ export async function updateAdminOrderStatus(orderId, newStatus) {
     if (error) throw error
     return { data, error: null }
   } catch (err) {
-    console.error('Error updating order status:', err)
+    if (import.meta.env.DEV) console.error('Error updating order status:', err)
     return { error: err.message }
   }
 }

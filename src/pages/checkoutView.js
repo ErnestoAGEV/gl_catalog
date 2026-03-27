@@ -120,6 +120,7 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
               <textarea
                 name="references"
                 rows="2"
+                maxlength="500"
                 class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30 resize-none"
                 placeholder="Entre calles, color de casa, referencias..."
               ></textarea>

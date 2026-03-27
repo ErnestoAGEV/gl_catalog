@@ -35,7 +35,7 @@ export function productCard(p, idx) {
     <div class="carousel-container relative group h-full" data-carousel>
       <div class="carousel-track flex h-full transition-transform duration-300" data-track>
         ${images.map((img, i) => `
-          <img src="${img}" alt="${p.name}" class="w-full h-full min-w-full ${imageFitClass} flex-shrink-0" loading="lazy" data-slide="${i}"/>
+          <img src="${img}" alt="${p.name}" class="w-full h-full min-w-full ${imageFitClass} flex-shrink-0" loading="lazy" data-slide="${i}" onerror="this.src='/placeholder.webp'"/>
         `).join('')}
       </div>
       
@@ -53,7 +53,9 @@ export function productCard(p, idx) {
       </div>
     </div>
   ` : `
-    <img src="${images[0]}" alt="${p.name}" class="w-full h-full ${imageFitClass} group-hover:scale-105 transition-transform duration-500" loading="lazy"/>
+    <div class="absolute inset-0 group-hover:scale-105 transition-transform duration-500 ease-out">
+      <img src="${images[0]}" alt="${p.name}" class="w-full h-full ${imageFitClass}" loading="lazy" onerror="this.src='/placeholder.webp'"/>
+    </div>
   `
 
   return `

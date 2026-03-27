@@ -50,12 +50,15 @@ export function featuredProductCard(p, idx) {
   return `
     <article class="product-card group relative bg-white dark:bg-gray-900 rounded-xl md:rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 transition-all duration-200 md:hover:shadow-lg md:hover:shadow-gray-900/[0.06] dark:md:hover:shadow-none md:hover:-translate-y-0.5 md:hover:border-gray-200 dark:md:hover:border-gray-700 active:scale-[0.98] md:active:scale-100 animate-fade-in h-full flex flex-col cursor-pointer" style="animation-delay: ${idx * 40}ms" data-home-qv="${p.id}">
       <div class="relative aspect-[3/4] md:aspect-[4/5] overflow-hidden ${imageBgClass}">
-        <img 
-          src="${img}" 
-          alt="${p.name}"
-          class="w-full h-full ${imageFitClass} group-hover:scale-[1.03] transition-transform duration-500 ease-out"
-          loading="lazy"
-        />
+        <div class="absolute inset-0 group-hover:scale-[1.03] transition-transform duration-500 ease-out">
+          <img 
+            src="${img}" 
+            alt="${p.name}"
+            class="w-full h-full ${imageFitClass}"
+            loading="lazy"
+            onerror="this.src='/placeholder.webp'"
+          />
+        </div>
         
         <!-- Badges -->
         <div class="absolute top-2 left-2 md:top-3 md:left-3 flex flex-col gap-1 z-20">
@@ -115,7 +118,7 @@ export function testimonialsSection() {
               </div>
               <p class="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed italic flex-grow">"${t.text}"</p>
               <div class="flex items-center gap-3 pt-4 border-t border-gray-50 dark:border-gray-800">
-                <img src="${t.avatar}" alt="${t.name}" class="w-10 h-10 rounded-full object-cover ring-2 ring-white dark:ring-gray-700 shadow-sm" loading="lazy"/>
+                <img src="${t.avatar}" alt="${t.name}" class="w-10 h-10 rounded-full object-cover ring-2 ring-white dark:ring-gray-700 shadow-sm" loading="lazy" onerror="this.src='/placeholder.webp'"/>
                 <div>
                   <h4 class="text-sm font-bold text-gray-900 dark:text-white">${t.name}</h4>
                   <span class="inline-flex items-center gap-1 text-[10px] text-green-600 dark:text-green-400 font-medium bg-green-50 dark:bg-green-900/30 px-1.5 py-0.5 rounded">
