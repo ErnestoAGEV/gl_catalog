@@ -16,7 +16,13 @@ Landing e-commerce mobile-first para ropa de hombre **G&L**, con flujo de compra
 
 ## Configuración rápida
 - Número de WhatsApp de la tienda (formato `52...` sin `+`): editar `STORE_WHATSAPP_NUMBER` en `src/app/config.js`
-- Credenciales del panel: editar `ADMIN_CREDENTIALS` en `src/app/config.js`
+- Panel admin: usa Supabase Auth (email/password), no credenciales hardcodeadas en frontend.
+
+## Seguridad (prioridad alta)
+- Ejecuta `supabase/rls-hardening.sql` en el SQL Editor de Supabase para habilitar políticas RLS.
+- El script crea la tabla `public.admin_users`; solo los usuarios presentes ahí pueden administrar productos, pedidos, cupones y uploads.
+- Después de crear el usuario admin en Supabase Auth, inserta su `user_id` en `public.admin_users`.
+- Mantén activado RLS en `products`, `orders`, `coupons`, `newsletter_subscribers` y usa el bucket `products` para imágenes.
 
 ## Rutas
 - Público:

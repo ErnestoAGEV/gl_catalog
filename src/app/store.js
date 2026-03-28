@@ -3,6 +3,12 @@ import { readJson, writeJson } from './storage.js'
 import { sanitizeEmail, sanitizeCouponCode } from './sanitize.js'
 
 const subscribers = new Set()
+const VALID_THEMES = new Set(['light', 'dark'])
+
+function getInitialTheme() {
+  const savedTheme = readJson(STORAGE_KEYS.theme, 'light')
+  return VALID_THEMES.has(savedTheme) ? savedTheme : 'light'
+}
 
 const state = {
   products: [], // Empty initially, populated by Supabase
@@ -10,7 +16,7 @@ const state = {
   cart: readJson(STORAGE_KEYS.cart, []),
   isAdminAuthed: false, // Driven by Supabase session, not localStorage flag
   wishlist: readJson(STORAGE_KEYS.wishlist, []),
-  theme: 'light', // Always start in light mode
+  theme: getInitialTheme(),
   coupon: readJson(STORAGE_KEYS.coupon, null),
   newsletter: readJson(STORAGE_KEYS.newsletter, null),
   searchQuery: '',
@@ -105,6 +111,52 @@ function dispatchError(message) {
   window.dispatchEvent(new CustomEvent('gl:error', { detail: { message } }))
 }
 
+function createStoreError(message, code = 'STORE_ERROR') {
+  return { message, code }
+}
+
+async function ensureAdminAccess() {
+  if (!supabase) {
+    return { ok: false, error: createStoreError('No hay conexión con la base de datos.', 'SUPABASE_UNAVAILABLE') }
+  }
+
+  const { data, error } = await supabase.auth.getSession()
+  if (error || !data?.session) {
+    if (state.isAdminAuthed) {
+      state.isAdminAuthed = false
+      emit()
+    }
+    return { ok: false, error: createStoreError('No autorizado', 'NOT_AUTHORIZED') }
+  }
+
+  const userId = data.session.user?.id
+  if (!userId) {
+    return { ok: false, error: createStoreError('No autorizado', 'NOT_AUTHORIZED') }
+  }
+
+  const { data: adminUser, error: adminError } = await supabase
+    .from('admin_users')
+    .select('user_id')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (adminError) {
+    if (import.meta.env.DEV) console.error('Admin access check failed:', adminError)
+    return { ok: false, error: createStoreError('No se pudo validar permisos de administrador.', 'ADMIN_ACCESS_CHECK_FAILED') }
+  }
+
+  if (!adminUser) {
+    return { ok: false, error: createStoreError('Tu usuario no está autorizado en admin_users.', 'NOT_ADMIN_USER') }
+  }
+
+  if (!state.isAdminAuthed) {
+    state.isAdminAuthed = true
+    emit()
+  }
+
+  return { ok: true }
+}
+
 async function loadProductsFromSupabase(isBackgroundUpdate = false) {
   if (!supabase) {
     if (import.meta.env.DEV) console.error('Supabase client not initialized')
@@ -122,6 +174,9 @@ async function loadProductsFromSupabase(isBackgroundUpdate = false) {
   })
 
   try {
+    const previousProductsJson = JSON.stringify(state.products)
+    const previousCartSize = state.cart.length
+
     // Race between actual query and timeout
     const result = await Promise.race([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
@@ -153,7 +208,9 @@ async function loadProductsFromSupabase(isBackgroundUpdate = false) {
         writeJson(STORAGE_KEYS.cart, state.cart)
       }
 
-      if (!isBackgroundUpdate) {
+      const productsChanged = JSON.stringify(state.products) !== previousProductsJson
+      const cartChanged = state.cart.length !== previousCartSize
+      if (!isBackgroundUpdate || productsChanged || cartChanged || state.isLoading) {
         emit()
       }
     }
@@ -169,6 +226,13 @@ async function loadProductsFromSupabase(isBackgroundUpdate = false) {
 
 // Reemplaza saveProducts con métodos granulares
 export async function addProduct(product) {
+  if (!supabase) {
+    return { error: createStoreError('No hay conexión con la base de datos.', 'SUPABASE_UNAVAILABLE') }
+  }
+
+  const access = await ensureAdminAccess()
+  if (!access.ok) return { error: access.error }
+
   const row = mapProductToRow(product)
   const { data, error } = await supabase.from('products').insert(row).select().single()
   
@@ -184,6 +248,13 @@ export async function addProduct(product) {
 }
 
 export async function updateProduct(id, updates) {
+  if (!supabase) {
+    return { error: createStoreError('No hay conexión con la base de datos.', 'SUPABASE_UNAVAILABLE') }
+  }
+
+  const access = await ensureAdminAccess()
+  if (!access.ok) return { error: access.error }
+
   const row = mapProductToRow({ ...getProductById(id), ...updates })
   const { error } = await supabase.from('products').update(row).eq('id', id)
 
@@ -202,6 +273,13 @@ export async function updateProduct(id, updates) {
 }
 
 export async function deleteProduct(id) {
+  if (!supabase) {
+    return { error: createStoreError('No hay conexión con la base de datos.', 'SUPABASE_UNAVAILABLE') }
+  }
+
+  const access = await ensureAdminAccess()
+  if (!access.ok) return { error: access.error }
+
   const { error } = await supabase.from('products').delete().eq('id', id)
   
   if (error) {
@@ -216,6 +294,13 @@ export async function deleteProduct(id) {
 
 // Upload image to Supabase Storage
 export async function uploadProductImage(file) {
+  if (!supabase) {
+    return { error: createStoreError('No hay conexión con la base de datos.', 'SUPABASE_UNAVAILABLE') }
+  }
+
+  const access = await ensureAdminAccess()
+  if (!access.ok) return { error: access.error }
+
   const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-').toLowerCase()}`
   const { data, error } = await supabase.storage
     .from('products')
@@ -368,6 +453,9 @@ export function toggleTheme() {
 export async function applyCoupon(code, silent = false) {
   const normalizedCode = sanitizeCouponCode(code)
   if (!normalizedCode) return { success: false, error: 'Código de cupón inválido' }
+  if (!supabase) {
+    return { success: false, error: 'No se pudo validar el cupón en este momento. Intenta de nuevo.' }
+  }
 
   // Search un Supabase table "coupons"
   const { data: coupon, error } = await supabase
@@ -591,7 +679,11 @@ export function getMostViewedProducts(limit = 4) {
 
 // ========== ADMIN QUERIES ==========
 export async function getAdminOrders() {
-  if (!state.isAdminAuthed) return []
+  if (!supabase || !state.isAdminAuthed) return []
+
+  const access = await ensureAdminAccess()
+  if (!access.ok) return []
+
   try {
     const { data, error } = await supabase
       .from('orders')
@@ -606,7 +698,11 @@ export async function getAdminOrders() {
 }
 
 export async function getAdminCoupons() {
-  if (!state.isAdminAuthed) return []
+  if (!supabase || !state.isAdminAuthed) return []
+
+  const access = await ensureAdminAccess()
+  if (!access.ok) return []
+
   try {
     const { data, error } = await supabase
       .from('coupons')
@@ -621,7 +717,9 @@ export async function getAdminCoupons() {
 }
 
 export async function createCoupon(payload) {
-  if (!state.isAdminAuthed) return { error: 'No autorizado' }
+  const access = await ensureAdminAccess()
+  if (!access.ok) return { error: access.error.message }
+
   const { data, error } = await supabase
     .from('coupons')
     .insert(payload)
@@ -635,7 +733,9 @@ export async function createCoupon(payload) {
 }
 
 export async function updateCoupon(code, payload) {
-  if (!state.isAdminAuthed) return { error: 'No autorizado' }
+  const access = await ensureAdminAccess()
+  if (!access.ok) return { error: access.error.message }
+
   const { error } = await supabase
     .from('coupons')
     .update(payload)
@@ -648,7 +748,9 @@ export async function updateCoupon(code, payload) {
 }
 
 export async function deleteCoupon(code) {
-  if (!state.isAdminAuthed) return { error: 'No autorizado' }
+  const access = await ensureAdminAccess()
+  if (!access.ok) return { error: access.error.message }
+
   const { error } = await supabase
     .from('coupons')
     .delete()
@@ -661,7 +763,14 @@ export async function deleteCoupon(code) {
 }
 
 export async function getAdminSubscribers() {
-  if (!state.isAdminAuthed) return []
+  if (!supabase || !state.isAdminAuthed) return []
+
+  const access = await ensureAdminAccess()
+  if (!access.ok) {
+    dispatchError(access.error.message)
+    return []
+  }
+
   try {
     const { data, error } = await supabase
       .from('newsletter_subscribers')
@@ -683,12 +792,19 @@ export async function getAdminSubscribers() {
     return (data || []).slice().sort((a, b) => getSubscriberTime(b) - getSubscriberTime(a))
   } catch (err) {
     if (import.meta.env.DEV) console.error('Error fetching admin subscribers:', err)
+    if (err?.code === '42501') {
+      dispatchError('No tienes permisos para ver newsletter. Revisa la tabla admin_users y las políticas RLS.')
+    } else {
+      dispatchError('No se pudieron cargar los suscriptores de newsletter.')
+    }
     return []
   }
 }
 
 export async function updateAdminOrderStatus(orderId, newStatus) {
-  if (!state.isAdminAuthed) return { error: 'No autorizado' }
+  const access = await ensureAdminAccess()
+  if (!access.ok) return { error: access.error.message }
+
   try {
     const { data, error } = await supabase
       .from('orders')
