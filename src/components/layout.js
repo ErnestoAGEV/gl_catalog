@@ -165,7 +165,7 @@ export function layoutAdmin({ contentHtml, state }) {
     <div class="min-h-screen bg-[#F8F9FA] text-[#191C1D] flex flex-col md:flex-row font-inter">
       
       <!-- Mobile Header -->
-      <header class="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-100 sticky top-0 z-30">
+      <header class="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-100 sticky top-0 layer-header">
         <a href="#/" class="flex items-center gap-2 group">
           <span class="text-xl font-bold font-manrope">G&L</span>
           <span class="text-[10px] tracking-wider uppercase px-2 py-0.5 rounded bg-brand text-white font-bold">Admin</span>
@@ -176,7 +176,7 @@ export function layoutAdmin({ contentHtml, state }) {
       </header>
 
       <!-- Sidebar Desktop / Drawer Mobile -->
-      <aside id="admin-sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-100 transition-transform -translate-x-full md:translate-x-0 md:static md:flex md:flex-col">
+      <aside id="admin-sidebar" class="fixed inset-y-0 left-0 layer-admin-sidebar w-64 bg-white border-r border-gray-100 transition-transform -translate-x-full md:translate-x-0 md:static md:flex md:flex-col">
         <div class="p-6 flex items-center justify-between">
           <a href="#/" class="flex items-center gap-2 group">
              <span class="text-2xl font-bold font-manrope">G&L</span>
@@ -205,7 +205,7 @@ export function layoutAdmin({ contentHtml, state }) {
       </aside>
 
       <!-- Overlay Mobile -->
-      <div id="admin-sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden backdrop-blur-sm animate-fade-in"></div>
+      <div id="admin-sidebar-overlay" class="fixed inset-0 bg-black/50 layer-admin-overlay hidden backdrop-blur-sm animate-fade-in"></div>
 
       <!-- Main Content -->
       <main class="flex-1 min-h-[calc(100vh-64px)] md:min-h-screen relative overflow-x-hidden">

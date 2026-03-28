@@ -20,7 +20,7 @@ export function productFormHTML(allColors) {
 
   return `
     <!-- Form Modal (hidden by default) -->
-    <section id="product-form-section" class="hidden fixed inset-0 z-[100] items-center justify-center p-2 sm:p-4 lg:p-6 bg-gray-900/60 backdrop-blur-sm transition-opacity overflow-y-auto">
+    <section id="product-form-section" class="hidden fixed inset-0 layer-modal items-center justify-center p-2 sm:p-4 lg:p-6 bg-gray-900/60 backdrop-blur-sm transition-opacity overflow-y-auto">
       <div class="relative w-full max-w-6xl my-auto bg-white rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.2)]">
         <!-- Botón de cerrar (esquina) -->
         <button type="button" id="modal-close-top" class="absolute top-5 right-5 p-2 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-900 transition-colors z-[10]" aria-label="Cerrar modal">

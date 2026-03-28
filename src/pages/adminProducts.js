@@ -163,7 +163,7 @@ export function pageAdminProducts(state) {
 
         modal = document.createElement('div')
         modal.id = 'delete-confirm-modal'
-        modal.className = 'fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4'
+        modal.className = 'fixed inset-0 layer-modal hidden items-center justify-center bg-black/50 p-4'
         modal.innerHTML = `
           <div class="w-full max-w-sm rounded-2xl bg-white shadow-2xl border border-gray-100">
             <div class="p-5">

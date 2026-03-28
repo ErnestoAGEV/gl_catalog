@@ -56,7 +56,7 @@ function couponCard(c) {
 function modalHTML(c = null) {
   const isEdit = !!c
   return `
-    <div id="coupon-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+    <div id="coupon-modal" class="fixed inset-0 layer-modal flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
       <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
         <!-- Header -->
         <div class="flex items-center justify-between p-6 border-b border-gray-100">

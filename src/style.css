@@ -11,6 +11,39 @@
   --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
+:root {
+  --z-header: 30;
+  --z-admin-overlay: 70;
+  --z-admin-sidebar: 80;
+  --z-mobile-nav: 90;
+  --z-modal: 120;
+  --z-toast: 200;
+}
+
+.layer-header {
+  z-index: var(--z-header) !important;
+}
+
+.layer-admin-overlay {
+  z-index: var(--z-admin-overlay) !important;
+}
+
+.layer-admin-sidebar {
+  z-index: var(--z-admin-sidebar) !important;
+}
+
+.layer-mobile-nav {
+  z-index: var(--z-mobile-nav) !important;
+}
+
+.layer-modal {
+  z-index: var(--z-modal) !important;
+}
+
+.layer-toast {
+  z-index: var(--z-toast) !important;
+}
+
 html,
 body {
   height: 100%;

@@ -5,8 +5,8 @@ export function showToast(message, type = 'success', duration = null) {
   if (!container) {
     container = document.createElement('div')
     container.id = 'toast-container'
-    // High z-index to overlay everything (nav, modal, etc.)
-    container.className = 'fixed bottom-28 md:bottom-10 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none'
+    // Keep toast above modal overlays using shared layer scale.
+    container.className = 'fixed bottom-28 md:bottom-10 left-1/2 -translate-x-1/2 layer-toast flex flex-col gap-2 pointer-events-none'
     document.body.appendChild(container)
   }
 

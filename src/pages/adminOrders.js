@@ -173,7 +173,7 @@ export function pageAdminOrders(state) {
 
         modal = document.createElement('div')
         modal.id = 'order-details-modal'
-        modal.className = 'fixed inset-0 z-[120] hidden items-center justify-center bg-black/60 p-4'
+        modal.className = 'fixed inset-0 layer-modal hidden items-center justify-center bg-black/60 p-4'
         modal.innerHTML = `
           <div class="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-2xl">
             <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between sticky top-0 bg-white dark:bg-gray-800">
@@ -194,9 +194,147 @@ export function pageAdminOrders(state) {
           document.body.style.overflow = ''
         }
 
+        const normalizePhone = (value) => (value || '').toString().replace(/\D+/g, '')
+
+        const copyToClipboard = async (text) => {
+          const value = (text || '').toString().trim()
+          if (!value) return false
+
+          try {
+            if (navigator?.clipboard?.writeText) {
+              await navigator.clipboard.writeText(value)
+              return true
+            }
+          } catch {
+            // Fallback below.
+          }
+
+          try {
+            const ta = document.createElement('textarea')
+            ta.value = value
+            ta.setAttribute('readonly', '')
+            ta.style.position = 'absolute'
+            ta.style.left = '-9999px'
+            document.body.appendChild(ta)
+            ta.select()
+            const ok = document.execCommand('copy')
+            document.body.removeChild(ta)
+            return ok
+          } catch {
+            return false
+          }
+        }
+
         modal.querySelector('#order-details-close')?.addEventListener('click', closeModal)
         modal.addEventListener('click', (e) => {
           if (e.target === modal) closeModal()
+        })
+
+        modal.addEventListener('click', async (e) => {
+          const btn = e.target?.closest?.('[data-order-action]')
+          if (!btn) return
+
+          const action = btn.getAttribute('data-order-action')
+          if (!action) return
+
+          if (action === 'copy-address') {
+            const encodedAddress = btn.getAttribute('data-address') || ''
+            const address = decodeURIComponent(encodedAddress)
+            const ok = await copyToClipboard(address)
+            showToast(ok ? 'Dirección copiada' : 'No se pudo copiar la dirección', ok ? 'success' : 'error')
+            return
+          }
+
+          if (action === 'copy-summary') {
+            const encodedSummary = btn.getAttribute('data-summary') || ''
+            const summary = decodeURIComponent(encodedSummary)
+            const ok = await copyToClipboard(summary)
+            showToast(ok ? 'Resumen copiado' : 'No se pudo copiar el resumen', ok ? 'success' : 'error')
+            return
+          }
+
+          if (action === 'open-whatsapp') {
+            const encodedPhone = btn.getAttribute('data-phone') || ''
+            const phoneRaw = decodeURIComponent(encodedPhone)
+            const phone = normalizePhone(phoneRaw)
+            if (!phone) {
+              showToast('No hay teléfono válido para WhatsApp', 'error')
+              return
+            }
+            window.open(`https://wa.me/${phone}`, '_blank', 'noopener,noreferrer')
+            return
+          }
+
+          if (action === 'print-order') {
+            const encoded = btn.getAttribute('data-print') || ''
+            if (!encoded) return
+
+            let data = null
+            try {
+              data = JSON.parse(decodeURIComponent(encoded))
+            } catch {
+              showToast('No se pudo preparar la impresión', 'error')
+              return
+            }
+
+            const printWindow = window.open('', '_blank', 'width=900,height=700')
+            if (!printWindow) {
+              showToast('El navegador bloqueó la ventana de impresión', 'error')
+              return
+            }
+
+            const itemsHtml = (data.items || []).map(item => `
+              <tr>
+                <td>${item.name || 'Producto'}</td>
+                <td>${item.size || 'Única'}</td>
+                <td>${item.qty || 0}</td>
+                <td>${formatMoney(item.price || 0)}</td>
+              </tr>
+            `).join('')
+
+            printWindow.document.write(`
+              <html>
+                <head>
+                  <title>Orden #${(data.id || '').toString().slice(0, 8)}</title>
+                  <style>
+                    body { font-family: Arial, sans-serif; padding: 24px; color: #111827; }
+                    h1 { margin: 0 0 8px; }
+                    .meta { margin: 4px 0; color: #374151; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+                    th, td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; font-size: 14px; }
+                    th { background: #f9fafb; }
+                  </style>
+                </head>
+                <body>
+                  <h1>Detalle de orden</h1>
+                  <p class="meta"><strong>Pedido:</strong> #${(data.id || '').toString().slice(0, 8)}</p>
+                  <p class="meta"><strong>Cliente:</strong> ${data.customerName || 'Sin nombre'}</p>
+                  <p class="meta"><strong>WhatsApp:</strong> ${data.customerWhatsapp || 'Sin teléfono'}</p>
+                  <p class="meta"><strong>Fecha:</strong> ${data.when || 'Sin fecha'}</p>
+                  <p class="meta"><strong>Entrega:</strong> ${data.deliveryMethod || 'Sin método'}</p>
+                  <p class="meta"><strong>Dirección:</strong> ${data.address || 'Sin dirección'}</p>
+                  <p class="meta"><strong>Pago:</strong> ${data.paymentLabel || 'Sin definir'}</p>
+                  <p class="meta"><strong>Total:</strong> ${formatMoney(data.total || 0)}</p>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Producto</th>
+                        <th>Talla</th>
+                        <th>Cantidad</th>
+                        <th>Precio</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${itemsHtml || '<tr><td colspan="4">Sin productos</td></tr>'}
+                    </tbody>
+                  </table>
+                </body>
+              </html>
+            `)
+            printWindow.document.close()
+            printWindow.focus()
+            printWindow.print()
+          }
         })
 
         return modal
@@ -220,9 +358,54 @@ export function pageAdminOrders(state) {
         const when = Number.isNaN(createdAt.getTime())
           ? 'Sin fecha'
           : `${createdAt.toLocaleDateString()} ${createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+        const printPayload = encodeURIComponent(JSON.stringify({
+          id: order.id,
+          customerName: order.customer_name,
+          customerWhatsapp: order.customer_whatsapp,
+          when,
+          deliveryMethod: order.delivery_method,
+          address: order.address,
+          paymentLabel: payment.label,
+          total: Number(order.total) || 0,
+          items,
+        }))
+        const summaryLines = [
+          `Pedido #${String(order.id).slice(0, 8)}`,
+          `Cliente: ${order.customer_name || 'Sin nombre'}`,
+          `WhatsApp: ${order.customer_whatsapp || 'Sin teléfono'}`,
+          `Fecha: ${when}`,
+          `Entrega: ${order.delivery_method || 'Sin método'}`,
+          `Dirección: ${order.address || 'Sin dirección'}`,
+          `Pago: ${payment.label}`,
+          'Productos:',
+          ...(items.length
+            ? items.map(item => `- ${item?.qty || 0}x ${item?.name || 'Producto'} (${item?.size || 'Única'}) · ${formatMoney(item?.price || 0)}`)
+            : ['- Sin productos registrados']),
+          `Total: ${formatMoney(order.total || 0)}`,
+        ]
+        const encodedSummary = encodeURIComponent(summaryLines.join('\n'))
 
         content.innerHTML = `
           <div class="space-y-5">
+            <div class="flex flex-wrap gap-2">
+              <button type="button" data-order-action="open-whatsapp" data-phone="${encodeURIComponent(order.customer_whatsapp || '')}" class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a2 2 0 011.948 1.553l.638 2.87a2 2 0 01-.545 1.86l-1.27 1.27a16 16 0 006.364 6.364l1.27-1.27a2 2 0 011.86-.545l2.87.638A2 2 0 0121 15.72V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                WhatsApp
+              </button>
+              <button type="button" data-order-action="copy-address" data-address="${encodeURIComponent(order.address || '')}" class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16h8M8 12h8m-8-4h8m2 12H6a2 2 0 01-2-2V6a2 2 0 012-2h8l6 6v8a2 2 0 01-2 2z"/></svg>
+                Copiar dirección
+              </button>
+              <button type="button" data-order-action="copy-summary" data-summary="${encodedSummary}" class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8m-8 4h8m-8 4h6M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg>
+                Copiar resumen
+              </button>
+              <button type="button" data-order-action="print-order" data-print="${printPayload}" class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V4h12v5M6 14H4a2 2 0 00-2 2v4h4m0 0h12m-12 0v-4h12v4m0 0h4v-4a2 2 0 00-2-2h-2"/></svg>
+                Imprimir
+              </button>
+            </div>
+
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="rounded-xl border border-gray-100 dark:border-gray-700 p-4">
                 <p class="text-xs uppercase tracking-wide text-gray-500">Cliente</p>
