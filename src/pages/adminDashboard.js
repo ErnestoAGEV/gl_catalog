@@ -71,188 +71,151 @@ export function pageAdminDashboard(state) {
   const productsCount = state.products?.length || 0
 
   const html = `
-    <div class="animate-fade-in space-y-6">
-      <div class="flex items-center justify-between mb-8">
+    <div class="animate-fade-in space-y-10 pb-12 surface-atelier min-h-screen pt-4">
+      <!-- Header Area (Editorial Style) -->
+      <div class="px-6 md:px-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 class="text-3xl font-manrope font-bold text-gray-900 dark:text-white">Dashboard</h1>
-          <p class="text-gray-500 mt-1">Resumen de la tienda G&L</p>
+          <h1 class="text-3xl md:text-5xl font-manrope font-extrabold tracking-tight text-[#191C1D]">Estadísticas de Venta</h1>
+          <p class="text-[#434654] font-inter mt-2 md:mt-3 text-base md:text-lg">Resumen ejecutivo • G&L Digital Atelier</p>
+        </div>
+        <div class="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-2 sm:pb-0" id="dash-range-selector" role="tablist" aria-label="Rango de tiempo">
+          <button type="button" data-range="7" class="dash-range-btn whitespace-nowrap px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-bold transition-all border border-transparent bg-[#214FC7] text-white shadow-sm">7 días</button>
+          <button type="button" data-range="30" class="dash-range-btn whitespace-nowrap px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-bold transition-all border border-[#C4C5D6]/30 text-[#434654] hover:bg-[#EDEEEF]">30 días</button>
+          <button type="button" data-range="90" class="dash-range-btn whitespace-nowrap px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-bold transition-all border border-[#C4C5D6]/30 text-[#434654] hover:bg-[#EDEEEF]">90 días</button>
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2 mb-2" id="dash-range-selector" role="tablist" aria-label="Rango de tiempo">
-        <button type="button" data-range="7" class="dash-range-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-brand bg-brand text-white">7d</button>
-        <button type="button" data-range="30" class="dash-range-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50">30d</button>
-        <button type="button" data-range="90" class="dash-range-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50">90d</button>
-      </div>
-
-      <!-- Quick Metrics -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <!-- Hero Metrics (Tonal Layering) -->
+      <div class="px-6 md:px-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         
-        <!-- Metric 1: Ventas Totales -->
-        <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group">
-          <div class="absolute right-0 top-0 w-24 h-24 bg-brand/5 rounded-bl-full transition-transform group-hover:scale-110"></div>
-          <div class="flex items-start sm:items-center gap-3 sm:gap-4 relative z-10">
-            <div class="w-10 sm:w-12 h-10 sm:h-12 rounded-xl bg-brand/10 flex items-center justify-center text-brand flex-shrink-0">
-              <svg class="w-5 sm:w-6 h-5 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            </div>
-            <div>
-              <p class="text-xs sm:text-sm font-medium text-gray-500">Ingresos Totales</p>
-              <h3 id="dash-revenue" class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">...</h3>
-            </div>
-          </div>
+        <!-- Metric: Revenue -->
+        <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.04)] relative overflow-hidden group">
+          <div class="absolute -right-4 -top-4 w-24 h-24 bg-[#214FC7]/5 rounded-full transition-transform group-hover:scale-125"></div>
+          <p class="text-[10px] sm:text-xs font-bold uppercase tracking-[0.1em] text-[#434654] mb-3">Ingresos Totales</p>
+          <h3 id="dash-revenue" class="text-3xl sm:text-4xl font-manrope font-extrabold text-[#191C1D]">...</h3>
+          <div id="dash-sales-month-trend" class="mt-4 text-xs sm:text-sm font-bold">...</div>
         </div>
 
-        <!-- Metric 2: Órdenes -->
-        <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group">
-          <div class="absolute right-0 top-0 w-24 h-24 bg-orange-500/5 rounded-bl-full transition-transform group-hover:scale-110"></div>
-          <div class="flex items-start sm:items-center gap-3 sm:gap-4 relative z-10">
-            <div class="w-10 sm:w-12 h-10 sm:h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 flex-shrink-0">
-              <svg class="w-5 sm:w-6 h-5 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-            </div>
-            <div>
-              <p class="text-xs sm:text-sm font-medium text-gray-500">Órdenes Totales</p>
-              <h3 id="dash-orders-count" class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">...</h3>
-            </div>
-          </div>
+        <!-- Metric: Orders -->
+        <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.04)] relative overflow-hidden group">
+          <div class="absolute -right-4 -top-4 w-24 h-24 bg-orange-500/5 rounded-full transition-transform group-hover:scale-125"></div>
+          <p class="text-[10px] sm:text-xs font-bold uppercase tracking-[0.1em] text-[#434654] mb-3">Órdenes Realizadas</p>
+          <h3 id="dash-orders-count" class="text-3xl sm:text-4xl font-manrope font-extrabold text-[#191C1D]">...</h3>
+          <div id="dash-conversion-rate-trend" class="mt-4 text-xs sm:text-sm font-bold">...</div>
         </div>
 
-        <!-- Metric 3: Catálogo -->
-        <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group">
-          <div class="absolute right-0 top-0 w-24 h-24 bg-purple-500/5 rounded-bl-full transition-transform group-hover:scale-110"></div>
-          <div class="flex items-start sm:items-center gap-3 sm:gap-4 relative z-10">
-            <div class="w-10 sm:w-12 h-10 sm:h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600 flex-shrink-0">
-              <svg class="w-5 sm:w-6 h-5 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-            </div>
-            <div>
-              <p class="text-xs sm:text-sm font-medium text-gray-500">Productos Activos</p>
-              <h3 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">${productsCount}</h3>
-            </div>
-          </div>
+        <!-- Metric: Products -->
+        <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.04)] relative overflow-hidden group">
+          <div class="absolute -right-4 -top-4 w-24 h-24 bg-purple-500/5 rounded-full transition-transform group-hover:scale-125"></div>
+          <p class="text-[10px] sm:text-xs font-bold uppercase tracking-[0.1em] text-[#434654] mb-3">Productos en Catálogo</p>
+          <h3 class="text-3xl sm:text-4xl font-manrope font-extrabold text-[#191C1D]">${productsCount}</h3>
+          <p id="dash-low-stock" class="mt-4 text-xs sm:text-sm text-[#434654]">Cargando inventario...</p>
         </div>
 
-        <!-- Metric 4: Newsletter -->
-        <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group">
-          <div class="absolute right-0 top-0 w-24 h-24 bg-green-500/5 rounded-bl-full transition-transform group-hover:scale-110"></div>
-          <div class="flex items-start sm:items-center gap-3 sm:gap-4 relative z-10">
-            <div class="w-10 sm:w-12 h-10 sm:h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-600 flex-shrink-0">
-              <svg class="w-5 sm:w-6 h-5 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-            </div>
-            <div>
-              <p class="text-xs sm:text-sm font-medium text-gray-500">Suscriptores</p>
-              <h3 id="dash-subscribers-count" class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">...</h3>
-            </div>
-          </div>
+        <!-- Metric: Subscribers -->
+        <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.04)] relative overflow-hidden group">
+          <div class="absolute -right-4 -top-4 w-24 h-24 bg-emerald-500/5 rounded-full transition-transform group-hover:scale-125"></div>
+          <p class="text-[10px] sm:text-xs font-bold uppercase tracking-[0.1em] text-[#434654] mb-3">Suscripciones</p>
+          <h3 id="dash-subscribers-count" class="text-3xl sm:text-4xl font-manrope font-extrabold text-[#191C1D]">...</h3>
+          <p class="mt-4 text-xs sm:text-sm text-[#434654]">Audiencia activa</p>
         </div>
 
       </div>
 
-      <!-- Management Metrics -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
-          <p class="text-xs uppercase tracking-wide text-gray-500">Ventas Hoy</p>
-          <p id="dash-sales-today" class="mt-2 text-xl font-bold text-gray-900 dark:text-white">...</p>
-          <p id="dash-sales-today-trend" class="mt-1 text-xs text-gray-500">...</p>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
-          <p class="text-xs uppercase tracking-wide text-gray-500">Ventas en Rango</p>
-          <p id="dash-sales-month" class="mt-2 text-xl font-bold text-gray-900 dark:text-white">...</p>
-          <p id="dash-sales-month-trend" class="mt-1 text-xs text-gray-500">...</p>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
-          <p class="text-xs uppercase tracking-wide text-gray-500">Ticket Promedio</p>
-          <p id="dash-average-ticket" class="mt-2 text-xl font-bold text-gray-900 dark:text-white">...</p>
-          <p id="dash-average-ticket-trend" class="mt-1 text-xs text-gray-500">...</p>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
-          <p class="text-xs uppercase tracking-wide text-gray-500">Conversión Pedidos</p>
-          <p id="dash-conversion-rate" class="mt-2 text-xl font-bold text-gray-900 dark:text-white">...</p>
-          <p id="dash-conversion-rate-trend" class="mt-1 text-xs text-gray-500">...</p>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
-          <p class="text-xs uppercase tracking-wide text-gray-500">Tasa de Cancelación</p>
-          <p id="dash-cancel-rate" class="mt-2 text-xl font-bold text-gray-900 dark:text-white">...</p>
-          <p id="dash-cancel-rate-trend" class="mt-1 text-xs text-gray-500">...</p>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
-          <p class="text-xs uppercase tracking-wide text-gray-500">Pendientes de Pago</p>
-          <p id="dash-pending-payments" class="mt-2 text-xl font-bold text-gray-900 dark:text-white">...</p>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
-          <p class="text-xs uppercase tracking-wide text-gray-500">Stock Crítico (<=10)</p>
-          <p id="dash-low-stock" class="mt-2 text-xl font-bold text-gray-900 dark:text-white">...</p>
-          <p id="dash-out-stock" class="mt-1 text-xs text-gray-500">...</p>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
-          <p class="text-xs uppercase tracking-wide text-gray-500">Top Producto (30d)</p>
-          <p id="dash-top-product" class="mt-2 text-base font-bold text-gray-900 dark:text-white truncate">...</p>
-          <p id="dash-top-product-units" class="mt-1 text-xs text-gray-500">...</p>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div class="xl:col-span-2 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 sm:p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="font-bold text-gray-900 dark:text-white">Ventas por día</h3>
-            <span id="dash-sales-chart-subtitle" class="text-xs text-gray-500">Últimos 7 días</span>
-          </div>
-          <div id="dash-sales-chart" class="h-48 flex items-end gap-1.5 sm:gap-2"></div>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 sm:p-6">
-          <h3 class="font-bold text-gray-900 dark:text-white mb-4">Estado de pedidos</h3>
-          <div id="dash-status-chart" class="space-y-3"></div>
-        </div>
-      </div>
-
-      <!-- Main Activity Area -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+      <!-- Main Visual Data Area -->
+      <div class="px-6 md:px-10 grid grid-cols-1 xl:grid-cols-3 gap-8">
         
-        <!-- Órdenes Recientes -->
-        <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col min-h-[24rem]">
-           <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-             <h3 class="font-bold text-gray-900 dark:text-white">Pedidos Recientes</h3>
-             <a href="#/admin/orders" class="text-sm font-medium text-brand hover:text-brand-dark transition-colors">Ver todos</a>
+        <!-- Sales Chart -->
+        <div class="xl:col-span-2 bg-white rounded-[2rem] p-6 sm:p-8 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.04)]">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
+            <div>
+              <h3 class="text-xl sm:text-2xl font-manrope font-extrabold text-[#191C1D]">Rendimiento Diario</h3>
+              <p id="dash-sales-chart-subtitle" class="text-[#434654] text-xs sm:text-sm mt-1">Últimos 7 días</p>
+            </div>
+            <div class="sm:text-right">
+              <p class="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[#434654]">Ventas hoy</p>
+              <p id="dash-sales-today" class="text-xl sm:text-2xl font-manrope font-extrabold text-[#214FC7]">...</p>
+            </div>
+          </div>
+          <div id="dash-sales-chart" class="h-64 flex items-end gap-2 sm:gap-4 overflow-x-auto pb-4 sm:pb-0"></div>
+        </div>
+
+        <!-- Logistics & Status -->
+        <div class="bg-white rounded-[2rem] p-8 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.04)]">
+          <h3 class="text-2xl font-manrope font-extrabold text-[#191C1D] mb-8">Estado de Logística</h3>
+          <div id="dash-status-chart" class="space-y-6"></div>
+          
+          <div class="mt-12 pt-8 border-t border-[#EDEEEF]">
+            <p class="text-xs font-bold uppercase tracking-widest text-[#434654] mb-4">Eficiencia Operativa</p>
+            <div class="space-y-4">
+               <div>
+                  <div class="flex justify-between text-sm mb-1">
+                    <span class="text-[#434654]">Ticket Promedio</span>
+                    <span id="dash-average-ticket" class="font-bold">...</span>
+                  </div>
+                  <div id="dash-average-ticket-trend" class="text-[11px]">...</div>
+               </div>
+               <div>
+                  <div class="flex justify-between text-sm mb-1">
+                    <span class="text-[#434654]">Tasa de Cancelación</span>
+                    <span id="dash-cancel-rate" class="font-bold text-red-600">...</span>
+                  </div>
+               </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Recent Activity & Quick Tools -->
+      <div class="px-6 md:px-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Pedidos Recientes (The Gallery List) -->
+        <div class="lg:col-span-2 bg-[#EDEEEF]/40 rounded-[2rem] p-6 sm:p-8 flex flex-col min-h-[30rem]">
+           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+             <h3 class="text-xl sm:text-2xl font-manrope font-extrabold text-[#191C1D]">Pedidos Recientes</h3>
+             <a href="#/admin/orders" class="inline-flex items-center justify-center px-4 py-2 rounded-full bg-white text-xs sm:text-sm font-bold shadow-sm hover:bg-[#214FC7] hover:text-white transition-all w-fit">Ver Historial</a>
            </div>
            
-           <div id="dash-recent-orders" class="flex-1 p-6 flex flex-col justify-center items-center text-center">
-             <div class="animate-pulse flex flex-col items-center">
-               <div class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full mb-3"></div>
-               <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-2"></div>
-               <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-48"></div>
-             </div>
+           <div id="dash-recent-orders" class="flex-1 flex flex-col">
+              <div class="m-auto text-center opacity-40">
+                <div class="w-10 h-10 border-2 border-[#214FC7] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p class="font-manrope font-bold text-sm">Sincronizando Atelier...</p>
+              </div>
            </div>
         </div>
 
-        <!-- Acciones Rápidas -->
-        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6">
-          <h3 class="font-bold text-gray-900 dark:text-white mb-4">Acciones Rápidas</h3>
-          <div class="space-y-3">
-            <a href="#/admin/products" class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-brand hover:text-brand transition-colors group">
-              <div class="w-10 h-10 bg-gray-50 dark:bg-gray-700 group-hover:bg-brand/10 rounded-lg flex items-center justify-center transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-              </div>
-              <div>
-                <p class="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-brand transition-colors">Agregar Producto</p>
-                <p class="text-xs text-gray-500">Publicar en el catálogo</p>
-              </div>
-            </a>
+        <!-- Quick Access (Atelier Tools) -->
+        <div class="space-y-6">
+          <div class="bg-[#214FC7] rounded-[2rem] p-8 text-white shadow-xl shadow-[#214FC7]/20 relative overflow-hidden group">
+            <div class="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-bl-full transition-transform group-hover:scale-110"></div>
+            <h3 class="text-xl font-manrope font-extrabold mb-2 relative z-10">Atelier Tools</h3>
+            <p class="text-white/70 text-sm mb-8 relative z-10">Acciones rápidas de gestión</p>
             
-            <a href="#/admin/coupons" class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-brand hover:text-brand transition-colors group">
-              <div class="w-10 h-10 bg-gray-50 dark:bg-gray-700 group-hover:bg-brand/10 rounded-lg flex items-center justify-center transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+            <div class="space-y-4 relative z-10">
+              <a href="#/admin/products" class="flex items-center justify-between p-4 rounded-2xl bg-white/10 hover:bg-white/20 transition-all group/btn">
+                <span class="font-bold">Nuevo Producto</span>
+                <svg class="w-5 h-5 transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+              </a>
+              <a href="#/admin/coupons" class="flex items-center justify-between p-4 rounded-2xl bg-white/10 hover:bg-white/20 transition-all group/btn">
+                <span class="font-bold">Crear Cupón</span>
+                <svg class="w-5 h-5 transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- Top Product Card -->
+          <div class="bg-white rounded-[2rem] p-8 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.04)]">
+            <p class="text-xs font-bold uppercase tracking-widest text-[#434654] mb-6">Pieza más Vendida</p>
+            <div class="flex items-center gap-4">
+              <div class="w-16 h-16 rounded-2xl bg-[#EDEEEF] flex items-center justify-center text-[#214FC7]">
+                <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
               </div>
-              <div>
-                <p class="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-brand transition-colors">Crear Cupón</p>
-                <p class="text-xs text-gray-500">Ofrecer descuentos</p>
+              <div class="flex-1 min-w-0">
+                <p id="dash-top-product" class="font-manrope font-extrabold text-[#191C1D] truncate text-lg">Cargando...</p>
+                <p id="dash-top-product-units" class="text-sm text-[#434654] mt-1">...</p>
               </div>
-            </a>
+            </div>
           </div>
         </div>
 
@@ -465,9 +428,11 @@ export function pageAdminDashboard(state) {
             const h = Math.max(6, Math.round((item.value / maxSales) * 100))
             const showLabel = rangeDays <= 14 || idx % Math.ceil(rangeDays / 7) === 0
             return `
-              <div class="flex-1 min-w-0 flex flex-col items-center justify-end gap-1">
-                <div title="${item.label}: ${formatMoney(item.value)}" class="w-full rounded-t-md bg-brand/80 hover:bg-brand transition-colors" style="height:${h}%"></div>
-                <span class="text-[10px] text-gray-400 leading-none ${showLabel ? '' : 'opacity-0'}">${item.label}</span>
+              <div class="flex-1 min-w-0 flex flex-col items-center justify-end gap-2 group/bar">
+                <div title="${item.label}: ${formatMoney(item.value)}" class="w-full rounded-full bg-[#214FC7]/20 group-hover/bar:bg-[#214FC7] transition-all relative" style="height:${h}%">
+                   <div class="absolute inset-0 bg-[#214FC7] rounded-full opacity-60"></div>
+                </div>
+                <span class="text-[10px] font-bold text-[#434654] leading-none ${showLabel ? '' : 'opacity-0'}">${item.label}</span>
               </div>
             `
           }).join('')
@@ -501,12 +466,12 @@ export function pageAdminDashboard(state) {
             const pct = Math.round((count / totalStatus) * 100)
             return `
               <div>
-                <div class="flex items-center justify-between text-xs mb-1">
-                  <span class="text-gray-600 dark:text-gray-300">${group.label}</span>
-                  <span class="text-gray-500">${count} (${pct}%)</span>
+                <div class="flex items-center justify-between text-sm mb-2">
+                  <span class="font-bold text-[#191C1D]">${group.label}</span>
+                  <span class="text-[#434654]">${count} (${pct}%)</span>
                 </div>
-                <div class="h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
-                  <div class="h-full ${group.color}" style="width:${pct}%"></div>
+                <div class="h-1.5 rounded-full bg-[#EDEEEF] overflow-hidden">
+                  <div class="h-full ${group.color.replace('bg-', 'bg-[#').replace('500', ']')}" style="width:${pct}%; background-color: ${group.key === 'completado' ? '#10b981' : group.key === 'pendientedepago' ? '#f59e0b' : group.key === 'cancelado' ? '#ef4444' : '#64748b'}"></div>
                 </div>
               </div>
             `
@@ -520,8 +485,8 @@ export function pageAdminDashboard(state) {
           rangeButtons.forEach(item => {
             const active = item === btn
             item.className = active
-              ? 'dash-range-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-brand bg-brand text-white'
-              : 'dash-range-btn px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50'
+              ? 'dash-range-btn px-5 py-2 rounded-full text-sm font-bold transition-all border border-transparent bg-[#214FC7] text-white shadow-sm'
+              : 'dash-range-btn px-5 py-2 rounded-full text-sm font-bold transition-all border border-[#C4C5D6]/30 text-[#434654] hover:bg-[#EDEEEF]'
           })
           renderRangeData(days)
         })
@@ -539,28 +504,32 @@ export function pageAdminDashboard(state) {
             <p class="text-sm text-gray-500 max-w-sm">Aún no hay pedidos registrados en la tienda.</p>
           `
         } else {
-          const recentOrders = orders.slice(0, 5) // Show top 5
-          recentOrdersEl.className = "flex-1 p-0 overflow-y-auto w-full" // Reset centering for the list
+          const recentOrders = orders.slice(0, 5)
           recentOrdersEl.innerHTML = `
-            <ul class="divide-y divide-gray-100 dark:divide-gray-800 w-full">
+            <ul class="space-y-4 w-full">
               ${recentOrders.map(order => `
-                <li class="p-4 sm:px-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors flex items-center justify-between">
-                  <div>
-                    <p class="font-medium text-gray-900 dark:text-white truncate max-w-[150px] sm:max-w-xs">${order.customer_name}</p>
-                    <p class="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
-                       <span>${new Date(order.created_at).toLocaleDateString()}</span>
-                       <span class="w-1 h-1 rounded-full bg-gray-300"></span>
-                       <span>${order.payment_method === 'whatsapp' ? 'WhatsApp' : 'Tarjeta'}</span>
-                    </p>
+                <li class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center justify-between group gap-3">
+                  <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+                    <div class="w-10 h-10 flex-shrink-0 rounded-full bg-[#EDEEEF] flex items-center justify-center font-bold text-[#191C1D] text-xs">
+                      ${order.customer_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                    </div>
+                    <div class="min-w-0">
+                      <p class="font-manrope font-extrabold text-[#191C1D] truncate text-sm sm:text-base">${order.customer_name}</p>
+                      <p class="text-[10px] sm:text-[11px] font-bold text-[#434654] flex items-center gap-1.5 mt-0.5 uppercase tracking-tighter">
+                         <span class="truncate">${new Date(order.created_at).toLocaleDateString()}</span>
+                         <span class="opacity-30">•</span>
+                         <span class="${order.payment_method === 'whatsapp' ? 'text-emerald-600' : 'text-[#214FC7]'} whitespace-nowrap">${order.payment_method === 'whatsapp' ? 'WhatsApp' : 'Tarjeta'}</span>
+                      </p>
+                    </div>
                   </div>
-                  <div class="text-right">
-                    <p class="font-bold text-gray-900 dark:text-white">${formatMoney(order.total || 0)}</p>
-                    <span class="inline-flex mt-1 items-center px-2 py-0.5 rounded text-[10px] font-medium ${
-                      order.status === 'completado' ? 'bg-green-100 text-green-800' :
+                  <div class="text-right flex-shrink-0">
+                    <p class="font-manrope font-extrabold text-[#191C1D] text-sm sm:text-base">${formatMoney(order.total || 0)}</p>
+                    <span class="inline-flex mt-1 items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest ${
+                      order.status === 'completado' ? 'bg-emerald-100 text-emerald-800' :
                       order.status === 'cancelado' ? 'bg-red-100 text-red-800' :
-                      'bg-orange-100 text-orange-800'
+                      'bg-amber-100 text-amber-800'
                     }">
-                      ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                      ${order.status}
                     </span>
                   </div>
                 </li>

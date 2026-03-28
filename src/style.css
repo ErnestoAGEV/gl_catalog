@@ -4,14 +4,22 @@
 
 /* Brand Colors */
 @theme {
-  --color-brand: #2563eb;
-  --color-brand-light: #60a5fa;
-  --color-brand-dark: #1e40af;
-  --font-heading: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+  --color-brand: #214fc7;
+  --color-brand-light: #4169e1;
+  --color-brand-dark: #003baf;
+  --font-heading: 'Manrope', ui-sans-serif, system-ui, sans-serif;
   --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
+  /* Digital Atelier Colors */
+  --atelier-bg: #f8f9fa;
+  --atelier-surface: #edeeef;
+  --atelier-card: #ffffff;
+  --atelier-text: #191c1d;
+  --atelier-text-variant: #434654;
+  --atelier-accent: #214fc7;
+
   --z-header: 30;
   --z-admin-overlay: 70;
   --z-admin-sidebar: 80;
@@ -435,6 +443,14 @@ body.dark {
   transform: translateY(-4px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
 }
+
+/* Tonal Layering Utilities (No-Line Rule) */
+.surface-atelier { background-color: var(--atelier-bg); }
+.surface-atelier-container { background-color: var(--atelier-surface); }
+.surface-atelier-card { background-color: var(--atelier-card); }
+
+.font-manrope { font-family: 'Manrope', sans-serif; }
+.font-inter { font-family: 'Inter', sans-serif; }
 
 /* Pop animation for cart badge */
 @keyframes pop {
