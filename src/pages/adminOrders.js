@@ -115,17 +115,18 @@ export function pageAdminOrders(state) {
       
       <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
         
-        <div class="overflow-x-auto">
+        <!-- Desktop Table View -->
+        <div class="hidden md:block overflow-x-auto">
           <table class="w-full text-left text-sm text-gray-600 dark:text-gray-400">
             <thead class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 text-xs uppercase tracking-wider">
               <tr>
-                <th scope="col" class="px-6 py-4 font-semibold min-w-[200px]">Cliente</th>
-                <th scope="col" class="px-6 py-4 font-semibold min-w-[280px]">Productos</th>
-                <th scope="col" class="px-6 py-4 font-semibold min-w-[130px]">Fecha</th>
-                <th scope="col" class="px-6 py-4 font-semibold min-w-[300px]">Entrega</th>
-                <th scope="col" class="px-6 py-4 font-semibold text-center min-w-[140px]">Pago</th>
-                <th scope="col" class="px-6 py-4 font-semibold text-center min-w-[120px]">Total</th>
-                <th scope="col" class="px-6 py-4 font-semibold text-center min-w-[180px]">Estado</th>
+                <th scope="col" class="px-6 py-4 font-semibold min-w-[180px]">Cliente</th>
+                <th scope="col" class="px-6 py-4 font-semibold min-w-[200px]">Productos</th>
+                <th scope="col" class="px-6 py-4 font-semibold min-w-[100px]">Fecha</th>
+                <th scope="col" class="px-6 py-4 font-semibold min-w-[200px]">Entrega</th>
+                <th scope="col" class="px-6 py-4 font-semibold text-center min-w-[110px]">Pago</th>
+                <th scope="col" class="px-6 py-4 font-semibold text-center min-w-[100px]">Total</th>
+                <th scope="col" class="px-6 py-4 font-semibold text-center min-w-[130px]">Estado</th>
               </tr>
             </thead>
             <tbody id="orders-tbody" class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -141,6 +142,11 @@ export function pageAdminOrders(state) {
           </table>
         </div>
 
+        <!-- Mobile Card View -->
+        <div id="orders-mobile" class="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+          <!-- Cards rendered here -->
+        </div>
+
       </div>
     </div>
   `
@@ -150,7 +156,8 @@ export function pageAdminOrders(state) {
     html,
     onMount(root) {
       const tbody = root.querySelector('#orders-tbody')
-      if (!tbody) return
+      const mobileContainer = root.querySelector('#orders-mobile')
+      if (!tbody || !mobileContainer) return
 
       const globalNotifierActive = typeof window !== 'undefined' && window.__glGlobalOrderNotifierActive === true
       let knownOrderIds = new Set()
@@ -195,19 +202,20 @@ export function pageAdminOrders(state) {
 
       const renderOrders = (orders) => {
         if (!orders.length) {
-          tbody.innerHTML = `
-            <tr>
-              <td colspan="7" class="px-6 py-12 text-center text-gray-500">
-                <div class="w-16 h-16 mx-auto bg-gray-50 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4 text-gray-400">
-                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                </div>
-                Aún no hay pedidos registrados.
-              </td>
-            </tr>
+          const emptyState = `
+            <div class="px-6 py-12 text-center text-gray-500">
+              <div class="w-16 h-16 mx-auto bg-gray-50 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4 text-gray-400">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+              </div>
+              Aún no hay pedidos registrados.
+            </div>
           `
+          tbody.innerHTML = `<tr><td colspan="7" class="px-0 py-0">${emptyState}</td></tr>`
+          mobileContainer.innerHTML = emptyState
           return
         }
 
+        // Desktop Table
         tbody.innerHTML = orders.map(order => {
           let items = []
           try {
@@ -260,6 +268,77 @@ export function pageAdminOrders(state) {
                </select>
             </td>
           </tr>
+        `}).join('')
+
+        // Mobile Cards
+        mobileContainer.innerHTML = orders.map(order => {
+          let items = []
+          try {
+             items = typeof order.cart_items === 'string' ? JSON.parse(order.cart_items) : (order.cart_items || [])
+          } catch(e) { console.error('Error parsing items for order', order.id) }
+
+          const payment = getPaymentMeta(order.payment_method)
+
+          return `
+          <div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+            <div class="space-y-3">
+              <div>
+                <p class="text-xs text-gray-500 font-semibold">Cliente</p>
+                <p class="font-medium text-gray-900 dark:text-white">${order.customer_name}</p>
+                <p class="text-xs text-brand">${order.customer_whatsapp}</p>
+              </div>
+              
+              <div>
+                <p class="text-xs text-gray-500 font-semibold">Productos</p>
+                <div class="flex flex-col gap-1 text-xs text-gray-600 dark:text-gray-400">
+                  ${items.map(item => `
+                     <div class="truncate" title="${item.name} (${item.size || 'Unica'})">
+                       <span class="font-semibold">${item.qty}x</span> ${item.name}
+                       ${item.size ? `<span class="text-gray-400">(${item.size})</span>` : ''}
+                     </div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <p class="text-xs text-gray-500 font-semibold">Fecha</p>
+                  <p class="text-xs text-gray-600 dark:text-gray-400">${new Date(order.created_at).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p class="text-xs text-gray-500 font-semibold">Total</p>
+                  <p class="font-semibold text-gray-900 dark:text-white">${formatMoney(order.total || 0)}</p>
+                </div>
+              </div>
+
+              <div>
+                <p class="text-xs text-gray-500 font-semibold">Entrega</p>
+                <p class="text-xs text-gray-600 dark:text-gray-400">
+                  ${order.delivery_method === 'Envío a domicilio' ? '🚚 Envío a Domicilio' : '🏪 Recoge en Tienda'}
+                </p>
+                ${order.delivery_method === 'Envío a domicilio' && order.address ? `
+                  <p class="text-xs text-gray-500 mt-1 truncate">${order.address}</p>
+                ` : ''}
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <p class="text-xs text-gray-500 font-semibold">Pago</p>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium ${payment.className}">
+                    ${payment.label}
+                  </span>
+                </div>
+                <div>
+                  <p class="text-xs text-gray-500 font-semibold">Estado</p>
+                  <select data-id="${order.id}" data-original="${order.status}" class="status-select outline-none bg-gray-50 border border-gray-200 text-gray-900 text-xs rounded w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                     <option value="pendientedepago" ${order.status === 'pendientedepago' ? 'selected' : ''}>Pendiente</option>
+                     <option value="completado" ${order.status === 'completado' ? 'selected' : ''}>Completado</option>
+                     <option value="cancelado" ${order.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
         `}).join('')
 
         attachStatusHandlers()

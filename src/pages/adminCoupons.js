@@ -138,12 +138,12 @@ export function pageAdminCoupons() {
     html: `
       <div class="animate-fade-in space-y-6">
         <!-- Header -->
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
           <div>
             <h1 class="text-3xl font-manrope font-bold text-gray-900">Cupones</h1>
             <p class="text-gray-500 mt-1 text-sm">Crea y gestiona códigos de descuento</p>
           </div>
-          <button id="open-create-modal" class="flex items-center gap-2 bg-brand text-white px-4 py-2.5 rounded-xl font-medium hover:bg-brand-dark transition-colors shadow-lg shadow-brand/20">
+          <button id="open-create-modal" class="w-full sm:w-auto self-start sm:self-auto flex items-center justify-center gap-2 bg-brand text-white px-4 py-2.5 rounded-xl font-medium hover:bg-brand-dark transition-colors shadow-lg shadow-brand/20">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
             Crear cupón
           </button>

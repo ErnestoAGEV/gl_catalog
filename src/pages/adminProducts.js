@@ -3,7 +3,7 @@ import { navigate } from '../app/router.js'
 import { on, qs } from '../app/dom.js'
 import { showToast } from '../app/toast.js'
 import { parseList } from './adminProductsData.js'
-import { productCard } from './adminProductCard.js'
+import { productCard, productCardMobile } from './adminProductCard.js'
 import { productFormHTML } from './adminProductForm.js'
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -24,13 +24,13 @@ export function pageAdminProducts(state) {
     html: `
       <div class="animate-fade-in space-y-6">
         <!-- Header with Title and Button -->
-        <div class="flex items-center justify-between mb-8">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-8">
           <div>
             <h1 class="text-3xl font-manrope font-bold text-gray-900 dark:text-white">Productos</h1>
             <p class="text-gray-500 mt-1">Gestiona tu catálogo</p>
             <span id="products-count" class="text-sm text-gray-500 block">${productCount} en total</span>
           </div>
-          <button type="button" id="toggle-form-btn" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-brand text-white font-semibold hover:bg-brand-dark transition-colors text-sm lg:rounded-2xl lg:px-6 lg:py-3">
+          <button type="button" id="toggle-form-btn" class="w-full sm:w-auto self-start sm:self-auto flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl bg-brand text-white font-semibold hover:bg-brand-dark transition-colors text-sm lg:rounded-2xl lg:px-6 lg:py-3">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
             </svg>
@@ -80,15 +80,16 @@ export function pageAdminProducts(state) {
         </div>
         
         <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden mb-6">
-          <div class="overflow-x-auto">
+          <!-- Desktop Table View -->
+          <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left text-sm text-gray-600 dark:text-gray-400">
               <thead class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 text-xs uppercase tracking-wider">
                 <tr>
-                  <th scope="col" class="px-6 py-4 font-semibold min-w-[250px]">Producto</th>
-                  <th scope="col" class="px-6 py-4 font-semibold min-w-[120px]">Categoría</th>
-                  <th scope="col" class="px-6 py-4 font-semibold min-w-[100px]">Precio</th>
-                  <th scope="col" class="px-6 py-4 font-semibold min-w-[140px]">Stock</th>
-                  <th scope="col" class="px-6 py-4 font-semibold min-w-[140px]">Estado</th>
+                  <th scope="col" class="px-6 py-4 font-semibold min-w-[200px]">Producto</th>
+                  <th scope="col" class="px-6 py-4 font-semibold min-w-[100px]">Categoría</th>
+                  <th scope="col" class="px-6 py-4 font-semibold min-w-[90px]">Precio</th>
+                  <th scope="col" class="px-6 py-4 font-semibold min-w-[100px]">Stock</th>
+                  <th scope="col" class="px-6 py-4 font-semibold min-w-[100px]">Estado</th>
                   <th scope="col" class="px-6 py-4 font-semibold text-center min-w-[120px]">Acciones</th>
                 </tr>
               </thead>
@@ -96,8 +97,14 @@ export function pageAdminProducts(state) {
               </tbody>
             </table>
           </div>
+
+          <!-- Mobile Card View -->
+          <div id="products-mobile" class="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+            <!-- Cards rendered here -->
+          </div>
+
           <!-- Pagination Controls -->
-          <div id="pagination-controls" class="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 min-h-[60px]">
+          <div id="pagination-controls" class="flex flex-col sm:flex-row items-center justify-between px-4 sm:px-6 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 min-h-[60px]">
           </div>
         </div>
       </section>
@@ -107,6 +114,7 @@ export function pageAdminProducts(state) {
     `,
     onMount(root) {
       const list = qs(root, '#products-list')
+      const mobileContainer = qs(root, '#products-mobile')
       const form = qs(root, '#product-form')
       const formSection = qs(root, '#product-form-section')
       const toggleFormBtn = qs(root, '#toggle-form-btn')
@@ -386,8 +394,7 @@ export function pageAdminProducts(state) {
         const paginationContainer = qs(root, '#pagination-controls')
 
         if (!filtered.length) {
-          list.innerHTML = `
-            <tr><td colspan="6">
+          const emptyState = `
             <div class="text-center py-16">
               <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                 <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -397,8 +404,9 @@ export function pageAdminProducts(state) {
               <h3 class="text-lg font-semibold text-gray-900 mb-2">${hasActiveFilters ? 'Sin resultados' : 'No hay productos'}</h3>
               <p class="text-sm text-gray-500">${hasActiveFilters ? 'Prueba con otra combinación de búsqueda/filtros' : 'Agrega tu primer producto usando el botón de arriba'}</p>
             </div>
-            </td></tr>
           `
+          list.innerHTML = `<tr><td colspan="6" class="px-0 py-0">${emptyState}</td></tr>`
+          mobileContainer.innerHTML = emptyState
           if (paginationContainer) paginationContainer.innerHTML = ''
           return
         }
@@ -411,6 +419,7 @@ export function pageAdminProducts(state) {
         const paginated = filtered.slice(startIdx, startIdx + itemsPerPage)
 
         list.innerHTML = paginated.map(productCard).join('')
+        mobileContainer.innerHTML = paginated.map(productCardMobile).join('')
 
         if (paginationContainer) {
           if (totalPages > 1) {
