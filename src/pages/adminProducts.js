@@ -14,6 +14,7 @@ const TOGGLE_PUBLISH_HANDLER_KEY = '__glAdminTogglePublishHandler'
 
 export function pageAdminProducts(state) {
   const productCount = state.products.length
+  const allTypes = [...new Set(state.products.map(p => (p.type || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'))
   
   // Extract unique colors from all products (passed to form for quick-select badges)
   const allColors = [...new Set(state.products.flatMap(p => p.colors || []).map(c => c.trim()))].sort()
@@ -21,37 +22,61 @@ export function pageAdminProducts(state) {
   return {
     title: 'Productos | Admin G&L',
     html: `
-      <!-- Header -->
-      <section id="admin-top" class="mb-6 flex items-center justify-between">
-        <div>
-          <h1 class="text-3xl font-manrope font-bold text-gray-900 dark:text-white">Productos</h1>
-          <p class="text-sm text-gray-500 mt-1">Gestiona tu catálogo (${productCount} en total)</p>
+      <div class="animate-fade-in space-y-6">
+        <!-- Header with Title and Button -->
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <h1 class="text-3xl font-manrope font-bold text-gray-900 dark:text-white">Productos</h1>
+            <p class="text-gray-500 mt-1">Gestiona tu catálogo</p>
+            <span id="products-count" class="text-sm text-gray-500 block">${productCount} en total</span>
+          </div>
+          <button type="button" id="toggle-form-btn" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-brand text-white font-semibold hover:bg-brand-dark transition-colors text-sm lg:rounded-2xl lg:px-6 lg:py-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            <span id="toggle-form-text">Agregar producto</span>
+          </button>
         </div>
-      </section>
 
-      <!-- Add Product Button -->
-      <button type="button" id="toggle-form-btn" class="w-full mb-6 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-brand text-white font-semibold hover:bg-brand-dark transition-colors shadow-lg shadow-brand/25">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-        </svg>
-        <span id="toggle-form-text">Agregar nuevo producto</span>
-      </button>
-
-      ${productFormHTML(allColors)}
-
-      <!-- Products List -->
-      <section>
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-bold text-gray-900">Productos</h2>
-          <span id="products-count" class="text-sm text-gray-500">${productCount} en total</span>
-        </div>
+        <!-- Products List -->
+        <section>
         
-        <!-- Search Bar -->
-        <div class="relative mb-4">
-          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
-          <input id="search-products" type="text" class="w-full rounded-xl border border-gray-200 bg-white pl-12 pr-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none transition-colors" placeholder="Buscar por nombre, categoría o badge..." />
+        <!-- Search + Filters -->
+        <div class="mb-3 flex flex-col gap-2 lg:flex-row lg:items-center">
+          <div class="relative min-w-0 lg:flex-1">
+            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input id="search-products" type="text" class="w-full rounded-lg border border-gray-200 bg-white pl-10 pr-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-colors" placeholder="Buscar por nombre, categoría o badge..." />
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 lg:flex lg:items-center gap-2 lg:flex-none">
+            <select id="filter-type" class="w-full lg:w-36 rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-700 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-colors">
+              <option value="all">Categoría</option>
+              ${allTypes.map(type => `<option value="${type}">${type}</option>`).join('')}
+            </select>
+
+            <select id="filter-status" class="w-full lg:w-32 rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-700 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-colors">
+              <option value="all">Estado</option>
+              <option value="published">Publicados</option>
+              <option value="draft">Borradores</option>
+            </select>
+
+            <select id="filter-stock" class="w-full lg:w-32 rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-700 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-colors">
+              <option value="all">Stock</option>
+              <option value="in-stock">Con stock</option>
+              <option value="low">Bajo stock</option>
+              <option value="out">Agotados</option>
+              <option value="infinite">Infinito</option>
+            </select>
+
+            <button type="button" id="clear-filters" title="Limpiar filtros" aria-label="Limpiar filtros" class="w-full lg:w-9 h-9 lg:h-auto rounded-lg border border-gray-200 bg-white px-3 lg:px-0 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap inline-flex items-center justify-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+              <span class="lg:hidden">Limpiar</span>
+            </button>
+          </div>
         </div>
         
         <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden mb-6">
@@ -76,6 +101,9 @@ export function pageAdminProducts(state) {
           </div>
         </div>
       </section>
+      </div>
+
+      ${productFormHTML(allColors)}
     `,
     onMount(root) {
       const list = qs(root, '#products-list')
@@ -108,6 +136,17 @@ export function pageAdminProducts(state) {
       let currentPage = 1
       const itemsPerPage = 50
       let currentSearchTerm = ''
+      let currentFilters = {
+        type: 'all',
+        status: 'all',
+        stock: 'all',
+      }
+
+      const isInfiniteStock = (stock) => stock === undefined || stock === null || stock === '' || stock === '∞'
+      const stockAsNumber = (stock) => {
+        const n = Number(stock)
+        return Number.isFinite(n) ? n : 0
+      }
 
       // ── Delete Confirm Modal ──
       const ensureDeleteModal = () => {
@@ -308,17 +347,38 @@ export function pageAdminProducts(state) {
         if (page !== null) currentPage = page
         
         const term = currentSearchTerm.toLowerCase()
-        const filtered = term
-          ? state.products.filter(p =>
-              p.name.toLowerCase().includes(term) ||
-              p.type.toLowerCase().includes(term) ||
-              (p.badge && p.badge.toLowerCase().includes(term))
-            )
-          : state.products
+        const filtered = state.products.filter(p => {
+          const matchesTerm = !term
+            || p.name.toLowerCase().includes(term)
+            || p.type.toLowerCase().includes(term)
+            || (p.badge && p.badge.toLowerCase().includes(term))
+
+          const matchesType = currentFilters.type === 'all' || p.type === currentFilters.type
+
+          const isPublished = p.badge !== 'Borrador'
+          const matchesStatus = currentFilters.status === 'all'
+            || (currentFilters.status === 'published' && isPublished)
+            || (currentFilters.status === 'draft' && !isPublished)
+
+          const infinite = isInfiniteStock(p.stock)
+          const qty = stockAsNumber(p.stock)
+          const matchesStock = currentFilters.stock === 'all'
+            || (currentFilters.stock === 'infinite' && infinite)
+            || (currentFilters.stock === 'in-stock' && (infinite || qty > 0))
+            || (currentFilters.stock === 'low' && (!infinite && qty > 0 && qty <= 10))
+            || (currentFilters.stock === 'out' && (!infinite && qty <= 0))
+
+          return matchesTerm && matchesType && matchesStatus && matchesStock
+        })
+
+        const hasActiveFilters = Boolean(term)
+          || currentFilters.type !== 'all'
+          || currentFilters.status !== 'all'
+          || currentFilters.stock !== 'all'
 
         const countEl = qs(root, '#products-count')
         if (countEl) {
-          countEl.textContent = term
+          countEl.textContent = hasActiveFilters
             ? `${filtered.length} de ${state.products.length} (Pág ${currentPage})`
             : `${state.products.length} en total (Pág ${currentPage})`
         }
@@ -334,8 +394,8 @@ export function pageAdminProducts(state) {
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                 </svg>
               </div>
-              <h3 class="text-lg font-semibold text-gray-900 mb-2">${term ? 'Sin resultados' : 'No hay productos'}</h3>
-              <p class="text-sm text-gray-500">${term ? 'Intenta con otro término de búsqueda' : 'Agrega tu primer producto usando el botón de arriba'}</p>
+              <h3 class="text-lg font-semibold text-gray-900 mb-2">${hasActiveFilters ? 'Sin resultados' : 'No hay productos'}</h3>
+              <p class="text-sm text-gray-500">${hasActiveFilters ? 'Prueba con otra combinación de búsqueda/filtros' : 'Agrega tu primer producto usando el botón de arriba'}</p>
             </div>
             </td></tr>
           `
@@ -405,6 +465,36 @@ export function pageAdminProducts(state) {
       if (typeSelect) { typeSelect.addEventListener('change', handleTypeChange); handleTypeChange() }
 
       qs(root, '#search-products').addEventListener('input', (e) => renderList(e.target.value.trim(), 1))
+
+      const filterTypeEl = qs(root, '#filter-type')
+      const filterStatusEl = qs(root, '#filter-status')
+      const filterStockEl = qs(root, '#filter-stock')
+      const clearFiltersBtn = qs(root, '#clear-filters')
+
+      const applyFilters = () => {
+        currentFilters = {
+          type: filterTypeEl?.value || 'all',
+          status: filterStatusEl?.value || 'all',
+          stock: filterStockEl?.value || 'all',
+        }
+        renderList(null, 1)
+      }
+
+      filterTypeEl?.addEventListener('change', applyFilters)
+      filterStatusEl?.addEventListener('change', applyFilters)
+      filterStockEl?.addEventListener('change', applyFilters)
+
+      clearFiltersBtn?.addEventListener('click', () => {
+        currentFilters = { type: 'all', status: 'all', stock: 'all' }
+        if (filterTypeEl) filterTypeEl.value = 'all'
+        if (filterStatusEl) filterStatusEl.value = 'all'
+        if (filterStockEl) filterStockEl.value = 'all'
+
+        const searchInput = qs(root, '#search-products')
+        if (searchInput) searchInput.value = ''
+
+        renderList('', 1)
+      })
 
       const paginationContainerObj = qs(root, '#pagination-controls')
       if (paginationContainerObj) {
