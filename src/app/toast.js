@@ -46,5 +46,5 @@ export function showToast(message, type = 'success', duration = null) {
   setTimeout(() => {
     toast.classList.add('translate-y-8', 'opacity-0')
     setTimeout(() => toast.remove(), 300)
-  }, 2500)
+  }, delay)
 }

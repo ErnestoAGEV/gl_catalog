@@ -10,6 +10,10 @@ import { sanitizeText, sanitizeCouponCode } from '../app/sanitize.js'
 const WHATSAPP_RE = /^[+]?[0-9\s\-().]{7,20}$/
 const ZIPCODE_RE  = /^[0-9]{4,6}$/
 
+function isInfiniteStock(stock) {
+  return stock === null || stock === undefined || stock === '' || stock === '∞'
+}
+
 function setFieldError(field, hasError) {
   if (!field) return
   if (hasError) {
@@ -239,8 +243,11 @@ export function pageCheckout(state) {
             if (!p) return null
             const qty = Number(i.qty) || 0
             const price = Number(p.price) || 0
+            const hasInfiniteStock = isInfiniteStock(p.stock)
             return { 
-              productId: i.productId, // CRITICO PARA EL TRIGGER DE STOCK
+              // For unlimited inventory, omit productId so stock triggers can safely skip decrement.
+              productId: hasInfiniteStock ? null : i.productId,
+              stock_unlimited: hasInfiniteStock,
               name: p.name, 
               type: p.type, 
               size: i.size, 

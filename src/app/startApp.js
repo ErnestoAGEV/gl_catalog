@@ -1,7 +1,64 @@
 import { getRoute, onRouteChange, startRouter, navigate } from './router.js'
-import { getState, isAdminAuthed, loadProducts, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession } from './store.js'
+import { getState, isAdminAuthed, loadProducts, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession, getAdminOrders } from './store.js'
 import { renderRoute } from './views.js'
 import { showToast } from './toast.js'
+import { supabase } from './supabase.js'
+import { formatMoney } from './format.js'
+
+function playOrderAlertSound() {
+  if (typeof window === 'undefined') return
+
+  const AudioCtx = window.AudioContext || window.webkitAudioContext
+  if (!AudioCtx) return
+
+  try {
+    const ctx = new AudioCtx()
+    const now = ctx.currentTime
+
+    const beep = (startAt, frequency, duration, gainValue) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(frequency, startAt)
+      gain.gain.setValueAtTime(0.0001, startAt)
+      gain.gain.exponentialRampToValueAtTime(gainValue, startAt + 0.02)
+      gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration)
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.start(startAt)
+      osc.stop(startAt + duration)
+    }
+
+    beep(now, 880, 0.16, 0.1)
+    beep(now + 0.2, 1046.5, 0.2, 0.08)
+
+    window.setTimeout(() => {
+      ctx.close().catch(() => {})
+    }, 800)
+  } catch (_err) {
+    // Silent fail: browser policies may block audio until user interaction.
+  }
+}
+
+function notifyIncomingOrder(order) {
+  const customer = order?.customer_name || 'Cliente'
+  const total = Number(order?.total || 0)
+
+  playOrderAlertSound()
+  showToast(`Nuevo pedido de ${customer} (${formatMoney(total)})`, 'success', 6000)
+
+  if (typeof window === 'undefined' || typeof Notification === 'undefined') return
+  if (Notification.permission !== 'granted') return
+
+  try {
+    const notification = new Notification('Nuevo pedido recibido', {
+      body: `${customer} - ${formatMoney(total)}`,
+    })
+    notification.onclick = () => window.focus()
+  } catch (_err) {
+    // Ignore browser notification errors.
+  }
+}
 
 export async function startApp(mountEl) {
   // Restore admin session from Supabase BEFORE first render so route guards work
@@ -25,6 +82,124 @@ export async function startApp(mountEl) {
   applyTheme()
 
   let currentCleanup = null
+  let stopAdminOrderNotifier = null
+
+  const startAdminOrderNotifier = () => {
+    if (stopAdminOrderNotifier) return
+
+    let stopped = false
+    let pollingTimer = null
+    let checking = false
+    let channel = null
+    const knownOrderIds = new Set()
+    const notifiedOrderIds = new Set()
+    const asKey = (value) => (value === null || value === undefined ? '' : String(value))
+
+    window.__glGlobalOrderNotifierActive = true
+
+    const notifyOnce = (order) => {
+      const key = asKey(order?.id)
+      if (!key || notifiedOrderIds.has(key)) return
+      notifiedOrderIds.add(key)
+      notifyIncomingOrder(order)
+    }
+
+    const bootstrap = async () => {
+      const orders = await getAdminOrders()
+      if (stopped || !orders.length) return
+      orders.forEach(order => {
+        const key = asKey(order?.id)
+        if (key) knownOrderIds.add(key)
+      })
+    }
+
+    const checkForNewOrders = async () => {
+      if (stopped || checking) return
+      checking = true
+      try {
+        const orders = await getAdminOrders()
+        if (stopped || !orders.length) return
+
+        const unseen = orders.filter(order => !knownOrderIds.has(asKey(order?.id)))
+        if (!unseen.length) return
+
+        unseen
+          .slice()
+          .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+          .forEach(order => {
+            const key = asKey(order?.id)
+            if (!key) return
+            knownOrderIds.add(key)
+            notifyOnce(order)
+          })
+      } catch (_err) {
+        // Silent fallback: next polling cycle retries automatically.
+      } finally {
+        checking = false
+      }
+    }
+
+    ;(async () => {
+      await bootstrap().catch(() => {})
+      if (stopped) return
+
+      if (typeof window !== 'undefined' && typeof Notification !== 'undefined' && Notification.permission === 'default') {
+        Notification.requestPermission().catch(() => {})
+      }
+
+      pollingTimer = window.setInterval(() => {
+        checkForNewOrders().catch(() => {})
+      }, 5000)
+
+      if (supabase) {
+        try {
+          channel = supabase
+            .channel(`global-admin-orders-${Date.now()}`)
+            .on('postgres_changes', {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'orders',
+            }, async (payload) => {
+              if (stopped) return
+              const incoming = payload?.new
+              const key = asKey(incoming?.id)
+              if (!key || knownOrderIds.has(key)) return
+              knownOrderIds.add(key)
+              notifyOnce(incoming)
+            })
+            .subscribe()
+        } catch (_err) {
+          // Polling keeps notifier alive if realtime cannot subscribe.
+        }
+      }
+    })()
+
+    stopAdminOrderNotifier = () => {
+      stopped = true
+      window.__glGlobalOrderNotifierActive = false
+      if (pollingTimer) {
+        window.clearInterval(pollingTimer)
+        pollingTimer = null
+      }
+      if (channel) {
+        supabase?.removeChannel(channel)
+        channel = null
+      }
+      stopAdminOrderNotifier = null
+    }
+  }
+
+  const syncAdminOrderNotifier = (path, authed) => {
+    const inAdminArea = authed && path.startsWith('/admin') && path !== '/admin/login'
+    if (inAdminArea) {
+      startAdminOrderNotifier()
+      return
+    }
+
+    if (stopAdminOrderNotifier) {
+      stopAdminOrderNotifier()
+    }
+  }
 
   const render = async (path) => {
     // Cleanup previous route if applicable
@@ -44,6 +219,8 @@ export async function startApp(mountEl) {
       navigate('/admin/login')
       return
     }
+
+    syncAdminOrderNotifier(path, authed)
 
     const { title, html, onMount } = await renderRoute(path, getState())
     document.title = title
@@ -147,6 +324,7 @@ export async function startApp(mountEl) {
   // First render is triggered by router, but store subscribe keeps it synced.
   // Cleanup function in case you ever want to unmount.
   return () => {
+    if (stopAdminOrderNotifier) stopAdminOrderNotifier()
     stopRouter()
     stopRouteListener()
     unsub()
