@@ -67,7 +67,7 @@ function modalHTML(c = null) {
         </div>
 
         <!-- Form -->
-        <form id="coupon-form" class="p-6 space-y-4">
+        <form id="coupon-form" method="post" class="p-6 space-y-4">
           ${isEdit ? `<input type="hidden" name="id" value="${c.id}">` : ''}
 
           <div>

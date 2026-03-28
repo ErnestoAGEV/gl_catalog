@@ -60,7 +60,18 @@ function notifyIncomingOrder(order) {
   }
 }
 
+function clearLegacySearchParamsInHashRoutes() {
+  if (typeof window === 'undefined') return
+  if (!window.location.search) return
+  if (!window.location.hash.startsWith('#/')) return
+
+  const cleanUrl = `${window.location.pathname}${window.location.hash}`
+  window.history.replaceState(null, '', cleanUrl)
+}
+
 export async function startApp(mountEl) {
+  clearLegacySearchParamsInHashRoutes()
+
   // Restore admin session from Supabase BEFORE first render so route guards work
   await initAdminSession()
 
