@@ -31,13 +31,13 @@ export function pageHome() {
         <!-- Background Image -->
         <div class="absolute inset-0">
           <img 
-            src="https://images.squarespace-cdn.com/content/v1/65265e4b2af6d222af0e276c/268a695a-a105-4821-86e6-f6541497a0b3/editorial-fashion-photo-laughing-blue-studio-setup.jpg"
-            alt="Nueva Colección"
+            src="https://images.unsplash.com/photo-1579014133304-7004d757f5d2?q=80&w=2560&auto=format&fit=crop"
+            alt="Colección G&L Men"
             class="w-full h-full object-cover object-center"
-            loading="lazy"
+            fetchpriority="high"
           />
-          <!-- Subtle elegant overlay -->
-          <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/10"></div>
+          <!-- Luxury subtle overlay for text readability -->
+          <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
         </div>
         
         <!-- Content - Bottom aligned on mobile, centered on desktop -->
@@ -415,6 +415,23 @@ export function pageHome() {
             }
           })
         })
+
+        const shareBtn = homeModalContainer.querySelector('#share-quickview')
+        if (shareBtn) {
+          shareBtn.addEventListener('click', () => {
+            const shareUrl = window.location.origin + window.location.pathname + '#/catalog?p=' + product.id
+            if (navigator.share) {
+              navigator.share({
+                title: product.name,
+                text: '¡Mira este producto en G&L!',
+                url: shareUrl
+              }).catch(console.error)
+            } else {
+              navigator.clipboard.writeText(shareUrl)
+              showToast('Enlace copiado al portapapeles')
+            }
+          })
+        }
 
         const qvAddBtn = homeModalContainer.querySelector('#qv-add-to-cart')
         if (product.sizes && product.sizes.length > 0) {
