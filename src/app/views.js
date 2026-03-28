@@ -56,7 +56,18 @@ export async function renderRoute(path, state) {
       html: layoutAdmin({ title, contentHtml: view.html, state }),
       onMount: (root) => {
         // Ejecutar el onMount de la vista específica
-        if (view.onMount) view.onMount(root)
+        if (view.onMount) {
+          try {
+            const maybePromise = view.onMount(root)
+            if (maybePromise instanceof Promise) {
+              maybePromise.catch(err => {
+                console.error(`Error in async onMount for ${title}:`, err)
+              })
+            }
+          } catch (err) {
+            console.error(`Error in onMount for ${title}:`, err)
+          }
+        }
         
         // Manejar el Sidebar en móviles globalmente para todas las vistas Admin
         const sidebar = root.querySelector('#admin-sidebar')

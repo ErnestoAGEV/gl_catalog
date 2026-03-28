@@ -171,7 +171,7 @@ export async function startApp(mountEl) {
               schema: 'public',
               table: 'orders',
             }, async (payload) => {
-              if (stopped) return
+              if (stopped || !payload) return
               const incoming = payload?.new
               const key = asKey(incoming?.id)
               if (!key || knownOrderIds.has(key)) return

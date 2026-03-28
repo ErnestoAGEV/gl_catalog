@@ -708,7 +708,7 @@ export function pageAdminOrders(state) {
                 table: 'orders',
               }, async (payload) => {
                 const incoming = payload?.new
-                if (!incoming?.id || isUnmounted) return
+                if (!payload || !incoming?.id || isUnmounted) return
                 if (knownOrderIds.has(incoming.id)) return
 
                 knownOrderIds.add(incoming.id)
