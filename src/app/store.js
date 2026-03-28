@@ -575,9 +575,21 @@ export async function getAdminSubscribers() {
     const { data, error } = await supabase
       .from('newsletter_subscribers')
       .select('*')
-      .order('created_at', { ascending: false })
     if (error) throw error
-    return data || []
+
+    const getSubscriberTime = (row) => {
+      const raw = row?.created_at
+        || row?.subscribed_at
+        || row?.createdAt
+        || row?.subscribedAt
+        || row?.updated_at
+        || row?.updatedAt
+        || null
+      const ts = raw ? new Date(raw).getTime() : 0
+      return Number.isFinite(ts) ? ts : 0
+    }
+
+    return (data || []).slice().sort((a, b) => getSubscriberTime(b) - getSubscriberTime(a))
   } catch (err) {
     if (import.meta.env.DEV) console.error('Error fetching admin subscribers:', err)
     return []

@@ -1,5 +1,21 @@
 import { getAdminSubscribers } from '../app/store.js'
 
+function formatSubscriberDate(sub) {
+  const raw = sub?.created_at
+    || sub?.subscribed_at
+    || sub?.createdAt
+    || sub?.subscribedAt
+    || sub?.updated_at
+    || sub?.updatedAt
+
+  if (!raw) return 'Sin fecha disponible'
+
+  const date = new Date(raw)
+  if (Number.isNaN(date.getTime())) return 'Sin fecha disponible'
+
+  return `${date.toLocaleDateString()} a las ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+}
+
 export function pageAdminNewsletter(state) {
   const html = `
     <div class="animate-fade-in space-y-6">
@@ -69,7 +85,7 @@ export function pageAdminNewsletter(state) {
             </div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-gray-500 dark:text-gray-400">${new Date(sub.created_at).toLocaleDateString()} a las ${new Date(sub.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">${formatSubscriberDate(sub)}</div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
