@@ -116,22 +116,21 @@ export function pageAdminOrders(state) {
       <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
         
         <!-- Desktop Table View -->
-        <div class="hidden md:block overflow-x-auto">
+        <div class="hidden md:block">
           <table class="w-full text-left text-sm text-gray-600 dark:text-gray-400">
             <thead class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 text-xs uppercase tracking-wider">
               <tr>
-                <th scope="col" class="px-6 py-4 font-semibold min-w-[180px]">Cliente</th>
-                <th scope="col" class="px-6 py-4 font-semibold min-w-[200px]">Productos</th>
-                <th scope="col" class="px-6 py-4 font-semibold min-w-[100px]">Fecha</th>
-                <th scope="col" class="px-6 py-4 font-semibold min-w-[200px]">Entrega</th>
-                <th scope="col" class="px-6 py-4 font-semibold text-center min-w-[110px]">Pago</th>
-                <th scope="col" class="px-6 py-4 font-semibold text-center min-w-[100px]">Total</th>
-                <th scope="col" class="px-6 py-4 font-semibold text-center min-w-[130px]">Estado</th>
+                <th scope="col" class="px-6 py-4 font-semibold">Pedido</th>
+                <th scope="col" class="px-6 py-4 font-semibold">Cliente</th>
+                <th scope="col" class="px-6 py-4 font-semibold">Fecha</th>
+                <th scope="col" class="px-6 py-4 font-semibold text-center">Total</th>
+                <th scope="col" class="px-6 py-4 font-semibold text-center">Estado</th>
+                <th scope="col" class="px-6 py-4 font-semibold text-center">Detalle</th>
               </tr>
             </thead>
             <tbody id="orders-tbody" class="divide-y divide-gray-100 dark:divide-gray-800">
                <tr>
-                <td colspan="7" class="px-6 py-12 text-center text-gray-400">
+                <td colspan="6" class="px-6 py-12 text-center text-gray-400">
                     <div class="animate-pulse flex flex-col items-center">
                        <svg class="w-8 h-8 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                        <span>Cargando órdenes...</span>
@@ -162,10 +161,139 @@ export function pageAdminOrders(state) {
       const globalNotifierActive = typeof window !== 'undefined' && window.__glGlobalOrderNotifierActive === true
       let knownOrderIds = new Set()
       const notifiedOrderIds = new Set()
+      let ordersById = new Map()
       let pollingTimer = null
       let channel = null
       let isUnmounted = false
       let isCheckingOrders = false
+
+      const ensureOrderDetailsModal = () => {
+        let modal = document.getElementById('order-details-modal')
+        if (modal) return modal
+
+        modal = document.createElement('div')
+        modal.id = 'order-details-modal'
+        modal.className = 'fixed inset-0 z-[120] hidden items-center justify-center bg-black/60 p-4'
+        modal.innerHTML = `
+          <div class="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-2xl">
+            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between sticky top-0 bg-white dark:bg-gray-800">
+              <h3 class="text-base font-bold text-gray-900 dark:text-white">Detalle de orden</h3>
+              <button type="button" id="order-details-close" class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Cerrar">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div id="order-details-content" class="p-5"></div>
+          </div>
+        `
+
+        document.body.appendChild(modal)
+
+        const closeModal = () => {
+          modal.classList.add('hidden')
+          modal.classList.remove('flex')
+          document.body.style.overflow = ''
+        }
+
+        modal.querySelector('#order-details-close')?.addEventListener('click', closeModal)
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) closeModal()
+        })
+
+        return modal
+      }
+
+      const openOrderDetails = (orderId) => {
+        const modal = ensureOrderDetailsModal()
+        const content = modal.querySelector('#order-details-content')
+        const order = ordersById.get(String(orderId))
+        if (!content || !order) return
+
+        let items = []
+        try {
+          items = typeof order.cart_items === 'string' ? JSON.parse(order.cart_items) : (order.cart_items || [])
+        } catch {
+          items = []
+        }
+
+        const payment = getPaymentMeta(order.payment_method)
+        const createdAt = new Date(order.created_at)
+        const when = Number.isNaN(createdAt.getTime())
+          ? 'Sin fecha'
+          : `${createdAt.toLocaleDateString()} ${createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+
+        content.innerHTML = `
+          <div class="space-y-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="rounded-xl border border-gray-100 dark:border-gray-700 p-4">
+                <p class="text-xs uppercase tracking-wide text-gray-500">Cliente</p>
+                <p class="mt-1 font-semibold text-gray-900 dark:text-white">${order.customer_name || 'Sin nombre'}</p>
+                <p class="text-sm text-brand mt-1">${order.customer_whatsapp || 'Sin teléfono'}</p>
+              </div>
+              <div class="rounded-xl border border-gray-100 dark:border-gray-700 p-4">
+                <p class="text-xs uppercase tracking-wide text-gray-500">Pedido</p>
+                <p class="mt-1 font-semibold text-gray-900 dark:text-white">#${String(order.id).slice(0, 8)}</p>
+                <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${when}</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="rounded-xl border border-gray-100 dark:border-gray-700 p-4">
+                <p class="text-xs uppercase tracking-wide text-gray-500">Total</p>
+                <p class="mt-1 font-bold text-gray-900 dark:text-white">${formatMoney(order.total || 0)}</p>
+              </div>
+              <div class="rounded-xl border border-gray-100 dark:border-gray-700 p-4">
+                <p class="text-xs uppercase tracking-wide text-gray-500">Pago</p>
+                <span class="mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${payment.className}">${payment.label}</span>
+              </div>
+              <div class="rounded-xl border border-gray-100 dark:border-gray-700 p-4">
+                <p class="text-xs uppercase tracking-wide text-gray-500">Estado</p>
+                <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">${(order.status || 'sin estado').toString()}</p>
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-gray-100 dark:border-gray-700 p-4">
+              <p class="text-xs uppercase tracking-wide text-gray-500">Entrega</p>
+              <p class="mt-1 text-sm font-medium text-gray-900 dark:text-white">${order.delivery_method || 'Sin método'}</p>
+              ${order.address ? `<p class="mt-1 text-sm text-gray-600 dark:text-gray-300">${order.address}</p>` : '<p class="mt-1 text-sm text-gray-500">Sin dirección</p>'}
+            </div>
+
+            <div class="rounded-xl border border-gray-100 dark:border-gray-700 p-4">
+              <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">Productos</p>
+              <div class="space-y-2">
+                ${items.length
+                  ? items.map(item => `
+                    <div class="flex items-start justify-between gap-3 text-sm">
+                      <div class="min-w-0">
+                        <p class="font-medium text-gray-900 dark:text-white truncate">${item?.name || 'Producto'}</p>
+                        <p class="text-xs text-gray-500">Talla: ${item?.size || 'Única'}</p>
+                      </div>
+                      <div class="text-right flex-shrink-0">
+                        <p class="font-semibold text-gray-900 dark:text-white">${item?.qty || 0}x</p>
+                        <p class="text-xs text-gray-500">${formatMoney(item?.price || 0)}</p>
+                      </div>
+                    </div>
+                  `).join('')
+                  : '<p class="text-sm text-gray-500">Sin productos registrados en la orden.</p>'
+                }
+              </div>
+            </div>
+          </div>
+        `
+
+        modal.classList.remove('hidden')
+        modal.classList.add('flex')
+        document.body.style.overflow = 'hidden'
+      }
+
+      const attachDetailHandlers = () => {
+        root.querySelectorAll('[data-order-detail]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-order-detail')
+            if (!id) return
+            openOrderDetails(id)
+          })
+        })
+      }
 
       const notifyOnce = (order) => {
         const id = order?.id
@@ -210,10 +338,12 @@ export function pageAdminOrders(state) {
               Aún no hay pedidos registrados.
             </div>
           `
-          tbody.innerHTML = `<tr><td colspan="7" class="px-0 py-0">${emptyState}</td></tr>`
+          tbody.innerHTML = `<tr><td colspan="6" class="px-0 py-0">${emptyState}</td></tr>`
           mobileContainer.innerHTML = emptyState
           return
         }
+
+        ordersById = new Map(orders.map(order => [String(order.id), order]))
 
         // Desktop Table
         tbody.innerHTML = orders.map(order => {
@@ -226,36 +356,17 @@ export function pageAdminOrders(state) {
 
           return `
           <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="font-semibold text-gray-900 dark:text-white">#${String(order.id).slice(0, 8)}</div>
+              <div class="text-xs text-gray-500 mt-1">${payment.label}</div>
+            </td>
             <td class="px-6 py-4">
               <div class="font-medium text-gray-900 dark:text-white">${order.customer_name}</div>
               <div class="text-xs text-brand mt-1">${order.customer_whatsapp}</div>
             </td>
-            <td class="px-6 py-4">
-              <div class="flex flex-col gap-1 text-xs text-gray-600 dark:text-gray-400">
-                ${items.map(item => `
-                   <div class="truncate" title="${item.name} (${item.size || 'Unica'})">
-                     <span class="font-semibold">${item.qty}x</span> ${item.name}
-                     ${item.size ? `<span class="text-gray-400">(${item.size})</span>` : ''}
-                   </div>
-                `).join('')}
-              </div>
-            </td>
             <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
               <div>${new Date(order.created_at).toLocaleDateString()}</div>
               <div>${new Date(order.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-            </td>
-            <td class="px-6 py-4 text-xs">
-              <span class="font-medium text-gray-900 border-b pb-0.5 min-w-max pr-2 border-gray-100 dark:border-gray-700 dark:text-white">
-                ${order.delivery_method === 'Envío a domicilio' ? '🚚 Envío a Domicilio' : '🏪 Recoge en Tienda'}
-              </span>
-              ${order.delivery_method === 'Envío a domicilio' && order.address ? `
-                <div class="text-gray-500 mt-1" title="${order.address}">${order.address}</div>
-              ` : ''}
-            </td>
-            <td class="px-6 py-4 text-center">
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium ${payment.className}">
-                ${payment.label}
-              </span>
             </td>
             <td class="px-6 py-4 text-center font-semibold text-gray-900 dark:text-white">
               ${formatMoney(order.total || 0)}
@@ -266,6 +377,11 @@ export function pageAdminOrders(state) {
                   <option value="completado" ${order.status === 'completado' ? 'selected' : ''}>Completado</option>
                   <option value="cancelado" ${order.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
                </select>
+            </td>
+            <td class="px-6 py-4 text-center">
+              <button type="button" data-order-detail="${order.id}" class="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                Ver detalle
+              </button>
             </td>
           </tr>
         `}).join('')
@@ -337,11 +453,16 @@ export function pageAdminOrders(state) {
                   </select>
                 </div>
               </div>
+
+              <button type="button" data-order-detail="${order.id}" class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                Ver detalle completo
+              </button>
             </div>
           </div>
         `}).join('')
 
         attachStatusHandlers()
+        attachDetailHandlers()
       }
 
       const loadAndRender = async () => {
