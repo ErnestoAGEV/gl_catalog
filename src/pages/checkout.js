@@ -5,6 +5,40 @@ import { on, qs } from '../app/dom.js'
 import { formatMoney } from '../app/format.js'
 import { checkoutHTML, couponAppliedHTML, couponInputHTML, checkoutSuccessHTML } from './checkoutView.js'
 import { sanitizeText, sanitizeCouponCode } from '../app/sanitize.js'
+import { navigate } from '../app/router.js'
+
+const CHECKOUT_SUCCESS_STORAGE_KEY = 'gl_checkout_success'
+
+function persistCheckoutSuccess(payload) {
+  try {
+    sessionStorage.setItem(CHECKOUT_SUCCESS_STORAGE_KEY, JSON.stringify(payload))
+  } catch (_err) {
+    // Ignore storage failures; route fallback will still work.
+  }
+}
+
+function readCheckoutSuccess() {
+  try {
+    const raw = sessionStorage.getItem(CHECKOUT_SUCCESS_STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') return null
+    return {
+      name: sanitizeText(String(parsed.name || 'Cliente')) || 'Cliente',
+      waUrl: typeof parsed.waUrl === 'string' ? parsed.waUrl : '',
+    }
+  } catch (_err) {
+    return null
+  }
+}
+
+function clearCheckoutSuccess() {
+  try {
+    sessionStorage.removeItem(CHECKOUT_SUCCESS_STORAGE_KEY)
+  } catch (_err) {
+    // Ignore storage failures.
+  }
+}
 
 // ── Helpers de validación ──
 const WHATSAPP_RE = /^[+]?[0-9\s\-().]{7,20}$/
@@ -34,6 +68,9 @@ function needsAddress(_payment, deliveryMethod) {
 }
 
 export function pageCheckout(state) {
+  // Entering the checkout form should always reset any previous success payload.
+  clearCheckoutSuccess()
+
   const subtotal = cartTotal()
   const coupon = getCoupon()
   const discount = coupon ? subtotal * (coupon.discount || 0) : 0
@@ -308,14 +345,36 @@ export function pageCheckout(state) {
             console.error('WhatsApp failed to open', err)
           }
 
+          persistCheckoutSuccess({ name, waUrl })
+          navigate('/checkout/success')
           clearCart()
-          root.innerHTML = checkoutSuccessHTML({ name, waUrl })
-          window.scrollTo({ top: 0, behavior: 'smooth' })
         }).catch(err => {
           setError('Ocurrió un error inesperado al conectar con el servidor.')
           setSubmitting(false)
         })
       })
+    },
+  }
+}
+
+export function pageCheckoutSuccess() {
+  const successData = readCheckoutSuccess()
+  if (!successData) {
+    return {
+      title: 'Checkout | G&L',
+      html: checkoutHTML({ subtotal: 0, discount: 0, total: 0, freeShipping: false, itemCount: 0, coupon: null }),
+      onMount() {
+        navigate('/checkout')
+      },
+    }
+  }
+
+  return {
+    title: 'Pedido Confirmado | G&L',
+    html: checkoutSuccessHTML(successData),
+    onMount() {
+      clearCheckoutSuccess()
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     },
   }
 }

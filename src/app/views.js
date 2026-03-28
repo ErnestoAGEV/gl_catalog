@@ -4,7 +4,7 @@ import { navigate } from './router.js'
 import { pageHome } from '../pages/home.js'
 import { pageCatalog } from '../pages/catalog.js'
 import { pageCart } from '../pages/cart.js'
-import { pageCheckout } from '../pages/checkout.js'
+import { pageCheckout, pageCheckoutSuccess } from '../pages/checkout.js'
 import { pageAdminLogin } from '../pages/adminLogin.js'
 
 const publicRoutes = {
@@ -12,6 +12,7 @@ const publicRoutes = {
   '/catalog': pageCatalog,
   '/cart': pageCart,
   '/checkout': pageCheckout,
+  '/checkout/success': pageCheckoutSuccess,
 }
 
 // Lazy-loaded admin pages — solo se descargan cuando el usuario visita el panel
