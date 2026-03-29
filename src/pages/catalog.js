@@ -107,7 +107,7 @@ export function pageCatalog(initialState) {
 
       <div id="modal-container"></div>
 
-      <a href="#/cart" class="fixed bottom-24 right-4 md:bottom-6 md:right-6 flex items-center gap-2 rounded-full bg-gray-900/80 dark:bg-white/80 backdrop-blur-md text-white dark:text-gray-900 pl-4 pr-5 py-2.5 shadow-lg hover:bg-gray-900 dark:hover:bg-white hover:scale-105 active:scale-95 transition-all z-20 text-xs font-medium">
+      <a href="/cart" class="fixed bottom-24 right-4 md:bottom-6 md:right-6 flex items-center gap-2 rounded-full bg-gray-900/80 dark:bg-white/80 backdrop-blur-md text-white dark:text-gray-900 pl-4 pr-5 py-2.5 shadow-lg hover:bg-gray-900 dark:hover:bg-white hover:scale-105 active:scale-95 transition-all z-20 text-xs font-medium">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
         Ver carrito
       </a>
@@ -407,19 +407,16 @@ export function pageCatalog(initialState) {
         }, 200)
       }
 
-      // Auto-open via URL parameter (Deeps Linking Share)
-      const hashParts = window.location.hash.split('?')
-      if (hashParts.length > 1) {
-        const params = new URLSearchParams(hashParts[1])
-        const pId = params.get('p')
-        if (pId) {
-          setTimeout(() => {
-            const btn = root.querySelector(`[data-quickview="${pId}"]`)
-            if (btn) btn.click()
-            // Clean up the URL quietly without triggering a router reload
-            history.replaceState(null, '', window.location.pathname + '#/catalog')
-          }, 300)
-        }
+      // Auto-open via URL parameter (Deep Linking Share)
+      const params = new URLSearchParams(window.location.search)
+      const pId = params.get('p')
+      if (pId) {
+        setTimeout(() => {
+          const btn = root.querySelector(`[data-quickview="${pId}"]`)
+          if (btn) btn.click()
+          // Clean up URL quietly after opening the modal
+          history.replaceState(null, '', '/catalog')
+        }, 300)
       }
 
       // Apply category filter if navigated from home category cards
@@ -484,7 +481,7 @@ export function pageCatalog(initialState) {
         const shareBtn = modalContainer.querySelector('#share-quickview')
         if (shareBtn) {
           shareBtn.addEventListener('click', () => {
-            const shareUrl = window.location.origin + window.location.pathname + '#/catalog?p=' + product.id
+            const shareUrl = `${window.location.origin}/catalog?p=${encodeURIComponent(product.id)}`
             if (navigator.share) {
               navigator.share({
                 title: product.name,

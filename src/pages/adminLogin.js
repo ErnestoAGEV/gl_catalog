@@ -35,7 +35,7 @@ export function pageAdminLogin() {
           </section>
 
           <div class="text-center mt-6">
-            <a href="#/" class="text-xs text-gray-500 hover:text-white transition-colors">
+            <a href="/" class="text-xs text-gray-500 hover:text-white transition-colors">
               ← Volver a la tienda
             </a>
           </div>

@@ -80,7 +80,7 @@ export function showMiniCart(productId) {
 
       <!-- CTA -->
       <div class="px-4 pb-3.5 pt-1">
-        <a href="#/cart" class="mini-cart-cta flex items-center justify-center gap-1.5 w-full py-2.5 rounded-lg text-[13px] font-semibold transition-all active:scale-[0.97] ${isDark ? 'bg-white text-gray-900 hover:bg-gray-100' : 'bg-gray-900 text-white hover:bg-gray-800'}">
+        <a href="/cart" class="mini-cart-cta flex items-center justify-center gap-1.5 w-full py-2.5 rounded-lg text-[13px] font-semibold transition-all active:scale-[0.97] ${isDark ? 'bg-white text-gray-900 hover:bg-gray-100' : 'bg-gray-900 text-white hover:bg-gray-800'}">
           Ver carrito
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </a>

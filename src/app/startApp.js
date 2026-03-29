@@ -60,18 +60,7 @@ function notifyIncomingOrder(order) {
   }
 }
 
-function clearLegacySearchParamsInHashRoutes() {
-  if (typeof window === 'undefined') return
-  if (!window.location.search) return
-  if (!window.location.hash.startsWith('#/')) return
-
-  const cleanUrl = `${window.location.pathname}${window.location.hash}`
-  window.history.replaceState(null, '', cleanUrl)
-}
-
 export async function startApp(mountEl) {
-  clearLegacySearchParamsInHashRoutes()
-
   // Restore admin session from Supabase BEFORE first render so route guards work
   await initAdminSession()
 
@@ -295,7 +284,7 @@ export async function startApp(mountEl) {
   const unsub = subscribe((state) => {
     // 1. Global badge update — always runs, no full re-render
     const count = state.cart.reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
-    document.querySelectorAll('a[href="#/cart"]').forEach(link => {
+    document.querySelectorAll('a[href="/cart"]').forEach(link => {
       const container = link.querySelector('.relative') || link
       if (container === link && !['absolute', 'relative', 'fixed'].some(cls => link.classList.contains(cls))) {
         link.classList.add('relative')

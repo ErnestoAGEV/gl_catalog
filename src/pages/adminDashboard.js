@@ -199,7 +199,7 @@ export function pageAdminDashboard(state) {
         <div class="lg:col-span-2 bg-[#EDEEEF]/40 rounded-[2rem] p-6 sm:p-8 flex flex-col min-h-[30rem]">
            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
              <h3 class="text-xl sm:text-2xl font-manrope font-extrabold text-[#191C1D]">Pedidos Recientes</h3>
-             <a href="#/admin/orders" class="inline-flex items-center justify-center px-4 py-2 rounded-full bg-white text-xs sm:text-sm font-bold shadow-sm hover:bg-[#214FC7] hover:text-white transition-all w-fit">Ver Historial</a>
+             <a href="/admin/orders" class="inline-flex items-center justify-center px-4 py-2 rounded-full bg-white text-xs sm:text-sm font-bold shadow-sm hover:bg-[#214FC7] hover:text-white transition-all w-fit">Ver Historial</a>
            </div>
            
            <div id="dash-recent-orders" class="flex-1 flex flex-col">
@@ -218,11 +218,11 @@ export function pageAdminDashboard(state) {
             <p class="text-white/70 text-sm mb-8 relative z-10">Acciones rápidas de gestión</p>
             
             <div class="space-y-4 relative z-10">
-              <a href="#/admin/products" class="flex items-center justify-between p-4 rounded-2xl bg-white/10 hover:bg-white/20 transition-all group/btn">
+              <a href="/admin/products" class="flex items-center justify-between p-4 rounded-2xl bg-white/10 hover:bg-white/20 transition-all group/btn">
                 <span class="font-bold">Nuevo Producto</span>
                 <svg class="w-5 h-5 transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
               </a>
-              <a href="#/admin/coupons" class="flex items-center justify-between p-4 rounded-2xl bg-white/10 hover:bg-white/20 transition-all group/btn">
+              <a href="/admin/coupons" class="flex items-center justify-between p-4 rounded-2xl bg-white/10 hover:bg-white/20 transition-all group/btn">
                 <span class="font-bold">Crear Cupón</span>
                 <svg class="w-5 h-5 transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
               </a>

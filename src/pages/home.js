@@ -56,7 +56,7 @@ export function pageHome() {
             <!-- CTA -->
             <div class="pt-4 md:pt-6">
               <a 
-                href="#/catalog" 
+                href="/catalog" 
                 class="inline-flex items-center justify-center gap-2 px-8 md:px-10 py-3.5 md:py-4 min-h-[48px] border-2 border-white text-white font-medium text-sm md:text-base rounded-xl hover:bg-white hover:text-gray-900 transition-all duration-300 active:scale-95"
               >
                 Descubrir colección
@@ -72,7 +72,7 @@ export function pageHome() {
       <section class="mb-8 md:mb-12">
         <div class="flex items-center justify-between mb-5 md:mb-8">
           <h2 class="text-xl md:text-3xl font-bold text-gray-900 dark:text-white">Explora por categoría</h2>
-          <a href="#/catalog" class="group text-xs md:text-sm font-medium text-brand hover:text-brand-dark transition-colors inline-flex items-center gap-1">
+          <a href="/catalog" class="group text-xs md:text-sm font-medium text-brand hover:text-brand-dark transition-colors inline-flex items-center gap-1">
             Ver todo
             <svg class="w-3.5 h-3.5 md:w-4 md:h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
           </a>
@@ -134,7 +134,7 @@ export function pageHome() {
             </span>
             <h2 class="text-xl md:text-3xl font-bold text-gray-900 dark:text-white">Lo más vendido</h2>
           </div>
-          <a href="#/catalog" class="hidden md:flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-full text-sm font-bold text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">
+          <a href="/catalog" class="hidden md:flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-full text-sm font-bold text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">
             Ver catálogo
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
           </a>
@@ -148,7 +148,7 @@ export function pageHome() {
         </div>
         
          <div class="mt-6 md:mt-8 text-center md:hidden">
-            <a href="#/catalog" class="inline-flex items-center justify-center w-full px-6 py-3.5 min-h-[48px] bg-gray-100 dark:bg-gray-800 rounded-xl text-sm font-bold text-gray-900 dark:text-white hover:bg-gray-200 transition-colors active:scale-95">
+            <a href="/catalog" class="inline-flex items-center justify-center w-full px-6 py-3.5 min-h-[48px] bg-gray-100 dark:bg-gray-800 rounded-xl text-sm font-bold text-gray-900 dark:text-white hover:bg-gray-200 transition-colors active:scale-95">
                 Ver más productos
             </a>
         </div>
@@ -165,7 +165,7 @@ export function pageHome() {
             </span>
             <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Recien Llegados</h2>
           </div>
-          <a href="#/catalog" class="hidden md:flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-full text-sm font-bold text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">
+          <a href="/catalog" class="hidden md:flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-full text-sm font-bold text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">
             Ver todo
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
           </a>
@@ -248,7 +248,7 @@ export function pageHome() {
                       Copiar
                    </button>
                 </div>
-                <a href="#/catalog" class="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-900 rounded-xl font-bold hover:bg-gray-100 transition-colors w-full sm:w-auto">
+                <a href="/catalog" class="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-900 rounded-xl font-bold hover:bg-gray-100 transition-colors w-full sm:w-auto">
                   Usar cupón
                 </a>
               </div>
@@ -357,7 +357,7 @@ export function pageHome() {
         btn.addEventListener('click', () => {
           const types = btn.dataset.categoryFilter // e.g. "Camisas" or "Playeras,Polos"
           sessionStorage.setItem('gl_pending_type_filter', types)
-          window.location.hash = '#/catalog'
+          window.history.pushState(null, '', '/catalog'); window.dispatchEvent(new Event('popstate'))
         })
       })
 
@@ -419,7 +419,7 @@ export function pageHome() {
         const shareBtn = homeModalContainer.querySelector('#share-quickview')
         if (shareBtn) {
           shareBtn.addEventListener('click', () => {
-            const shareUrl = window.location.origin + window.location.pathname + '#/catalog?p=' + product.id
+            const shareUrl = `${window.location.origin}/catalog?p=${encodeURIComponent(product.id)}`
             if (navigator.share) {
               navigator.share({
                 title: product.name,

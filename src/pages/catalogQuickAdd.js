@@ -34,11 +34,11 @@ export function handleQuickAdd(ev, btn, modalContainer) {
 
     // Actualizar badge del carrito
     const count = cartCount()
-    const cartBadge = document.querySelector('a[href="#/cart"] span')
+    const cartBadge = document.querySelector('a[href="/cart"] span')
     if (cartBadge) {
       cartBadge.textContent = count
     } else {
-      const cartLink = document.querySelector('a[href="#/cart"]')
+      const cartLink = document.querySelector('a[href="/cart"]')
       if (cartLink) {
         const b = document.createElement('span')
         b.className = 'absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white'

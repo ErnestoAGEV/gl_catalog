@@ -12,6 +12,7 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
   const count = (state.cart || []).reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
   const theme = state.theme || 'dark'
   const isDark = theme === 'dark'
+  const currentPath = window.location.pathname || '/'
 
   const searchBarHtml = showSearch ? `
       <!-- Search Bar -->
@@ -46,17 +47,17 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
         ${searchBarHtml}
         <!-- Navigation -->
         <div class="mx-auto flex w-full max-w-screen-xl items-center justify-between px-4 py-3">
-        <a href="#/" class="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
+        <a href="/" class="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
           <img src="logo.png" alt="G&L" class="h-10 w-auto object-contain" />
         </a>
         <nav class="hidden md:flex items-center gap-6">
-          <a class="text-sm font-medium ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-all hover:-translate-y-0.5 relative group" href="#/catalog">
+          <a class="text-sm font-medium ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-all hover:-translate-y-0.5 relative group" href="/catalog">
             Tienda
             <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-brand transition-all group-hover:w-full"></span>
           </a>
 
           <!-- Cart -->
-          <a class="relative p-1.5 ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-all hover:scale-110" href="#/cart" title="Carrito">
+          <a class="relative p-1.5 ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-all hover:scale-110" href="/cart" title="Carrito">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
             </svg>
@@ -98,8 +99,8 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
           </div>
 
           <div class="flex flex-wrap justify-center gap-4 mb-4 text-xs ${isDark ? 'text-gray-500' : 'text-gray-600'}">
-            <a href="#/catalog" class="hover:underline">Catálogo</a>
-            <a href="#/cart" class="hover:underline">Carrito</a>
+            <a href="/catalog" class="hover:underline">Catálogo</a>
+            <a href="/cart" class="hover:underline">Carrito</a>
             <a href="https://wa.me/${BRAND.whatsapp}" target="_blank" rel="noopener noreferrer" class="hover:underline">Contacto</a>
           </div>
 
@@ -113,15 +114,15 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
     <!-- Mobile Bottom Navigation -->
     <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 ${isDark ? 'bg-black/80' : 'bg-white/90'} backdrop-blur-xl border-t ${isDark ? 'border-gray-800' : 'border-gray-200'} pb-safe">
       <div class="flex items-center justify-around h-16">
-        <a href="#/" class="flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-colors ${window.location.hash === '#/' || window.location.hash === '' ? 'text-brand' : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600')}">
+        <a href="/" class="flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-colors ${currentPath === '/' ? 'text-brand' : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600')}">
           <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
           Inicio
         </a>
-        <a href="#/catalog" class="flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-colors ${window.location.hash.startsWith('#/catalog') ? 'text-brand' : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600')}">
+        <a href="/catalog" class="flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-colors ${currentPath.startsWith('/catalog') ? 'text-brand' : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600')}">
           <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
           Catálogo
         </a>
-        <a href="#/cart" class="relative flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-colors ${window.location.hash.startsWith('#/cart') ? 'text-brand' : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600')}">
+        <a href="/cart" class="relative flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-colors ${currentPath.startsWith('/cart') ? 'text-brand' : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600')}">
           <div class="relative">
              <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
              ${count > 0 ? `<span class="cart-count-badge absolute -top-1 -right-2 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-brand text-[9px] font-bold text-white border-2 border-white dark:border-black">${count}</span>` : ''}
@@ -135,7 +136,7 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
 
 export function layoutAdmin({ contentHtml, state }) {
   const authed = Boolean(state?.isAdminAuthed)
-  const currentPath = window.location.hash.split('?')[0] || ''
+  const currentPath = window.location.pathname || ''
 
   if (!authed) {
     return `<div class="min-h-dvh flex items-center justify-center bg-[#F8F9FA] text-[#191C1D]">
@@ -144,15 +145,15 @@ export function layoutAdmin({ contentHtml, state }) {
   }
 
   const links = [
-    { path: '#/admin/dashboard', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/>', label: 'Dashboard' },
-    { path: '#/admin/orders', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>', label: 'Órdenes' },
-    { path: '#/admin/products', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>', label: 'Productos' },
-    { path: '#/admin/coupons', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>', label: 'Cupones' },
-    { path: '#/admin/newsletter', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>', label: 'Newsletter' },
+    { path: '/admin/dashboard', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/>', label: 'Dashboard' },
+    { path: '/admin/orders', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>', label: 'Órdenes' },
+    { path: '/admin/products', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>', label: 'Productos' },
+    { path: '/admin/coupons', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>', label: 'Cupones' },
+    { path: '/admin/newsletter', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>', label: 'Newsletter' },
   ]
 
   const navHtml = links.map(l => {
-    const active = currentPath === l.path || (currentPath === '#/admin' && l.path === '#/admin/dashboard')
+    const active = currentPath === l.path || (currentPath === '/admin' && l.path === '/admin/dashboard')
     return `
       <a href="${l.path}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${active ? 'bg-brand/10 text-brand font-semibold relative before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-8 before:bg-brand before:rounded-r-md' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">${l.icon}</svg>
@@ -166,7 +167,7 @@ export function layoutAdmin({ contentHtml, state }) {
       
       <!-- Mobile Header -->
       <header class="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-100 sticky top-0 layer-header">
-        <a href="#/" class="flex items-center gap-2 group">
+        <a href="/" class="flex items-center gap-2 group">
           <span class="text-xl font-bold font-manrope">G&L</span>
           <span class="text-[10px] tracking-wider uppercase px-2 py-0.5 rounded bg-brand text-white font-bold">Admin</span>
         </a>
@@ -178,7 +179,7 @@ export function layoutAdmin({ contentHtml, state }) {
       <!-- Sidebar Desktop / Drawer Mobile -->
       <aside id="admin-sidebar" class="fixed inset-y-0 left-0 layer-admin-sidebar w-64 bg-white border-r border-gray-100 transition-transform -translate-x-full md:translate-x-0 md:static md:flex md:flex-col">
         <div class="p-6 flex items-center justify-between">
-          <a href="#/" class="flex items-center gap-2 group">
+          <a href="/" class="flex items-center gap-2 group">
              <span class="text-2xl font-bold font-manrope">G&L</span>
              <span class="text-[10px] tracking-wider uppercase px-2 py-0.5 rounded bg-brand text-white font-bold">Admin</span>
           </a>
@@ -193,7 +194,7 @@ export function layoutAdmin({ contentHtml, state }) {
         </nav>
 
         <div class="p-4 border-t border-gray-100">
-          <a href="#/" class="flex items-center gap-3 w-full px-4 py-3 mb-2 text-sm font-medium text-gray-500 hover:text-brand hover:bg-brand/5 rounded-xl transition-colors">
+          <a href="/" class="flex items-center gap-3 w-full px-4 py-3 mb-2 text-sm font-medium text-gray-500 hover:text-brand hover:bg-brand/5 rounded-xl transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
             Ver Tienda
           </a>
