@@ -127,7 +127,7 @@ export function pageAdminDashboard(state) {
         
         <!-- Sales Chart -->
         <div class="xl:col-span-2 bg-white rounded-[2rem] p-6 sm:p-8 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.04)]">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
               <h3 class="text-xl sm:text-2xl font-manrope font-extrabold text-[#191C1D]">Rendimiento Diario</h3>
               <p id="dash-sales-chart-subtitle" class="text-[#434654] text-xs sm:text-sm mt-1">Últimos 7 días</p>
@@ -137,7 +137,32 @@ export function pageAdminDashboard(state) {
               <p id="dash-sales-today" class="text-xl sm:text-2xl font-manrope font-extrabold text-[#214FC7]">...</p>
             </div>
           </div>
-          <div id="dash-sales-chart" class="h-64 flex items-end gap-2 sm:gap-4 overflow-x-auto pb-4 sm:pb-0"></div>
+          
+          <!-- Legend -->
+          <div class="flex flex-wrap gap-4 mb-6 pb-4 border-b border-[#EDEEEF]">
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4" style="background-color: #10b981;"></div>
+              <span class="text-sm text-[#434654]">Excelente</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4" style="background-color: #06b6d4;"></div>
+              <span class="text-sm text-[#434654]">Bueno</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4" style="background-color: #f59e0b;"></div>
+              <span class="text-sm text-[#434654]">Regular</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4" style="background-color: #ef4444;"></div>
+              <span class="text-sm text-[#434654]">Bajo</span>
+            </div>
+          </div>
+          
+          <div id="dash-sales-chart" class="h-72 flex items-end gap-2 sm:gap-4 overflow-x-auto pb-4 sm:pb-0 relative"></div>
+          
+          <p class="text-sm text-[#434654] mt-4">
+            ✓ Cada barra = ventas de un día • Pasa el mouse para ver el monto exacto
+          </p>
         </div>
 
         <!-- Logistics & Status -->
@@ -423,19 +448,47 @@ export function pageAdminDashboard(state) {
         })
 
         const maxSales = Math.max(...dayTotals.map(i => i.value), 1)
+        const avgSales = dayTotals.reduce((acc, item) => acc + item.value, 0) / dayTotals.length
+        
         if (salesChartEl) {
-          salesChartEl.innerHTML = dayTotals.map((item, idx) => {
-            const h = Math.max(6, Math.round((item.value / maxSales) * 100))
-            const showLabel = rangeDays <= 14 || idx % Math.ceil(rangeDays / 7) === 0
-            return `
-              <div class="flex-1 min-w-0 flex flex-col items-center justify-end gap-2 group/bar">
-                <div title="${item.label}: ${formatMoney(item.value)}" class="w-full rounded-full bg-[#214FC7]/20 group-hover/bar:bg-[#214FC7] transition-all relative" style="height:${h}%">
-                   <div class="absolute inset-0 bg-[#214FC7] rounded-full opacity-60"></div>
-                </div>
-                <span class="text-[10px] font-bold text-[#434654] leading-none ${showLabel ? '' : 'opacity-0'}">${item.label}</span>
+          salesChartEl.innerHTML = `
+            <div class="w-full h-full flex flex-col justify-between">
+              <!-- Barras -->
+              <div class="flex-1 flex items-end justify-between gap-3 mb-6">
+                ${dayTotals.map((item) => {
+                  const h = Math.max(5, (item.value / maxSales) * 100)
+                  let barColor = '#3b82f6'
+                  if (item.value === 0) barColor = '#e5e7eb'
+                  else if (item.value >= avgSales * 1.2) barColor = '#10b981'
+                  else if (item.value >= avgSales) barColor = '#06b6d4'
+                  else if (item.value >= avgSales * 0.5) barColor = '#f59e0b'
+                  else barColor = '#ef4444'
+                  
+                  return `
+                    <div class="flex-1 flex flex-col items-center group">
+                      <div class="w-full flex items-end justify-center mb-2 h-6">
+                        <span class="text-xs font-bold text-[#191C1D] opacity-0 group-hover:opacity-100 transition-opacity">
+                          ${formatMoney(item.value)}
+                        </span>
+                      </div>
+                      <div class="w-full rounded-t transition-all hover:shadow-lg" 
+                           style="height: ${h}%; background-color: ${barColor}; min-height: 8px;">
+                      </div>
+                    </div>
+                  `
+                }).join('')}
               </div>
-            `
-          }).join('')
+              
+              <!-- Fechas abajo -->
+              <div class="flex justify-between gap-3 pt-4 border-t border-[#e5e7eb]">
+                ${dayTotals.map((item) => `
+                  <div class="flex-1 text-center">
+                    <span class="text-xs font-semibold text-[#434654]">${item.label}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `
         }
 
         if (salesChartSubtitleEl) {
