@@ -7,6 +7,83 @@ import { pageCart } from '../pages/cart.js'
 import { pageCheckout, pageCheckoutSuccess } from '../pages/checkout.js'
 import { pageAdminLogin } from '../pages/adminLogin.js'
 
+function getSeoForRoute(path, basePath, state) {
+  if (basePath === '/') {
+    return {
+      title: 'G&L | Moda Masculina en Colima',
+      description: 'Descubre ropa y accesorios para hombre en G&L: camisas, polos, jeans y perfumes con estilo moderno.',
+      canonicalPath: '/',
+      robots: 'index,follow',
+    }
+  }
+
+  if (basePath === '/catalog') {
+    const params = new URLSearchParams(path.split('?')[1] || '')
+    const productId = params.get('p')
+    const product = state?.products?.find((item) => String(item.id) === String(productId || ''))
+
+    if (product) {
+      const productType = product.type || 'Moda masculina'
+      return {
+        title: `${product.name} | ${productType} | G&L`,
+        description: `${product.name} disponible en G&L. Compra ${productType.toLowerCase()} para hombre con estilo premium en Colima.`,
+        canonicalPath: '/catalog',
+        robots: 'index,follow',
+      }
+    }
+
+    return {
+      title: 'Catalogo de Ropa para Hombre | G&L',
+      description: 'Explora el catalogo de G&L con camisas, polos, jeans y perfumes para hombre. Compra facil y segura.',
+      canonicalPath: '/catalog',
+      robots: 'index,follow',
+    }
+  }
+
+  if (basePath === '/cart') {
+    return {
+      title: 'Carrito de Compra | G&L',
+      description: 'Revisa los productos seleccionados en tu carrito de G&L antes de finalizar tu compra.',
+      canonicalPath: '/cart',
+      robots: 'noindex,follow',
+    }
+  }
+
+  if (basePath === '/checkout') {
+    return {
+      title: 'Checkout | G&L',
+      description: 'Finaliza tu pedido en G&L de forma segura y confirma tu compra por WhatsApp.',
+      canonicalPath: '/checkout',
+      robots: 'noindex,follow',
+    }
+  }
+
+  if (basePath === '/checkout/success') {
+    return {
+      title: 'Pedido Confirmado | G&L',
+      description: 'Tu pedido fue registrado correctamente en G&L. Gracias por tu compra.',
+      canonicalPath: '/checkout/success',
+      robots: 'noindex,nofollow',
+    }
+  }
+
+  if (basePath.startsWith('/admin')) {
+    return {
+      title: 'Panel Administrativo | G&L',
+      description: 'Area administrativa de G&L.',
+      canonicalPath: basePath,
+      robots: 'noindex,nofollow',
+    }
+  }
+
+  return {
+    title: 'G&L | Moda Masculina en Colima',
+    description: 'Moda masculina premium en Colima. Compra camisas, polos, jeans y perfumes en G&L.',
+    canonicalPath: '/',
+    robots: 'index,follow',
+  }
+}
+
 const publicRoutes = {
   '/': pageHome,
   '/catalog': pageCatalog,
@@ -50,10 +127,12 @@ export async function renderRoute(path, state) {
 
   const view = page(state)
   const title = view.title
+  const seo = getSeoForRoute(path, basePath, state)
 
   if (isAdmin) {
     return {
       title,
+      seo,
       html: layoutAdmin({ title, contentHtml: view.html, state }),
       onMount: (root) => {
         // Ejecutar el onMount de la vista específica
@@ -104,6 +183,7 @@ export async function renderRoute(path, state) {
 
   return {
     title,
+    seo,
     html: layoutPublic({ title, contentHtml: view.html, state, showSearch: view.showSearch, noPaddingTop: view.noPaddingTop }),
     onMount: view.onMount,
   }

@@ -4,6 +4,7 @@ import { renderRoute } from './views.js'
 import { showToast } from './toast.js'
 import { supabase } from './supabase.js'
 import { formatMoney } from './format.js'
+import { applySeo } from './seo.js'
 
 function playOrderAlertSound() {
   if (typeof window === 'undefined') return
@@ -222,8 +223,13 @@ export async function startApp(mountEl) {
 
     syncAdminOrderNotifier(path, authed)
 
-    const { title, html, onMount } = await renderRoute(path, getState())
-    document.title = title
+    const { title, seo, html, onMount } = await renderRoute(path, getState())
+    applySeo({
+      title: seo?.title || title,
+      description: seo?.description,
+      canonicalPath: seo?.canonicalPath || path.split('?')[0],
+      robots: seo?.robots,
+    })
     mountEl.innerHTML = html
     
     // Execute onMount and capture cleanup function
