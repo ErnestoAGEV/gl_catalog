@@ -5,4 +5,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /api/
 
-Sitemap: https://gl-catalog.vercel.app/sitemap.xml
+Sitemap: https://www.glboutique.com.mx/sitemap.xml
