@@ -8,7 +8,7 @@ function container(children, theme = 'dark') {
   </div>`
 }
 
-export function layoutPublic({ contentHtml, state, showSearch = false, noPaddingTop = false }) {
+export function layoutPublic({ contentHtml, state, showSearch = false, noPaddingTop = false, hideHeaderOnMobile = false }) {
   const count = (state.cart || []).reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
   const theme = state.theme || 'dark'
   const isDark = theme === 'dark'
@@ -34,7 +34,7 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
 
   return container(`
     <!-- Free Shipping Banner -->
-    <div class="bg-brand text-white text-center py-2 px-4">
+    <div class="bg-brand text-white text-center py-2 px-4 ${hideHeaderOnMobile ? 'hidden md:block' : ''}">
         <p class="text-xs font-medium flex items-center justify-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
@@ -43,12 +43,12 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
         </p>
       </div>
 
-    <header class="sticky top-0 z-40 ${isDark ? 'bg-black/95' : 'bg-white/95'} backdrop-blur-lg border-b ${isDark ? 'border-gray-800/50' : 'border-gray-200'}">
+    <header class="sticky top-0 z-40 ${isDark ? 'bg-black/95' : 'bg-white/95'} backdrop-blur-lg border-b ${isDark ? 'border-gray-800/50' : 'border-gray-200'} ${hideHeaderOnMobile ? 'hidden md:block' : ''}">
         ${searchBarHtml}
         <!-- Navigation -->
         <div class="mx-auto flex w-full max-w-screen-xl items-center justify-between px-4 py-3">
         <a href="/" class="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
-          <img src="logo.png" alt="G&L" class="h-10 w-auto object-contain" />
+          <img src="/logo.png" alt="G&L" class="h-10 w-auto object-contain" />
         </a>
         <nav class="hidden md:flex items-center gap-6">
           <a class="text-sm font-medium ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-all hover:-translate-y-0.5 relative group" href="/catalog">

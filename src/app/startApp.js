@@ -292,6 +292,7 @@ export async function startApp(mountEl) {
   // Catalog manages its own updates via its own subscribe, so we skip it here.
   const routeRelevantKeys = {
     '/':              (s) => `${s.products.length}|${s.isLoading}`,
+    '/producto':      (s) => `${s.products.length}|${s.isLoading}`,
     '/cart':          (s) => `${JSON.stringify(s.cart)}|${JSON.stringify(s.coupon)}|${s.products.length}`,
     '/wishlist':      (s) => JSON.stringify(s.wishlist),
     '/checkout':      (s) => `${JSON.stringify(s.cart)}|${JSON.stringify(s.coupon)}|${s.products.length}`,
@@ -330,7 +331,8 @@ export async function startApp(mountEl) {
 
     // 2. Selective page re-render
     const currentPath = getRoute()
-    const keyFn = routeRelevantKeys[currentPath]
+    // Match dynamic routes like /producto/{id}
+    const keyFn = routeRelevantKeys[currentPath] || (currentPath.startsWith('/producto/') ? routeRelevantKeys['/producto'] : null)
     if (!keyFn) return  // catalog and other self-managed pages → skip
 
     const sig = keyFn(state)

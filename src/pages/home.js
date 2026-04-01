@@ -1,10 +1,8 @@
 import { BRAND } from '../app/config.js'
 import { getState, subscribeNewsletter, isSubscribedNewsletter, getMostViewedProducts, trackProductView, addToCart, cartCount } from '../app/store.js'
 import { on, qs } from '../app/dom.js'
-import { showMiniCart } from '../app/miniCart.js'
+import { navigate } from '../app/router.js'
 import { featuredProductCard, homeSkeletonCard, testimonialsSection } from './homeCards.js'
-import { quickViewModal } from './catalogModals.js'
-import { initModalCarousel, initModalZoom } from './catalogCarousels.js'
 import { showToast } from '../app/toast.js'
 import { handleQuickAdd } from './catalogQuickAdd.js'
 import { sanitizeEmail } from '../app/sanitize.js'
@@ -349,7 +347,8 @@ export function pageHome() {
         </div>
       </section>
 
-      <div id="home-modal-container"></div>
+
+      <div id="home-quick-add-container"></div>
     `,
     onMount(root) {
       // Category filter navigation
@@ -361,104 +360,20 @@ export function pageHome() {
         })
       })
 
-      // Contenedor global de modales del Home
-      const homeModalContainer = qs(root, '#home-modal-container')
-
       // Quick Add to Cart from home cards
-      on(root, 'click', '[data-quick-add]', (ev, btn) => handleQuickAdd(ev, btn, homeModalContainer))
+      const homeQuickAddContainer = qs(root, '#home-quick-add-container')
+      on(root, 'click', '[data-quick-add]', (ev, btn) => {
+        ev.stopPropagation()
+        handleQuickAdd(ev, btn, homeQuickAddContainer)
+      })
 
-      // Product card click -> open quick view modal directly on home
-
-      const openHomeModal = (product) => {
-        trackProductView(product.id)
-        homeModalContainer.innerHTML = quickViewModal(product)
-        document.body.style.overflow = 'hidden'
-
-        const closeModal = () => {
-          homeModalContainer.querySelectorAll('.qv-size-btn').forEach(b => {
-            b.classList.remove('qv-size-selected', 'border-brand', 'bg-brand', 'text-white', '!border-brand', '!bg-brand', '!text-white')
-          })
-          homeModalContainer.querySelectorAll('.modal-img-zoomable').forEach(img => {
-            img.style.transform = ''
-            img.style.transformOrigin = ''
-          })
-          const containers = homeModalContainer.querySelectorAll('[data-modal-carousel], [data-modal-single]')
-          containers.forEach(c => { c.style.cursor = '' })
-          homeModalContainer.innerHTML = ''
-          document.body.style.overflow = ''
-        }
-
-        homeModalContainer.querySelector('#close-quickview').addEventListener('click', closeModal)
-        homeModalContainer.querySelector('#quick-view-modal').addEventListener('click', (e) => {
-          if (e.target.id === 'quick-view-modal') closeModal()
-        })
-
-        initModalCarousel(homeModalContainer.querySelector('[data-modal-carousel]'))
-        initModalZoom(homeModalContainer)
-
-        // Size button selection
-        const sizeButtons = homeModalContainer.querySelectorAll('.qv-size-btn')
-        sizeButtons.forEach(sizeBtn => {
-          sizeBtn.addEventListener('click', (e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            sizeButtons.forEach(b => {
-              b.classList.remove('qv-size-selected', 'border-brand', 'bg-brand', 'text-white', '!border-brand', '!bg-brand', '!text-white')
-              b.classList.add('border-gray-200', 'dark:border-gray-700', 'text-gray-700', 'dark:text-gray-300')
-            })
-            sizeBtn.classList.add('qv-size-selected', '!border-brand', '!bg-brand', '!text-white')
-            sizeBtn.classList.remove('border-gray-200', 'dark:border-gray-700', 'text-gray-700', 'dark:text-gray-300', 'hover:text-brand')
-            const qvBtn = homeModalContainer.querySelector('#qv-add-to-cart')
-            if (qvBtn) {
-              qvBtn.disabled = false
-              qvBtn.classList.remove('opacity-50', 'cursor-not-allowed')
-            }
-          })
-        })
-
-        const shareBtn = homeModalContainer.querySelector('#share-quickview')
-        if (shareBtn) {
-          shareBtn.addEventListener('click', () => {
-            const shareUrl = `${window.location.origin}/catalog?p=${encodeURIComponent(product.id)}`
-            if (navigator.share) {
-              navigator.share({
-                title: product.name,
-                text: '¡Mira este producto en G&L!',
-                url: shareUrl
-              }).catch(console.error)
-            } else {
-              navigator.clipboard.writeText(shareUrl)
-              showToast('Enlace copiado al portapapeles')
-            }
-          })
-        }
-
-        const qvAddBtn = homeModalContainer.querySelector('#qv-add-to-cart')
-        if (product.sizes && product.sizes.length > 0) {
-          qvAddBtn.disabled = true
-          qvAddBtn.classList.add('opacity-50', 'cursor-not-allowed')
-        }
-
-        qvAddBtn.addEventListener('click', () => {
-          if (qvAddBtn.disabled) return
-          qvAddBtn.disabled = true
-          const selectedSizeBtn = homeModalContainer.querySelector('.qv-size-selected')
-          const size = selectedSizeBtn ? selectedSizeBtn.dataset.size : ''
-          const colorSelect = homeModalContainer.querySelector('#qv-color')
-          const color = colorSelect ? colorSelect.value : ''
-          addToCart({ productId: product.id, size, color, qty: 1 })
-          // El contador del carrito se actualiza globalmente desde store.js -> startApp.js
-          closeModal()
-        })
-      }
-
+      // Product card click -> navigate to product page
       root.querySelectorAll('[data-home-qv]').forEach(card => {
         card.addEventListener('click', (e) => {
           if (e.target.closest('[data-quick-add]')) return
           e.preventDefault()
-          const state = getState()
-            const product = publicProducts.find(p => p.id === card.dataset.homeQv)
-          if (product) openHomeModal(product)
+          const productId = card.dataset.homeQv
+          if (productId) navigate(`/producto/${productId}`)
         })
       })
 

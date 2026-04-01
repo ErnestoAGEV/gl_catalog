@@ -3,6 +3,7 @@ import { adminLogout, isAdminAuthed } from './store.js'
 import { navigate } from './router.js'
 import { pageHome } from '../pages/home.js'
 import { pageCatalog } from '../pages/catalog.js'
+import { pageProduct } from '../pages/product.js'
 import { pageCart } from '../pages/cart.js'
 import { pageCheckout, pageCheckoutSuccess } from '../pages/checkout.js'
 import { pageAdminLogin } from '../pages/adminLogin.js'
@@ -18,8 +19,16 @@ function getSeoForRoute(path, basePath, state) {
   }
 
   if (basePath === '/catalog') {
-    const params = new URLSearchParams(path.split('?')[1] || '')
-    const productId = params.get('p')
+    return {
+      title: 'Catalogo de Ropa para Hombre | G&L',
+      description: 'Explora el catalogo de G&L con camisas, polos, jeans y perfumes para hombre. Compra facil y segura.',
+      canonicalPath: '/catalog',
+      robots: 'index,follow',
+    }
+  }
+
+  if (basePath.startsWith('/producto/')) {
+    const productId = basePath.split('/producto/')[1]
     const product = state?.products?.find((item) => String(item.id) === String(productId || ''))
 
     if (product) {
@@ -27,16 +36,16 @@ function getSeoForRoute(path, basePath, state) {
       return {
         title: `${product.name} | ${productType} | G&L`,
         description: `${product.name} disponible en G&L. Compra ${productType.toLowerCase()} para hombre con estilo premium en Colima.`,
-        canonicalPath: '/catalog',
+        canonicalPath: `/producto/${product.id}`,
         robots: 'index,follow',
       }
     }
 
     return {
-      title: 'Catalogo de Ropa para Hombre | G&L',
-      description: 'Explora el catalogo de G&L con camisas, polos, jeans y perfumes para hombre. Compra facil y segura.',
-      canonicalPath: '/catalog',
-      robots: 'index,follow',
+      title: 'Producto no encontrado | G&L',
+      description: 'El producto que buscas no está disponible en nuestro catálogo.',
+      canonicalPath: basePath,
+      robots: 'noindex,follow',
     }
   }
 
@@ -121,6 +130,8 @@ export async function renderRoute(path, state) {
       const loader = lazyAdminRoutes[basePath] || lazyAdminRoutes['/admin']
       page = await loader()
     }
+  } else if (basePath.startsWith('/producto/')) {
+    page = pageProduct
   } else {
     page = publicRoutes[basePath] || pageHome
   }
@@ -184,7 +195,7 @@ export async function renderRoute(path, state) {
   return {
     title,
     seo,
-    html: layoutPublic({ title, contentHtml: view.html, state, showSearch: view.showSearch, noPaddingTop: view.noPaddingTop }),
+    html: layoutPublic({ title, contentHtml: view.html, state, showSearch: view.showSearch, noPaddingTop: view.noPaddingTop, hideHeaderOnMobile: view.hideHeaderOnMobile }),
     onMount: view.onMount,
   }
 }

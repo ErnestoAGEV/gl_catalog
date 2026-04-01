@@ -1,10 +1,10 @@
 import { addToCart, searchProducts, setSearchQuery, getSearchQuery, cartCount, subscribe, trackProductView, getState } from '../app/store.js'
 import { on, qs } from '../app/dom.js'
 import { showToast } from '../app/toast.js'
+import { navigate } from '../app/router.js'
 import { uniqueSorted, getFilterState, applyFilters } from './catalogFilters.js'
 import { skeletonGrid, productCard } from './catalogCard.js'
-import { quickViewModal } from './catalogModals.js'
-import { initCarousels, initModalCarousel, initModalZoom } from './catalogCarousels.js'
+import { initCarousels } from './catalogCarousels.js'
 import { handleQuickAdd } from './catalogQuickAdd.js'
 import { escapeHtml } from '../app/sanitize.js'
 
@@ -104,8 +104,8 @@ export function pageCatalog(initialState) {
       </section>
 
 
+      <div id="quick-add-container"></div>
 
-      <div id="modal-container"></div>
 
       <a href="/cart" class="fixed bottom-24 right-4 md:bottom-6 md:right-6 flex items-center gap-2 rounded-full bg-gray-900/80 dark:bg-white/80 backdrop-blur-md text-white dark:text-gray-900 pl-4 pr-5 py-2.5 shadow-lg hover:bg-gray-900 dark:hover:bg-white hover:scale-105 active:scale-95 transition-all z-20 text-xs font-medium">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
@@ -116,7 +116,6 @@ export function pageCatalog(initialState) {
       const grid = qs(root, '#catalog-grid')
       const productCountEl = qs(root, '#product-count')
       const productCountMobile = qs(root, '#product-count-mobile')
-      const modalContainer = qs(root, '#modal-container')
       const loadMoreContainer = qs(root, '#load-more-container')
       const loadMoreBtn = qs(root, '#load-more-btn')
       const showingCount = qs(root, '#showing-count')
@@ -407,16 +406,13 @@ export function pageCatalog(initialState) {
         }, 200)
       }
 
-      // Auto-open via URL parameter (Deep Linking Share)
+      // Auto-redirect via URL parameter (Deep Linking Share - backward compat)
       const params = new URLSearchParams(window.location.search)
       const pId = params.get('p')
       if (pId) {
-        setTimeout(() => {
-          const btn = root.querySelector(`[data-quickview="${pId}"]`)
-          if (btn) btn.click()
-          // Clean up URL quietly after opening the modal
-          history.replaceState(null, '', '/catalog')
-        }, 300)
+        // Redirect old ?p= links to new /producto/{id} route
+        navigate(`/producto/${pId}`)
+        return
       }
 
       // Apply category filter if navigated from home category cards
@@ -451,106 +447,13 @@ export function pageCatalog(initialState) {
       on(root, 'click', '[data-quickview]', (ev, btn) => {
         const product = publicProducts.find(p => p.id === btn.dataset.quickview)
         if (!product) return
-        trackProductView(product.id)
-        modalContainer.innerHTML = quickViewModal(product)
-        document.body.style.overflow = 'hidden'
-        
-        const closeModal = () => { 
-          // Reset size button selections
-          modalContainer.querySelectorAll('.qv-size-btn').forEach(btn => {
-            btn.classList.remove('qv-size-selected', 'border-brand', 'bg-brand', 'text-white', '!border-brand', '!bg-brand', '!text-white')
-          })
-          
-          // Reset zoom state
-          modalContainer.querySelectorAll('.modal-img-zoomable').forEach(img => {
-            img.style.transform = ''
-            img.style.transformOrigin = ''
-          })
-          
-          // Reset container cursor styles
-          const containers = modalContainer.querySelectorAll('[data-modal-carousel], [data-modal-single]')
-          containers.forEach(c => { c.style.cursor = '' })
-          
-          // Clear modal and restore scroll
-          modalContainer.innerHTML = ''
-          document.body.style.overflow = ''
-        }
-        modalContainer.querySelector('#close-quickview')?.addEventListener('click', closeModal)
-        modalContainer.querySelector('#quick-view-modal')?.addEventListener('click', (e) => { if (e.target.id === 'quick-view-modal') closeModal() })
-        
-        const shareBtn = modalContainer.querySelector('#share-quickview')
-        if (shareBtn) {
-          shareBtn.addEventListener('click', () => {
-            const shareUrl = `${window.location.origin}/catalog?p=${encodeURIComponent(product.id)}`
-            if (navigator.share) {
-              navigator.share({
-                title: product.name,
-                text: '¡Mira este producto en G&L!',
-                url: shareUrl
-              }).catch(console.error)
-            } else {
-              navigator.clipboard.writeText(shareUrl)
-              showToast('Enlace copiado al portapapeles')
-            }
-          })
-        }
-        
-        // Initialize modal carousel and zoom (extracted modules)
-        initModalCarousel(modalContainer.querySelector('[data-modal-carousel]'))
-        initModalZoom(modalContainer)
-        
-        // Size button selection logic
-        const sizeButtons = modalContainer.querySelectorAll('.qv-size-btn')
-        sizeButtons.forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            // Remove selection from all buttons
-            sizeButtons.forEach(b => {
-              b.classList.remove('qv-size-selected', 'border-brand', 'bg-brand', 'text-white', '!border-brand', '!bg-brand', '!text-white')
-              b.classList.add('border-gray-200', 'dark:border-gray-700', 'text-gray-700', 'dark:text-gray-300')
-            })
-            // Add selection to clicked button
-            btn.classList.add('qv-size-selected', '!border-brand', '!bg-brand', '!text-white')
-            btn.classList.remove('border-gray-200', 'dark:border-gray-700', 'text-gray-700', 'dark:text-gray-300', 'hover:text-brand')
-            
-            // Enable add-to-cart button
-            const qvAddBtn = modalContainer.querySelector('#qv-add-to-cart')
-            if (qvAddBtn) {
-              qvAddBtn.disabled = false
-              qvAddBtn.classList.remove('opacity-50', 'cursor-not-allowed')
-            }
-          })
-        })
-        
-        const qvAddBtn = modalContainer.querySelector('#qv-add-to-cart')
-        
-        // Disable button initially if product has sizes but none selected
-        if (product.sizes && product.sizes.length > 0) {
-          qvAddBtn.disabled = true
-          qvAddBtn.classList.add('opacity-50', 'cursor-not-allowed')
-        }
-        
-        qvAddBtn.addEventListener('click', () => {
-          if (qvAddBtn.disabled) return
-          qvAddBtn.disabled = true
-          
-          // Get selected size from button
-          const selectedSizeBtn = modalContainer.querySelector('.qv-size-selected')
-          const size = selectedSizeBtn ? selectedSizeBtn.dataset.size : ''
-          
-          // Get color from dropdown if it exists
-          const colorSelect = modalContainer.querySelector('#qv-color')
-          const color = colorSelect ? colorSelect.value : ''
-          
-          addToCart({ productId: product.id, size, color, qty: 1 })
-          
-          // El contador del carrito se actualiza globalmente desde store.js -> startApp.js
-          closeModal()
-        })
+        navigate(`/producto/${product.id}`)
       })
 
-      on(root, 'click', '[data-quick-add]', (ev, btn) => handleQuickAdd(ev, btn, modalContainer))
+      on(root, 'click', '[data-quick-add]', (ev, btn) => {
+        const quickAddContainer = qs(root, '#quick-add-container')
+        handleQuickAdd(ev, btn, quickAddContainer)
+      })
 
       // Return cleanup function
       return unsubscribe
