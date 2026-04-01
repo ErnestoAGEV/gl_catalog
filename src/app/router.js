@@ -16,6 +16,9 @@ function getLegacyHashRoute() {
 }
 
 function notify() {
+  // Always clear body scroll lock left by modals/overlays from the previous route
+  document.body.style.overflow = ''
+
   // Immediate scroll
   window.scrollTo(0, 0)
   document.documentElement.scrollTop = 0

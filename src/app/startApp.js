@@ -203,6 +203,19 @@ export async function startApp(mountEl) {
   }
 
   const render = async (path) => {
+    // ── Always reset body scroll lock on navigation ──
+    // Modals, bottom sheets, sidebar overlays, and fullscreen viewers set
+    // document.body.style.overflow = 'hidden'. If the user navigates away
+    // before closing them (common on mobile), the style stays and the new
+    // page can't scroll. Resetting here is cheap and guarantees a clean
+    // slate for every route.
+    document.body.style.overflow = ''
+
+    // Remove orphaned overlays that live outside #app and could block
+    // interaction on the new page.
+    document.getElementById('fs-viewer')?.remove()          // fullscreen image viewer
+    document.getElementById('order-details-modal')?.remove() // admin order detail modal
+
     // Cleanup previous route if applicable
     if (currentCleanup) {
       currentCleanup()
