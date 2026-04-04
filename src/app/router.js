@@ -1,5 +1,8 @@
 const listeners = new Set()
 
+// Scroll position memory: key = normalized path, value = scrollY
+export const scrollPositions = new Map()
+
 function normalizePath(path) {
   if (!path) return '/'
   const withSlash = path.startsWith('/') ? path : `/${path}`
@@ -19,26 +22,7 @@ function notify() {
   // Always clear body scroll lock left by modals/overlays from the previous route
   document.body.style.overflow = ''
 
-  // Immediate scroll
-  window.scrollTo(0, 0)
-  document.documentElement.scrollTop = 0
-  document.body.scrollTop = 0
-
   for (const fn of listeners) fn(getRoute())
-
-  // Scroll after render
-  requestAnimationFrame(() => {
-    window.scrollTo(0, 0)
-    document.documentElement.scrollTop = 0
-    document.body.scrollTop = 0
-
-    // One more scroll after a tiny delay to catch async content
-    setTimeout(() => {
-      window.scrollTo(0, 0)
-      document.documentElement.scrollTop = 0
-      document.body.scrollTop = 0
-    }, 10)
-  })
 }
 
 export function getRoute() {
@@ -52,6 +36,10 @@ export function navigate(path) {
   const next = `${normalizePath(url.pathname)}${url.search || ''}`
   const current = getRoute()
   if (next === current) return
+
+  // Save current scroll position before leaving
+  scrollPositions.set(current, window.scrollY)
+
   window.history.pushState(null, '', next)
   notify()
 }

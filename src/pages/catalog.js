@@ -120,6 +120,50 @@ export function pageCatalog(initialState) {
       const loadMoreBtn = qs(root, '#load-more-btn')
       const showingCount = qs(root, '#showing-count')
 
+      // ── Catalog state persistence (scroll + filters) ──
+      // When the user navigates to a product and comes back, restore exactly
+      // where they were — including applied filters and scroll position.
+      const CATALOG_STATE_KEY = 'gl_catalog_state'
+
+      // Read and immediately consume saved state
+      let savedCatalogState = null
+      try {
+        const raw = sessionStorage.getItem(CATALOG_STATE_KEY)
+        if (raw) {
+          sessionStorage.removeItem(CATALOG_STATE_KEY)
+          savedCatalogState = JSON.parse(raw)
+        }
+      } catch { /* ignore parse errors */ }
+
+      // Save current scroll + filter state before leaving the catalog
+      const saveCatalogState = () => {
+        try {
+          const filters = {
+            type:     root.querySelector('select[name="type"]')?.value || '',
+            size:     root.querySelector('select[name="size"]')?.value || '',
+            color:    root.querySelector('select[name="color"]')?.value || '',
+            minPrice: root.querySelector('input[name="minPrice"]')?.value || '',
+            maxPrice: root.querySelector('input[name="maxPrice"]')?.value || '',
+            sort:     root.querySelector('#sort-select')?.value || '',
+          }
+          sessionStorage.setItem(CATALOG_STATE_KEY, JSON.stringify({
+            scroll: window.scrollY,
+            filters,
+          }))
+        } catch { /* ignore */ }
+      }
+
+      // Restore filter DOM elements from saved state
+      const restoreFilters = (filters) => {
+        if (!filters) return
+        if (filters.type)     root.querySelectorAll('select[name="type"]').forEach(s => { s.value = filters.type })
+        if (filters.size)     root.querySelectorAll('select[name="size"]').forEach(s => { s.value = filters.size })
+        if (filters.color)    root.querySelectorAll('select[name="color"]').forEach(s => { s.value = filters.color })
+        if (filters.minPrice) root.querySelectorAll('input[name="minPrice"]').forEach(i => { i.value = filters.minPrice })
+        if (filters.maxPrice) root.querySelectorAll('input[name="maxPrice"]').forEach(i => { i.value = filters.maxPrice })
+        if (filters.sort)     { const s = root.querySelector('#sort-select'); if (s) s.value = filters.sort }
+      }
+
       // Pagination state
       const PRODUCTS_PER_PAGE = 20
       let currentPage = 1
@@ -388,13 +432,37 @@ export function pageCatalog(initialState) {
       }
 
       // Subscribe to store changes (crucial for reload scenario)
+      // Block re-renders during the initial restoration window to avoid
+      // the subscribe overwriting the grid before scroll restoration completes.
+      let restoringState = Boolean(savedCatalogState)
       const unsubscribe = subscribe((newState) => {
         state = newState
         publicProducts = state.products.filter(p => p.badge !== 'Borrador')
-        renderGrid()
+        if (!restoringState) renderGrid()
       })
 
-      setTimeout(renderGrid, 100)
+      // First render: restore filters + scroll if returning from a product page,
+      // otherwise just render normally
+      setTimeout(() => {
+        if (savedCatalogState?.filters) {
+          restoreFilters(savedCatalogState.filters)
+        }
+        renderGrid()
+        if (savedCatalogState?.scroll != null) {
+          const targetY = savedCatalogState.scroll
+          requestAnimationFrame(() => {
+            window.scrollTo({ top: targetY, behavior: 'instant' })
+            // Second pass: covers lazy images / deferred content that shifts layout
+            setTimeout(() => {
+              window.scrollTo({ top: targetY, behavior: 'instant' })
+              // Release guard so subscribe can respond to state changes again
+              restoringState = false
+            }, 350)
+          })
+        } else {
+          restoringState = false
+        }
+      }, 100)
 
       // Auto-open quick view if navigated from home
       const pendingQv = sessionStorage.getItem('gl_pending_quickview')
@@ -444,9 +512,13 @@ export function pageCatalog(initialState) {
         renderGrid()
       })
 
+      // Save catalog state before navigating to a product page
+      on(root, 'click', 'a[href^="/producto/"]', () => saveCatalogState())
+
       on(root, 'click', '[data-quickview]', (ev, btn) => {
         const product = publicProducts.find(p => p.id === btn.dataset.quickview)
         if (!product) return
+        saveCatalogState()
         navigate(`/producto/${product.id}`)
       })
 

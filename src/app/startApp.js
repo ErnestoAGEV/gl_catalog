@@ -1,4 +1,4 @@
-import { getRoute, onRouteChange, startRouter, navigate } from './router.js'
+import { getRoute, onRouteChange, startRouter, navigate, scrollPositions } from './router.js'
 import { getState, isAdminAuthed, loadProducts, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession, getAdminOrders } from './store.js'
 import { renderRoute } from './views.js'
 import { showToast } from './toast.js'
@@ -204,11 +204,6 @@ export async function startApp(mountEl) {
 
   const render = async (path) => {
     // ── Always reset body scroll lock on navigation ──
-    // Modals, bottom sheets, sidebar overlays, and fullscreen viewers set
-    // document.body.style.overflow = 'hidden'. If the user navigates away
-    // before closing them (common on mobile), the style stays and the new
-    // page can't scroll. Resetting here is cheap and guarantees a clean
-    // slate for every route.
     document.body.style.overflow = ''
 
     // Remove orphaned overlays that live outside #app and could block
@@ -221,6 +216,10 @@ export async function startApp(mountEl) {
       currentCleanup()
       currentCleanup = null
     }
+
+    // Capture the saved scroll position for this route BEFORE rendering
+    // (it gets cleared after use to avoid stale restores)
+    const savedScroll = scrollPositions.get(path) ?? null
 
     const authed = isAdminAuthed()
 
@@ -243,12 +242,32 @@ export async function startApp(mountEl) {
       canonicalPath: seo?.canonicalPath || path.split('?')[0],
       robots: seo?.robots,
     })
+
+    // For forward navigation: scroll to top immediately
+    if (savedScroll === null) {
+      window.scrollTo(0, 0)
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+    } else {
+      // Restoring: remove from in-memory map (catalog reads from sessionStorage instead)
+      scrollPositions.delete(path)
+    }
+
     mountEl.innerHTML = html
-    
+
     // Execute onMount and capture cleanup function
     const cleanup = onMount?.(mountEl)
     if (typeof cleanup === 'function') {
       currentCleanup = cleanup
+    }
+
+    // For non-catalog pages, apply saved scroll after rAF (DOM is fully painted)
+    // Catalog.js handles its own restoration internally after its deferred renderGrid()
+    if (savedScroll !== null && !path.startsWith('/catalog')) {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: savedScroll, behavior: 'instant' })
+        setTimeout(() => window.scrollTo({ top: savedScroll, behavior: 'instant' }), 120)
+      })
     }
 
     // Setup global event listeners after render
