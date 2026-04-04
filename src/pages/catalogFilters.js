@@ -1,5 +1,19 @@
 // Filter utilities for the catalog page
 
+// Desired display order for product categories in the catalog
+export const CATEGORY_ORDER = [
+  'Pantalones',
+  'Perfumes',
+  'Camisas',
+  'Playeras',
+  'Polos',
+  'Shorts',
+  'Sudaderas',
+  'Suéteres',
+  'Chamarras',
+  'Abrigos',
+]
+
 export function uniqueSorted(values) {
   return Array.from(new Set(values)).filter(Boolean).sort((a, b) => String(a).localeCompare(String(b)))
 }
@@ -31,6 +45,16 @@ export function applyFilters(products, filters) {
     return true
   })
   if (filters.sort === 'price-asc') result.sort((a, b) => a.price - b.price)
-  if (filters.sort === 'price-desc') result.sort((a, b) => b.price - a.price)
+  else if (filters.sort === 'price-desc') result.sort((a, b) => b.price - a.price)
+  else {
+    // Default: group products by category in the defined display order
+    result.sort((a, b) => {
+      const ai = CATEGORY_ORDER.indexOf(a.type)
+      const bi = CATEGORY_ORDER.indexOf(b.type)
+      const aOrder = ai === -1 ? CATEGORY_ORDER.length : ai
+      const bOrder = bi === -1 ? CATEGORY_ORDER.length : bi
+      return aOrder - bOrder
+    })
+  }
   return result
 }
