@@ -140,6 +140,7 @@ export function pageAdminProducts(state) {
       let selectedColorBadges = new Set()
       let isEditing = false
       let selectedFiles = []
+      let savedScrollPos = 0
 
       let currentPage = 1
       const itemsPerPage = 50
@@ -444,12 +445,13 @@ export function pageAdminProducts(state) {
 
       // ── Form Show/Hide ──
       const showForm = (editing = false) => {
+        savedScrollPos = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0
         isEditing = editing
         formSection.classList.remove('hidden')
         formSection.classList.add('flex')
         document.body.style.overflow = 'hidden'
-        formTitle.textContent = editing ? 'Editar producto' : 'Añadir a la Colección'
-        submitText.textContent = editing ? 'Guardar cambios' : 'Guardar en Colección'
+        formTitle.textContent = editing ? 'Editar producto' : 'Nuevo Producto'
+        submitText.textContent = editing ? 'Guardar cambios' : 'Guardar'
         setError('')
       }
 
@@ -466,6 +468,17 @@ export function pageAdminProducts(state) {
         updateColorBadges()
         renderPreviews()
         renderList(null, resetPage === true ? 1 : null)
+        
+        // Restore scroll position
+        const restore = () => {
+          window.scrollTo({ top: savedScrollPos, behavior: 'instant' })
+          document.documentElement.scrollTop = savedScrollPos
+          document.body.scrollTop = savedScrollPos
+        }
+        requestAnimationFrame(restore)
+        setTimeout(restore, 10)
+        setTimeout(restore, 50)
+        setTimeout(restore, 150)
       }
 
       // ── Init ──
@@ -599,11 +612,13 @@ export function pageAdminProducts(state) {
           if (idInput.value) {
             const { error } = await updateProduct(idInput.value, { name, type, price, originalPrice, stock, badge, sizes, colors, images })
             if (error) throw new Error('Error al actualizar: ' + error.message)
+            hideForm(false) // Do not reset pagination for updates
           } else {
             const { error } = await addProduct({ name, type, price, originalPrice, stock, badge, sizes, colors, images })
             if (error) throw new Error('Error al crear: ' + error.message)
+            hideForm(true) // Reset pagination to view the newly added product
           }
-          hideForm(true)
+
         } catch (err) {
           console.error(err)
           setError(err.message || 'Error al guardar. Revisa la consola.')

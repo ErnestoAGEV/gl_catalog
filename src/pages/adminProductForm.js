@@ -28,7 +28,7 @@ export function productFormHTML(allColors) {
         </button>
         <!-- Header -->
         <div class="px-6 pt-6 pb-2 pr-16 bg-white rounded-t-3xl border-b border-gray-100">
-          <h2 id="form-title" class="text-xl font-manrope font-bold text-gray-900">Añadir a la Colección</h2>
+          <h2 id="form-title" class="text-xl font-manrope font-bold text-gray-900">Nuevo Producto</h2>
           <p class="text-xs text-gray-500 mt-1">Completa los detalles de este nuevo integrante del catálogo.</p>
         </div>
         

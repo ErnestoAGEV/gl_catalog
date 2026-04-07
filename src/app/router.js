@@ -38,7 +38,8 @@ export function navigate(path) {
   if (next === current) return
 
   // Save current scroll position before leaving
-  scrollPositions.set(current, window.scrollY)
+  const scrollY = window.scrollY || (document.scrollingElement ? document.scrollingElement.scrollTop : 0) || document.documentElement.scrollTop || document.body.scrollTop || 0
+  scrollPositions.set(current, scrollY)
 
   window.history.pushState(null, '', next)
   notify()

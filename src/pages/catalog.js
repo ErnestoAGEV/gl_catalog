@@ -170,7 +170,7 @@ export function pageCatalog(initialState) {
       let allFilteredProducts = []
       let lastFilters = null
 
-      const renderGrid = () => {
+      const renderGrid = (options = {}) => {
         const filters = getFilterState(root)
         const searchQuery = getSearchQuery()
         
@@ -204,10 +204,14 @@ export function pageCatalog(initialState) {
           if (curr && colors.includes(curr)) sel.value = curr
         })
 
-        // Check if filters actually changed
+        // Check if filters actually changed (for updating DOM/inputs if we wanted to, but we just use options now)
         const currentFilters = JSON.stringify({ ...filters, searchQuery })
-        const filtersChanged = lastFilters !== currentFilters
         lastFilters = currentFilters
+
+        // Only reset to page 1 when explicitly requested
+        if (options.resetPage) {
+          currentPage = 1
+        }
         
         // Start with search results if there's a query, otherwise all products
           let baseProducts = searchQuery ? searchProducts(searchQuery) : publicProducts
@@ -221,8 +225,8 @@ export function pageCatalog(initialState) {
           allFilteredProducts = applyFilters(baseProducts, filters)
         }
         
-        // Only reset to page 1 when filters/search actually change
-        if (filtersChanged) {
+        // Only reset to page 1 when explicitly requested
+        if (options.resetPage) {
           currentPage = 1
         }
         
@@ -245,7 +249,7 @@ export function pageCatalog(initialState) {
               setSearchQuery('')
               const si = qs(root, '#catalog-search')
               if (si) si.value = ''
-              renderGrid()
+              renderGrid({ resetPage: true })
             })
           }
           return
@@ -368,7 +372,7 @@ export function pageCatalog(initialState) {
         // Clear matching controls in both desktop and mobile panels
         root.querySelectorAll(`select[name="${key}"]`).forEach(s => s.selectedIndex = 0)
         root.querySelectorAll(`input[name="${key}"]`).forEach(i => { i.value = '' })
-        renderGrid()
+        renderGrid({ resetPage: true })
       })
 
       // Reset all filters
@@ -380,7 +384,7 @@ export function pageCatalog(initialState) {
         if (si) si.value = ''
         // Close mobile panel
         if (mobilePanel) closeSheet(mobilePanel)
-        renderGrid()
+        renderGrid({ resetPage: true })
       }
       if (resetBtn) resetBtn.addEventListener('click', resetAllFilters)
       if (resetBtnMobile) resetBtnMobile.addEventListener('click', resetAllFilters)
@@ -392,7 +396,7 @@ export function pageCatalog(initialState) {
           if (e.key === 'Enter') {
             e.preventDefault()
             setSearchQuery(e.target.value.trim())
-            renderGrid()
+            renderGrid({ resetPage: true })
           }
         })
         let searchTimeout
@@ -400,7 +404,7 @@ export function pageCatalog(initialState) {
           clearTimeout(searchTimeout)
           searchTimeout = setTimeout(() => {
             setSearchQuery(e.target.value.trim())
-            renderGrid()
+            renderGrid({ resetPage: true })
           }, 300)
         })
       }
@@ -444,19 +448,26 @@ export function pageCatalog(initialState) {
       // First render: restore filters + scroll if returning from a product page,
       // otherwise just render normally
       setTimeout(() => {
+        console.log("Restoring catalog state from memory:", savedCatalogState)
         if (savedCatalogState?.filters) {
           restoreFilters(savedCatalogState.filters)
+        }
+        if (savedCatalogState?.currentPage) {
+          currentPage = savedCatalogState.currentPage
+          console.log("Restored currentPage to:", currentPage)
         }
         renderGrid()
         if (savedCatalogState?.scroll != null && savedCatalogState.scroll > 10) {
           const targetY = savedCatalogState.scroll
           requestAnimationFrame(() => {
             window.scrollTo({ top: targetY, behavior: 'instant' })
+            if (document.scrollingElement) document.scrollingElement.scrollTop = targetY
             document.documentElement.scrollTop = targetY
             document.body.scrollTop = targetY
             // Second pass: covers lazy images / deferred content that shifts layout
             setTimeout(() => {
               window.scrollTo({ top: targetY, behavior: 'instant' })
+              if (document.scrollingElement) document.scrollingElement.scrollTop = targetY
               document.documentElement.scrollTop = targetY
               document.body.scrollTop = targetY
               // Release guard so subscribe can respond to state changes again
@@ -497,12 +508,12 @@ export function pageCatalog(initialState) {
           root.querySelectorAll('select[name="type"]').forEach(sel => {
             sel.value = types[0]
           })
-          renderGrid()
+          renderGrid({ resetPage: true })
         } else {
           // Multiple types (e.g. Playeras + Polos): override applyFilters for this render
           // Store the multi-type filter in a custom attribute on the grid
           grid.dataset.multiTypeFilter = types.join(',')
-          renderGrid()
+          renderGrid({ resetPage: true })
         }
       }
 
@@ -513,29 +524,13 @@ export function pageCatalog(initialState) {
         root.querySelectorAll(`[name="${name}"]`).forEach(s => { if (s !== el) s.value = val })
         // Clear multi-type filter when user manually changes filters
         delete grid.dataset.multiTypeFilter
-        renderGrid()
+        renderGrid({ resetPage: true })
       })
-
-      // Track scroll position continuously — works on both window and inner scroll containers
-      // On iOS/Safari, overflow-x-hidden on a parent can cause scroll to happen on that
-      // element instead of window, making window.scrollY always 0.
-      const scrollContainer = document.documentElement.scrollTop > 0
-        ? document.documentElement
-        : (document.querySelector('#app > div') || document.body)
-      
-      const getScrollY = () => {
-        return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0
-      }
-
-      let trackedScrollY = getScrollY()
-      const onScroll = () => { trackedScrollY = getScrollY() }
-      window.addEventListener('scroll', onScroll, { passive: true })
-      document.addEventListener('scroll', onScroll, { passive: true })
 
       // Save current scroll + filter state before leaving the catalog
       const saveCatalogStateWithScroll = () => {
         try {
-          const scroll = trackedScrollY
+          const scroll = window.scrollY || (document.scrollingElement ? document.scrollingElement.scrollTop : 0) || document.documentElement.scrollTop || document.body.scrollTop || 0
           const filters = {
             type:     root.querySelector('select[name="type"]')?.value || '',
             size:     root.querySelector('select[name="size"]')?.value || '',
@@ -544,7 +539,8 @@ export function pageCatalog(initialState) {
             maxPrice: root.querySelector('input[name="maxPrice"]')?.value || '',
             sort:     root.querySelector('#sort-select')?.value || '',
           }
-          sessionStorage.setItem(CATALOG_STATE_KEY, JSON.stringify({ scroll, filters }))
+          console.log("Saving catalog state:", { scroll, filters, currentPage })
+          sessionStorage.setItem(CATALOG_STATE_KEY, JSON.stringify({ scroll, filters, currentPage }))
         } catch { /* ignore */ }
       }
 
@@ -565,8 +561,6 @@ export function pageCatalog(initialState) {
       // Return cleanup function
       return () => {
         unsubscribe()
-        window.removeEventListener('scroll', onScroll)
-        document.removeEventListener('scroll', onScroll)
       }
     },
   }

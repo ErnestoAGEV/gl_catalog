@@ -264,9 +264,16 @@ export async function startApp(mountEl) {
     // For non-catalog pages, apply saved scroll after rAF (DOM is fully painted)
     // Catalog.js handles its own restoration internally after its deferred renderGrid()
     if (savedScroll !== null && !path.startsWith('/catalog')) {
-      requestAnimationFrame(() => {
+      const applyScroll = () => {
         window.scrollTo({ top: savedScroll, behavior: 'instant' })
-        setTimeout(() => window.scrollTo({ top: savedScroll, behavior: 'instant' }), 120)
+        document.documentElement.scrollTop = savedScroll
+        document.body.scrollTop = savedScroll
+      }
+      requestAnimationFrame(() => {
+        applyScroll()
+        setTimeout(applyScroll, 50)
+        setTimeout(applyScroll, 150)
+        setTimeout(applyScroll, 400)
       })
     }
 
