@@ -319,7 +319,6 @@ export function pageAdminProducts(state) {
       const handleFiles = (fileList) => {
         const urlsStr = imageUrlsTextarea?.value.trim()
         const urls = urlsStr ? urlsStr.split(',').map(u => u.trim()).filter(Boolean) : []
-        const remaining = Math.max(0, 5 - urls.length)
 
         const validFiles = []
         const invalid = []
@@ -337,8 +336,9 @@ export function pageAdminProducts(state) {
           showToast(invalid.join(' | '), 'error')
         }
 
-        selectedFiles = validFiles.slice(0, remaining)
-        if (remaining === 0) fileInput.value = ''
+        const remaining = Math.max(0, 5 - (urls.length + selectedFiles.length))
+        selectedFiles = [...selectedFiles, ...validFiles.slice(0, remaining)]
+        fileInput.value = ''
         renderPreviews()
       }
 

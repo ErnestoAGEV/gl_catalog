@@ -11,7 +11,7 @@ export const CATEGORY_ORDER = [
   'Sudaderas',
   'Suéteres',
   'Chamarras',
-  'Abrigos',
+  'Abrigos'
 ]
 
 export function uniqueSorted(values) {

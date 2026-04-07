@@ -448,13 +448,17 @@ export function pageCatalog(initialState) {
           restoreFilters(savedCatalogState.filters)
         }
         renderGrid()
-        if (savedCatalogState?.scroll != null) {
+        if (savedCatalogState?.scroll != null && savedCatalogState.scroll > 10) {
           const targetY = savedCatalogState.scroll
           requestAnimationFrame(() => {
             window.scrollTo({ top: targetY, behavior: 'instant' })
+            document.documentElement.scrollTop = targetY
+            document.body.scrollTop = targetY
             // Second pass: covers lazy images / deferred content that shifts layout
             setTimeout(() => {
               window.scrollTo({ top: targetY, behavior: 'instant' })
+              document.documentElement.scrollTop = targetY
+              document.body.scrollTop = targetY
               // Release guard so subscribe can respond to state changes again
               restoringState = false
             }, 350)
@@ -512,13 +516,44 @@ export function pageCatalog(initialState) {
         renderGrid()
       })
 
-      // Save catalog state before navigating to a product page
-      on(root, 'click', 'a[href^="/producto/"]', () => saveCatalogState())
+      // Track scroll position continuously — works on both window and inner scroll containers
+      // On iOS/Safari, overflow-x-hidden on a parent can cause scroll to happen on that
+      // element instead of window, making window.scrollY always 0.
+      const scrollContainer = document.documentElement.scrollTop > 0
+        ? document.documentElement
+        : (document.querySelector('#app > div') || document.body)
+      
+      const getScrollY = () => {
+        return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0
+      }
+
+      let trackedScrollY = getScrollY()
+      const onScroll = () => { trackedScrollY = getScrollY() }
+      window.addEventListener('scroll', onScroll, { passive: true })
+      document.addEventListener('scroll', onScroll, { passive: true })
+
+      // Save current scroll + filter state before leaving the catalog
+      const saveCatalogStateWithScroll = () => {
+        try {
+          const scroll = trackedScrollY
+          const filters = {
+            type:     root.querySelector('select[name="type"]')?.value || '',
+            size:     root.querySelector('select[name="size"]')?.value || '',
+            color:    root.querySelector('select[name="color"]')?.value || '',
+            minPrice: root.querySelector('input[name="minPrice"]')?.value || '',
+            maxPrice: root.querySelector('input[name="maxPrice"]')?.value || '',
+            sort:     root.querySelector('#sort-select')?.value || '',
+          }
+          sessionStorage.setItem(CATALOG_STATE_KEY, JSON.stringify({ scroll, filters }))
+        } catch { /* ignore */ }
+      }
+
+      on(root, 'click', 'a[href^="/producto/"]', () => saveCatalogStateWithScroll())
 
       on(root, 'click', '[data-quickview]', (ev, btn) => {
         const product = publicProducts.find(p => p.id === btn.dataset.quickview)
         if (!product) return
-        saveCatalogState()
+        saveCatalogStateWithScroll()
         navigate(`/producto/${product.id}`)
       })
 
@@ -528,7 +563,11 @@ export function pageCatalog(initialState) {
       })
 
       // Return cleanup function
-      return unsubscribe
+      return () => {
+        unsubscribe()
+        window.removeEventListener('scroll', onScroll)
+        document.removeEventListener('scroll', onScroll)
+      }
     },
   }
 }
