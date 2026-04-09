@@ -82,8 +82,9 @@ export async function startApp(mountEl) {
   }
   applyTheme()
 
-  let currentCleanup = null
   let stopAdminOrderNotifier = null
+  const cachedViews = new Map() // { el, cleanup, seoConfig }
+  let currentNonCachedView = null
 
   const startAdminOrderNotifier = () => {
     if (stopAdminOrderNotifier) return
@@ -202,7 +203,24 @@ export async function startApp(mountEl) {
     }
   }
 
-  const render = async (path) => {
+  let renderPromise = Promise.resolve()
+
+  const render = async (path, options = {}) => {
+    const currentPromise = renderPromise
+    let resolveNext
+    renderPromise = new Promise(r => { resolveNext = r })
+    await currentPromise
+
+    try {
+      await _render(path, options)
+    } finally {
+      resolveNext()
+    }
+  }
+
+  const _render = async (path, options = {}) => {
+    const { forceRebuild = false } = options
+
     // ── Always reset body scroll lock on navigation ──
     document.body.style.overflow = ''
 
@@ -211,14 +229,9 @@ export async function startApp(mountEl) {
     document.getElementById('fs-viewer')?.remove()          // fullscreen image viewer
     document.getElementById('order-details-modal')?.remove() // admin order detail modal
 
-    // Cleanup previous route if applicable
-    if (currentCleanup) {
-      currentCleanup()
-      currentCleanup = null
-    }
+    const cacheKey = path === '/' ? '/' : (path.startsWith('/catalog') ? '/catalog' : null)
 
     // Capture the saved scroll position for this route BEFORE rendering
-    // (it gets cleared after use to avoid stale restores)
     const savedScroll = scrollPositions.get(path) ?? null
 
     const authed = isAdminAuthed()
@@ -235,13 +248,80 @@ export async function startApp(mountEl) {
 
     syncAdminOrderNotifier(path, authed)
 
+    // Hide all cached views
+    cachedViews.forEach(v => { v.el.style.display = 'none' })
+    if (currentNonCachedView) {
+      currentNonCachedView.el.style.display = 'none'
+    }
+
+    if (cacheKey && cachedViews.has(cacheKey) && !forceRebuild) {
+      // Restore from cache
+      const view = cachedViews.get(cacheKey)
+      view.el.style.display = ''
+      applySeo(view.seoConfig)
+
+      // Apply scroll
+      if (savedScroll === null) {
+        window.scrollTo(0, 0)
+        document.documentElement.scrollTop = 0
+        document.body.scrollTop = 0
+      } else {
+        scrollPositions.delete(path)
+        const applyScroll = () => {
+          window.scrollTo({ top: savedScroll, behavior: 'instant' })
+          document.documentElement.scrollTop = savedScroll
+          document.body.scrollTop = savedScroll
+        }
+        requestAnimationFrame(() => {
+          applyScroll()
+          setTimeout(applyScroll, 50)
+          setTimeout(applyScroll, 150)
+          setTimeout(applyScroll, 400)
+        })
+      }
+      
+      setupGlobalHandlers()
+      return
+    }
+
     const { title, seo, html, onMount } = await renderRoute(path, getState())
-    applySeo({
+    const seoConfig = {
       title: seo?.title || title,
       description: seo?.description,
       canonicalPath: seo?.canonicalPath || path.split('?')[0],
       robots: seo?.robots,
-    })
+    }
+    applySeo(seoConfig)
+
+    if (cacheKey && forceRebuild && cachedViews.has(cacheKey)) {
+       // Cleanup old cached version
+       const oldView = cachedViews.get(cacheKey)
+       oldView.cleanup?.()
+       oldView.el.remove()
+       cachedViews.delete(cacheKey)
+    }
+
+    // Create a container for this page route to prevent innerHTML destroying others
+    const pageContainer = document.createElement('div')
+    pageContainer.className = 'page-route-container'
+    pageContainer.innerHTML = html
+    mountEl.appendChild(pageContainer)
+
+    const cleanup = onMount?.(pageContainer)
+
+    if (cacheKey) {
+      cachedViews.set(cacheKey, { el: pageContainer, cleanup, seoConfig })
+    } else {
+      if (currentNonCachedView && !forceRebuild) {
+         currentNonCachedView.cleanup?.()
+         currentNonCachedView.el.remove()
+      }
+      if (forceRebuild && currentNonCachedView) {
+         currentNonCachedView.cleanup?.()
+         currentNonCachedView.el.remove()
+      }
+      currentNonCachedView = { el: pageContainer, cleanup }
+    }
 
     // For forward navigation: scroll to top immediately
     if (savedScroll === null) {
@@ -249,32 +329,22 @@ export async function startApp(mountEl) {
       document.documentElement.scrollTop = 0
       document.body.scrollTop = 0
     } else {
-      // Restoring: remove from in-memory map (catalog reads from sessionStorage instead)
+      // Restoring: remove from in-memory map
       scrollPositions.delete(path)
-    }
-
-    mountEl.innerHTML = html
-
-    // Execute onMount and capture cleanup function
-    const cleanup = onMount?.(mountEl)
-    if (typeof cleanup === 'function') {
-      currentCleanup = cleanup
-    }
-
-    // For non-catalog pages, apply saved scroll after rAF (DOM is fully painted)
-    // Catalog.js handles its own restoration internally after its deferred renderGrid()
-    if (savedScroll !== null && !path.startsWith('/catalog')) {
-      const applyScroll = () => {
-        window.scrollTo({ top: savedScroll, behavior: 'instant' })
-        document.documentElement.scrollTop = savedScroll
-        document.body.scrollTop = savedScroll
+      // For non-catalog pages apply saved scroll after DOM is painted
+      if (!path.startsWith('/catalog')) {
+        const applyScroll = () => {
+          window.scrollTo({ top: savedScroll, behavior: 'instant' })
+          document.documentElement.scrollTop = savedScroll
+          document.body.scrollTop = savedScroll
+        }
+        requestAnimationFrame(() => {
+          applyScroll()
+          setTimeout(applyScroll, 50)
+          setTimeout(applyScroll, 150)
+          setTimeout(applyScroll, 400)
+        })
       }
-      requestAnimationFrame(() => {
-        applyScroll()
-        setTimeout(applyScroll, 50)
-        setTimeout(applyScroll, 150)
-        setTimeout(applyScroll, 400)
-      })
     }
 
     // Setup global event listeners after render
@@ -305,7 +375,11 @@ export async function startApp(mountEl) {
     }
 
     // Navigation custom event listener (for coupon apply/remove)
-    window.addEventListener('navigate', () => render(getRoute()), { once: true })
+    // Avoid attaching duplicate event listeners if it already exists
+    if (!window.__glNavigationListenerAdded) {
+      window.__glNavigationListenerAdded = true
+      window.addEventListener('navigate', () => render(getRoute()), { once: true })
+    }
   }
 
   const stopRouteListener = onRouteChange(render)
@@ -364,9 +438,8 @@ export async function startApp(mountEl) {
     const sig = keyFn(state)
     if (prevSignatures[currentPath] === sig) return  // nothing relevant changed
     prevSignatures[currentPath] = sig
-    render(currentPath)
+    render(currentPath, { forceRebuild: true })
   })
-
 
   // First render is triggered by router, but store subscribe keeps it synced.
   // Cleanup function in case you ever want to unmount.
@@ -375,5 +448,7 @@ export async function startApp(mountEl) {
     stopRouter()
     stopRouteListener()
     unsub()
+    cachedViews.forEach(v => v.cleanup?.())
+    if (currentNonCachedView) currentNonCachedView.cleanup?.()
   }
 }

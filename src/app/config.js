@@ -2,7 +2,7 @@ export const BRAND = {
   name: import.meta.env.VITE_BRAND_NAME || 'G&L',
   tagline: 'Ropa de hombre en México. Compra rápida por WhatsApp.',
   whatsapp: import.meta.env.VITE_WHATSAPP_NUMBER || '523121018263',
-  freeShippingMin: 999,
+  freeShippingMin: 1499,
 }
 
 // Formato internacional sin '+' (ej: 5255XXXXXXXX). Reemplazar por el número real.
