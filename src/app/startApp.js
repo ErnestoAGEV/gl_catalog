@@ -232,7 +232,7 @@ export async function startApp(mountEl) {
     const cacheKey = path === '/' ? '/' : (path.startsWith('/catalog') ? '/catalog' : null)
 
     // Capture the saved scroll position for this route BEFORE rendering
-    const savedScroll = scrollPositions.get(path) ?? null
+    let savedScroll = scrollPositions.get(path) ?? null
 
     const authed = isAdminAuthed()
 
@@ -252,6 +252,20 @@ export async function startApp(mountEl) {
     cachedViews.forEach(v => { v.el.style.display = 'none' })
     if (currentNonCachedView) {
       currentNonCachedView.el.style.display = 'none'
+    }
+
+    // Check if the catalog needs to be rebuilt (e.g. navigating from home category cards)
+    if (window.__glForceCatalogRebuild && cacheKey === '/catalog') {
+      delete window.__glForceCatalogRebuild
+      // Clear any saved scroll so the page starts at the top
+      scrollPositions.delete(path)
+      savedScroll = null
+      if (cachedViews.has(cacheKey)) {
+        const oldView = cachedViews.get(cacheKey)
+        oldView.cleanup?.()
+        oldView.el.remove()
+        cachedViews.delete(cacheKey)
+      }
     }
 
     if (cacheKey && cachedViews.has(cacheKey) && !forceRebuild) {

@@ -55,6 +55,7 @@ export function pageHome() {
             <div class="pt-4 md:pt-6">
               <a 
                 href="/catalog" 
+                id="hero-cta"
                 class="inline-flex items-center justify-center gap-2 px-8 md:px-10 py-3.5 md:py-4 min-h-[48px] border-2 border-white text-white font-medium text-sm md:text-base rounded-xl hover:bg-white hover:text-gray-900 transition-all duration-300 active:scale-95"
               >
                 Descubrir colección
@@ -351,12 +352,24 @@ export function pageHome() {
       <div id="home-quick-add-container"></div>
     `,
     onMount(root) {
+      // Hero CTA and other /catalog links: force clean (unfiltered) catalog
+      const heroCta = qs(root, '#hero-cta')
+      if (heroCta) {
+        heroCta.addEventListener('click', (e) => {
+          e.preventDefault()
+          window.__glForceCatalogRebuild = true
+          navigate('/catalog')
+        })
+      }
+
       // Category filter navigation
       root.querySelectorAll('[data-category-filter]').forEach(btn => {
         btn.addEventListener('click', () => {
           const types = btn.dataset.categoryFilter // e.g. "Camisas" or "Playeras,Polos"
           sessionStorage.setItem('gl_pending_type_filter', types)
-          window.history.pushState(null, '', '/catalog'); window.dispatchEvent(new Event('popstate'))
+          // Signal that catalog must rebuild (not restore from keep-alive cache)
+          window.__glForceCatalogRebuild = true
+          navigate('/catalog')
         })
       })
 
