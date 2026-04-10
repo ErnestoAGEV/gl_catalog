@@ -301,7 +301,14 @@ export async function uploadProductImage(file) {
   const access = await ensureAdminAccess()
   if (!access.ok) return { error: access.error }
 
-  const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-').toLowerCase()}`
+  // Sanitize filename: remove accents/diacritics and non-ASCII chars (Supabase Storage rejects them)
+  const safeName = file.name
+    .normalize('NFD')                   // decompose accented chars (e.g. ñ → n + combining tilde)
+    .replace(/[\u0300-\u036f]/g, '')    // strip combining diacritical marks
+    .replace(/\s+/g, '-')              // spaces → hyphens
+    .replace(/[^a-zA-Z0-9._-]/g, '')   // remove any remaining unsafe chars
+    .toLowerCase()
+  const fileName = `${Date.now()}-${safeName || 'image.jpg'}`
   const { data, error } = await supabase.storage
     .from('products')
     .upload(fileName, file, {
