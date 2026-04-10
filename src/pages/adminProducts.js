@@ -224,15 +224,15 @@ export function pageAdminProducts(state) {
           imagePreviewsContainer.innerHTML = items.map((item, i) => `
             <div class="relative aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200 group">
               <img src="${item.src}" alt="Preview ${i + 1}" class="w-full h-full object-cover"/>
-              <div class="absolute top-1 right-1 flex gap-1">
+              <div class="absolute top-1 right-1 flex gap-1 z-10">
                 <button type="button" class="w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm" data-remove-kind="${item.kind}" data-remove-idx="${item.idx}" title="Eliminar imagen">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
               </div>
-              <div class="absolute bottom-1 left-1 flex items-center gap-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">
-                ${i === 0 ? '<span class="font-bold">Portada</span>' : `<button type="button" class="underline" data-cover-kind="${item.kind}" data-cover-idx="${item.idx}">Marcar portada</button>`}
+              <div class="absolute top-1 left-1 bg-black/50 text-white text-[9px] px-1.5 py-0.5 rounded max-w-[calc(100%-2rem)] truncate backdrop-blur-sm">${item.label}</div>
+              <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] px-1.5 py-1 text-center backdrop-blur-sm">
+                ${i === 0 ? '<span class="font-bold">✓ Portada</span>' : `<button type="button" class="underline hover:text-brand-light w-full" data-cover-kind="${item.kind}" data-cover-idx="${item.idx}">Marcar portada</button>`}
               </div>
-              <div class="absolute bottom-1 right-1 bg-black/40 text-white text-[10px] px-1.5 py-0.5 rounded">${item.label}</div>
             </div>
           `).join('')
         }
@@ -316,18 +316,60 @@ export function pageAdminProducts(state) {
         }
       }
 
+      // ── Image Compression Helper ──
+      const compressImage = (file, maxWidth = 2000, maxHeight = 2000, quality = 0.85) => {
+        return new Promise((resolve, reject) => {
+          const img = new Image()
+          const url = URL.createObjectURL(file)
+          img.onload = () => {
+            URL.revokeObjectURL(url)
+            let { width, height } = img
+
+            // Scale down if larger than max dimensions
+            if (width > maxWidth || height > maxHeight) {
+              const ratio = Math.min(maxWidth / width, maxHeight / height)
+              width = Math.round(width * ratio)
+              height = Math.round(height * ratio)
+            }
+
+            const canvas = document.createElement('canvas')
+            canvas.width = width
+            canvas.height = height
+            const ctx = canvas.getContext('2d')
+            ctx.drawImage(img, 0, 0, width, height)
+
+            canvas.toBlob(
+              (blob) => {
+                if (!blob) return reject(new Error('Compression failed'))
+                // Create a new File from the blob, preserving a clean name
+                const ext = '.jpg'
+                const baseName = file.name.replace(/\.[^.]+$/, '')
+                const compressedFile = new File([blob], baseName + ext, { type: 'image/jpeg' })
+                resolve(compressedFile)
+              },
+              'image/jpeg',
+              quality
+            )
+          }
+          img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not load image')) }
+          img.src = url
+        })
+      }
+
       // ── File Handling ──
-      const handleFiles = (fileList) => {
+      const handleFiles = async (fileList) => {
         const urlsStr = imageUrlsTextarea?.value.trim()
         const urls = urlsStr ? urlsStr.split(',').map(u => u.trim()).filter(Boolean) : []
 
         const validFiles = []
         const invalid = []
+        const toCompress = []
+
         Array.from(fileList || []).forEach(file => {
           if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
             invalid.push(`${file.name}: tipo no permitido`)
           } else if (file.size > MAX_IMAGE_SIZE_BYTES) {
-            invalid.push(`${file.name}: supera ${MAX_IMAGE_SIZE_MB} MB`)
+            toCompress.push(file) // Will auto-compress instead of rejecting
           } else {
             validFiles.push(file)
           }
@@ -335,6 +377,30 @@ export function pageAdminProducts(state) {
 
         if (invalid.length) {
           showToast(invalid.join(' | '), 'error')
+        }
+
+        // Auto-compress oversized images
+        if (toCompress.length) {
+          showToast(`Comprimiendo ${toCompress.length} imagen(es) grande(s)...`, 'info')
+          for (const file of toCompress) {
+            try {
+              const compressed = await compressImage(file)
+              if (compressed.size > MAX_IMAGE_SIZE_BYTES) {
+                // Try again with lower quality
+                const recompressed = await compressImage(file, 1600, 1600, 0.7)
+                if (recompressed.size > MAX_IMAGE_SIZE_BYTES) {
+                  invalid.push(`${file.name}: sigue siendo muy grande después de comprimir`)
+                  continue
+                }
+                validFiles.push(recompressed)
+              } else {
+                validFiles.push(compressed)
+              }
+            } catch (err) {
+              invalid.push(`${file.name}: error al comprimir`)
+            }
+          }
+          if (invalid.length) showToast(invalid.join(' | '), 'error')
         }
 
         const remaining = Math.max(0, 5 - (urls.length + selectedFiles.length))
