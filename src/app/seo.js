@@ -55,12 +55,12 @@ export function applySeo({
 
   setMetaByProperty('og:type', 'website')
   setMetaByProperty('og:url', canonicalUrl)
-  setMetaByProperty('og:title', title || 'G&L | Moda Masculina en Mexico')
+  setMetaByProperty('og:title', title || 'G&L | Tu fit perfecto')
   setMetaByProperty('og:description', safeDescription)
   setMetaByProperty('og:image', image)
 
   setMetaByName('twitter:card', 'summary_large_image')
-  setMetaByName('twitter:title', title || 'G&L | Moda Masculina en Mexico')
+  setMetaByName('twitter:title', title || 'G&L | Tu fit perfecto')
   setMetaByName('twitter:description', safeDescription)
   setMetaByName('twitter:image', image)
 }

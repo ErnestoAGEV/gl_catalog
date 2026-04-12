@@ -11,7 +11,7 @@ import { pageAdminLogin } from '../pages/adminLogin.js'
 function getSeoForRoute(path, basePath, state) {
   if (basePath === '/') {
     return {
-      title: 'G&L | Moda Masculina en Colima',
+      title: 'G&L | Tu fit perfecto',
       description: 'Descubre ropa y accesorios para hombre en G&L: camisas, polos, jeans y perfumes con estilo moderno.',
       canonicalPath: '/',
       robots: 'index,follow',
@@ -86,7 +86,7 @@ function getSeoForRoute(path, basePath, state) {
   }
 
   return {
-    title: 'G&L | Moda Masculina en Colima',
+    title: 'G&L | Tu fit perfecto',
     description: 'Moda masculina premium en Colima. Compra camisas, polos, jeans y perfumes en G&L.',
     canonicalPath: '/',
     robots: 'index,follow',
