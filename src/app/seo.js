@@ -22,7 +22,13 @@ function setMetaByProperty(property, content) {
 }
 
 function setCanonical(url) {
-  let tag = document.querySelector('link[rel="canonical"]')
+  // Find any existing canonical tag (may have been created by inline script in index.html)
+  const existing = document.querySelectorAll('link[rel="canonical"]')
+  if (existing.length > 1) {
+    // Remove duplicates, keep only the first
+    for (let i = 1; i < existing.length; i++) existing[i].remove()
+  }
+  let tag = existing[0] || null
   if (!tag) {
     tag = document.createElement('link')
     tag.setAttribute('rel', 'canonical')

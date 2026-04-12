@@ -10,7 +10,7 @@
       content="Descubre ropa y accesorios para hombre en G&L: camisas, polos, jeans y perfumes con estilo moderno."
     />
     <meta name="robots" content="index,follow" />
-    <link rel="canonical" href="https://www.glboutique.com.mx/" />
+    <!-- canonical is set dynamically by seo.js per route — do NOT hardcode here -->
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -40,9 +40,36 @@
     />
     <meta name="apple-mobile-web-app-title" content="G&L" />
     <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
+
+    <!-- Inline script: set canonical dynamically BEFORE app loads (for crawlers) -->
+    <script>
+      (function() {
+        var path = window.location.pathname || '/';
+        var base = 'https://www.glboutique.com.mx';
+        var canonical = base + (path === '/' ? '/' : path.replace(/\/$/, ''));
+        var link = document.createElement('link');
+        link.rel = 'canonical';
+        link.href = canonical;
+        document.head.appendChild(link);
+      })();
+    </script>
   </head>
   <body class="bg-black overflow-x-hidden">
     <div id="app" class="overflow-x-hidden"></div>
+
+    <!-- Fallback content for search engines that don't execute JavaScript -->
+    <noscript>
+      <div style="background:#000;color:#fff;font-family:Inter,sans-serif;padding:40px 20px;text-align:center">
+        <h1>G&L — Moda Masculina en Colima</h1>
+        <p>Descubre ropa y accesorios para hombre: camisas, polos, jeans y perfumes con estilo moderno.</p>
+        <nav style="margin-top:20px">
+          <a href="/" style="color:#c8a97e;margin:0 12px">Inicio</a>
+          <a href="/catalog" style="color:#c8a97e;margin:0 12px">Catálogo</a>
+        </nav>
+        <p style="margin-top:20px;font-size:14px;color:#999">Envío GRATIS en compras +$1,499 MXN · Colima, México</p>
+        <p style="margin-top:10px;font-size:12px;color:#666">© 2026 G&L. Todos los derechos reservados.</p>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.js"></script>
     <script>
       // Register Service Worker
