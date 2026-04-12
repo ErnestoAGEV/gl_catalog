@@ -18,9 +18,25 @@ function getLegacyHashRoute() {
   return queryPart ? `${path}?${queryPart}` : path
 }
 
+/** Reset mobile pinch-to-zoom back to 1× without permanently disabling zoom */
+function resetZoom() {
+  const vp = document.querySelector('meta[name="viewport"]')
+  if (!vp) return
+  const original = vp.getAttribute('content') || ''
+  // Temporarily force scale to 1
+  vp.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0')
+  // Restore original viewport on the next frame so the user can still zoom
+  requestAnimationFrame(() => {
+    vp.setAttribute('content', original)
+  })
+}
+
 function notify() {
   // Always clear body scroll lock left by modals/overlays from the previous route
   document.body.style.overflow = ''
+
+  // Reset any pinch-to-zoom so the new page renders at 1×
+  resetZoom()
 
   for (const fn of listeners) fn(getRoute())
 }
