@@ -11,6 +11,39 @@ const MAX_IMAGE_SIZE_MB   = 5
 const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024
 
 const TOGGLE_PUBLISH_HANDLER_KEY = '__glAdminTogglePublishHandler'
+const ADMIN_PRODUCTS_STATE_KEY = 'gl_admin_products_state'
+
+function readAdminProductsState(allTypes) {
+  try {
+    const raw = sessionStorage.getItem(ADMIN_PRODUCTS_STATE_KEY)
+    if (!raw) return null
+
+    const parsed = JSON.parse(raw)
+    const allowedStatus = new Set(['all', 'published', 'draft'])
+    const allowedStock = new Set(['all', 'in-stock', 'low', 'out', 'infinite'])
+    const savedFilters = parsed?.filters || {}
+
+    return {
+      searchTerm: typeof parsed?.searchTerm === 'string' ? parsed.searchTerm : '',
+      currentPage: Number.isFinite(parsed?.currentPage) && parsed.currentPage > 0 ? parsed.currentPage : 1,
+      filters: {
+        type: typeof savedFilters.type === 'string' && (savedFilters.type === 'all' || allTypes.includes(savedFilters.type)) ? savedFilters.type : 'all',
+        status: typeof savedFilters.status === 'string' && allowedStatus.has(savedFilters.status) ? savedFilters.status : 'all',
+        stock: typeof savedFilters.stock === 'string' && allowedStock.has(savedFilters.stock) ? savedFilters.stock : 'all',
+      },
+    }
+  } catch {
+    return null
+  }
+}
+
+function saveAdminProductsState(state) {
+  try {
+    sessionStorage.setItem(ADMIN_PRODUCTS_STATE_KEY, JSON.stringify(state))
+  } catch {
+    // ignore storage errors
+  }
+}
 
 export function pageAdminProducts(state) {
   const productCount = state.products.length
@@ -142,13 +175,29 @@ export function pageAdminProducts(state) {
       let selectedFiles = []
       let savedScrollPos = 0
 
-      let currentPage = 1
+      const savedState = readAdminProductsState(allTypes)
+
+      let currentPage = savedState?.currentPage || 1
       const itemsPerPage = 50
-      let currentSearchTerm = ''
-      let currentFilters = {
+      let currentSearchTerm = savedState?.searchTerm || ''
+      let currentFilters = savedState?.filters || {
         type: 'all',
         status: 'all',
         stock: 'all',
+      }
+
+      const searchInput = qs(root, '#search-products')
+      const filterTypeEl = qs(root, '#filter-type')
+      const filterStatusEl = qs(root, '#filter-status')
+      const filterStockEl = qs(root, '#filter-stock')
+      const clearFiltersBtn = qs(root, '#clear-filters')
+
+      const persistViewState = () => {
+        saveAdminProductsState({
+          searchTerm: currentSearchTerm,
+          currentPage,
+          filters: currentFilters,
+        })
       }
 
       const isInfiniteStock = (stock) => stock === undefined || stock === null || stock === '' || stock === '∞'
@@ -475,6 +524,7 @@ export function pageAdminProducts(state) {
           list.innerHTML = `<tr><td colspan="6" class="px-0 py-0">${emptyState}</td></tr>`
           mobileContainer.innerHTML = emptyState
           if (paginationContainer) paginationContainer.innerHTML = ''
+          persistViewState()
           return
         }
 
@@ -507,6 +557,8 @@ export function pageAdminProducts(state) {
             paginationContainer.innerHTML = ''
           }
         }
+
+        persistViewState()
       }
 
       // ── Form Show/Hide ──
@@ -548,16 +600,16 @@ export function pageAdminProducts(state) {
       }
 
       // ── Init ──
+      if (searchInput) searchInput.value = currentSearchTerm
+      if (filterTypeEl) filterTypeEl.value = currentFilters.type
+      if (filterStatusEl) filterStatusEl.value = currentFilters.status
+      if (filterStockEl) filterStockEl.value = currentFilters.stock
+
       renderList()
 
       if (typeSelect) { typeSelect.addEventListener('change', handleTypeChange); handleTypeChange() }
 
-      qs(root, '#search-products').addEventListener('input', (e) => renderList(e.target.value.trim(), 1))
-
-      const filterTypeEl = qs(root, '#filter-type')
-      const filterStatusEl = qs(root, '#filter-status')
-      const filterStockEl = qs(root, '#filter-stock')
-      const clearFiltersBtn = qs(root, '#clear-filters')
+      searchInput.addEventListener('input', (e) => renderList(e.target.value.trim(), 1))
 
       const applyFilters = () => {
         currentFilters = {

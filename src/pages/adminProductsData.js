@@ -25,7 +25,7 @@ export const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'XXXXL']
 
 export const PANTS_SIZE_OPTIONS = ['28', '30', '32', '33', '34', '36', '38', '40', '42', '44', '46', '48', '50', '52']
 
-export const PERFUME_SIZE_OPTIONS = ['80 ml', '100 ml', '125 ml', '150 ml', '200 ml']
+export const PERFUME_SIZE_OPTIONS = ['85 ml', '100 ml', '125 ml', '150 ml', '200 ml']
 
 export function parseList(value) {
   return value
