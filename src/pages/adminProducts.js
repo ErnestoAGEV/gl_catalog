@@ -732,6 +732,15 @@ export function pageAdminProducts(state) {
             if (error) throw new Error('Error al actualizar: ' + error.message)
             hideForm(false) // Do not reset pagination for updates
           } else {
+            // Clear persisted filters/search BEFORE addProduct, because addProduct
+            // calls emit() which re-renders the page. The re-render reads
+            // sessionStorage to restore filters — if stale filters are present,
+            // the new product may be filtered out and appear "not created".
+            sessionStorage.removeItem(ADMIN_PRODUCTS_STATE_KEY)
+            currentSearchTerm = ''
+            currentFilters = { type: 'all', status: 'all', stock: 'all' }
+            currentPage = 1
+
             const { error } = await addProduct({ name, type, price, originalPrice, stock, badge, sizes, colors, images })
             if (error) throw new Error('Error al crear: ' + error.message)
             hideForm(true) // Reset pagination to view the newly added product
