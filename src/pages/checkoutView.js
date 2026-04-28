@@ -4,7 +4,7 @@ import { BRAND } from '../app/config.js'
 /**
  * Returns the full HTML for the checkout page.
  */
-export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCount, coupon }) {
+export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCount, coupon, upsellProducts = [] }) {
   return `
     <div class="w-full max-w-full overflow-x-hidden">
     <section class="mb-5">
@@ -139,7 +139,16 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
       </div>
 
       <!-- Right Column: Summary (2/5 width on desktop, sticky) -->
-      <div class="lg:col-span-2 mt-6 lg:mt-0 overflow-hidden w-full max-w-full min-w-0">
+      <div id="checkout-summary-column" class="lg:col-span-2 mt-6 lg:mt-0 overflow-hidden w-full max-w-full min-w-0">
+        ${checkoutSummaryHTML({ subtotal, discount, total, freeShipping, itemCount, coupon, upsellProducts })}
+      </div>
+    </div>
+    </div>
+  `
+}
+
+export function checkoutSummaryHTML({ subtotal, discount, total, freeShipping, itemCount, coupon, upsellProducts = [] }) {
+  return `
         <div class="lg:sticky lg:top-24 space-y-4">
           
           <!-- Order Summary -->
@@ -180,6 +189,27 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
             </div>
           </section>
 
+          <!-- Upsell Items -->
+          ${upsellProducts.length > 0 ? `
+            <section class="rounded-xl bg-gray-100 dark:bg-gray-900 p-4">
+              <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Completa tu carrito</div>
+              <div class="space-y-2">
+                ${upsellProducts.map(p => `
+                  <div class="flex items-center gap-3 bg-white dark:bg-gray-800 p-2 rounded-xl border border-gray-100 dark:border-gray-700">
+                    <img src="${p.images?.[0] || ''}" loading="lazy" class="w-[3.25rem] h-[3.25rem] object-cover rounded-lg bg-gray-100" alt="${p.name}">
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-semibold text-gray-900 dark:text-white truncate" title="${p.name}">${p.name}</p>
+                      <p class="text-xs font-semibold text-brand">${formatMoney(p.price)}</p>
+                    </div>
+                    <button data-upsell-id="${p.id}" class="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-brand/5 text-brand hover:bg-brand hover:text-white transition-colors" title="Agregar al carrito">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v12m-6-6h12"/></svg>
+                    </button>
+                  </div>
+                `).join('')}
+              </div>
+            </section>
+          ` : ''}
+
           <!-- Submit button (desktop only) -->
           ${whatsappButton('hidden lg:flex')}
 
@@ -211,9 +241,6 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
             </div>
           </div>
         </div>
-      </div>
-    </div>
-    </div>
   `
 }
 

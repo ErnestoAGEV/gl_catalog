@@ -1,9 +1,10 @@
-import { getProductById, cartTotal, getCoupon, getDiscountAmount, applyCoupon, removeCoupon, saveOrder, clearCart } from '../app/store.js'
+import { getProductById, cartTotal, getCoupon, getDiscountAmount, applyCoupon, removeCoupon, saveOrder, clearCart, addToCart } from '../app/store.js'
 import { BRAND } from '../app/config.js'
 import { buildOrderMessage, openWhatsAppWithMessage } from '../app/whatsapp.js'
 import { on, qs } from '../app/dom.js'
 import { formatMoney } from '../app/format.js'
-import { checkoutHTML, couponAppliedHTML, couponInputHTML, checkoutSuccessHTML } from './checkoutView.js'
+import { checkoutHTML, checkoutSummaryHTML, couponAppliedHTML, couponInputHTML, checkoutSuccessHTML } from './checkoutView.js'
+import { sizeSelectionModal } from './catalogModals.js'
 import { sanitizeText, sanitizeCouponCode } from '../app/sanitize.js'
 import { navigate } from '../app/router.js'
 
@@ -78,9 +79,14 @@ export function pageCheckout(state) {
   const freeShipping = coupon?.freeShipping || subtotal >= BRAND.freeShippingMin
   const itemCount = state.cart.reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
 
+  // Create Upsell items (random selection of products not in cart)
+  const cartItemIds = new Set(state.cart.map(i => i.productId))
+  const eligibleUpsell = state.products.filter(p => p.badge !== 'Borrador' && !cartItemIds.has(p.id) && (isInfiniteStock(p.stock) || Number(p.stock) > 0))
+  const upsellProducts = eligibleUpsell.sort(() => 0.5 - Math.random()).slice(0, 3)
+
   return {
     title: 'Checkout | G&L',
-    html: checkoutHTML({ subtotal, discount, total, freeShipping, itemCount, coupon }),
+    html: checkoutHTML({ subtotal, discount, total, freeShipping, itemCount, coupon, upsellProducts }),
     onMount(root) {
       const form = qs(root, '#checkout-form')
       const addressWrap = qs(root, '#address-wrap')
@@ -111,7 +117,7 @@ export function pageCheckout(state) {
             applyCoupon(code, true).then(result => {
               if (result.success) {
                 if (couponError) couponError.classList.add('hidden')
-                updateCouponUI(getCoupon())
+                refreshSummaryView()
               } else {
                 if (couponError) {
                   couponError.textContent = result.error || 'Cupón inválido'
@@ -127,34 +133,94 @@ export function pageCheckout(state) {
         if (removeBtn) {
           removeBtn.addEventListener('click', () => {
             removeCoupon(true)
-            updateCouponUI(null)
+            refreshSummaryView()
           })
         }
       }
 
-      const updateCouponUI = (appliedCoupon) => {
+      const refreshSummaryView = () => {
+        // Recalculate totals
         const currentSubtotal = cartTotal()
-        const currentDiscount = getDiscountAmount(appliedCoupon)
+        const currentCoupon = getCoupon()
+        const currentDiscount = getDiscountAmount(currentCoupon)
         const currentTotal = currentSubtotal - currentDiscount
+        const currentFreeShip = currentCoupon?.freeShipping || currentSubtotal >= BRAND.freeShippingMin
+        const currentItemCount = state.cart.reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
 
-        if (appliedCoupon) {
-          couponContent.innerHTML = couponAppliedHTML(appliedCoupon)
-          discountRow.classList.remove('hidden')
-          discountRow.classList.add('flex')
-          discountCode.textContent = appliedCoupon.code
-          discountAmount.textContent = '-' + formatMoney(currentDiscount)
-        } else {
-          couponContent.innerHTML = couponInputHTML()
-          discountRow.classList.add('hidden')
-          discountRow.classList.remove('flex')
+        // Find the wrapper and replace HTML
+        const wrapper = root.querySelector('#checkout-summary-column')
+        if (wrapper) {
+          wrapper.innerHTML = checkoutSummaryHTML({ 
+            subtotal: currentSubtotal, 
+            discount: currentDiscount, 
+            total: currentTotal, 
+            freeShipping: currentFreeShip, 
+            itemCount: currentItemCount, 
+            coupon: currentCoupon, 
+            upsellProducts 
+          })
+          
+          attachCouponHandlers()
+          attachUpsellHandlers()
         }
+      }
 
-        totalAmount.textContent = formatMoney(currentTotal)
-        attachCouponHandlers()
+      const attachUpsellHandlers = () => {
+        root.querySelectorAll('[data-upsell-id]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault()
+            const productId = btn.dataset.upsellId
+            const product = getProductById(productId)
+            if (!product) return
+
+            // Create a temporary modal container if none exists, or use the body
+            let modalContainer = document.getElementById('modal-container')
+            if (!modalContainer) {
+              modalContainer = document.createElement('div')
+              modalContainer.id = 'modal-container'
+              document.body.appendChild(modalContainer)
+            }
+
+            modalContainer.innerHTML = sizeSelectionModal(product)
+
+            const closeModal = () => { modalContainer.innerHTML = '' }
+
+            const closeBtn = modalContainer.querySelector('#close-quick-add')
+            if (closeBtn) closeBtn.addEventListener('click', closeModal)
+
+            const modalEl = modalContainer.querySelector('#quick-add-modal')
+            if (modalEl) {
+              modalEl.addEventListener('click', (ev) => {
+                if (ev.target.id === 'quick-add-modal') closeModal()
+              })
+            }
+
+            const sizeButtons = modalContainer.querySelectorAll('.size-select-btn')
+            sizeButtons.forEach(sizeBtn => {
+              sizeBtn.addEventListener('click', (ev) => {
+                ev.preventDefault()
+                ev.stopPropagation()
+                const size = sizeBtn.dataset.size
+                addToCart({ productId, size, color: '', qty: 1 })
+                closeModal()
+                
+                // Hide from upsell list smoothly and update summary
+                const itemDiv = btn.closest('.flex.items-center.gap-3')
+                if (itemDiv) itemDiv.style.display = 'none'
+                
+                refreshSummaryView()
+                
+                // Limpiar el aviso si había error de "Carrito vacío"
+                setError('')
+              })
+            })
+          })
+        })
       }
 
       // Initial handler attachment
       attachCouponHandlers()
+      attachUpsellHandlers()
 
       // ── Address section show/hide ──
       const refreshConditional = () => {
