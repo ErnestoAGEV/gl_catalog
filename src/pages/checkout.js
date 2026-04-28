@@ -1,4 +1,4 @@
-import { getProductById, cartTotal, getCoupon, applyCoupon, removeCoupon, saveOrder, clearCart } from '../app/store.js'
+import { getProductById, cartTotal, getCoupon, getDiscountAmount, applyCoupon, removeCoupon, saveOrder, clearCart } from '../app/store.js'
 import { BRAND } from '../app/config.js'
 import { buildOrderMessage, openWhatsAppWithMessage } from '../app/whatsapp.js'
 import { on, qs } from '../app/dom.js'
@@ -73,7 +73,7 @@ export function pageCheckout(state) {
 
   const subtotal = cartTotal()
   const coupon = getCoupon()
-  const discount = coupon ? subtotal * (coupon.discount || 0) : 0
+  const discount = getDiscountAmount()
   const total = subtotal - discount
   const freeShipping = coupon?.freeShipping || subtotal >= BRAND.freeShippingMin
   const itemCount = state.cart.reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
@@ -134,7 +134,7 @@ export function pageCheckout(state) {
 
       const updateCouponUI = (appliedCoupon) => {
         const currentSubtotal = cartTotal()
-        const currentDiscount = appliedCoupon ? currentSubtotal * (appliedCoupon.discount || 0) : 0
+        const currentDiscount = getDiscountAmount(appliedCoupon)
         const currentTotal = currentSubtotal - currentDiscount
 
         if (appliedCoupon) {
@@ -303,7 +303,7 @@ export function pageCheckout(state) {
 
         const currentSubtotal = cartTotal()
         const appliedCoupon   = getCoupon()
-        const currentDiscount = appliedCoupon ? currentSubtotal * (appliedCoupon.discount || 0) : 0
+        const currentDiscount = getDiscountAmount(appliedCoupon)
         const currentTotal    = currentSubtotal - currentDiscount
 
         const message = buildOrderMessage({

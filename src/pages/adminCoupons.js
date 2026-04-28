@@ -1,4 +1,4 @@
-import { getAdminCoupons, createCoupon, updateCoupon, deleteCoupon } from '../app/store.js'
+import { getAdminCoupons, createCoupon, updateCoupon, deleteCoupon, getState } from '../app/store.js'
 import { showToast } from '../app/toast.js'
 import { sanitizeCouponCode, sanitizeText, sanitizeNumber } from '../app/sanitize.js'
 
@@ -29,8 +29,14 @@ function couponCard(c) {
         <p class="text-sm text-gray-500 mt-0.5">${c.label || '—'}</p>
       </div>
 
-      <!-- Stats -->
+      <!-- Categories / Stats -->
       <div class="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
+        <div class="col-span-full mb-1">
+           ${c.categories && c.categories.length > 0 
+              ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-600">Solo en aplicables</span>` 
+              : `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-600">Aplica a toda la tienda</span>`
+           }
+        </div>
         <div class="bg-gray-50 rounded-xl p-3 text-center">
           <p class="text-lg font-bold text-gray-900">${discountPct ? discountPct + '%' : '—'}</p>
           <p class="text-[10px] text-gray-400 uppercase tracking-wide mt-0.5">Descuento</p>
@@ -55,9 +61,12 @@ function couponCard(c) {
 
 function modalHTML(c = null) {
   const isEdit = !!c
+  const availableTypes = [...new Set(getState().products.map(p => p.type).filter(Boolean))].sort()
+  const selectedTypes = isEdit && c.categories ? c.categories : []
+
   return `
-    <div id="coupon-modal" class="fixed inset-0 layer-modal flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-      <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
+    <div id="coupon-modal" class="fixed inset-0 layer-modal flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in z-50">
+      <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden max-h-[90vh] flex flex-col">
         <!-- Header -->
         <div class="flex items-center justify-between p-6 border-b border-gray-100">
           <h2 class="text-lg font-bold font-manrope text-gray-900">${isEdit ? 'Editar cupón' : 'Crear nuevo cupón'}</h2>
@@ -67,7 +76,7 @@ function modalHTML(c = null) {
         </div>
 
         <!-- Form -->
-        <form id="coupon-form" method="post" class="p-6 space-y-4">
+        <form id="coupon-form" method="post" class="p-6 space-y-4 overflow-y-auto">
           ${isEdit ? `<input type="hidden" name="id" value="${c.id}">` : ''}
 
           <div>
@@ -88,8 +97,23 @@ function modalHTML(c = null) {
           <div>
             <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Descuento (%)</label>
             <input name="discount" type="number" min="0" max="100" step="1" value="${isEdit ? Math.round((c.discount || 0) * 100) : ''}"
+              onwheel="this.blur()"
               class="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none transition-colors"
               placeholder="25"/>
+          </div>
+
+          <!-- Product Categories Restriction -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Aplicar solo a Categorías (Opcional)</label>
+            <p class="text-[10px] text-gray-500 mb-2">Si cierras todo en blanco, aplicará a toda la tienda de forma general.</p>
+            <div class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-xl border border-gray-100 max-h-36 overflow-y-auto">
+              ${availableTypes.map(type => `
+                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-100 p-1.5 rounded transition-colors text-gray-700">
+                  <input type="checkbox" name="categories" value="${type}" class="rounded text-brand focus:ring-brand w-4 h-4" ${selectedTypes.includes(type) ? 'checked' : ''}>
+                  ${type}
+                </label>
+              `).join('')}
+            </div>
           </div>
 
           <div class="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
@@ -220,6 +244,9 @@ export function pageAdminCoupons() {
           const discount = Math.round(discountPct) / 100  // guardar como decimal en DB
           const freeShipping = form.querySelector('input[name="free_shipping"]').checked
           const active = form.querySelector('input[name="active"]').checked
+          
+          const categoriesInputs = form.querySelectorAll('input[name="categories"]:checked')
+          const categories = Array.from(categoriesInputs).map(i => i.value)
 
           if (!code) {
             errorEl.textContent = 'El código es requerido y solo puede tener letras y números.'
@@ -231,7 +258,7 @@ export function pageAdminCoupons() {
           submitBtn.textContent = 'Guardando...'
 
           const originalCode = form.querySelector('input[name="id"]')?.value
-          const payload = { label, discount, free_shipping: freeShipping, active }
+          const payload = { label, discount, free_shipping: freeShipping, active, categories }
           // Solo añadir code al payload si es creación (en edición el code es PK, no se puede cambiar)
           if (!originalCode) payload.code = code
 

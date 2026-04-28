@@ -476,12 +476,26 @@ export async function applyCoupon(code, silent = false) {
     return { success: false, error: 'Cupón no válido o expirado' }
   }
 
+  const couponCategories = coupon.categories || []
+  
+  // Validate if at least one cart item applies to this coupon
+  if (couponCategories.length > 0) {
+    const hasApplicableItem = state.cart.some(item => {
+      const p = getProductById(item.productId)
+      return p && couponCategories.includes(p.type)
+    })
+    if (!hasApplicableItem) {
+      return { success: false, error: 'Este cupón no aplica para los productos en tu carrito' }
+    }
+  }
+
   // Format valid coupon
   state.coupon = { 
     code: coupon.code, 
     discount: Number(coupon.discount), 
     freeShipping: coupon.free_shipping,
-    label: coupon.label 
+    label: coupon.label,
+    categories: couponCategories
   }
   
   writeJson(STORAGE_KEYS.coupon, state.coupon)
@@ -500,11 +514,30 @@ export function getCoupon() {
   return state.coupon
 }
 
+export function getDiscountAmount(couponOverride = null) {
+  const coupon = couponOverride || state.coupon
+  if (!coupon) return 0
+  
+  const discountRate = coupon.discount || 0
+  const applicableCategories = coupon.categories || []
+
+  if (applicableCategories.length === 0) {
+    return cartTotal() * discountRate
+  }
+
+  // Calculate subtotal of applicable items
+  const applicableSubtotal = state.cart.reduce((acc, i) => {
+    const product = getProductById(i.productId)
+    if (!product) return acc
+    if (!applicableCategories.includes(product.type)) return acc
+    return acc + (product.price * i.qty)
+  }, 0)
+
+  return applicableSubtotal * discountRate
+}
+
 export function getDiscountedTotal() {
-  const subtotal = cartTotal()
-  if (!state.coupon) return subtotal
-  const discount = state.coupon.discount || 0
-  return subtotal * (1 - discount)
+  return cartTotal() - getDiscountAmount()
 }
 
 // ========== NEWSLETTER ==========
