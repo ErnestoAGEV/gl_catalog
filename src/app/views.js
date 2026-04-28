@@ -27,6 +27,16 @@ function getSeoForRoute(path, basePath, state) {
     }
   }
 
+  if (basePath.startsWith('/categoria/')) {
+    const category = decodeURIComponent(basePath.split('/categoria/')[1] || '')
+    return {
+      title: `${category.replace(/,/g, ' y ')} en Colima | G&L`,
+      description: `Compra ${category.replace(/,/g, ' y ').toLowerCase()} para hombre con estilo premium en Colima. G&L Tu fit perfecto.`,
+      canonicalPath: basePath,
+      robots: 'index,follow',
+    }
+  }
+
   if (basePath.startsWith('/producto/')) {
     const productId = basePath.split('/producto/')[1]
     const product = state?.products?.find((item) => String(item.id) === String(productId || ''))
@@ -132,6 +142,8 @@ export async function renderRoute(path, state) {
     }
   } else if (basePath.startsWith('/producto/')) {
     page = pageProduct
+  } else if (basePath.startsWith('/categoria/')) {
+    page = pageCatalog
   } else {
     page = publicRoutes[basePath] || pageHome
   }

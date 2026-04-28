@@ -372,6 +372,11 @@ export function pageCatalog(initialState) {
         // Clear matching controls in both desktop and mobile panels
         root.querySelectorAll(`select[name="${key}"]`).forEach(s => s.selectedIndex = 0)
         root.querySelectorAll(`input[name="${key}"]`).forEach(i => { i.value = '' })
+        
+        if (key === 'type') {
+           window.history.replaceState(null, '', '/catalog' + window.location.search)
+        }
+        
         renderGrid({ resetPage: true })
       })
 
@@ -384,6 +389,8 @@ export function pageCatalog(initialState) {
         if (si) si.value = ''
         // Close mobile panel
         if (mobilePanel) closeSheet(mobilePanel)
+        
+        window.history.replaceState(null, '', '/catalog' + window.location.search)
         renderGrid({ resetPage: true })
       }
       if (resetBtn) resetBtn.addEventListener('click', resetAllFilters)
@@ -498,11 +505,19 @@ export function pageCatalog(initialState) {
         return
       }
 
-      // Apply category filter if navigated from home category cards
+      // Apply category filter if navigated from home category cards or URL slug
       const pendingTypeFilter = sessionStorage.getItem('gl_pending_type_filter')
-      if (pendingTypeFilter) {
-        sessionStorage.removeItem('gl_pending_type_filter')
-        const types = pendingTypeFilter.split(',').map(t => t.trim())
+      const basePath = window.location.pathname
+      let urlTypeFilter = null
+      if (basePath.startsWith('/categoria/')) {
+        urlTypeFilter = decodeURIComponent(basePath.split('/categoria/')[1]) || null
+      }
+      
+      const filterToApply = pendingTypeFilter || urlTypeFilter
+
+      if (filterToApply) {
+        if (pendingTypeFilter) sessionStorage.removeItem('gl_pending_type_filter')
+        const types = filterToApply.split(',').map(t => t.trim())
         if (types.length === 1) {
           // Single type: set the select directly
           root.querySelectorAll('select[name="type"]').forEach(sel => {
@@ -524,6 +539,12 @@ export function pageCatalog(initialState) {
         root.querySelectorAll(`[name="${name}"]`).forEach(s => { if (s !== el) s.value = val })
         // Clear multi-type filter when user manually changes filters
         delete grid.dataset.multiTypeFilter
+        
+        if (name === 'type') {
+           const path = val ? `/categoria/${encodeURIComponent(val)}` : '/catalog'
+           window.history.replaceState(null, '', path + window.location.search)
+        }
+        
         renderGrid({ resetPage: true })
       })
 

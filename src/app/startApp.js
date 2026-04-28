@@ -229,7 +229,7 @@ export async function startApp(mountEl) {
     document.getElementById('fs-viewer')?.remove()          // fullscreen image viewer
     document.getElementById('order-details-modal')?.remove() // admin order detail modal
 
-    const cacheKey = path === '/' ? '/' : (path.startsWith('/catalog') ? '/catalog' : null)
+    const cacheKey = path === '/' ? '/' : (path.startsWith('/catalog') || path.startsWith('/categoria/') ? '/catalog' : null)
 
     // Capture the saved scroll position for this route BEFORE rendering
     let savedScroll = scrollPositions.get(path) ?? null
@@ -346,7 +346,7 @@ export async function startApp(mountEl) {
       // Restoring: remove from in-memory map
       scrollPositions.delete(path)
       // For non-catalog pages apply saved scroll after DOM is painted
-      if (!path.startsWith('/catalog')) {
+      if (!path.startsWith('/catalog') && !path.startsWith('/categoria/')) {
         const applyScroll = () => {
           window.scrollTo({ top: savedScroll, behavior: 'instant' })
           document.documentElement.scrollTop = savedScroll
