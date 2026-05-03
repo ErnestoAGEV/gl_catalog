@@ -9,12 +9,14 @@ import {
 /**
  * Returns the full HTML for the product form section.
  * @param {string[]} allColors - All existing colors across products (for quick-select badges)
+ * @param {string[]} [dynamicCategories] - Categories loaded from DB (falls back to CATEGORY_OPTIONS)
  */
-export function productFormHTML(allColors) {
+export function productFormHTML(allColors, dynamicCategories) {
   const badgeOptions = BADGE_OPTIONS.map(b =>
     `<option value="${b.value}">${b.label}</option>`
   ).join('')
-  const categoryOptions = CATEGORY_OPTIONS.map(c =>
+  const categories = dynamicCategories && dynamicCategories.length > 0 ? dynamicCategories : CATEGORY_OPTIONS
+  const categoryOptions = categories.map(c =>
     `<option value="${c}">${c}</option>`
   ).join('')
 

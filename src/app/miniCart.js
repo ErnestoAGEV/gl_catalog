@@ -1,5 +1,6 @@
 import { getProductById, cartCount, getState } from './store.js'
 import { formatMoney } from './format.js'
+import { isPerfumeCategory } from '../pages/adminProductsData.js'
 
 let activeTimer = null
 let activeEl = null
@@ -34,7 +35,7 @@ export function showMiniCart(productId) {
 
   const state = getState()
   const img = product.images?.[0] || 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=120&h=150&fit=crop'
-  const isPerfume = product.type === 'Perfumes'
+  const isPerfume = isPerfumeCategory(product.type)
   const imgFit = isPerfume ? 'object-contain bg-white' : 'object-cover'
   const isDark = state.theme === 'dark'
   const count = cartCount()

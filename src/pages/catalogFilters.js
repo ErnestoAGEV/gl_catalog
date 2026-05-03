@@ -1,7 +1,9 @@
 // Filter utilities for the catalog page
+import { getActiveCategories } from '../app/store.js'
 
 // Desired display order for product categories in the catalog
-export const CATEGORY_ORDER = [
+// This is now dynamic from the database, with a hardcoded fallback
+export const CATEGORY_ORDER_FALLBACK = [
   'Pantalones',
   'Perfumes',
   'Camisas',
@@ -13,6 +15,14 @@ export const CATEGORY_ORDER = [
   'Chamarras',
   'Abrigos'
 ]
+
+export function getCategoryOrder() {
+  const dbCategories = getActiveCategories()
+  if (dbCategories && dbCategories.length > 0) {
+    return dbCategories.map(c => c.name)
+  }
+  return CATEGORY_ORDER_FALLBACK
+}
 
 export function uniqueSorted(values) {
   return Array.from(new Set(values)).filter(Boolean).sort((a, b) => String(a).localeCompare(String(b)))
@@ -47,7 +57,8 @@ export function applyFilters(products, filters) {
   if (filters.sort === 'price-asc') result.sort((a, b) => a.price - b.price)
   else if (filters.sort === 'price-desc') result.sort((a, b) => b.price - a.price)
   else {
-    // Default: group products by category in the defined display order
+    // Default: group products by category in the defined display order (dynamic from DB)
+    const CATEGORY_ORDER = getCategoryOrder()
     result.sort((a, b) => {
       const ai = CATEGORY_ORDER.indexOf(a.type)
       const bi = CATEGORY_ORDER.indexOf(b.type)

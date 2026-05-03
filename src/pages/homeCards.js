@@ -1,5 +1,6 @@
 import { formatMoney } from '../app/format.js'
 import { testimonials } from './homeData.js'
+import { isPerfumeCategory } from './adminProductsData.js'
 
 export function getBadgeColor(badge) {
   const colors = {
@@ -43,7 +44,7 @@ export function renderStars(rating) {
 
 export function featuredProductCard(p, idx) {
   const img = p.images?.[0] || 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400&h=500&fit=crop'
-  const isPerfume = p.type === 'Perfumes'
+  const isPerfume = isPerfumeCategory(p.type)
   const imageFitClass = isPerfume ? 'object-contain p-4' : 'object-cover'
   const imageBgClass = isPerfume ? 'bg-white' : 'bg-gray-100 dark:bg-gray-800'
   

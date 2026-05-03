@@ -1,4 +1,5 @@
 import { formatMoney } from '../app/format.js'
+import { isPerfumeCategory } from './adminProductsData.js'
 
 export function getBadgeColor(badge) {
   return { 'Nuevo': 'bg-blue-500', 'Oferta': 'bg-red-500', 'Popular': 'bg-amber-500', 'Premium': 'bg-purple-500' }[badge] || 'bg-gray-700'
@@ -26,7 +27,7 @@ export function productCard(p, idx) {
   const images = p.images && p.images.length > 0 
     ? p.images 
     : ['https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400&h=500&fit=crop']
-  const isPerfume = p.type === 'Perfumes'
+  const isPerfume = isPerfumeCategory(p.type)
   const imageFitClass = isPerfume ? 'object-contain bg-white' : 'object-cover object-center'
   const imageWrapClass = isPerfume ? 'bg-white' : 'bg-gray-100 dark:bg-gray-800'
   

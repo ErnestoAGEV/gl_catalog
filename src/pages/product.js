@@ -5,6 +5,7 @@ import { showToast } from '../app/toast.js'
 import { initModalCarousel, initModalZoom } from './catalogCarousels.js'
 import { getBadgeColor } from './catalogCard.js'
 import { handleQuickAdd } from './catalogQuickAdd.js'
+import { isPerfumeCategory } from './adminProductsData.js'
 
 function getRecommendedProducts(currentProduct, allProducts, limit = 4) {
   const candidates = allProducts.filter(p =>
@@ -22,7 +23,7 @@ function getRecommendedProducts(currentProduct, allProducts, limit = 4) {
 
 function recommendedCard(p) {
   const img = p.images?.[0] || 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400&h=500&fit=crop'
-  const isPerfume = p.type === 'Perfumes'
+  const isPerfume = isPerfumeCategory(p.type)
   const imageFitClass = isPerfume ? 'object-contain p-3' : 'object-cover'
   const imageBgClass = isPerfume ? 'bg-white' : 'bg-gray-100 dark:bg-gray-800'
 
@@ -82,7 +83,7 @@ export function pageProduct(initialState) {
   const images = product.images && product.images.length > 0
     ? product.images
     : ['https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&h=750&fit=crop']
-  const isPerfume = product.type === 'Perfumes'
+  const isPerfume = isPerfumeCategory(product.type)
   const modalImageFitClass = isPerfume ? 'object-contain bg-transparent' : 'object-contain md:object-cover object-center bg-transparent'
 
   const colorOpts = (product.colors || []).map(c => `<option value="${c}">${c}</option>`).join('')

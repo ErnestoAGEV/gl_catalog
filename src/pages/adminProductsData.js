@@ -27,6 +27,14 @@ export const PANTS_SIZE_OPTIONS = ['28', '30', '32', '33', '34', '36', '38', '40
 
 export const PERFUME_SIZE_OPTIONS = ['85 ml', '100 ml', '125 ml', '150 ml', '200 ml']
 
+/**
+ * Returns true if the given category/type name is a perfume category.
+ * Matches "Perfumes", "Perfumes Dama", "Perfumes Arabes", etc.
+ */
+export function isPerfumeCategory(type) {
+  return typeof type === 'string' && type.toLowerCase().startsWith('perfume')
+}
+
 export function parseList(value) {
   return value
     .split(',')

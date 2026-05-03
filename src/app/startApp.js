@@ -1,5 +1,5 @@
 import { getRoute, onRouteChange, startRouter, navigate, scrollPositions } from './router.js'
-import { getState, isAdminAuthed, loadProducts, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession, getAdminOrders } from './store.js'
+import { getState, isAdminAuthed, loadProducts, loadCategories, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession, getAdminOrders } from './store.js'
 import { renderRoute } from './views.js'
 import { showToast } from './toast.js'
 import { supabase } from './supabase.js'
@@ -72,6 +72,7 @@ export async function startApp(mountEl) {
   })
 
   loadProducts()
+  loadCategories()
 
   // Apply initial theme
   const applyTheme = () => {

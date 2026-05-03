@@ -1,8 +1,8 @@
-import { adminLogout, addProduct, updateProduct, deleteProduct, uploadProductImage } from '../app/store.js'
+import { adminLogout, addProduct, updateProduct, deleteProduct, uploadProductImage, getCategoryNames } from '../app/store.js'
 import { navigate } from '../app/router.js'
 import { on, qs } from '../app/dom.js'
 import { showToast } from '../app/toast.js'
-import { parseList } from './adminProductsData.js'
+import { parseList, isPerfumeCategory } from './adminProductsData.js'
 import { productCard, productCardMobile } from './adminProductCard.js'
 import { productFormHTML } from './adminProductForm.js'
 
@@ -51,6 +51,9 @@ export function pageAdminProducts(state) {
   
   // Extract unique colors from all products (passed to form for quick-select badges)
   const allColors = [...new Set(state.products.flatMap(p => p.colors || []).map(c => c.trim()))].sort()
+
+  // Get dynamic categories from DB (falls back to hardcoded in the form)
+  const dynamicCategories = getCategoryNames()
 
   return {
     title: 'Productos | Admin G&L',
@@ -143,7 +146,7 @@ export function pageAdminProducts(state) {
       </section>
       </div>
 
-      ${productFormHTML(allColors)}
+      ${productFormHTML(allColors, dynamicCategories)}
     `,
     onMount(root) {
       const list = qs(root, '#products-list')
@@ -346,7 +349,7 @@ export function pageAdminProducts(state) {
 
       // ── Type Change Handler ──
       const handleTypeChange = () => {
-        const isPerfume = typeSelect?.value === 'Perfumes'
+        const isPerfume = isPerfumeCategory(typeSelect?.value)
         if (clothingSizesSection) clothingSizesSection.classList.toggle('hidden', isPerfume)
         if (perfumeSizesSection) perfumeSizesSection.classList.toggle('hidden', !isPerfume)
 
@@ -693,7 +696,7 @@ export function pageAdminProducts(state) {
         const idInput = qs(root, 'input[name="id"]')
         const name = qs(root, 'input[name="name"]').value.trim()
         const type = qs(root, 'select[name="type"]').value
-        const isPerfume = type === 'Perfumes'
+        const isPerfume = isPerfumeCategory(type)
         const price = Number(qs(root, 'input[name="price"]').value || 0)
         const originalPrice = Number(qs(root, 'input[name="originalPrice"]').value || 0) || null
         const stock = Number(qs(root, 'input[name="stock"]').value || 0) || null

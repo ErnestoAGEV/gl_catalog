@@ -1,4 +1,5 @@
 import { addToCart, searchProducts, setSearchQuery, getSearchQuery, cartCount, subscribe, trackProductView, getState } from '../app/store.js'
+import { formatMoney } from '../app/format.js'
 import { on, qs } from '../app/dom.js'
 import { showToast } from '../app/toast.js'
 import { navigate } from '../app/router.js'
@@ -27,10 +28,12 @@ export function pageCatalog(initialState) {
       <div id="catalog-control-bar" class="bg-white dark:bg-black border-b border-black/5 dark:border-white/5 -mx-3 md:-mx-4 px-3 md:px-4 py-2.5 md:py-3">
         <div class="flex flex-col gap-2.5">
           <!-- Search row -->
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 relative" id="search-container">
             <div class="search-pill flex-1">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              <input type="search" id="catalog-search" placeholder="Buscar productos..." value="${getSearchQuery() || ''}" aria-label="Buscar productos" />
+              <div class="flex items-center w-full">
+                <svg class="mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="search" id="catalog-search" class="flex-1 bg-transparent focus:outline-none w-full min-w-0" autocomplete="off" placeholder="Buscar productos..." value="${getSearchQuery() || ''}" aria-label="Buscar productos" />
+              </div>
             </div>
             <div class="toolbar-actions">
               <button id="open-filters" class="toolbar-btn md:hidden">
@@ -43,6 +46,9 @@ export function pageCatalog(initialState) {
                 <option value="price-desc">Precio ↓</option>
               </select>
             </div>
+            
+            <!-- Global Suggestions Modal -->
+            <div id="search-suggestions" class="absolute top-full mt-2 left-0 right-0 max-h-[60vh] overflow-y-auto bg-white/98 dark:bg-gray-950/98 backdrop-blur-xl shadow-2xl border border-gray-100 dark:border-gray-800 rounded-xl z-[60] hidden flex-col divide-y divide-gray-100 dark:divide-gray-800 overscroll-contain"></div>
           </div>
 
           <!-- Filters row (desktop) -->
@@ -398,21 +404,83 @@ export function pageCatalog(initialState) {
 
       // Listen for search input changes (catalog-local search bar)
       const searchInput = qs(root, '#catalog-search')
-      if (searchInput) {
+      const searchSuggestions = qs(root, '#search-suggestions')
+      const searchContainer = qs(root, '#search-container')
+
+      if (searchInput && searchSuggestions && searchContainer) {
+        // Press Enter to do a full search
         searchInput.addEventListener('keypress', (e) => {
           if (e.key === 'Enter') {
             e.preventDefault()
+            searchSuggestions.classList.add('hidden')
             setSearchQuery(e.target.value.trim())
             renderGrid({ resetPage: true })
+            searchInput.blur()
           }
         })
+        
+        // As-you-type intelligent popup
         let searchTimeout
         searchInput.addEventListener('input', (e) => {
+          const query = e.target.value.trim()
+          
+          if (query.length < 2) {
+             searchSuggestions.classList.add('hidden')
+             return
+          }
+
           clearTimeout(searchTimeout)
           searchTimeout = setTimeout(() => {
-            setSearchQuery(e.target.value.trim())
-            renderGrid({ resetPage: true })
-          }, 300)
+            const results = searchProducts(query).filter(p => p.badge !== 'Borrador')
+            if (results.length > 0) {
+              const topResults = results.slice(0, 5) // Show top 5
+              searchSuggestions.innerHTML = topResults.map(p => `
+                <a href="/producto/${p.id}" class="flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors suggestion-link">
+                  <img src="${p.images?.[0] || ''}" loading="lazy" class="w-12 h-14 object-cover rounded-md bg-gray-100 dark:bg-gray-800 flex-shrink-0" alt="${p.name}">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white truncate" title="${p.name}">${p.name}</p>
+                    <p class="text-xs text-brand font-medium mt-0.5">${formatMoney(p.price)}</p>
+                  </div>
+                </a>
+              `).join('')
+              
+              // Handle clicks gracefully within SPA router
+              searchSuggestions.querySelectorAll('.suggestion-link').forEach(link => {
+                link.addEventListener('click', (ev) => {
+                  ev.preventDefault()
+                  saveCatalogStateWithScroll()
+                  navigate(link.getAttribute('href'))
+                })
+              })
+
+              searchSuggestions.classList.remove('hidden')
+              searchSuggestions.classList.add('flex')
+            } else {
+              searchSuggestions.innerHTML = '<div class="p-4 text-center text-sm text-gray-500">No se encontraron sugerencias</div>'
+              searchSuggestions.classList.remove('hidden')
+              searchSuggestions.classList.add('flex')
+            }
+          }, 150) // Extremely fast debounce for typeahead
+        })
+
+        // Dismiss popup logic
+        document.addEventListener('click', (e) => {
+          if (!searchContainer.contains(e.target)) {
+            searchSuggestions.classList.add('hidden')
+          }
+        })
+        
+        searchInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+             searchSuggestions.classList.add('hidden')
+             searchInput.blur()
+          }
+        })
+        
+        searchInput.addEventListener('focus', () => {
+          if (searchInput.value.trim().length >= 2 && searchSuggestions.innerHTML.trim() !== '') {
+            searchSuggestions.classList.remove('hidden')
+          }
         })
       }
 

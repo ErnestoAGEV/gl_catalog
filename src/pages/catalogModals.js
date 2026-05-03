@@ -1,11 +1,12 @@
 import { getBadgeColor } from './catalogCard.js'
 import { formatMoney } from '../app/format.js'
+import { isPerfumeCategory } from './adminProductsData.js'
 
 export function quickViewModal(p) {
   const images = p.images && p.images.length > 0 
     ? p.images 
     : ['https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&h=750&fit=crop']
-  const isPerfume = p.type === 'Perfumes'
+  const isPerfume = isPerfumeCategory(p.type)
   const modalImageFitClass = isPerfume ? 'object-contain bg-transparent' : 'object-contain md:object-cover object-center bg-transparent'
   
   const colorOpts = (p.colors || []).map(c => `<option value="${c}">${c}</option>`).join('')
