@@ -101,10 +101,45 @@ export function startRouter() {
 
     const targetUrl = new URL(href, window.location.origin)
     if (targetUrl.origin !== window.location.origin) return
-    if (targetUrl.hash && targetUrl.pathname === window.location.pathname && targetUrl.search === window.location.search) return
+    
+    // Same page with hash — scroll to element ourselves
+    if (targetUrl.hash && targetUrl.pathname === window.location.pathname && targetUrl.search === window.location.search) {
+      event.preventDefault()
+      const el = document.querySelector(targetUrl.hash)
+      if (el) {
+        // Update URL to show hash without reloading
+        window.history.pushState(null, '', targetUrl.href)
+        el.scrollIntoView({ behavior: 'smooth' })
+      }
+      return
+    }
 
     event.preventDefault()
+    if (targetUrl.hash) {
+      // Block render's scroll-to-top while we navigate + scroll to hash
+      window.__glScrollLockUntil = Date.now() + 3000
+    }
+    
+    // Navigate using pathname + search.
     navigate(`${targetUrl.pathname}${targetUrl.search}`)
+    
+    if (targetUrl.hash) {
+      // Update URL to show hash 
+      window.history.replaceState(null, '', targetUrl.href)
+      
+      const hash = targetUrl.hash
+      let attempts = 0
+      const doScroll = () => {
+        const el = document.querySelector(hash)
+        if (el && el.offsetParent !== null) {
+          el.scrollIntoView({ behavior: 'smooth' })
+        } else if (attempts < 20) {
+          attempts++
+          setTimeout(doScroll, 100)
+        }
+      }
+      setTimeout(doScroll, 50)
+    }
   }
 
   window.addEventListener('popstate', onPopState)
@@ -116,3 +151,5 @@ export function startRouter() {
     document.removeEventListener('click', onDocumentClick)
   }
 }
+
+

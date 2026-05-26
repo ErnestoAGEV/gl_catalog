@@ -222,6 +222,15 @@ export async function startApp(mountEl) {
   const _render = async (path, options = {}) => {
     const { forceRebuild = false } = options
 
+    // Clear scroll lock on real navigation (not in-page re-renders)
+    if (!forceRebuild) {
+      window.__glScrollLockUntil = 0
+      // Pages that should always start at top on fresh navigation
+      if (path === '/cart' || path === '/checkout' || path === '/checkout/success') {
+        scrollPositions.delete(path)
+      }
+    }
+
     // ── Always reset body scroll lock on navigation ──
     document.body.style.overflow = ''
 
@@ -275,8 +284,10 @@ export async function startApp(mountEl) {
       view.el.style.display = ''
       applySeo(view.seoConfig)
 
-      // Apply scroll
-      if (savedScroll === null) {
+      // Skip scroll reset if a data-scroll-to navigation is in progress
+      if (window.__glScrollLockUntil && Date.now() < window.__glScrollLockUntil) {
+        // noop — router will handle the scroll
+      } else if (savedScroll === null) {
         window.scrollTo(0, 0)
         document.documentElement.scrollTop = 0
         document.body.scrollTop = 0
@@ -294,7 +305,7 @@ export async function startApp(mountEl) {
           setTimeout(applyScroll, 400)
         })
       }
-      
+
       setupGlobalHandlers()
       return
     }
@@ -338,8 +349,12 @@ export async function startApp(mountEl) {
       currentNonCachedView = { el: pageContainer, cleanup }
     }
 
-    // For forward navigation: scroll to top immediately
-    if (savedScroll === null) {
+    // Handle pending scroll-to OR default scroll behavior
+    // Skip scroll reset if a data-scroll-to navigation is in progress
+    if (window.__glScrollLockUntil && Date.now() < window.__glScrollLockUntil) {
+      // noop — router will handle the scroll
+    } else if (savedScroll === null) {
+      // For forward navigation: scroll to top immediately
       window.scrollTo(0, 0)
       document.documentElement.scrollTop = 0
       document.body.scrollTop = 0
@@ -406,7 +421,7 @@ export async function startApp(mountEl) {
   // ─── Smart re-render: only re-render a page when its relevant state slice changes ───
   // Catalog manages its own updates via its own subscribe, so we skip it here.
   const routeRelevantKeys = {
-    '/':              (s) => `${s.products.length}|${s.isLoading}`,
+    '/':              (s) => `${s.products.length}|${s.isLoading}|${s.products.filter(p => p.badge !== 'Borrador').length}`,
     '/producto':      (s) => `${s.products.length}|${s.isLoading}`,
     '/cart':          (s) => `${JSON.stringify(s.cart)}|${JSON.stringify(s.coupon)}|${s.products.length}`,
     '/wishlist':      (s) => JSON.stringify(s.wishlist),
@@ -453,6 +468,8 @@ export async function startApp(mountEl) {
     const sig = keyFn(state)
     if (prevSignatures[currentPath] === sig) return  // nothing relevant changed
     prevSignatures[currentPath] = sig
+    // Prevent scroll-to-top during in-page re-renders (e.g. cart qty change)
+    window.__glScrollLockUntil = Date.now() + 2000
     render(currentPath, { forceRebuild: true })
   })
 

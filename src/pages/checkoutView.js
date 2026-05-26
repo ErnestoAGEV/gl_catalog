@@ -1,323 +1,353 @@
 import { formatMoney } from '../app/format.js'
 import { BRAND } from '../app/config.js'
+import { getState, getProductById } from '../app/store.js'
+import { isPerfumeCategory } from './adminProductsData.js'
 
-/**
- * Returns the full HTML for the checkout page.
- */
-export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCount, coupon, upsellProducts = [] }) {
-  return `
-    <div class="w-full max-w-full overflow-x-hidden">
-    <section class="mb-5">
-      <a href="/cart" class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-2">
-        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-        </svg>
-        Volver al carrito
-      </a>
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Checkout</h1>
-    </section>
+const waIcon = `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`
 
-    <!-- Main Layout: 2 columns on desktop -->
-    <div class="w-full max-w-full lg:grid lg:grid-cols-5 lg:gap-6 overflow-hidden box-border">
-      
-      <!-- Left Column: Form (3/5 width on desktop) -->
-      <div class="lg:col-span-3 space-y-5 overflow-hidden w-full max-w-full min-w-0">
-        
-        <!-- Contact Info -->
-        <section class="rounded-xl bg-gray-100 dark:bg-gray-900 p-5">
-          <div class="flex items-center gap-2 mb-4">
-            <div class="w-6 h-6 rounded-full bg-brand text-white text-xs font-bold flex items-center justify-center">1</div>
-            <span class="text-sm font-medium text-gray-900 dark:text-white">Información de contacto</span>
-          </div>
+const waIconSmall = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.2s-.8 1-.9 1.2-.3.2-.6.1-1.3-.5-2.4-1.5c-.9-.8-1.5-1.8-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5s0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4s-1 1-1 2.5 1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4s.2-1.3.2-1.4-.3-.2-.6-.4M12 21.8a9.9 9.9 0 01-5-1.4l-.4-.2-3.7 1 1-3.7-.2-.4a9.9 9.9 0 01-1.5-5.3c0-5.5 4.4-9.9 9.9-9.9 2.6 0 5.1 1 7 2.9a9.8 9.8 0 012.9 7c0 5.5-4.4 9.9-9.9 9.9m8.4-18.3A11.8 11.8 0 0012 0C5.5 0 .2 5.3.2 11.9c0 2.1.5 4.1 1.6 6L0 24l6.3-1.7a11.9 11.9 0 005.7 1.5c6.6 0 11.9-5.3 11.9-11.9a11.8 11.8 0 00-3.5-8.4z"/></svg>`
 
-          <form id="checkout-form" class="space-y-4" novalidate>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1.5">Nombre completo</label>
-              <input name="name" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30" placeholder="Tu nombre completo" />
-            </div>
-
-            <div>
-              <label class="block text-xs text-gray-500 mb-1.5">WhatsApp</label>
-              <input name="whatsapp" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30" inputmode="tel" placeholder="+52 312 123 4567" />
-            </div>
-        </section>
-
-        <!-- Payment & Delivery -->
-        <section class="rounded-xl bg-gray-100 dark:bg-gray-900 p-5">
-          <div class="flex items-center gap-2 mb-4">
-            <div class="w-6 h-6 rounded-full bg-brand text-white text-xs font-bold flex items-center justify-center">2</div>
-            <span class="text-sm font-medium text-gray-900 dark:text-white">Pago y entrega</span>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs text-gray-500 mb-1.5">Método de pago</label>
-              <select name="paymentMethod" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-3 text-sm text-gray-900 dark:text-white focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30">
-                <option value="">Seleccionar...</option>
-                <option value="Transferencia">💳 Transferencia bancaria</option>
-                <option value="Pago al recoger">💵 Efectivo al recibir</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-xs text-gray-500 mb-1.5">Método de entrega</label>
-              <select name="deliveryMethod" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-3 text-sm text-gray-900 dark:text-white focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30">
-                <option value="">Seleccionar...</option>
-                <option value="Recoger en tienda">🏪 Recoger en tienda</option>
-                <option value="Envío a domicilio">🚚 Envío a domicilio</option>
-              </select>
-            </div>
-          </div>
-        </section>
-
-        <!-- Shipping Address (conditional) -->
-        <section id="address-wrap" class="hidden rounded-xl bg-gray-100 dark:bg-gray-900 p-5">
-          <div class="flex items-center gap-2 mb-4">
-            <div class="w-6 h-6 rounded-full bg-brand text-white text-xs font-bold flex items-center justify-center">3</div>
-            <span class="text-sm font-medium text-gray-900 dark:text-white">Dirección de envío</span>
-          </div>
-          
-          <div class="space-y-4">
-            <div>
-              <label class="block text-xs text-gray-500 mb-1.5">Calle</label>
-              <input name="street" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30" placeholder="Ej: Av. Insurgentes Sur" />
-            </div>
-            
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs text-gray-500 mb-1.5">Núm. exterior</label>
-                <input name="numExt" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30" placeholder="123" />
-              </div>
-              <div>
-                <label class="block text-xs text-gray-500 mb-1.5">Núm. interior</label>
-                <input name="numInt" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30" placeholder="Opcional" />
-              </div>
-            </div>
-            
-            <div>
-              <label class="block text-xs text-gray-500 mb-1.5">Colonia</label>
-              <input name="neighborhood" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30" placeholder="Nombre de la colonia" />
-            </div>
-            
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs text-gray-500 mb-1.5">Ciudad</label>
-                <input name="city" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30" placeholder="Colima" />
-              </div>
-              <div>
-                <label class="block text-xs text-gray-500 mb-1.5">Código Postal</label>
-                <input name="zipCode" inputmode="numeric" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30" placeholder="28000" />
-              </div>
-            </div>
-            
-            <div>
-              <label class="block text-xs text-gray-500 mb-1.5">Estado</label>
-              <input name="state" class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30" placeholder="Colima" />
-            </div>
-            
-            <div>
-              <label class="block text-xs text-gray-500 mb-1.5">Referencias para el repartidor</label>
-              <textarea
-                name="references"
-                rows="2"
-                maxlength="500"
-                class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30 resize-none"
-                placeholder="Entre calles, color de casa, referencias..."
-              ></textarea>
-            </div>
-          </div>
-        </section>
-
-        <!-- Error message -->
-        <div id="form-error" class="hidden rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-500"></div>
-
-        <!-- Submit button (mobile only) -->
-        <div class="lg:hidden">
-          ${whatsappButton('')}
+function cartItemsHTML() {
+  const state = getState()
+  if (!state.cart || !state.cart.length) return ''
+  return state.cart.map(item => {
+    const p = getProductById(item.productId)
+    if (!p) return ''
+    const qty = Number(item.qty) || 1
+    const isPerfume = isPerfumeCategory(p.type)
+    const imgClass = isPerfume ? 'w-full h-full object-contain p-2 bg-white' : 'w-full h-full object-cover'
+    return `
+      <li class="flex gap-4">
+        <div class="relative w-16 h-20 flex-shrink-0 rounded bg-fog overflow-visible">
+          <img src="${p.images?.[0] || ''}" alt="${p.name}" loading="lazy" class="${imgClass} rounded"/>
+          ${qty > 1 ? `<span class="absolute -top-1.5 -right-1.5 z-10 min-w-[20px] h-[20px] px-1 rounded-full bg-ink text-paper font-mono text-[10px] font-bold flex items-center justify-center">${qty}</span>` : ''}
         </div>
-        </form>
-      </div>
-
-      <!-- Right Column: Summary (2/5 width on desktop, sticky) -->
-      <div id="checkout-summary-column" class="lg:col-span-2 mt-6 lg:mt-0 overflow-hidden w-full max-w-full min-w-0">
-        ${checkoutSummaryHTML({ subtotal, discount, total, freeShipping, itemCount, coupon, upsellProducts })}
-      </div>
-    </div>
-    </div>
-  `
+        <div class="flex-1 min-w-0">
+          <div class="font-display font-bold text-[15px] leading-tight tracking-[-0.02em]">${p.name}</div>
+          <div class="font-mono text-[11px] text-ink/55 mt-1">${item.size ? `Talla ${item.size}` : ''}${item.size && item.color ? ' · ' : ''}${item.color || ''}</div>
+        </div>
+        <div class="text-right">
+          <div class="font-mono text-[13px] font-semibold">${formatMoney(p.price * qty)}</div>
+        </div>
+      </li>`
+  }).filter(Boolean).join('')
 }
 
-export function checkoutSummaryHTML({ subtotal, discount, total, freeShipping, itemCount, coupon, upsellProducts = [] }) {
+export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCount, coupon, upsellProducts = [] }) {
   return `
-        <div class="lg:sticky lg:top-24 space-y-4">
-          
-          <!-- Order Summary -->
-          <section class="rounded-xl bg-gray-100 dark:bg-gray-900 p-5">
-            <div class="text-sm font-medium text-gray-900 dark:text-white mb-4">Resumen del pedido</div>
-            
-            <div class="space-y-3 text-sm">
-              <div class="flex justify-between">
-                <span class="text-gray-500 dark:text-gray-400">${itemCount} productos</span>
-                <span class="text-gray-900 dark:text-white">${formatMoney(subtotal)}</span>
-              </div>
-              
-              <div id="discount-row" class="${coupon ? 'flex' : 'hidden'} justify-between text-brand">
-                <span class="flex items-center gap-2">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-                  <span id="discount-code">${coupon?.code || ''}</span>
-                </span>
-                <span id="discount-amount">-${formatMoney(discount)}</span>
-              </div>
-              
-              <div class="flex justify-between">
-                <span class="text-gray-500 dark:text-gray-400">Envío</span>
-                <span class="${freeShipping ? 'text-brand font-medium' : 'text-gray-500 dark:text-gray-400'}">${freeShipping ? '¡GRATIS!' : 'Por calcular'}</span>
-              </div>
-              
-              <div class="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
-                <span class="font-semibold text-gray-900 dark:text-white">Total</span>
-                <span id="total-amount" class="text-xl font-bold text-gray-900 dark:text-white">${formatMoney(total)}</span>
-              </div>
-            </div>
-          </section>
+  <div class="w-full">
 
-          <!-- Coupon -->
-          <section id="coupon-section" class="rounded-xl bg-gray-100 dark:bg-gray-900 p-4">
-            <div class="text-xs text-gray-500 dark:text-gray-400 mb-3">Cupón de descuento</div>
-            <div id="coupon-content">
-            ${coupon ? couponAppliedHTML(coupon) : couponInputHTML()}
-            </div>
-          </section>
-
-          <!-- Upsell Items -->
-          ${upsellProducts.length > 0 ? `
-            <section class="rounded-xl bg-gray-100 dark:bg-gray-900 p-4">
-              <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Completa tu carrito</div>
-              <div class="space-y-2">
-                ${upsellProducts.map(p => `
-                  <div class="flex items-center gap-3 bg-white dark:bg-gray-800 p-2 rounded-xl border border-gray-100 dark:border-gray-700">
-                    <img src="${p.images?.[0] || ''}" loading="lazy" class="w-[3.25rem] h-[3.25rem] object-cover rounded-lg bg-gray-100" alt="${p.name}">
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm font-semibold text-gray-900 dark:text-white truncate" title="${p.name}">${p.name}</p>
-                      <p class="text-xs font-semibold text-brand">${formatMoney(p.price)}</p>
-                    </div>
-                    <button data-upsell-id="${p.id}" class="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-brand/5 text-brand hover:bg-brand hover:text-white transition-colors" title="Agregar al carrito">
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v12m-6-6h12"/></svg>
-                    </button>
-                  </div>
-                `).join('')}
-              </div>
-            </section>
-          ` : ''}
-
-          <!-- Submit button (desktop only) -->
-          ${whatsappButton('hidden lg:flex')}
-
-          <!-- Trust badges -->
-          <div class="flex justify-center gap-4 py-2">
-            <div class="text-center">
-              <div class="w-8 h-8 mx-auto mb-1 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
-                <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                </svg>
-              </div>
-              <span class="text-[10px] text-gray-500">Seguro</span>
-            </div>
-            <div class="text-center">
-              <div class="w-8 h-8 mx-auto mb-1 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
-                <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-              </div>
-              <span class="text-[10px] text-gray-500">Rápido</span>
-            </div>
-            <div class="text-center">
-              <div class="w-8 h-8 mx-auto mb-1 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
-                <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-              </div>
-              <span class="text-[10px] text-gray-500">Sin pago online</span>
-            </div>
+    <!-- Hero Strip -->
+    <section class="pt-12 lg:pt-16 pb-8 border-b border-ink/10">
+      <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+        <div class="flex items-center gap-3 mb-8 reveal in">
+          <a href="/cart" class="inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55 hover:text-ink transition-colors">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            Volver a la bolsa
+          </a>
+          <span class="h-px flex-1 bg-ink/15 mx-3"></span>
+          <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55">Tiempo estimado &middot; 90 segundos</span>
+        </div>
+        <div class="grid grid-cols-12 gap-6 lg:gap-10 items-end">
+          <div class="col-span-12 lg:col-span-9">
+            <h1 class="font-display font-extrabold text-[clamp(64px,11vw,184px)] leading-[0.86] tracking-[-0.04em]">
+              Cierra tu<br/><span class="text-brand">pedido</span>.
+            </h1>
+          </div>
+          <div class="col-span-12 lg:col-span-3 lg:text-right">
+            <p class="text-[15px] text-ink/70 max-w-[340px] lg:ml-auto leading-relaxed">
+              Llenamos tus datos en <strong>3 pasos</strong>. Te contactamos por WhatsApp para confirmar pago &mdash; <strong>cero pago online</strong>.
+            </p>
           </div>
         </div>
-  `
+      </div>
+    </section>
+
+    <!-- Main 2-column -->
+    <section class="py-12 lg:py-16">
+      <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+        <div class="grid grid-cols-12 gap-8 lg:gap-12">
+
+          <!-- LEFT: Form -->
+          <form id="checkout-form" class="col-span-12 lg:col-span-7 space-y-14" novalidate>
+
+            <!-- Hidden selects for validator compatibility -->
+            <select name="paymentMethod" class="hidden">
+              <option value="">Seleccionar...</option>
+              <option value="Transferencia" selected>Transferencia</option>
+              <option value="Pago al recoger">Pago al recoger</option>
+            </select>
+            <select name="deliveryMethod" class="hidden">
+              <option value="">Seleccionar...</option>
+              <option value="Recoger en tienda">Recoger en tienda</option>
+              <option value="Envío a domicilio" selected>Env&iacute;o a domicilio</option>
+            </select>
+
+            <!-- STEP 1: Contacto -->
+            <section class="reveal in">
+              <div class="flex items-center gap-5 mb-7">
+                <div class="step-num">01<span class="text-brand">.</span></div>
+                <div>
+                  <h2 class="font-display font-extrabold text-[28px] leading-none tracking-[-0.03em]">Contacto</h2>
+                  <p class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55 mt-1.5">&iquest;C&oacute;mo te contactamos?</p>
+                </div>
+                <span class="ml-auto font-mono text-[10px] tracking-[0.24em] uppercase text-brand">En curso &rarr;</span>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                <div class="field">
+                  <label>Nombre completo</label>
+                  <input name="name" placeholder="Eduardo N&uacute;&ntilde;ez" required/>
+                </div>
+                <div class="field">
+                  <label>WhatsApp</label>
+                  <input name="whatsapp" inputmode="tel" placeholder="+52 312 123 4567" required/>
+                </div>
+              </div>
+            </section>
+
+            <!-- STEP 2: Pago & entrega -->
+            <section class="reveal">
+              <div class="flex items-center gap-5 mb-7">
+                <div class="step-num">02<span class="text-brand">.</span></div>
+                <div>
+                  <h2 class="font-display font-extrabold text-[28px] leading-none tracking-[-0.03em]">Pago &amp; entrega</h2>
+                  <p class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55 mt-1.5">Sin pago online &mdash; confirmamos por WhatsApp</p>
+                </div>
+              </div>
+
+              <div class="font-mono text-[11px] tracking-[0.24em] uppercase text-ink/55 mb-3">&iquest;C&oacute;mo pagas?</div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8" id="pay-group">
+                <button type="button" class="choice active" data-val="transferencia">
+                  <span class="dot"></span>
+                  <div class="flex-1">
+                    <div class="font-display font-bold text-[18px] leading-none tracking-[-0.02em]">Transferencia</div>
+                    <div class="meta mt-2 font-mono text-[11px] text-ink/55">SPEI &middot; BBVA &middot; Confirmaci&oacute;n inmediata</div>
+                  </div>
+                  <div class="font-mono text-[10px] tracking-wider uppercase"></div>
+                </button>
+                <button type="button" class="choice" data-val="recoger">
+                  <span class="dot"></span>
+                  <div class="flex-1">
+                    <div class="font-display font-bold text-[18px] leading-none tracking-[-0.02em]">Pago al recoger</div>
+                    <div class="meta mt-2 font-mono text-[11px] text-ink/55">Efectivo &middot; TPV en tienda</div>
+                  </div>
+                  <div class="font-mono text-[10px] tracking-wider uppercase">&mdash;</div>
+                </button>
+              </div>
+
+              <div class="font-mono text-[11px] tracking-[0.24em] uppercase text-ink/55 mb-3">&iquest;C&oacute;mo lo recibes?</div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="dlv-group">
+                <button type="button" class="choice active" data-val="envio">
+                  <span class="dot"></span>
+                  <div class="flex-1">
+                    <div class="font-display font-bold text-[18px] leading-none tracking-[-0.02em]">Env&iacute;o a domicilio</div>
+                    <div class="meta mt-2 font-mono text-[11px] text-ink/55">2&mdash;3 d&iacute;as &middot; todo M&eacute;xico</div>
+                  </div>
+                  <div class="font-mono text-[10px] tracking-wider uppercase text-brand">${freeShipping ? 'Gratis' : `+$${BRAND.freeShippingMin.toLocaleString()}`}</div>
+                </button>
+                <button type="button" class="choice" data-val="tienda">
+                  <span class="dot"></span>
+                  <div class="flex-1">
+                    <div class="font-display font-bold text-[18px] leading-none tracking-[-0.02em]">Recoger en tienda</div>
+                    <div class="meta mt-2 font-mono text-[11px] text-ink/55">Centro &middot; Villa de &Aacute;lvarez</div>
+                  </div>
+                  <div class="font-mono text-[10px] tracking-wider uppercase">Hoy</div>
+                </button>
+              </div>
+            </section>
+
+            <!-- STEP 3: Dirección -->
+            <section id="address-wrap" class="reveal">
+              <div class="flex items-center gap-5 mb-7">
+                <div class="step-num">03<span class="text-brand">.</span></div>
+                <div>
+                  <h2 class="font-display font-extrabold text-[28px] leading-none tracking-[-0.03em]">Direcci&oacute;n</h2>
+                  <p class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55 mt-1.5">&iquest;D&oacute;nde lo dejamos?</p>
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-x-6">
+                <div class="field md:col-span-8">
+                  <label>Calle</label>
+                  <input name="street" placeholder="Av. Constituci&oacute;n"/>
+                </div>
+                <div class="field md:col-span-2">
+                  <label>N&uacute;m. ext.</label>
+                  <input name="numExt" placeholder="140"/>
+                </div>
+                <div class="field md:col-span-2">
+                  <label>N&uacute;m. int.</label>
+                  <input name="numInt" placeholder="&mdash;"/>
+                </div>
+                <div class="field md:col-span-6">
+                  <label>Colonia</label>
+                  <input name="neighborhood" placeholder="Centro"/>
+                </div>
+                <div class="field md:col-span-3">
+                  <label>Ciudad</label>
+                  <input name="city" placeholder="Colima"/>
+                </div>
+                <div class="field md:col-span-3">
+                  <label>C&oacute;digo postal</label>
+                  <input name="zipCode" inputmode="numeric" placeholder="28000"/>
+                </div>
+                <div class="field md:col-span-6">
+                  <label>Estado</label>
+                  <input name="state" placeholder="Colima"/>
+                </div>
+                <div class="field md:col-span-6">
+                  <label>Referencias</label>
+                  <textarea name="references" rows="2" placeholder="Casa azul, entre Hidalgo y Aldama"></textarea>
+                </div>
+              </div>
+            </section>
+
+            <!-- Form error -->
+            <div id="form-error" class="hidden font-mono text-[10px] tracking-[0.24em] uppercase text-red-500 mt-4"></div>
+
+            <!-- Submit -->
+            <section class="reveal">
+              <!-- Desktop: large pill -->
+              <button type="submit" class="hidden lg:flex group items-center justify-between gap-3 bg-[#25D366] text-paper pl-7 pr-3 h-20 w-full rounded-full text-[17px] font-semibold hover:bg-[#1ebc59] transition-colors">
+                <span class="flex items-center gap-3">
+                  ${waIcon}
+                  Enviar pedido por WhatsApp
+                </span>
+                <span class="w-14 h-14 rounded-full bg-paper text-[#25D366] flex items-center justify-center flex-shrink-0">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg>
+                </span>
+              </button>
+              <!-- Mobile: compact pill -->
+              <button type="submit" class="lg:hidden flex items-center justify-center gap-2 bg-[#25D366] text-paper w-full h-14 rounded-full text-[15px] font-semibold hover:bg-[#1ebc59] transition-colors">
+                ${waIconSmall}
+                Enviar pedido por WhatsApp
+              </button>
+              <p class="mt-4 font-mono text-[10px] tracking-[0.24em] uppercase text-ink/55 text-center">
+                Al continuar aceptas nuestros t&eacute;rminos &middot; cero pago online &middot; todo se confirma por WhatsApp
+              </p>
+            </section>
+          </form>
+
+          <!-- RIGHT: Order Summary -->
+          <aside class="col-span-12 lg:col-span-5 order-first lg:order-none">
+            <div id="checkout-summary-column">
+              ${checkoutSummaryHTML({ subtotal, discount, total, freeShipping, itemCount, coupon, upsellProducts })}
+            </div>
+          </aside>
+
+        </div>
+      </div>
+    </section>
+
+  </div>`
+}
+
+export function checkoutSummaryHTML({ subtotal, discount, total, freeShipping, itemCount, coupon }) {
+  const items = cartItemsHTML()
+
+  return `
+    <div class="lg:sticky lg:top-[24px] space-y-4">
+
+      <!-- Items card -->
+      <div class="bg-fog rounded-lg p-6">
+        <div class="flex items-center justify-between mb-5">
+          <div class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55">Tu pedido</div>
+          <a href="/cart" class="ul-link text-[11px] font-mono uppercase tracking-wider">Editar &rarr;</a>
+        </div>
+        <ul class="space-y-4">
+          ${items}
+        </ul>
+
+        <!-- Totals -->
+        <div class="mt-6 pt-5 border-t border-ink/10 space-y-3 font-mono text-[13px] digit-tabular">
+          <div class="flex justify-between">
+            <span class="text-ink/65">Subtotal &middot; ${itemCount} pzs</span>
+            <span>${formatMoney(subtotal)}</span>
+          </div>
+          <div id="discount-row" class="${coupon ? 'flex' : 'hidden'} justify-between text-brand">
+            <span>Descuento &middot; <span id="discount-code">${coupon?.code || ''}</span></span>
+            <span id="discount-amount">&minus;${formatMoney(discount)}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-ink/65">Env&iacute;o</span>
+            <span class="${freeShipping ? 'text-brand' : 'text-ink/65'}">${freeShipping ? '&iexcl;Gratis!' : 'Por calcular'}</span>
+          </div>
+        </div>
+
+        <!-- Grand total -->
+        <div class="mt-5 pt-5 border-t border-ink/10 flex items-baseline justify-between">
+          <div class="font-mono text-[11px] tracking-[0.28em] uppercase">Total</div>
+          <div id="total-amount" class="font-display font-extrabold text-[48px] leading-none tracking-[-0.04em] digit-tabular">${formatMoney(total)}</div>
+        </div>
+        <div class="mt-1 font-mono text-[10px] tracking-[0.2em] uppercase text-ink/45 text-right">MXN &middot; IVA incluido</div>
+      </div>
+
+      <!-- Trust strip -->
+      <div class="grid grid-cols-3 gap-px bg-ink/10 rounded-lg overflow-hidden">
+        <div class="bg-paper p-5 text-center">
+          <svg class="w-5 h-5 mx-auto mb-2 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.6-4A11.96 11.96 0 0112 2.9 11.96 11.96 0 013.4 6 12 12 0 003 9c0 5.6 3.8 10.3 9 11.6 5.2-1.3 9-6 9-11.6 0-1-.1-2-.4-3z"/></svg>
+          <div class="font-mono text-[9px] tracking-[0.2em] uppercase">Seguro</div>
+        </div>
+        <div class="bg-paper p-5 text-center">
+          <svg class="w-5 h-5 mx-auto mb-2 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3M3 12a9 9 0 1118 0 9 9 0 01-18 0z"/></svg>
+          <div class="font-mono text-[9px] tracking-[0.2em] uppercase">Cierre en 90s</div>
+        </div>
+        <div class="bg-paper p-5 text-center">
+          <svg class="w-5 h-5 mx-auto mb-2 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <div class="font-mono text-[9px] tracking-[0.2em] uppercase">Sin pago online</div>
+        </div>
+      </div>
+
+      <!-- Manifesto micro -->
+      <div class="border border-ink/10 rounded-lg p-5">
+        <div class="font-display font-medium text-[15px] leading-snug tracking-[-0.01em]">
+          &ldquo;Confirmamos cada pedido por WhatsApp con un humano &mdash;no un bot&mdash; para asegurar que <strong>todo te llegue bien</strong>.&rdquo;
+        </div>
+        <div class="mt-3 font-mono text-[10px] tracking-[0.24em] uppercase text-ink/55">&mdash; Equipo G&amp;L &middot; Colima</div>
+      </div>
+
+    </div>`
 }
 
 export function couponAppliedHTML(coupon) {
-  return `
-    <div class="flex items-center justify-between bg-brand/10 border border-brand/30 rounded-lg p-3">
-      <div class="flex items-center gap-2">
-        <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-        <div>
-          <p class="text-sm font-medium text-brand">${coupon.code}</p>
-          <p class="text-xs text-brand/70">${coupon.label}</p>
-        </div>
-      </div>
-      <button id="remove-coupon" class="text-xs text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors">Quitar</button>
-    </div>
-  `
+  return ''
 }
 
 export function couponInputHTML() {
-  return `
-    <div class="flex gap-2">
-      <input id="coupon-input" type="text" placeholder="Código" class="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-brand focus:outline-none uppercase"/>
-      <button id="apply-coupon" class="px-4 py-2.5 bg-brand text-white text-sm font-semibold rounded-lg hover:bg-brand-dark transition-colors">Aplicar</button>
-    </div>
-    <p id="coupon-error" class="hidden text-xs text-red-500 mt-2"></p>
-  `
-}
-
-function whatsappButton(extraClass) {
-  const waIcon = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`
-  return `
-    <button
-      type="submit"
-      form="checkout-form"
-      class="${extraClass} flex items-center justify-center gap-2 w-full rounded-xl bg-green-500 hover:bg-green-600 px-4 py-4 text-sm font-semibold text-white transition-colors shadow-lg shadow-green-500/20"
-    >
-      ${waIcon}
-      Enviar pedido por WhatsApp
-    </button>
-  `
+  return ''
 }
 
 export function checkoutSuccessHTML({ name, waUrl }) {
   return `
-    <div class="fixed inset-0 z-50 bg-gray-50 dark:bg-black/95 flex flex-col items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
-      <div class="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl p-8 shadow-2xl text-center border border-gray-100 dark:border-gray-800">
-        
-        <!-- Animated Check Icon -->
-        <div class="w-24 h-24 mx-auto mb-6 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center">
-          <svg class="w-12 h-12 text-green-500 animate-[bounce_1s_ease-in-out_1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="fixed inset-0 z-50 bg-paper flex flex-col items-center justify-center p-4">
+      <div class="w-full max-w-md bg-paper rounded-lg p-10 text-center border border-ink/10">
+
+        <div class="w-24 h-24 mx-auto mb-6 bg-brand/10 rounded-full flex items-center justify-center">
+          <svg class="w-12 h-12 text-brand animate-[bounce_1s_ease-in-out_1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path d="M5 13l4 4L19 7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
-        
-        <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white mb-2 tracking-tight">¡Pedido Recibido!</h2>
-        <p class="text-gray-500 dark:text-gray-400 mb-8 text-base">
-          Gracias <strong>${name}</strong>, hemos registrado tu pedido con éxito en nuestro sistema.
+
+        <h2 class="font-display font-extrabold text-[clamp(36px,6vw,64px)] tracking-[-0.04em] leading-none mb-4">&iexcl;Pedido recibido!</h2>
+        <p class="text-[15px] text-ink/70 max-w-sm mx-auto mb-8 leading-relaxed">
+          Gracias <strong>${name}</strong>, registramos tu pedido con &eacute;xito. Te escribimos por WhatsApp en los pr&oacute;ximos minutos.
         </p>
-        
-        <div class="space-y-4">
-          <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-            ¿No se abrió WhatsApp automáticamente?
-          </p>
-          <a
-            href="${waUrl}"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="flex items-center justify-center gap-2 w-full rounded-xl bg-green-500 hover:bg-green-600 px-4 py-4 text-sm font-semibold text-white transition-colors shadow-lg shadow-green-500/20"
-          >
-            <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-            Contactarnos por WhatsApp
-          </a>
-          <a href="/catalog" class="block mt-4 text-sm font-medium text-brand hover:underline underline-offset-4">
-            Volver a la tienda
-          </a>
-        </div>
+
+        <a
+          href="${waUrl}"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex items-center justify-between gap-3 bg-[#25D366] text-paper pl-7 pr-3 h-16 w-full rounded-full text-[17px] font-semibold hover:bg-[#1ebc59] transition-colors"
+        >
+          <span class="flex items-center gap-3">
+            ${waIcon}
+            Abrir WhatsApp
+          </span>
+          <span class="w-12 h-12 rounded-full bg-paper text-[#25D366] flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </span>
+        </a>
+
+        <a href="/catalog" class="ul-link text-[14px] font-semibold mt-6 inline-block">Volver a la tienda</a>
       </div>
-    </div>
-  `
+    </div>`
 }

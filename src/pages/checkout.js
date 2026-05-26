@@ -86,8 +86,63 @@ export function pageCheckout(state) {
 
   return {
     title: 'Checkout | G&L',
+    noPaddingTop: true,
+    fullWidth: true,
+    forceLight: true,
     html: checkoutHTML({ subtotal, discount, total, freeShipping, itemCount, coupon, upsellProducts }),
     onMount(root) {
+      // Body class for custom cursor
+      document.body.classList.add('checkout')
+
+      // Reveal on scroll
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in') })
+      }, { threshold: 0.1 })
+      root.querySelectorAll('.reveal').forEach(el => io.observe(el))
+
+      // Cursor bindings
+      const bindCursor = () => {
+        root.querySelectorAll('a, button, [data-cursor-hover], summary, .choice').forEach(el => {
+          el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'))
+          el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'))
+        })
+        root.querySelectorAll('input, textarea, select').forEach(el => {
+          el.addEventListener('mouseenter', () => document.body.classList.add('cursor-text'))
+          el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-text'))
+        })
+      }
+      bindCursor()
+
+      // Choice card groups — sync to hidden selects
+      const valMap = { transferencia: 'Transferencia', recoger: 'Pago al recoger', envio: 'Envío a domicilio', tienda: 'Recoger en tienda' }
+      const setupGroup = (id, selectName) => {
+        const wrap = root.querySelector('#' + id)
+        const sel = root.querySelector(`select[name="${selectName}"]`)
+        if (!wrap || !sel) return
+        wrap.addEventListener('click', (e) => {
+          const c = e.target.closest('.choice')
+          if (!c) return
+          wrap.querySelectorAll('.choice').forEach(x => x.classList.remove('active'))
+          c.classList.add('active')
+          sel.value = valMap[c.dataset.val] || ''
+          sel.dispatchEvent(new Event('change', { bubbles: true }))
+
+          if (id === 'dlv-group') {
+            const addr = root.querySelector('#address-wrap')
+            if (addr) {
+              if (c.dataset.val === 'tienda') {
+                addr.style.opacity = '.45'
+                addr.style.pointerEvents = 'none'
+              } else {
+                addr.style.opacity = '1'
+                addr.style.pointerEvents = 'auto'
+              }
+            }
+          }
+        })
+      }
+      setupGroup('pay-group', 'paymentMethod')
+      setupGroup('dlv-group', 'deliveryMethod')
       const form = qs(root, '#checkout-form')
       const addressWrap = qs(root, '#address-wrap')
       const errorBox = qs(root, '#form-error')
@@ -162,6 +217,7 @@ export function pageCheckout(state) {
           
           attachCouponHandlers()
           attachUpsellHandlers()
+          bindCursor()
         }
       }
 
@@ -226,7 +282,9 @@ export function pageCheckout(state) {
       const refreshConditional = () => {
         const payment = qs(root, 'select[name="paymentMethod"]').value
         const delivery = qs(root, 'select[name="deliveryMethod"]').value
-        addressWrap.classList.toggle('hidden', !needsAddress(payment, delivery))
+        const show = needsAddress(payment, delivery)
+        addressWrap.style.opacity = show ? '1' : '.45'
+        addressWrap.style.pointerEvents = show ? 'auto' : 'none'
       }
 
       const setError = (msg, fieldEl = null) => {
@@ -419,6 +477,12 @@ export function pageCheckout(state) {
           setSubmitting(false)
         })
       })
+
+      // Cleanup: remove body class on unmount
+      return () => {
+        document.body.classList.remove('checkout', 'cursor-hover', 'cursor-text')
+        io.disconnect()
+      }
     },
   }
 }
@@ -428,6 +492,9 @@ export function pageCheckoutSuccess() {
   if (!successData) {
     return {
       title: 'Checkout | G&L',
+      noPaddingTop: true,
+      fullWidth: true,
+      forceLight: true,
       html: checkoutHTML({ subtotal: 0, discount: 0, total: 0, freeShipping: false, itemCount: 0, coupon: null }),
       onMount() {
         navigate('/checkout')
@@ -437,6 +504,9 @@ export function pageCheckoutSuccess() {
 
   return {
     title: 'Pedido Confirmado | G&L',
+    noPaddingTop: true,
+    fullWidth: true,
+    forceLight: true,
     html: checkoutSuccessHTML(successData),
     onMount() {
       clearCheckoutSuccess()

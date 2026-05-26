@@ -1,463 +1,608 @@
 import { BRAND } from '../app/config.js'
-import { getState, subscribeNewsletter, isSubscribedNewsletter, getMostViewedProducts, trackProductView, addToCart, cartCount } from '../app/store.js'
+import { getState, subscribeNewsletter, isSubscribedNewsletter, getMostViewedProducts } from '../app/store.js'
 import { on, qs } from '../app/dom.js'
 import { navigate } from '../app/router.js'
-import { featuredProductCard, homeSkeletonCard, testimonialsSection } from './homeCards.js'
-import { showToast } from '../app/toast.js'
-import { handleQuickAdd } from './catalogQuickAdd.js'
+import { bestSellerRow, homeSkeletonCard } from './homeCards.js'
 import { sanitizeEmail } from '../app/sanitize.js'
+import { formatMoney } from '../app/format.js'
+import { heroSlides, categoryTiles, stats, stores } from './homeData.js'
 
 export function pageHome() {
   const state = getState()
   const isSubscribed = isSubscribedNewsletter()
+  const bestSellers = getMostViewedProducts(6)
+  const topProduct = getMostViewedProducts(1)[0]
   const publicProducts = state.products.filter(p => p.badge !== 'Borrador')
 
-    // Get featured products
-  const featured = [...publicProducts].slice(0, 4)
+  // Count pieces per category
+  function countByType(type) {
+    return publicProducts.filter(p => p.type === type).length
+  }
 
-    // Best sellers (most viewed by customers)
-  const bestSellers = getMostViewedProducts(4)
-
-    // New arrivals (with "Nuevo" badge)
-  const newArrivals = publicProducts.filter(p => p.badge === 'Nuevo').slice(0, 4)
-
-  return {
-    title: `${BRAND.name} | Men´s Cloting`,
-    html: `
-      <!-- Hero Section - Premium Minimalist -->
-      <section class="relative min-h-[90vh] md:min-h-[85vh] w-full overflow-hidden mb-8 md:mb-12">
-        <!-- Background Image -->
-        <div class="absolute inset-0">
-          <img 
-            src="https://images.unsplash.com/photo-1579014133304-7004d757f5d2?q=80&w=2560&auto=format&fit=crop"
-            alt="Colección G&L Men"
-            class="w-full h-full object-cover object-center"
-            fetchpriority="high"
-          />
-          <!-- Luxury subtle overlay for text readability -->
-          <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
-        </div>
-        
-        <!-- Content - Bottom aligned on mobile, centered on desktop -->
-        <div class="relative h-full min-h-[90vh] md:min-h-[85vh] flex items-end md:items-center justify-center px-6 md:px-12 pb-16 md:pb-0">
-          <div class="max-w-2xl text-center space-y-6 md:space-y-8 animate-fade-in">
-            <!-- Title -->
-            <h1 class="text-4xl md:text-6xl font-semibold text-white leading-tight tracking-tight">
-              Esenciales modernos
-            </h1>
-            
-            <!-- Subtitle -->
-            <p class="text-base md:text-xl text-white/90 font-light tracking-wide max-w-lg mx-auto">
-              Detalles que marcan diferencia.
-            </p>
-            
-            <!-- CTA -->
-            <div class="pt-4 md:pt-6">
-              <a 
-                href="/catalog" 
-                id="hero-cta"
-                class="inline-flex items-center justify-center gap-2 px-8 md:px-10 py-3.5 md:py-4 min-h-[48px] border-2 border-white text-white font-medium text-sm md:text-base rounded-xl hover:bg-white hover:text-gray-900 transition-all duration-300 active:scale-95"
-              >
-                Descubrir colección
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-
-
-      <!-- Quick Shop Categories -->
-      <section class="mb-8 md:mb-12">
-        <div class="flex items-center justify-between mb-5 md:mb-8">
-          <h2 class="text-xl md:text-3xl font-bold text-gray-900 dark:text-white">Explora por categoría</h2>
-          <a href="/catalog" class="group text-xs md:text-sm font-medium text-brand hover:text-brand-dark transition-colors inline-flex items-center gap-1">
-            Ver todo
-            <svg class="w-3.5 h-3.5 md:w-4 md:h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+  // Hero slides HTML
+  const heroSlidesLeft = heroSlides.map((s, i) => `
+    <div class="hero-slide absolute inset-0 flex flex-col justify-center transition-opacity duration-[1200ms] ease ${i === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'}" data-slide="${i}">
+      <h1 class="font-heading font-[800] text-[clamp(72px,11vw,184px)] leading-[0.86] tracking-[-0.04em] text-ink mb-6">${s.headline}</h1>
+      ${s.couponBody ? `
+        <p class="text-[17px] text-ink/70 max-w-[460px] leading-relaxed">
+          Aplica <span class="bg-fog font-mono rounded-md px-2 py-1 text-[15px]">WELCOME10</span> en checkout. Válido para clientes nuevos en cualquier categoría.
+        </p>
+      ` : `<p class="text-[17px] text-ink/70 max-w-[460px] leading-relaxed">${s.body}</p>`}
+      <div class="flex items-center gap-6 mt-8">
+        ${s.cta.isCopy ? `
+          <button id="hero-copy-coupon" class="group inline-flex items-center gap-2.5 h-14 px-7 rounded-full bg-brand text-paper text-[15px] font-semibold hover:bg-ink transition-colors">
+            <span class="copy-label">${s.cta.label}</span>
+            <span class="arrow-walk">→</span>
+          </button>
+        ` : `
+          <a href="${s.cta.href}" class="hero-cta group inline-flex items-center gap-2.5 h-14 px-7 rounded-full bg-ink text-paper text-[15px] font-semibold hover:bg-brand transition-colors" data-href="${s.cta.href}">
+            ${s.cta.label}
+            <span class="arrow-walk">→</span>
           </a>
-        </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
-          <!-- Camisas -->
-          <a href="/categoria/Camisas" class="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block active:scale-95 w-full text-left cursor-pointer">
-            <img src="https://i.pinimg.com/736x/f0/cc/e5/f0cce55c3da63f81343dd530422c7558.jpg" alt="Camisas" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy"/>
-            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-500"></div>
-            <div class="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-6 text-center md:transform md:translate-y-4 md:group-hover:translate-y-0 transition-transform duration-500">
-              <span class="inline-block px-2 py-0.5 md:px-3 md:py-1 bg-white/10 backdrop-blur rounded-full text-[9px] md:text-[10px] font-bold text-white uppercase tracking-widest mb-2 md:mb-3 border border-white/20 shadow-sm">Casual</span>
-              <h3 class="text-lg md:text-2xl font-black text-white mb-1 md:mb-2 leading-tight drop-shadow-lg">Camisas</h3>
-              <p class="hidden md:block text-gray-200 text-xs font-medium max-w-[160px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 translate-y-2 group-hover:translate-y-0">Estilo y confort para cualquier ocasión.</p>
-            </div>
-          </a>
-          
-          <!-- Playeras -->
-          <a href="/categoria/Polos" class="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block active:scale-95 w-full text-left cursor-pointer">
-            <img src="https://i.pinimg.com/1200x/b2/de/7a/b2de7a76b7037ee02ba7394cfb874849.jpg" alt="Polos" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy"/>
-            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-500"></div>
-             <div class="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-6 text-center md:transform md:translate-y-4 md:group-hover:translate-y-0 transition-transform duration-500">
-              <span class="inline-block px-2 py-0.5 md:px-3 md:py-1 bg-white/10 backdrop-blur rounded-full text-[9px] md:text-[10px] font-bold text-white uppercase tracking-widest mb-2 md:mb-3 border border-white/20 shadow-sm">Básicos</span>
-              <h3 class="text-lg md:text-2xl font-black text-white mb-1 md:mb-2 leading-tight drop-shadow-lg">Polos</h3>
-              <p class="hidden md:block text-gray-200 text-xs font-medium max-w-[160px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 translate-y-2 group-hover:translate-y-0">Algodón pima de alta calidad.</p>
-            </div>
-          </a>
-          
-          <!-- Pantalones -->
-          <a href="/categoria/Pantalones" class="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block active:scale-95 w-full text-left cursor-pointer">
-            <img src="https://i.pinimg.com/736x/8a/e5/6c/8ae56c59aba6c6a1f88e579b133a0104.jpg" alt="Pantalones" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy"/>
-            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-500"></div>
-             <div class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-              <span class="inline-block px-3 py-1 bg-white/10 backdrop-blur rounded-full text-[10px] font-bold text-white uppercase tracking-widest mb-3 border border-white/20 shadow-sm">Denim</span>
-              <h3 class="text-xl md:text-2xl font-black text-white mb-2 leading-tight drop-shadow-lg">Jeans & Chinos</h3>
-              <p class="text-gray-200 text-xs font-medium max-w-[160px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 translate-y-2 group-hover:translate-y-0">Corte perfecto y durabilidad.</p>
-            </div>
-          </a>
+        `}
+        ${s.secondary ? `<a href="${s.secondary.href}" class="ul-link text-[14px] font-medium text-ink/70 hover:text-ink">${s.secondary.label}</a>` : ''}
+      </div>
+    </div>
+  `).join('')
 
-          <!-- Perfumes -->
-          <a href="/categoria/Perfumes" class="relative aspect-[3/4] rounded-3xl overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-500 block w-full text-left cursor-pointer">
-            <img src="https://i.pinimg.com/736x/2c/f3/45/2cf345c33502c764d0a39389f18fce93.jpg" alt="Perfumes" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy"/>
-            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-500"></div>
-             <div class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-              <span class="inline-block px-3 py-1 bg-white/10 backdrop-blur rounded-full text-[10px] font-bold text-white uppercase tracking-widest mb-3 border border-white/20 shadow-sm">Fragancias</span>
-              <h3 class="text-xl md:text-2xl font-black text-white mb-2 leading-tight drop-shadow-lg">Perfumes</h3>
-              <p class="text-gray-200 text-xs font-medium max-w-[160px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 translate-y-2 group-hover:translate-y-0">Las mejores fragancias para él.</p>
-            </div>
-          </a>
-        </div>
-      </section>
+  const heroSlidesRight = heroSlides.map((s, i) => `
+    <div class="hero-img absolute inset-0 transition-opacity duration-[1200ms] ease ${i === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'}" data-slide="${i}">
+      <img src="${s.image}" alt="" class="w-full h-full object-cover" loading="${i === 0 ? 'eager' : 'lazy'}" />
+      <div class="absolute bottom-4 left-4">
+        <span class="${s.captionClass} text-paper text-[12px] font-mono px-3 py-1.5 rounded-full">${s.caption}</span>
+      </div>
+    </div>
+  `).join('')
 
-      <!-- Best Sellers - Grid -->
-      <section class="mb-8 md:mb-12">
-        <div class="flex items-end justify-between mb-5 md:mb-8">
-          <div>
-            <span class="inline-flex items-center gap-1.5 text-[10px] md:text-xs font-bold text-brand uppercase tracking-widest mb-1.5 md:mb-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-brand"></span>
-              Favoritos
-            </span>
-            <h2 class="text-xl md:text-3xl font-bold text-gray-900 dark:text-white">Lo más vendido</h2>
+  // "Más vendido" card (inline, goes next to ticker)
+  const topProductCard = topProduct ? `
+    <a href="/producto/${topProduct.id}" class="hidden lg:flex items-center gap-4 bg-paper border border-ink/10 shadow-lg rounded-lg px-4 py-3 hover:shadow-xl hover:-translate-y-0.5 transition-all cursor-pointer">
+      <div class="flex items-center gap-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-brand"></span>
+        <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink/60">Más vendido</span>
+      </div>
+      <p class="font-heading font-bold text-[15px] text-ink leading-tight">${topProduct.name}</p>
+      <span class="font-mono text-[13px] text-ink/70 shrink-0">${formatMoney(topProduct.price)}</span>
+    </a>
+  ` : ''
+
+  // Category tiles HTML
+  const categoriesHtml = categoryTiles.map(tile => {
+    const pieces = countByType(tile.categoryType)
+    const piecesLabel = `${pieces} pieza${pieces !== 1 ? 's' : ''}`
+
+    if (tile.type === 'image-brand') {
+      return `
+        <a href="${tile.href}" class="ct ${tile.span} relative bg-ink text-paper rounded-md p-5 flex flex-col justify-between overflow-hidden group">
+          <img src="${tile.image}" alt="${tile.name}" class="ct-img absolute inset-0 w-full h-full object-cover" loading="lazy" />
+          <div class="absolute inset-0 bg-ink/35"></div>
+          <span class="font-mono text-[10px] tracking-[0.22em] uppercase opacity-80 relative z-10">${tile.eyebrow}</span>
+          <div class="ct-label relative z-10">
+            <h3 class="font-heading font-[800] ${tile.headingSize} tracking-[-0.04em]">${tile.name}</h3>
+            <span class="font-mono text-[11px] opacity-70">${piecesLabel} →</span>
           </div>
-          <a href="/catalog" class="hidden md:flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-full text-sm font-bold text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">
-            Ver catálogo
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-          </a>
-        </div>
-        
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
-          ${bestSellers.length > 0 
-            ? bestSellers.map((p, i) => featuredProductCard(p, i)).join('') 
-            : Array.from({ length: 4 }, () => homeSkeletonCard()).join('')
-          }
-        </div>
-        
-         <div class="mt-6 md:mt-8 text-center md:hidden">
-            <a href="/catalog" class="inline-flex items-center justify-center w-full px-6 py-3.5 min-h-[48px] bg-gray-100 dark:bg-gray-800 rounded-xl text-sm font-bold text-gray-900 dark:text-white hover:bg-gray-200 transition-colors active:scale-95">
-                Ver más productos
-            </a>
-        </div>
-      </section>
-
-      <!-- New Arrivals -->
-      ${newArrivals.length > 0 ? `
-      <section class="mb-16">
-        <div class="flex items-center justify-between mb-8">
-           <div>
-            <span class="inline-flex items-center gap-1.5 text-xs font-bold text-blue-500 uppercase tracking-widest mb-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-              Recién llegados
-            </span>
-            <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Recien Llegados</h2>
+        </a>
+      `
+    }
+    if (tile.type === 'image-ink') {
+      return `
+        <a href="${tile.href}" class="ct ${tile.span} relative bg-ink text-paper rounded-md p-5 flex flex-col justify-between overflow-hidden group">
+          <img src="${tile.image}" alt="${tile.name}" class="ct-img absolute inset-0 w-full h-full object-cover opacity-30" loading="lazy" />
+          <div class="absolute inset-0 bg-ink/40"></div>
+          <span class="font-mono text-[10px] tracking-[0.22em] uppercase opacity-70 relative z-10">${tile.eyebrow}</span>
+          <div class="ct-label relative z-10">
+            <h3 class="font-heading font-[800] ${tile.headingSize} tracking-[-0.04em]">${tile.name}</h3>
+            <span class="font-mono text-[11px] opacity-70">${piecesLabel} →</span>
           </div>
-          <a href="/catalog" class="hidden md:flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-full text-sm font-bold text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">
-            Ver todo
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-          </a>
-        </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 stagger-children">
-          ${newArrivals.length > 0 
-            ? newArrivals.map((p, i) => featuredProductCard(p, i)).join('')
-            : Array.from({ length: 4 }, () => homeSkeletonCard()).join('')
-          }
-        </div>
-      </section>
-      ` : ''}
-
-      <!-- Features / Trust Section -->
-      <section class="mb-8 md:mb-12 border-y border-gray-100 dark:border-gray-800 py-8 md:py-10">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-y-6 md:gap-y-8 gap-x-3 md:gap-x-4">
-          <!-- WhatsApp -->
-          <div class="flex flex-col items-center text-center group">
-            <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center mb-2 md:mb-3 group-hover:scale-110 transition-transform text-green-600 dark:text-green-400">
-              <svg class="w-5 h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>
-            </div>
-            <h3 class="text-xs md:text-sm font-bold text-gray-900 dark:text-white">WhatsApp</h3>
-            <p class="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 mt-0.5 md:mt-1">Atención personalizada</p>
-          </div>
-
-          <!-- Shipping -->
-          <div class="flex flex-col items-center text-center group">
-            <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mb-2 md:mb-3 group-hover:scale-110 transition-transform text-blue-600 dark:text-blue-400">
-              <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
-            </div>
-            <h3 class="text-xs md:text-sm font-bold text-gray-900 dark:text-white">Envío Gratis</h3>
-            <p class="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 mt-0.5 md:mt-1">+$1,499</p>
-          </div>
-
-          <!-- Warranty -->
-          <div class="flex flex-col items-center text-center group">
-            <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center mb-2 md:mb-3 group-hover:scale-110 transition-transform text-purple-600 dark:text-purple-400">
-               <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-            </div>
-            <h3 class="text-xs md:text-sm font-bold text-gray-900 dark:text-white">Garantía</h3>
-            <p class="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 mt-0.5 md:mt-1">Calidad asegurada</p>
-          </div>
-
-          <!-- Payment -->
-          <div class="flex flex-col items-center text-center group">
-            <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center mb-2 md:mb-3 group-hover:scale-110 transition-transform text-orange-600 dark:text-orange-400">
-              <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-            </div>
-            <h3 class="text-xs md:text-sm font-bold text-gray-900 dark:text-white">Pago Seguro</h3>
-            <p class="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 mt-0.5 md:mt-1">Tarjeta o efectivo</p>
-          </div>
-        </div>
-      </section>
-
-      ${testimonialsSection()}
-
-      <!-- Promo Banners -->
-      <section class="mb-8 md:mb-12 grid md:grid-cols-1 gap-6">
-        <div class="relative rounded-2xl md:rounded-[2rem] overflow-hidden shadow-2xl group min-h-[16rem] md:min-h-[18rem] flex items-center">
-          <img 
-            src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&h=600&fit=crop"
-            alt="Promo"
-            class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
-            loading="lazy"
-          />
-          <div class="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent"></div>
-          <div class="relative z-10 w-full p-5 md:p-10">
-            <div class="max-w-md">
-              <div class="inline-flex items-center gap-2 px-2.5 py-1 md:px-3 md:py-1 bg-brand text-white rounded-full mb-3 md:mb-4 shadow-lg shadow-brand/20">
-                <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                <span class="text-[9px] md:text-[10px] font-black uppercase tracking-wider">Oferta Exclusiva</span>
-              </div>
-              <h2 class="text-2xl md:text-4xl font-black text-white leading-tight mb-2">10% OFF</h2>
-              <p class="text-sm md:text-lg text-gray-200 mb-4 md:mb-6 font-medium">Obtén un descuento especial en tu primera compra.</p>
-              <div class="flex flex-col sm:flex-row items-start gap-3 w-full sm:w-auto">
-                <div class="relative group/code w-full sm:w-auto">
-                   <code class="block px-6 py-3 bg-white/10 backdrop-blur border border-white/20 rounded-xl text-white font-mono text-lg tracking-widest text-center">WELCOME10</code>
-                   <button id="copy-coupon" class="absolute inset-0 w-full h-full flex items-center justify-center bg-brand/90 opacity-0 group-hover/code:opacity-100 transition-opacity rounded-xl cursor-copy text-white font-bold text-xs gap-1">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                      Copiar
-                   </button>
-                </div>
-                <a href="/catalog" class="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-900 rounded-xl font-bold hover:bg-gray-100 transition-colors w-full sm:w-auto">
-                  Usar cupón
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Newsletter -->
-      <section class="mb-8 relative overflow-hidden rounded-2xl md:rounded-[2rem] bg-brand p-6 md:p-12">
-        <div class="absolute inset-0 bg-blue-600"></div>
-        <div class="absolute inset-0 bg-gradient-to-br from-brand via-blue-700 to-indigo-900"></div>
-        <!-- Decorative circles -->
-         <div class="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-white/5 blur-3xl"></div>
-         <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-60 h-60 rounded-full bg-black/10 blur-2xl"></div>
-        
-        <div class="relative z-10 grid md:grid-cols-2 gap-8 items-center">
-            <div class="text-left">
-                <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur rounded-full mb-4 border border-white/10">
-                    <svg class="w-4 h-4 text-orange-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                    <span class="text-[10px] font-bold text-white uppercase tracking-wider">Club G&L</span>
-                </div>
-                <h2 class="text-3xl md:text-4xl font-black text-white mb-3">Únete a nosotros.</h2>
-                <p class="text-blue-100 text-lg">Suscríbete para recibir ofertas exclusivas y novedades antes que nadie. Además, <strong>10% OFF</strong> en tu primera orden.</p>
-            </div>
-        
-          ${isSubscribed ? `
-            <div class="bg-white/10 backdrop-blur rounded-2xl p-6 text-center border border-white/20">
-              <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-green-900/20">
-                  <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-                  </svg>
-              </div>
-              <h3 class="text-xl font-bold text-white mb-1">¡Ya estás dentro!</h3>
-              <p class="text-blue-200 text-sm">Gracias por ser parte de la comunidad.</p>
+        </a>
+      `
+    }
+    // Image tiles (Camisas = large, Jeans = medium)
+    const isLarge = tile.span.includes('row-span-2')
+    const gradient = isLarge
+      ? 'bg-gradient-to-br from-ink/40 via-ink/0 to-ink/0'
+      : 'bg-gradient-to-t from-ink/35 to-ink/0'
+    return `
+      <a href="${tile.href}" class="ct ${tile.span} relative rounded-md overflow-hidden group">
+        <img src="${tile.image}" alt="${tile.name}" class="ct-img absolute inset-0 w-full h-full object-cover" loading="lazy" />
+        <div class="absolute inset-0 ${gradient}"></div>
+        <div class="relative h-full flex flex-col justify-between p-5 text-paper">
+          ${isLarge ? `
+            <div class="flex items-center justify-between">
+              <span class="bg-paper text-ink rounded-full px-3 py-1.5 text-[11px] font-mono font-medium">${tile.eyebrow}</span>
+              <span class="font-mono text-[11px] opacity-70">${piecesLabel}</span>
             </div>
           ` : `
-            <form id="newsletter-form-page" class="bg-white/5 backdrop-blur rounded-2xl p-6 border border-white/10">
-              <div class="flex flex-col gap-4">
-                  <div>
-                    <label class="block text-xs font-bold text-blue-200 uppercase tracking-wider mb-2" for="email-page">Correo electrónico</label>
-                    <input 
-                        type="email" 
-                        name="email"
-                        id="email-page"
-                        placeholder="ejemplo@correo.com" 
-                        class="w-full px-5 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder:text-blue-300/50 focus:outline-none focus:bg-black/30 focus:border-white/30 transition-all"
-                        required
-                    />
-                  </div>
-                  <button type="submit" class="w-full px-6 py-4 bg-white text-brand font-black rounded-xl text-sm uppercase tracking-wide hover:bg-blue-50 hover:scale-[1.02] transition-all shadow-lg shadow-black/20">
-                    Suscribirme ahora
-                  </button>
-                  <p class="text-xs text-blue-300 text-center">Respetamos tu privacidad. Sin spam.</p>
-              </div>
-            </form>
+            <span class="font-mono text-[11px] tracking-[0.14em] uppercase opacity-80">${tile.eyebrow}</span>
           `}
+          <div class="ct-label">
+            ${tile.subtitle ? `<span class="font-mono text-[11px] tracking-[0.14em] uppercase opacity-80 block mb-1">${tile.subtitle}</span>` : ''}
+            <h3 class="font-heading font-[800] ${tile.headingSize} tracking-[-0.04em]">${tile.name}${isLarge ? ' →' : ''}</h3>
+            ${!isLarge ? `<span class="font-mono text-[11px] opacity-70">${piecesLabel} →</span>` : ''}
+          </div>
+        </div>
+      </a>
+    `
+  }).join('')
+
+  // Best sellers list
+  const bestSellersHtml = bestSellers.length > 0
+    ? bestSellers.map((p, i) => bestSellerRow(p, i)).join('')
+    : Array.from({ length: 6 }, (_, i) => `
+        <li class="grid grid-cols-12 items-center gap-4 py-6 px-3 border-b border-[#EAE9E4]">
+          <span class="col-span-1 h-4 w-6 rounded skeleton-shimmer"></span>
+          <span class="col-span-10 md:col-span-6 h-8 w-3/4 rounded skeleton-shimmer"></span>
+          <span class="hidden md:block col-span-3 h-4 w-1/2 rounded skeleton-shimmer"></span>
+          <span class="col-span-1 md:col-span-2 h-4 w-16 rounded skeleton-shimmer ml-auto"></span>
+        </li>
+      `).join('')
+
+  // Stats HTML
+  const statsHtml = stats.map(s => `
+    <div class="text-center md:text-left">
+      <p class="font-heading font-bold text-[64px] leading-none tracking-[-0.04em] tabular-nums">${s.number}</p>
+      <p class="font-mono text-[11px] tracking-[0.24em] uppercase opacity-60 mt-2">${s.caption}</p>
+    </div>
+  `).join('')
+
+  // Stores HTML
+  const storesHtml = stores.map(s => `
+    <div class="group bg-fog hover:bg-ink hover:text-paper p-10 rounded-md min-h-[340px] flex flex-col justify-between transition-all duration-[350ms]">
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <span class="font-mono text-[11px] tracking-[0.22em] uppercase opacity-60">Sucursal — ${s.id}</span>
+          <span class="font-mono text-[10px] tracking-[0.24em] uppercase opacity-50">${s.coords}</span>
+        </div>
+        <h3 class="font-heading font-[800] text-[56px] tracking-[-0.04em] leading-none">${s.name}</h3>
+        <p class="font-mono text-[13px] opacity-60 mb-6">${s.fullName}</p>
+        <p class="text-[15px] max-w-sm opacity-90 leading-relaxed">${s.address}</p>
+      </div>
+      <div class="flex items-end justify-between mt-6">
+        <div class="font-mono text-[11px] tracking-[0.16em] uppercase opacity-60 leading-relaxed">
+          ${s.hours.map(h => `<span class="block">${h}</span>`).join('')}
+        </div>
+        <a href="${s.mapUrl}" target="_blank" rel="noopener noreferrer" class="ul-link text-[14px] font-medium shrink-0">Cómo llegar →</a>
+      </div>
+    </div>
+  `).join('')
+
+  return {
+    title: `${BRAND.name} | Tu fit, perfecto`,
+    fullWidth: true,
+    noPaddingTop: true,
+    forceLight: true,
+    html: `
+      <!-- §3 — Hero -->
+      <section class="max-w-[1440px] mx-auto px-6 lg:px-10 pt-10 lg:pt-14 pb-16 lg:pb-20" id="hero-section">
+        <!-- Eyebrow -->
+        <div class="flex items-center gap-4 mb-8">
+          <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60">Vol.03 — O/I '26</span>
+          <span class="h-px flex-1 bg-ink/15"></span>
+          <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60">Colima · Mx</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-6">
+          <!-- Left: headline carousel -->
+          <div class="lg:col-span-7 relative min-h-[440px] md:min-h-[540px]">
+            ${heroSlidesLeft}
+          </div>
+
+          <!-- Right: image carousel -->
+          <div class="lg:col-span-5">
+            <div class="aspect-[4/5] bg-fog rounded-md overflow-hidden relative">
+              ${heroSlidesRight}
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide ticker -->
+        <div class="flex items-center justify-between mt-8 gap-4">
+          <div class="flex items-center gap-3 shrink-0">
+            <span class="font-mono text-[13px] tabular-nums text-ink" id="slide-current">01</span>
+            <div class="w-[160px] h-[2px] bg-ink/10 rounded-full overflow-hidden">
+              <div class="h-full bg-ink origin-left" id="slide-progress" style="transform: scaleX(0)"></div>
+            </div>
+            <span class="font-mono text-[13px] tabular-nums text-ink/40">03</span>
+          </div>
+          ${topProductCard}
+          <div class="flex items-center gap-2 shrink-0">
+            <button id="hero-prev" class="w-11 h-11 rounded-full border border-ink/15 flex items-center justify-center text-ink hover:bg-ink hover:text-paper transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <button id="hero-next" class="w-11 h-11 rounded-full border border-ink/15 flex items-center justify-center text-ink hover:bg-ink hover:text-paper transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
         </div>
       </section>
 
-      <!-- Locations -->
-      <section class="mb-8 md:mb-12">
-        <div class="text-center mb-6 md:mb-10">
-           <h2 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-2">Nuestras Sucursales</h2>
-           <p class="text-sm md:text-base text-gray-500 dark:text-gray-400">Visítanos en nuestras tiendas físicas</p>
-        </div>
-        
-        <div class="grid md:grid-cols-2 gap-4 md:gap-6">
-           <!-- Colima -->
-           <div class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-100 dark:border-gray-800 shadow-lg flex items-start gap-4 hover:shadow-xl transition-all group">
-             <div class="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-             </div>
-             <div>
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Colima Centro</h3>
-                <p class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">Zaragoza #140<br/>Col. Centro, Colima</p>
-                <a href="https://www.google.com/maps/place/G%26L+Colima/@19.2424015,-103.7280069,17z/data=!3m2!4b1!5s0x84255aab867046b3:0x293c46c0e72ef43a!4m6!3m5!1s0x84255aab8670a0bf:0x969da2ab885623e0!8m2!3d19.2424015!4d-103.725432!16s%2Fg%2F11c45qrg02?entry=ttu&g_ep=EgoyMDI2MDEwNy4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-sm font-bold text-brand mt-3 hover:underline">
-                   Ver en mapa
-                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                </a>
-             </div>
-           </div>
-
-           <!-- Villa de Alvarez -->
-           <div class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-100 dark:border-gray-800 shadow-lg flex items-start gap-4 hover:shadow-xl transition-all group">
-             <div class="w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0 text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-             </div>
-             <div>
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Villa de Álvarez</h3>
-                <p class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">Av. María Ahumada de Gómez #30<br/>Local #6</p>
-                <a href="https://www.google.com/maps/place/G%26L+Villa+de+%C3%81lvarez/@19.271313,-103.770113,14z/data=!3m1!4b1!4m6!3m5!1s0x842545c072adffd5:0xdfee853b24213661!8m2!3d19.2713167!4d-103.7332035!16s%2Fg%2F11h53ml_dy?entry=ttu&g_ep=EgoyMDI2MDEwNy4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-sm font-bold text-brand mt-3 hover:underline">
-                   Ver en mapa
-                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                </a>
-             </div>
-           </div>
+      <!-- §4 — Stats Band -->
+      <section class="bg-ink text-paper py-12 reveal">
+        <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            ${statsHtml}
+          </div>
         </div>
       </section>
 
+      <!-- §5 — Categories -->
+      <section class="py-24 lg:py-32 reveal">
+        <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+          <div class="flex flex-col md:flex-row md:items-end md:justify-between mb-14">
+            <div>
+              <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 block mb-3">§ 01 — Categorías</span>
+              <h2 class="font-heading font-[800] text-[clamp(56px,8vw,128px)] leading-[0.88] tracking-[-0.045em]">Explora<br/>por <span class="text-brand">categoría</span>.</h2>
+            </div>
+            <a href="/catalog" class="hidden md:inline-flex ul-link text-[14px] font-medium text-ink/70 hover:text-ink mt-4 md:mt-0">Catálogo completo →</a>
+          </div>
+          <div class="grid grid-cols-12 gap-4 auto-rows-[200px] md:auto-rows-[280px]">
+            ${categoriesHtml}
+          </div>
+        </div>
+      </section>
+
+      <!-- §6 — Best Sellers -->
+      <section class="bg-fog py-24 lg:py-32 relative reveal">
+        <!-- Ambient bg text -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden="true">
+          <div class="marquee-track whitespace-nowrap opacity-[0.04]">
+            <span class="font-heading font-[800] text-[180px] leading-none">BEST · SELLERS · FAVORITOS · 2026 &nbsp;&nbsp;</span>
+            <span class="font-heading font-[800] text-[180px] leading-none">BEST · SELLERS · FAVORITOS · 2026 &nbsp;&nbsp;</span>
+          </div>
+          <div class="marquee-track-rev whitespace-nowrap opacity-[0.04] mt-[-40px]">
+            <span class="font-heading font-[800] text-[180px] leading-none">BEST · SELLERS · FAVORITOS · 2026 &nbsp;&nbsp;</span>
+            <span class="font-heading font-[800] text-[180px] leading-none">BEST · SELLERS · FAVORITOS · 2026 &nbsp;&nbsp;</span>
+          </div>
+        </div>
+
+        <div class="max-w-[1440px] mx-auto px-6 lg:px-10 relative z-10">
+          <!-- Header -->
+          <div class="grid grid-cols-1 md:grid-cols-12 md:items-end gap-6 mb-12">
+            <div class="md:col-span-7">
+              <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 block mb-3">§ 02 — Favoritos</span>
+              <h2 class="font-heading font-[800] text-[clamp(56px,8vw,128px)] leading-[0.88] tracking-[-0.045em]">Lo que más se <span class="text-brand italic">llevan</span>.</h2>
+            </div>
+            <div class="md:col-span-5 md:text-right">
+              <p class="text-[15px] text-ink/60 leading-relaxed">Productos elegidos por nuestros clientes esta temporada. Pasa el cursor sobre cada uno.</p>
+            </div>
+          </div>
+
+          <!-- List -->
+          <ul class="relative">
+            ${bestSellersHtml}
+          </ul>
+
+          <!-- Bottom -->
+          <div class="flex items-center justify-between mt-8">
+            <a href="/catalog" class="ul-link text-[14px] font-medium text-ink/70 hover:text-ink">Ver los ${state.products.length > 0 ? state.products.filter(p => p.badge !== 'Borrador').length : '...'} productos →</a>
+            <span class="font-mono text-[11px] tracking-[0.2em] uppercase text-ink/40">${bestSellers.length > 0 ? String(bestSellers.length).padStart(2, '0') : '00'} productos · vista lista</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- §7 — Manifesto -->
+      <section class="bg-brand text-paper py-28 lg:py-40 reveal">
+        <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
+            <div class="md:col-span-3">
+              <p class="font-mono text-[11px] tracking-[0.32em] uppercase opacity-70 leading-relaxed">§ 03 — Manifiesto</p>
+              <p class="font-mono text-[11px] tracking-[0.32em] uppercase opacity-70 mt-1">G&L / 2026</p>
+            </div>
+            <div class="md:col-span-9">
+              <p class="font-heading font-medium text-[clamp(28px,3.6vw,52px)] leading-[1.1] tracking-[-0.03em]">
+                No llenamos el clóset. Curamos. Cada temporada elegimos a mano las mejores marcas — la camisa que se pone una y otra vez, los jeans que solo se ven mejor con el tiempo, la fragancia que la gente te pregunta. <span class="opacity-70">Marcas seleccionadas, al mejor precio. En Colima desde 1995.</span>
+              </p>
+              <a href="/catalog" class="ul-link text-[14px] font-medium opacity-80 hover:opacity-100 inline-block mt-8">Descubre nuestras marcas →</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- §8 — Newsletter -->
+      <section class="bg-ink text-paper py-24 lg:py-32 reveal">
+        <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+          <div class="grid grid-cols-1 md:grid-cols-12 md:items-end gap-10">
+            <div class="md:col-span-7">
+              <span class="font-mono text-[11px] tracking-[0.28em] uppercase opacity-60 block mb-3">§ 04 — Club G&L</span>
+              <h2 class="font-heading font-[800] text-[clamp(56px,8vw,124px)] leading-[0.86] tracking-[-0.045em]">
+                Un correo<br/>al mes.<br/><span class="outline-text">10% off</span><br/><span class="text-brand">de bienvenida.</span>
+              </h2>
+            </div>
+            <div class="md:col-span-5">
+              <p class="text-[15px] text-paper/70 leading-relaxed mb-6">Drops antes que nadie. Rebajas privadas. Cero spam. Pausar o cancelar con un click — siempre.</p>
+
+              ${isSubscribed ? `
+                <div class="py-8 text-center">
+                  <div class="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-7 h-7 text-paper" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                  </div>
+                  <p class="font-heading font-bold text-[18px]">¡Ya estás dentro!</p>
+                  <p class="text-paper/60 text-[14px] mt-1">Gracias por unirte al Club G&L.</p>
+                </div>
+              ` : `
+                <form id="newsletter-form" class="border-b border-paper/30 flex items-center focus-within:border-paper transition-colors">
+                  <input type="email" name="email" placeholder="tu@correo.com" class="flex-1 bg-transparent text-[17px] text-paper py-5 pr-4 placeholder:text-paper/30 focus:outline-none" required />
+                  <button type="submit" class="text-[13px] font-bold text-paper shrink-0 hover:text-brand transition-colors">Suscribirme →</button>
+                </form>
+                <div class="flex items-center justify-between mt-4">
+                  <span class="font-mono text-[11px] tracking-[0.2em] uppercase opacity-60">+2,400 suscriptores</span>
+                  <span class="font-mono text-[11px] tracking-[0.2em] uppercase opacity-60">WELCOME10 al instante</span>
+                </div>
+              `}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- §9 — Sucursales -->
+      <section class="py-24 lg:py-32 reveal scroll-mt-[72px]" id="sucursales">
+        <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+          <div class="mb-14">
+            <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 block mb-3">§ 05 — Visítanos</span>
+            <h2 class="font-heading font-[800] text-[clamp(56px,7vw,112px)] leading-[0.88] tracking-[-0.045em]">Dos puntos<br/>en <span class="text-brand">Colima</span>.</h2>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${storesHtml}
+          </div>
+        </div>
+      </section>
 
       <div id="home-quick-add-container"></div>
     `,
     onMount(root) {
-      // Hero CTA and other /catalog links: force clean (unfiltered) catalog
-      const heroCta = qs(root, '#hero-cta')
-      if (heroCta) {
-        heroCta.addEventListener('click', (e) => {
-          e.preventDefault()
-          window.__glForceCatalogRebuild = true
-          navigate('/catalog')
+      // ── Hero Carousel ──
+      let currentSlide = 0
+      const totalSlides = heroSlides.length
+      const leftSlides = root.querySelectorAll('.hero-slide')
+      const rightSlides = root.querySelectorAll('.hero-img')
+      const slideCurrent = root.querySelector('#slide-current')
+      const slideProgress = root.querySelector('#slide-progress')
+      let autoTimer = null
+      let progressAnim = null
+
+      function goToSlide(idx) {
+        currentSlide = ((idx % totalSlides) + totalSlides) % totalSlides
+        leftSlides.forEach((el, i) => {
+          el.style.opacity = i === currentSlide ? '1' : '0'
+          el.style.zIndex = i === currentSlide ? '10' : '0'
+        })
+        rightSlides.forEach((el, i) => {
+          el.style.opacity = i === currentSlide ? '1' : '0'
+          el.style.zIndex = i === currentSlide ? '10' : '0'
+        })
+        if (slideCurrent) slideCurrent.textContent = String(currentSlide + 1).padStart(2, '0')
+        resetProgress()
+      }
+
+      function resetProgress() {
+        if (progressAnim) progressAnim.cancel()
+        if (slideProgress) {
+          slideProgress.style.transform = 'scaleX(0)'
+          progressAnim = slideProgress.animate(
+            [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }],
+            { duration: 6000, easing: 'linear', fill: 'forwards' }
+          )
+        }
+        clearInterval(autoTimer)
+        autoTimer = setInterval(() => goToSlide(currentSlide + 1), 6000)
+      }
+
+      // Init
+      resetProgress()
+
+      const prevBtn = root.querySelector('#hero-prev')
+      const nextBtn = root.querySelector('#hero-next')
+      if (prevBtn) prevBtn.addEventListener('click', () => goToSlide(currentSlide - 1))
+      if (nextBtn) nextBtn.addEventListener('click', () => goToSlide(currentSlide + 1))
+
+      // Pause on hover
+      const heroSection = root.querySelector('#hero-section')
+      if (heroSection) {
+        heroSection.addEventListener('mouseenter', () => {
+          clearInterval(autoTimer)
+          if (progressAnim) progressAnim.pause()
+        })
+        heroSection.addEventListener('mouseleave', () => {
+          if (progressAnim) progressAnim.play()
+          autoTimer = setInterval(() => goToSlide(currentSlide + 1), 6000)
         })
       }
 
-      // Category links are now standard <a> tags that router.js intercepts automatically
-      root.querySelectorAll('a[href^="/categoria/"]').forEach(link => {
-        link.addEventListener('click', () => {
-          // Signal that catalog must rebuild (not restore from keep-alive cache)
-          window.__glForceCatalogRebuild = true
-        })
-      })
-
-      // Quick Add to Cart from home cards
-      const homeQuickAddContainer = qs(root, '#home-quick-add-container')
-      on(root, 'click', '[data-quick-add]', (ev, btn) => {
-        ev.stopPropagation()
-        handleQuickAdd(ev, btn, homeQuickAddContainer)
-      })
-
-      // Product card click -> navigate to product page
-      root.querySelectorAll('[data-home-qv]').forEach(card => {
-        card.addEventListener('click', (e) => {
-          if (e.target.closest('[data-quick-add]')) return
+      // ── Hero CTA links ──
+      root.querySelectorAll('.hero-cta').forEach(link => {
+        link.addEventListener('click', (e) => {
           e.preventDefault()
-          const productId = card.dataset.homeQv
-          if (productId) navigate(`/producto/${productId}`)
+          window.__glForceCatalogRebuild = true
+          navigate(link.dataset.href || link.getAttribute('href'))
         })
       })
 
-      // Copy coupon code
-      const copyBtn = qs(root, '#copy-coupon')
+      // ── Copy coupon (hero slide 3) ──
+      const copyBtn = root.querySelector('#hero-copy-coupon')
       if (copyBtn) {
         copyBtn.addEventListener('click', () => {
           navigator.clipboard.writeText('WELCOME10')
-          copyBtn.innerHTML = '<svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>'
-          setTimeout(() => {
-            copyBtn.innerHTML = '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>'
-          }, 2000)
+          const label = copyBtn.querySelector('.copy-label')
+          if (label) {
+            const orig = label.textContent
+            label.textContent = '¡Copiado!'
+            copyBtn.querySelector('.arrow-walk').textContent = '✓'
+            setTimeout(() => {
+              label.textContent = orig
+              copyBtn.querySelector('.arrow-walk').textContent = '→'
+            }, 1800)
+          }
         })
       }
 
-      // Newsletter Logic (Page only)
-      const form = root.querySelector('#newsletter-form-page')
+      // ── Category links ──
+      root.querySelectorAll('a[href^="/categoria/"]').forEach(link => {
+        link.addEventListener('click', () => {
+          window.__glForceCatalogRebuild = true
+        })
+      })
+
+      // ── Best sellers row click ──
+      root.querySelectorAll('.ls-row[data-href]').forEach(row => {
+        row.addEventListener('click', (e) => {
+          e.preventDefault()
+          navigate(row.dataset.href)
+        })
+      })
+
+      // ── Newsletter ──
+      const form = root.querySelector('#newsletter-form')
       if (form) {
         form.addEventListener('submit', async (ev) => {
           ev.preventDefault()
           const emailInput = form.querySelector('input[type="email"]')
-          const submitBtn  = form.querySelector('button[type="submit"]')
+          const submitBtn = form.querySelector('button[type="submit"]')
           const { value: email, valid: emailValid } = sanitizeEmail(emailInput ? emailInput.value : '')
 
           if (!email) return
           if (!emailValid) {
-            const prevErr = form.querySelector('.newsletter-error')
+            const prevErr = form.parentElement.querySelector('.newsletter-error')
             if (prevErr) prevErr.remove()
             const errEl = document.createElement('p')
-            errEl.className = 'newsletter-error text-xs text-red-300 text-center mt-2'
+            errEl.className = 'newsletter-error text-[12px] text-red-400 mt-2'
             errEl.textContent = 'Ingresa un correo electrónico válido.'
-            form.appendChild(errEl)
+            form.after(errEl)
             return
           }
 
-
-          // Loading state
-          const originalBtnHTML = submitBtn.innerHTML
+          const originalHTML = submitBtn.innerHTML
           submitBtn.disabled = true
-          submitBtn.innerHTML = `
-            <span class="flex items-center justify-center gap-2">
-              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"/>
-              </svg>
-              Enviando...
-            </span>`
+          submitBtn.textContent = 'Enviando...'
 
-          // Remove previous error if any
-          const prevErr = form.querySelector('.newsletter-error')
+          const prevErr = form.parentElement.querySelector('.newsletter-error')
           if (prevErr) prevErr.remove()
 
           const result = await subscribeNewsletter(email)
 
           if (result.ok) {
-            form.innerHTML = `
-              <div class="flex flex-col items-center justify-center gap-2 text-white py-4 text-center animate-fade-in">
-                <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg mb-2">
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+            const wrapper = form.closest('.md\\:col-span-5')
+            if (wrapper) {
+              // Remove the stats row below the form too
+              const statsRow = wrapper.querySelector('.flex.items-center.justify-between.mt-4')
+              if (statsRow) statsRow.remove()
+            }
+            form.outerHTML = `
+              <div class="py-8 text-center animate-fade-in">
+                <div class="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg class="w-7 h-7 text-paper" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                 </div>
-                <span class="text-sm font-bold">¡Suscripción exitosa!</span>
-                <p class="text-xs text-blue-200">Gracias por unirte al Club G&L.</p>
-              </div>`
+                <p class="font-heading font-bold text-[18px]">¡Suscripción exitosa!</p>
+                <p class="text-paper/60 text-[14px] mt-1">Gracias por unirte al Club G&L.</p>
+              </div>
+            `
           } else {
-            // Restore button + show error
             submitBtn.disabled = false
-            submitBtn.innerHTML = originalBtnHTML
+            submitBtn.innerHTML = originalHTML
             const errEl = document.createElement('p')
-            errEl.className = 'newsletter-error text-xs text-red-300 text-center mt-2'
+            errEl.className = 'newsletter-error text-[12px] text-red-400 mt-2'
             errEl.textContent = result.error || 'Ocurrió un error. Intenta de nuevo.'
-            form.appendChild(errEl)
+            form.after(errEl)
           }
         })
       }
+
+      // ── Scroll Reveal ──
+      const reveals = root.querySelectorAll('.reveal')
+      if (reveals.length) {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('in')
+              observer.unobserve(entry.target)
+            }
+          })
+        }, { threshold: 0.1 })
+        reveals.forEach(el => observer.observe(el))
+      }
+
+      // ── Custom Cursor ──
+      if (!window.matchMedia('(pointer: coarse)').matches) {
+        // Check if cursor elements already exist (idempotent)
+        if (!root.querySelector('.cursor-dot')) {
+          const dot = document.createElement('div')
+          dot.className = 'cursor-dot'
+          const ring = document.createElement('div')
+          ring.className = 'cursor-ring'
+          root.appendChild(dot)
+          root.appendChild(ring)
+
+          document.body.classList.add('home')
+
+          let mouseX = 0, mouseY = 0
+          let ringX = 0, ringY = 0
+
+          const onMouseMove = (e) => {
+            mouseX = e.clientX
+            mouseY = e.clientY
+            dot.style.left = mouseX + 'px'
+            dot.style.top = mouseY + 'px'
+          }
+          document.addEventListener('mousemove', onMouseMove)
+
+          let rafId
+          function lerpRing() {
+            ringX += (mouseX - ringX) * 0.18
+            ringY += (mouseY - ringY) * 0.18
+            ring.style.left = ringX + 'px'
+            ring.style.top = ringY + 'px'
+            rafId = requestAnimationFrame(lerpRing)
+          }
+          rafId = requestAnimationFrame(lerpRing)
+
+          // Hover states
+          const addHover = () => document.body.classList.add('cursor-hover')
+          const removeHover = () => document.body.classList.remove('cursor-hover')
+          const addText = () => document.body.classList.add('cursor-text')
+          const removeText = () => document.body.classList.remove('cursor-text')
+
+          root.querySelectorAll('a, button, [data-cursor-hover]').forEach(el => {
+            el.addEventListener('mouseenter', addHover)
+            el.addEventListener('mouseleave', removeHover)
+          })
+          root.querySelectorAll('input, textarea').forEach(el => {
+            el.addEventListener('mouseenter', addText)
+            el.addEventListener('mouseleave', removeText)
+          })
+
+          // Cleanup on route change (store reference for teardown)
+          root.__cursorCleanup = () => {
+            document.removeEventListener('mousemove', onMouseMove)
+            cancelAnimationFrame(rafId)
+            document.body.classList.remove('home', 'cursor-hover', 'cursor-text')
+            dot.remove()
+            ring.remove()
+          }
+        }
+      }
+
+      // Cleanup on unmount
+      const origOnMount = root.__cursorCleanup
+      const observer2 = new MutationObserver(() => {
+        if (!document.body.contains(root)) {
+          if (origOnMount) origOnMount()
+          observer2.disconnect()
+        }
+      })
+      observer2.observe(document.body, { childList: true, subtree: true })
+
+      // ── Cleanup autorotate on route change ──
+      const navCleanup = () => {
+        clearInterval(autoTimer)
+        if (progressAnim) progressAnim.cancel()
+      }
+      // Use same MutationObserver pattern
+      const observer3 = new MutationObserver(() => {
+        if (!document.body.contains(root)) {
+          navCleanup()
+          observer3.disconnect()
+        }
+      })
+      observer3.observe(document.body, { childList: true, subtree: true })
     },
   }
 }

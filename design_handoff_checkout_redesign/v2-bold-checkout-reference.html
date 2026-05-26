@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>G&L | Checkout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: {
+    colors: { brand:{DEFAULT:'#214fc7',dark:'#003baf',light:'#4169e1',tint:'#E8EDF9'}, ink:'#0A0A0F', paper:'#FFFFFF', fog:'#F2F1ED' },
+    fontFamily: { display:['Manrope','system-ui','sans-serif'], sans:['Inter','system-ui','sans-serif'], mono:['JetBrains Mono','ui-monospace','monospace'] },
+  } } };
+</script>
+<style>
+  :root { --brand:#214fc7; --ink:#0A0A0F; --paper:#FFFFFF; --fog:#F2F1ED; }
+  html, body { background: var(--paper); color: var(--ink); font-family:'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; cursor: none; }
+  .font-display { font-family:'Manrope', sans-serif; letter-spacing: -0.04em; }
+  .font-mono { font-family:'JetBrains Mono', monospace; }
+  ::selection { background: var(--brand); color: white; }
+
+  .cursor-dot { position: fixed; pointer-events: none; z-index: 9999; width: 8px; height: 8px; border-radius: 50%; background: var(--ink); transform: translate(-50%,-50%); transition: width .25s, height .25s; mix-blend-mode: difference; }
+  .cursor-ring { position: fixed; pointer-events: none; z-index: 9998; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--ink); mix-blend-mode: difference; transform: translate(-50%,-50%); transition: width .35s cubic-bezier(.22,.61,.36,1), height .35s cubic-bezier(.22,.61,.36,1), background .25s; }
+  body.cursor-hover .cursor-dot { width: 0; height: 0; }
+  body.cursor-hover .cursor-ring { width: 80px; height: 80px; background: white; mix-blend-mode: normal; border-color: white; }
+  body.cursor-text .cursor-dot { width: 0; height: 0; }
+  body.cursor-text .cursor-ring { width: 4px; height: 28px; border-radius: 2px; background: var(--ink); mix-blend-mode: difference; }
+
+  @keyframes scroll-x { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .marquee-track { animation: scroll-x 38s linear infinite; }
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity .8s ease, transform .9s cubic-bezier(.22,.61,.36,1); }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+  .digit-tabular { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+  .ul-link { position: relative; }
+  .ul-link::after { content:''; position:absolute; left:0; right:0; bottom:-3px; height:1px; background: currentColor; transform-origin: right; transform: scaleX(0); transition: transform .45s cubic-bezier(.22,.61,.36,1); }
+  .ul-link:hover::after { transform-origin: left; transform: scaleX(1); }
+  .arrow-walk { transition: transform .35s; }
+  .arrow-walk:hover { transform: translateX(4px); }
+  .outline-text { -webkit-text-stroke: 1px currentColor; color: transparent; }
+  img { background: #EFEEE8; }
+
+  /* Form */
+  .field { display:block; margin-bottom: 18px; }
+  .field label { display:block; font-family:'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .24em; text-transform: uppercase; color: rgba(10,10,15,.55); margin-bottom: 8px; }
+  .field input, .field select, .field textarea {
+    width: 100%; background: var(--paper); border: 1px solid rgba(10,10,15,.15); border-radius: 0; padding: 14px 16px; font-size: 15px; outline: none;
+    transition: border-color .2s, background .2s;
+    border-bottom: 1px solid rgba(10,10,15,.4);
+    border-top: none; border-left: none; border-right: none;
+    background: transparent;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-bottom-color: var(--brand); }
+  .field input::placeholder, .field textarea::placeholder { color: rgba(10,10,15,.35); }
+  .field select { -webkit-appearance: none; appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="%230A0A0F" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>'); background-repeat: no-repeat; background-position: right 6px center; background-size: 14px; padding-right: 30px; }
+
+  /* Choice cards */
+  .choice { display:flex; gap: 14px; align-items: flex-start; padding: 18px; border:1px solid rgba(10,10,15,.12); cursor: none; transition: border-color .2s, background .2s; border-radius: 6px; }
+  .choice:hover { border-color: var(--ink); }
+  .choice.active { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+  .choice.active .meta { color: rgba(255,255,255,.65); }
+  .choice .dot { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid currentColor; display: inline-flex; align-items:center; justify-content:center; flex-shrink:0; margin-top: 2px; }
+  .choice .dot::after { content:''; width: 10px; height: 10px; border-radius: 50%; background: currentColor; transform: scale(0); transition: transform .2s; }
+  .choice.active .dot::after { transform: scale(1); }
+
+  /* Step header */
+  .step-num { font-family:'Manrope', sans-serif; font-weight:800; font-size: 28px; line-height:1; letter-spacing:-.03em; }
+
+  /* Mobile sticky footer total */
+  .summary-stripe { display:none; }
+  @media (max-width: 1023px) {
+    .summary-stripe { display:flex; position: sticky; bottom: 0; z-index: 30; background: var(--ink); color: var(--paper); padding: 14px 20px; align-items: center; justify-content: space-between; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor-ring" id="cring"></div>
+<div class="cursor-dot" id="cdot"></div>
+
+<!-- Marquee -->
+<div class="bg-ink text-paper overflow-hidden whitespace-nowrap py-2.5 border-b border-white/10">
+  <div class="marquee-track inline-flex gap-10 font-mono text-[11px] tracking-[0.22em] uppercase">
+    <span>★ Cierre por WhatsApp · sin pago online</span><span>—</span>
+    <span>Envío gratis +$1,499 MXN</span><span>—</span>
+    <span>Transferencia o pago al recoger</span><span>—</span>
+    <span>2 tiendas físicas en Colima</span><span>—</span>
+    <span>★ Cierre por WhatsApp · sin pago online</span><span>—</span>
+    <span>Envío gratis +$1,499 MXN</span><span>—</span>
+    <span>Transferencia o pago al recoger</span><span>—</span>
+    <span>2 tiendas físicas en Colima</span><span>—</span>
+  </div>
+</div>
+
+<!-- Header (minimal: brand only + steps) -->
+<header class="border-b border-ink/10">
+  <div class="max-w-[1440px] mx-auto px-6 lg:px-10 flex items-center justify-between h-[72px]">
+    <a href="v2-bold.html" class="font-display text-[28px] font-extrabold leading-none">G<span class="text-brand">&</span>L<span class="text-brand">.</span></a>
+    <div class="hidden md:flex items-center gap-3 font-mono text-[11px] tracking-[0.24em] uppercase">
+      <a href="v2-bold-cart.html" class="text-ink/45 hover:text-ink">01 — Bolsa</a>
+      <span class="opacity-30">→</span>
+      <span class="text-brand">02 — Checkout</span>
+      <span class="opacity-30">→</span>
+      <span class="opacity-40">03 — WhatsApp</span>
+    </div>
+    <div class="flex items-center gap-3 font-mono text-[11px] tracking-[0.24em] uppercase text-ink/55">
+      <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 11c0-1.7 1.3-3 3-3s3 1.3 3 3v3M8 11V8c0-2.2 1.8-4 4-4s4 1.8 4 4M6 11h12v9H6z"/></svg>
+      Sesión segura
+    </div>
+  </div>
+</header>
+
+<!-- ── HEADER STRIP ── -->
+<section class="pt-12 lg:pt-16 pb-8 border-b border-ink/10">
+  <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+    <div class="flex items-center gap-3 mb-8 reveal in">
+      <a href="v2-bold-cart.html" class="inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55 hover:text-ink">
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        Volver a la bolsa
+      </a>
+      <span class="h-px flex-1 bg-ink/15 mx-3"></span>
+      <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55">Tiempo estimado · 90 segundos</span>
+    </div>
+
+    <div class="grid grid-cols-12 gap-6 lg:gap-10 items-end">
+      <div class="col-span-12 lg:col-span-9">
+        <h1 class="font-display font-extrabold text-[clamp(64px,11vw,184px)] leading-[0.86] tracking-[-0.04em]">
+          Cierra tu<br/>
+          <span class="text-brand">pedido</span>.
+        </h1>
+      </div>
+      <div class="col-span-12 lg:col-span-3 lg:text-right">
+        <p class="text-[15px] text-ink/70 max-w-[340px] lg:ml-auto leading-relaxed">
+          Llenamos tus datos en <strong>3 pasos</strong>. Te contactamos por WhatsApp para confirmar pago — <strong>cero pago online</strong>.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── MAIN: 2 columns ── -->
+<section class="py-12 lg:py-16">
+  <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+    <div class="grid grid-cols-12 gap-8 lg:gap-12">
+
+      <!-- LEFT — form -->
+      <form id="checkout-form" class="col-span-12 lg:col-span-7 space-y-14" novalidate>
+
+        <!-- STEP 1: contact -->
+        <section class="reveal in">
+          <div class="flex items-center gap-5 mb-7">
+            <div class="step-num">01<span class="text-brand">.</span></div>
+            <div>
+              <h2 class="font-display font-extrabold text-[28px] leading-none tracking-[-0.03em]">Contacto</h2>
+              <p class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55 mt-1.5">¿Cómo te contactamos?</p>
+            </div>
+            <span class="ml-auto font-mono text-[10px] tracking-[0.24em] uppercase text-brand">En curso →</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+            <div class="field">
+              <label>Nombre completo</label>
+              <input name="name" placeholder="Eduardo Núñez" required/>
+            </div>
+            <div class="field">
+              <label>WhatsApp</label>
+              <input name="whatsapp" inputmode="tel" placeholder="+52 312 123 4567" required/>
+            </div>
+            <div class="field md:col-span-2">
+              <label>Correo electrónico <span class="text-ink/35 normal-case tracking-normal">— opcional, para recibo</span></label>
+              <input name="email" type="email" placeholder="tu@correo.com"/>
+            </div>
+          </div>
+        </section>
+
+        <!-- STEP 2: payment + delivery -->
+        <section class="reveal">
+          <div class="flex items-center gap-5 mb-7">
+            <div class="step-num">02<span class="text-brand">.</span></div>
+            <div>
+              <h2 class="font-display font-extrabold text-[28px] leading-none tracking-[-0.03em]">Pago &amp; entrega</h2>
+              <p class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55 mt-1.5">Sin pago online — confirmamos por WhatsApp</p>
+            </div>
+          </div>
+
+          <div class="font-mono text-[11px] tracking-[0.24em] uppercase text-ink/55 mb-3">¿Cómo pagas?</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8" id="pay-group">
+            <button type="button" class="choice active" data-val="transferencia">
+              <span class="dot"></span>
+              <div class="flex-1">
+                <div class="font-display font-bold text-[18px] leading-none tracking-[-0.02em]">Transferencia</div>
+                <div class="meta mt-2 font-mono text-[11px] text-ink/55">SPEI · BBVA · Confirmación inmediata</div>
+              </div>
+              <div class="font-mono text-[10px] tracking-wider uppercase">−2%</div>
+            </button>
+            <button type="button" class="choice" data-val="recoger">
+              <span class="dot"></span>
+              <div class="flex-1">
+                <div class="font-display font-bold text-[18px] leading-none tracking-[-0.02em]">Pago al recoger</div>
+                <div class="meta mt-2 font-mono text-[11px] text-ink/55">Efectivo · TPV en tienda</div>
+              </div>
+              <div class="font-mono text-[10px] tracking-wider uppercase">—</div>
+            </button>
+          </div>
+
+          <div class="font-mono text-[11px] tracking-[0.24em] uppercase text-ink/55 mb-3">¿Cómo lo recibes?</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="dlv-group">
+            <button type="button" class="choice active" data-val="envio">
+              <span class="dot"></span>
+              <div class="flex-1">
+                <div class="font-display font-bold text-[18px] leading-none tracking-[-0.02em]">Envío a domicilio</div>
+                <div class="meta mt-2 font-mono text-[11px] text-ink/55">2—3 días · todo México</div>
+              </div>
+              <div class="font-mono text-[10px] tracking-wider uppercase text-brand">Gratis</div>
+            </button>
+            <button type="button" class="choice" data-val="tienda">
+              <span class="dot"></span>
+              <div class="flex-1">
+                <div class="font-display font-bold text-[18px] leading-none tracking-[-0.02em]">Recoger en tienda</div>
+                <div class="meta mt-2 font-mono text-[11px] text-ink/55">Centro · Villa de Álvarez</div>
+              </div>
+              <div class="font-mono text-[10px] tracking-wider uppercase">Hoy</div>
+            </button>
+          </div>
+        </section>
+
+        <!-- STEP 3: address -->
+        <section id="address-wrap" class="reveal">
+          <div class="flex items-center gap-5 mb-7">
+            <div class="step-num">03<span class="text-brand">.</span></div>
+            <div>
+              <h2 class="font-display font-extrabold text-[28px] leading-none tracking-[-0.03em]">Dirección</h2>
+              <p class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55 mt-1.5">¿Dónde lo dejamos?</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-x-6">
+            <div class="field md:col-span-8">
+              <label>Calle</label>
+              <input name="street" placeholder="Av. Constitución" />
+            </div>
+            <div class="field md:col-span-2">
+              <label>Núm. ext.</label>
+              <input name="ext" placeholder="140"/>
+            </div>
+            <div class="field md:col-span-2">
+              <label>Núm. int.</label>
+              <input name="int" placeholder="—"/>
+            </div>
+            <div class="field md:col-span-6">
+              <label>Colonia</label>
+              <input name="colonia" placeholder="Centro"/>
+            </div>
+            <div class="field md:col-span-3">
+              <label>Ciudad</label>
+              <input name="city" placeholder="Colima"/>
+            </div>
+            <div class="field md:col-span-3">
+              <label>Código postal</label>
+              <input name="zip" inputmode="numeric" placeholder="28000"/>
+            </div>
+            <div class="field md:col-span-6">
+              <label>Estado</label>
+              <input name="state" placeholder="Colima"/>
+            </div>
+            <div class="field md:col-span-6">
+              <label>Referencias</label>
+              <input name="refs" placeholder="Casa azul, entre Hidalgo y Aldama"/>
+            </div>
+            <div class="field md:col-span-12">
+              <label>Notas para el pedido <span class="text-ink/35 normal-case tracking-normal">— opcional</span></label>
+              <textarea name="notes" rows="2" placeholder="Es regalo, manda con tarjeta sin precio."></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- Submit (desktop) -->
+        <section class="reveal">
+          <button type="submit" class="hidden lg:flex group items-center justify-between gap-3 bg-[#25D366] text-paper pl-7 pr-3 h-20 w-full rounded-full text-[17px] font-semibold hover:bg-[#1ebc59] transition-colors">
+            <span class="flex items-center gap-3">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884"/></svg>
+              Enviar pedido por WhatsApp
+            </span>
+            <span class="w-14 h-14 rounded-full bg-paper text-[#25D366] inline-flex items-center justify-center arrow-walk">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </span>
+          </button>
+          <p class="hidden lg:block mt-4 font-mono text-[10px] tracking-[0.24em] uppercase text-ink/55 text-center">
+            Al continuar aceptas nuestros términos · cero pago online · todo se confirma por WhatsApp
+          </p>
+        </section>
+      </form>
+
+      <!-- RIGHT — order summary -->
+      <aside class="col-span-12 lg:col-span-5 order-first lg:order-none">
+        <div class="lg:sticky lg:top-[24px] space-y-4">
+
+          <!-- Items list -->
+          <div class="bg-fog rounded-lg p-6">
+            <div class="flex items-center justify-between mb-5">
+              <div class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55">Tu pedido</div>
+              <a href="v2-bold-cart.html" class="ul-link text-[11px] font-mono uppercase tracking-wider">Editar →</a>
+            </div>
+            <ul class="space-y-4">
+              <li class="flex gap-4">
+                <div class="relative w-16 h-20 flex-shrink-0 rounded overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=400&q=80&auto=format&fit=crop" class="w-full h-full object-cover"/>
+                  <span class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-ink text-paper font-mono text-[10px] flex items-center justify-center">1</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-display font-bold text-[15px] leading-tight">Camisa Oxford Hueso</div>
+                  <div class="font-mono text-[11px] text-ink/55 mt-1">Talla M · Hueso</div>
+                </div>
+                <div class="text-right">
+                  <div class="font-mono text-[11px] text-ink/40 line-through">$1,490</div>
+                  <div class="font-mono text-[13px] font-semibold text-brand">$1,290</div>
+                </div>
+              </li>
+              <li class="flex gap-4">
+                <div class="relative w-16 h-20 flex-shrink-0 rounded overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&q=80&auto=format&fit=crop" class="w-full h-full object-cover"/>
+                  <span class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-ink text-paper font-mono text-[10px] flex items-center justify-center">1</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-display font-bold text-[15px] leading-tight">Jean Slim Crudo Selvedge</div>
+                  <div class="font-mono text-[11px] text-ink/55 mt-1">Talla 32 · Crudo</div>
+                </div>
+                <div class="text-right">
+                  <div class="font-mono text-[13px] font-semibold">$1,490</div>
+                </div>
+              </li>
+              <li class="flex gap-4">
+                <div class="relative w-16 h-20 flex-shrink-0 rounded overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=400&q=80&auto=format&fit=crop" class="w-full h-full object-cover"/>
+                  <span class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-ink text-paper font-mono text-[10px] flex items-center justify-center">1</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-display font-bold text-[15px] leading-tight">Polo Pima Marino</div>
+                  <div class="font-mono text-[11px] text-ink/55 mt-1">Talla L · Marino</div>
+                </div>
+                <div class="text-right">
+                  <div class="font-mono text-[13px] font-semibold">$890</div>
+                </div>
+              </li>
+            </ul>
+
+            <!-- Coupon -->
+            <div class="mt-5 pt-5 border-t border-ink/10">
+              <details>
+                <summary class="font-mono text-[11px] tracking-[0.22em] uppercase text-ink/65 hover:text-ink cursor-pointer flex items-center gap-2">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M5 3h6c.5 0 1 .2 1.4.6l7 7a2 2 0 010 2.8l-7 7a2 2 0 01-2.8 0l-7-7C3.2 13 3 12.5 3 12V5a2 2 0 012-2z"/></svg>
+                  Tengo un cupón
+                </summary>
+                <div class="mt-3 flex gap-2">
+                  <input type="text" placeholder="WELCOME10" class="flex-1 bg-paper border border-ink/15 rounded-full px-4 h-11 text-[12px] font-mono tracking-wider uppercase placeholder:text-ink/35 outline-none focus:border-ink"/>
+                  <button type="button" class="px-5 h-11 rounded-full bg-ink text-paper text-[12px] font-semibold hover:bg-brand transition-colors">Aplicar</button>
+                </div>
+              </details>
+            </div>
+
+            <!-- Totals -->
+            <div class="mt-6 pt-5 border-t border-ink/10 space-y-3 font-mono text-[13px] digit-tabular">
+              <div class="flex justify-between"><span class="text-ink/65">Subtotal · 3 pzs</span><span>$3,670</span></div>
+              <div class="flex justify-between text-brand"><span>Descuento · WELCOME10</span><span>−$367</span></div>
+              <div class="flex justify-between"><span class="text-ink/65">Envío</span><span class="text-brand">¡Gratis!</span></div>
+              <div class="flex justify-between"><span class="text-ink/65">Pronto pago · 2%</span><span class="text-brand">−$66</span></div>
+            </div>
+
+            <div class="mt-5 pt-5 border-t border-ink/10 flex items-baseline justify-between">
+              <div class="font-mono text-[11px] tracking-[0.28em] uppercase">Total</div>
+              <div class="font-display font-extrabold text-[48px] leading-none tracking-[-0.04em] digit-tabular">$3,237</div>
+            </div>
+            <div class="mt-1 font-mono text-[10px] tracking-[0.2em] uppercase text-ink/45 text-right">MXN · IVA incluido</div>
+          </div>
+
+          <!-- Trust badges -->
+          <div class="grid grid-cols-3 gap-px bg-ink/10 rounded-lg overflow-hidden">
+            <div class="bg-paper p-5 text-center">
+              <svg class="w-5 h-5 mx-auto mb-2 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.6-4A11.96 11.96 0 0112 2.9 11.96 11.96 0 013.4 6 12 12 0 003 9c0 5.6 3.8 10.3 9 11.6 5.2-1.3 9-6 9-11.6 0-1-.1-2-.4-3z"/></svg>
+              <div class="font-mono text-[9px] tracking-[0.2em] uppercase">Seguro</div>
+            </div>
+            <div class="bg-paper p-5 text-center">
+              <svg class="w-5 h-5 mx-auto mb-2 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3M3 12a9 9 0 1118 0 9 9 0 01-18 0z"/></svg>
+              <div class="font-mono text-[9px] tracking-[0.2em] uppercase">Cierre en 90s</div>
+            </div>
+            <div class="bg-paper p-5 text-center">
+              <svg class="w-5 h-5 mx-auto mb-2 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              <div class="font-mono text-[9px] tracking-[0.2em] uppercase">Sin pago online</div>
+            </div>
+          </div>
+
+          <!-- Manifesto micro -->
+          <div class="border border-ink/10 rounded-lg p-5">
+            <div class="font-display font-medium text-[15px] leading-snug tracking-[-0.01em]">
+              "Confirmamos cada pedido por WhatsApp con un humano —no un bot— para asegurar que <strong>todo te llegue bien</strong>."
+            </div>
+            <div class="mt-3 font-mono text-[10px] tracking-[0.24em] uppercase text-ink/55">— Equipo G&L · Colima</div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- Mobile sticky checkout stripe -->
+<div class="summary-stripe">
+  <div class="flex flex-col">
+    <span class="font-mono text-[10px] tracking-[0.22em] uppercase opacity-60">Total · 3 pzs</span>
+    <span class="font-display font-extrabold text-[24px] leading-none tracking-[-0.03em] digit-tabular">$3,237</span>
+  </div>
+  <button type="submit" form="checkout-form" class="flex-1 ml-2 bg-[#25D366] text-paper rounded-full h-14 px-5 flex items-center justify-center gap-2 font-semibold text-[14px]">
+    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.2s-.8 1-.9 1.2-.3.2-.6.1-1.3-.5-2.4-1.5c-.9-.8-1.5-1.8-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5s0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4s-1 1-1 2.5 1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4s.2-1.3.2-1.4-.3-.2-.6-.4M12 21.8a9.9 9.9 0 01-5-1.4l-.4-.2-3.7 1 1-3.7-.2-.4a9.9 9.9 0 01-1.5-5.3c0-5.5 4.4-9.9 9.9-9.9 2.6 0 5.1 1 7 2.9a9.8 9.8 0 012.9 7c0 5.5-4.4 9.9-9.9 9.9m8.4-18.3A11.8 11.8 0 0012 0C5.5 0 .2 5.3.2 11.9c0 2.1.5 4.1 1.6 6L0 24l6.3-1.7a11.9 11.9 0 005.7 1.5c6.6 0 11.9-5.3 11.9-11.9a11.8 11.8 0 00-3.5-8.4z"/></svg>
+    Enviar
+  </button>
+</div>
+
+<!-- Footer -->
+<footer class="bg-ink text-paper relative overflow-hidden">
+  <div class="absolute inset-x-0 top-0 overflow-hidden whitespace-nowrap py-6 border-b border-paper/10">
+    <div class="marquee-track inline-flex gap-12 font-display font-extrabold text-[80px] leading-none tracking-[-0.04em]">
+      <span>G&L → TU FIT, PERFECTO</span><span class="text-brand">·</span>
+      <span>SHOP · LOOKBOOK · WHATSAPP</span><span class="text-brand">·</span>
+      <span>G&L → TU FIT, PERFECTO</span><span class="text-brand">·</span>
+      <span>SHOP · LOOKBOOK · WHATSAPP</span><span class="text-brand">·</span>
+    </div>
+  </div>
+  <div class="max-w-[1440px] mx-auto px-6 lg:px-10 pt-44 pb-12">
+    <div class="grid grid-cols-12 gap-8">
+      <div class="col-span-12 md:col-span-6">
+        <div class="font-mono text-[11px] tracking-[0.28em] uppercase opacity-50">Tu fit, perfecto. Desde 1995.</div>
+        <p class="mt-6 text-[15px] opacity-70 max-w-md">Boutique de moda masculina en Colima, México. Las mejores marcas, curadas a mano.</p>
+      </div>
+      <div class="col-span-6 md:col-span-2">
+        <div class="font-mono text-[10px] tracking-[0.28em] uppercase opacity-50 mb-5">Tienda</div>
+        <ul class="space-y-3 text-[14px]">
+          <li><a href="v2-bold-catalog.html" class="ul-link">Catálogo</a></li>
+          <li><a href="#" class="ul-link">Camisas</a></li>
+          <li><a href="#" class="ul-link">Jeans</a></li>
+        </ul>
+      </div>
+      <div class="col-span-6 md:col-span-2">
+        <div class="font-mono text-[10px] tracking-[0.28em] uppercase opacity-50 mb-5">Soporte</div>
+        <ul class="space-y-3 text-[14px]">
+          <li><a href="#" class="ul-link">Envíos</a></li>
+          <li><a href="#" class="ul-link">Cambios</a></li>
+          <li><a href="#" class="ul-link">WhatsApp</a></li>
+        </ul>
+      </div>
+      <div class="col-span-12 md:col-span-2">
+        <div class="font-mono text-[10px] tracking-[0.28em] uppercase opacity-50 mb-5">Cuenta</div>
+        <ul class="space-y-3 text-[14px]">
+          <li><a href="v2-bold-cart.html" class="ul-link">Bolsa</a></li>
+          <li><a href="v2-bold-checkout.html" class="ul-link">Checkout</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="mt-16 pt-8 border-t border-paper/10 flex items-center justify-between text-[12px] font-mono opacity-60">
+      <span>© 2026 G&L · Colima, México</span>
+      <span>Curado en Colima desde 1995</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Cursor
+  const dot = document.getElementById('cdot');
+  const ring = document.getElementById('cring');
+  let rx=0, ry=0, tx=0, ty=0;
+  window.addEventListener('mousemove', (e) => { dot.style.left=e.clientX+'px'; dot.style.top=e.clientY+'px'; tx=e.clientX; ty=e.clientY; });
+  (function tick(){ rx += (tx - rx) * 0.18; ry += (ty - ry) * 0.18; ring.style.left = rx + 'px'; ring.style.top = ry + 'px'; requestAnimationFrame(tick); })();
+  document.querySelectorAll('a, button, [data-cursor-hover], summary, .choice').forEach(el => {
+    el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+    el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+  });
+  document.querySelectorAll('input, textarea, select').forEach(el => {
+    el.addEventListener('mouseenter', () => document.body.classList.add('cursor-text'));
+    el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-text'));
+  });
+
+  // Toggle choice groups
+  function setupGroup(id) {
+    const wrap = document.getElementById(id);
+    if (!wrap) return;
+    wrap.addEventListener('click', (e) => {
+      const c = e.target.closest('.choice');
+      if (!c) return;
+      wrap.querySelectorAll('.choice').forEach(x => x.classList.remove('active'));
+      c.classList.add('active');
+
+      // Toggle address visibility based on delivery
+      if (id === 'dlv-group') {
+        const addr = document.getElementById('address-wrap');
+        if (c.dataset.val === 'tienda') {
+          addr.style.opacity = '.45';
+          addr.style.pointerEvents = 'none';
+        } else {
+          addr.style.opacity = '1';
+          addr.style.pointerEvents = 'auto';
+        }
+      }
+    });
+  }
+  setupGroup('pay-group');
+  setupGroup('dlv-group');
+
+  // Reveal
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+</body>
+</html>

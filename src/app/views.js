@@ -208,7 +208,7 @@ export async function renderRoute(path, state) {
   return {
     title,
     seo,
-    html: layoutPublic({ title, contentHtml: view.html, state, showSearch: view.showSearch, noPaddingTop: view.noPaddingTop, hideHeaderOnMobile: view.hideHeaderOnMobile }),
+    html: layoutPublic({ title, contentHtml: view.html, state, showSearch: view.showSearch, noPaddingTop: view.noPaddingTop, hideHeaderOnMobile: view.hideHeaderOnMobile, fullWidth: view.fullWidth, forceLight: view.forceLight, hideHeader: view.hideHeader }),
     onMount: view.onMount,
   }
 }

@@ -1,6 +1,6 @@
 export const BRAND = {
   name: import.meta.env.VITE_BRAND_NAME || 'G&L',
-  tagline: 'Ropa de hombre en México. Compra rápida por WhatsApp.',
+  tagline: 'Boutique de moda masculina en Colima. Curado desde 1995.',
   whatsapp: import.meta.env.VITE_WHATSAPP_NUMBER || '523121018263',
   freeShippingMin: 1499,
 }
