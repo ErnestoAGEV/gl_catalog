@@ -130,7 +130,6 @@ export function pageCatalog(initialState) {
               <svg class="w-3.5 h-3.5 md:w-4 md:h-4 text-ink/40 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
               <input type="search" id="catalog-search" class="flex-1 bg-transparent focus:outline-none text-[12px] md:text-[13px] font-mono min-w-0" autocomplete="off" placeholder="Buscar..." value="${getSearchQuery() || ''}" aria-label="Buscar productos" />
             </div>
-            <div id="search-suggestions" class="absolute top-full mt-2 left-0 right-0 max-h-[60vh] overflow-y-auto bg-paper border border-ink/10 rounded-md shadow-2xl z-[60] hidden flex-col"></div>
           </div>
         </div>
       </section>
@@ -601,66 +600,29 @@ export function pageCatalog(initialState) {
         renderGrid({ resetPage: true })
       })
 
-      // ── Search ──
+      // ── Search (live filter) ──
       const searchInput = root.querySelector('#catalog-search')
-      const searchSuggestions = root.querySelector('#search-suggestions')
-      const searchContainer = root.querySelector('#search-container')
 
-      if (searchInput && searchSuggestions) {
+      if (searchInput) {
+        let searchTimeout
+        searchInput.addEventListener('input', (e) => {
+          clearTimeout(searchTimeout)
+          searchTimeout = setTimeout(() => {
+            setSearchQuery(e.target.value.trim())
+            renderGrid({ resetPage: true })
+          }, 200)
+        })
         searchInput.addEventListener('keypress', (e) => {
           if (e.key === 'Enter') {
             e.preventDefault()
-            searchSuggestions.classList.add('hidden')
+            clearTimeout(searchTimeout)
             setSearchQuery(e.target.value.trim())
             renderGrid({ resetPage: true })
             searchInput.blur()
           }
         })
-
-        let searchTimeout
-        searchInput.addEventListener('input', (e) => {
-          const query = e.target.value.trim()
-          if (query.length < 2) { searchSuggestions.classList.add('hidden'); return }
-          clearTimeout(searchTimeout)
-          searchTimeout = setTimeout(() => {
-            const results = searchProducts(query).filter(p => p.badge !== 'Borrador')
-            if (results.length > 0) {
-              const top = results.slice(0, 5)
-              searchSuggestions.innerHTML = top.map(p => `
-                <a href="/producto/${p.id}" class="flex items-center gap-3 p-3 hover:bg-fog transition-colors suggestion-link">
-                  <img src="${p.images?.[0] || ''}" loading="lazy" class="w-12 h-[60px] object-cover rounded flex-shrink-0 bg-fog" alt="${p.name}">
-                  <div class="flex-1 min-w-0">
-                    <p class="font-display font-semibold text-[14px] text-ink truncate">${p.name}</p>
-                    <p class="font-mono text-[12px] text-brand mt-0.5">${formatMoney(p.price)}</p>
-                  </div>
-                </a>
-              `).join('')
-              searchSuggestions.querySelectorAll('.suggestion-link').forEach(link => {
-                link.addEventListener('click', (ev) => {
-                  ev.preventDefault()
-                  saveCatalogStateWithScroll()
-                  navigate(link.getAttribute('href'))
-                })
-              })
-              searchSuggestions.classList.remove('hidden')
-              searchSuggestions.classList.add('flex')
-            } else {
-              searchSuggestions.innerHTML = '<div class="p-4 text-center font-mono text-[12px] text-ink/55">No se encontraron sugerencias</div>'
-              searchSuggestions.classList.remove('hidden')
-            }
-          }, 150)
-        })
-
-        document.addEventListener('click', (e) => {
-          if (!searchContainer.contains(e.target)) searchSuggestions.classList.add('hidden')
-        })
         searchInput.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape') { searchSuggestions.classList.add('hidden'); searchInput.blur() }
-        })
-        searchInput.addEventListener('focus', () => {
-          if (searchInput.value.trim().length >= 2 && searchSuggestions.innerHTML.trim()) {
-            searchSuggestions.classList.remove('hidden')
-          }
+          if (e.key === 'Escape') searchInput.blur()
         })
       }
 
