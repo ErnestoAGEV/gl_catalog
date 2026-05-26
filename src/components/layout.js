@@ -67,11 +67,11 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
 
     <!-- Footer -->
     <footer class="bg-ink text-paper relative overflow-hidden">
-      <!-- Footer Marquee (desktop only) -->
-      <div class="hidden md:block py-6 border-b border-paper/10 overflow-hidden">
+      <!-- Footer Marquee -->
+      <div class="py-4 md:py-6 border-b border-paper/10 overflow-hidden">
         <div class="marquee-track whitespace-nowrap" style="width:max-content;display:flex">
-          <span class="font-heading font-[800] text-[80px] leading-none tracking-[-0.04em] shrink-0">G&L&nbsp;<span class="text-brand">→</span>&nbsp;TU&nbsp;FIT,&nbsp;PERFECTO&nbsp;&nbsp;<span class="text-brand">·</span>&nbsp;&nbsp;SHOP&nbsp;<span class="text-brand">·</span>&nbsp;LOOKBOOK&nbsp;<span class="text-brand">·</span>&nbsp;WHATSAPP&nbsp;&nbsp;&nbsp;&nbsp;</span>
-          <span class="font-heading font-[800] text-[80px] leading-none tracking-[-0.04em] shrink-0">G&L&nbsp;<span class="text-brand">→</span>&nbsp;TU&nbsp;FIT,&nbsp;PERFECTO&nbsp;&nbsp;<span class="text-brand">·</span>&nbsp;&nbsp;SHOP&nbsp;<span class="text-brand">·</span>&nbsp;LOOKBOOK&nbsp;<span class="text-brand">·</span>&nbsp;WHATSAPP&nbsp;&nbsp;&nbsp;&nbsp;</span>
+          <span class="font-heading font-[800] text-[40px] md:text-[80px] leading-none tracking-[-0.04em] shrink-0">G&L&nbsp;<span class="text-brand">→</span>&nbsp;TU&nbsp;FIT,&nbsp;PERFECTO&nbsp;&nbsp;<span class="text-brand">·</span>&nbsp;&nbsp;SHOP&nbsp;<span class="text-brand">·</span>&nbsp;LOOKBOOK&nbsp;<span class="text-brand">·</span>&nbsp;WHATSAPP&nbsp;&nbsp;&nbsp;&nbsp;</span>
+          <span class="font-heading font-[800] text-[40px] md:text-[80px] leading-none tracking-[-0.04em] shrink-0">G&L&nbsp;<span class="text-brand">→</span>&nbsp;TU&nbsp;FIT,&nbsp;PERFECTO&nbsp;&nbsp;<span class="text-brand">·</span>&nbsp;&nbsp;SHOP&nbsp;<span class="text-brand">·</span>&nbsp;LOOKBOOK&nbsp;<span class="text-brand">·</span>&nbsp;WHATSAPP&nbsp;&nbsp;&nbsp;&nbsp;</span>
         </div>
       </div>
 
