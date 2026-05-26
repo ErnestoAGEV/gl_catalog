@@ -397,17 +397,6 @@ export function pageProduct(initialState) {
       </section>`
       })() : ''}
 
-      <!-- ── MOBILE STICKY CTA ── -->
-      <div class="mobile-cta" id="pdp-mobile-cta">
-        <div class="flex-1">
-          <div class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink/55">Total · talla <span id="pdp-m-size">—</span></div>
-          <div class="font-display font-extrabold text-[22px] leading-none tracking-[-0.03em] digit-tabular text-brand">${formatMoney(product.price)}</div>
-        </div>
-        <button class="bg-ink text-paper h-14 px-7 rounded-full text-[14px] font-semibold inline-flex items-center gap-2 disabled:opacity-40 hover:bg-brand transition-colors" id="pdp-m-add"${hasSizes ? ' disabled' : ''}>
-          Agregar
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg>
-        </button>
-      </div>
 
       <!-- Quick Add Modal Container -->
       <div id="product-modal-container"></div>
@@ -533,8 +522,6 @@ export function pageProduct(initialState) {
       const sizeNameEl = root.querySelector('#pdp-size-name')
       const addBtn = root.querySelector('#qv-add-to-cart')
       const addLabel = root.querySelector('#pdp-add-label')
-      const mAdd = root.querySelector('#pdp-m-add')
-      const mSize = root.querySelector('#pdp-m-size')
 
       if (sizesEl) {
         sizesEl.addEventListener('click', (e) => {
@@ -551,8 +538,6 @@ export function pageProduct(initialState) {
               Agregar · talla ${selectedSize}
             `
           }
-          if (mAdd) mAdd.disabled = false
-          if (mSize) mSize.textContent = selectedSize
           bindCursor()
         })
       }
@@ -587,7 +572,6 @@ export function pageProduct(initialState) {
       }
 
       addBtn?.addEventListener('click', handleAdd)
-      mAdd?.addEventListener('click', handleAdd)
 
       // ── Quick add from recommended ──
       const modalContainer = root.querySelector('#product-modal-container')
