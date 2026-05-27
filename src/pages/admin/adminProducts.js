@@ -369,7 +369,7 @@ export function pageAdminProducts(state) {
       }
 
       // ── Image Compression Helper ──
-      const compressImage = (file, maxWidth = 2000, maxHeight = 2000, quality = 0.85) => {
+      const compressImage = (file, maxWidth = 1000, maxHeight = 1000, quality = 0.8) => {
         return new Promise((resolve, reject) => {
           const img = new Image()
           const url = URL.createObjectURL(file)
@@ -394,12 +394,12 @@ export function pageAdminProducts(state) {
               (blob) => {
                 if (!blob) return reject(new Error('Compression failed'))
                 // Create a new File from the blob, preserving a clean name
-                const ext = '.jpg'
+                const ext = '.webp'
                 const baseName = file.name.replace(/\.[^.]+$/, '')
-                const compressedFile = new File([blob], baseName + ext, { type: 'image/jpeg' })
+                const compressedFile = new File([blob], baseName + ext, { type: 'image/webp' })
                 resolve(compressedFile)
               },
-              'image/jpeg',
+              'image/webp',
               quality
             )
           }
@@ -439,7 +439,7 @@ export function pageAdminProducts(state) {
               const compressed = await compressImage(file)
               if (compressed.size > MAX_IMAGE_SIZE_BYTES) {
                 // Try again with lower quality
-                const recompressed = await compressImage(file, 1600, 1600, 0.7)
+                const recompressed = await compressImage(file, 800, 800, 0.6)
                 if (recompressed.size > MAX_IMAGE_SIZE_BYTES) {
                   invalid.push(`${file.name}: sigue siendo muy grande después de comprimir`)
                   continue
