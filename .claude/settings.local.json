@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"/c/Users/vevle/OneDrive/Documentos/g&l\" && npx vite build 2>&1 | head -30)",
+      "Bash(cd \"/c/Users/vevle/OneDrive/Documentos/g&l\" && npx vite build 2>&1 | tail -5)",
+      "Bash(cd \"/c/Users/vevle/OneDrive/Documentos/g&l\" && npx vite build 2>&1 | tail -3)",
+      "Bash(cd \"/c/Users/vevle/OneDrive/Documentos/g&l\" && npx vite build 2>&1 | tail -2)",
+      "Bash(ls \"C:/Users/vevle/OneDrive/Documentos/g&l/package.json\" 2>/dev/null && cat \"C:/Users/vevle/OneDrive/Documentos/g&l/package.json\" | head -20)",
+      "Bash(cd \"C:/Users/vevle/OneDrive/Documentos/g&l\" && npx vite --port 5173 2>&1)",
+      "Bash(ls \"C:/Users/vevle/OneDrive/Documentos/g&l/public/sw.js\" 2>/dev/null && echo \"EXISTS\" || echo \"NOT FOUND\")",
+      "WebFetch(domain:localhost)",
+      "Bash(cd \"C:/Users/vevle/OneDrive/Documentos/g&l\" && node -c src/app/router.js && echo \"SYNTAX OK\" || echo \"SYNTAX ERROR\")",
+      "Bash(cd \"C:/Users/vevle/OneDrive/Documentos/g&l\" && node -c src/components/layout.js && echo \"SYNTAX OK\" || echo \"SYNTAX ERROR\")",
+      "Bash(cd \"C:/Users/vevle/OneDrive/Documentos/g&l\" && node -c src/app/startApp.js && echo \"SYNTAX OK\" || echo \"SYNTAX ERROR\")",
+      "Bash(cd \"C:/Users/vevle/OneDrive/Documentos/g&l\" && npx vite build 2>&1 | tail -20)",
+      "Bash(cd \"C:/Users/vevle/OneDrive/Documentos/g&l\" && npx vite build 2>&1 | tail -10)",
+      "Bash(ls \"C:/Users/vevle/OneDrive/Documentos/g&l/\"vite.config* 2>/dev/null)",
+      "Bash(cd \"C:/Users/vevle/OneDrive/Documentos/g&l\" && npx vite build 2>&1 | grep -E \"error|Error|✓\")",
+      "Bash(cd \"/c/Users/vevle/OneDrive/Documentos/g&l\" && npx vite build 2>&1 | tail -20)",
+      "Bash(cd \"/c/Users/vevle/OneDrive/Documentos/g&l\" && npx vite build 2>&1 | tail -15)",
+      "Bash(cd \"/c/Users/vevle/OneDrive/Documentos/g&l\" && npx vite build --mode development 2>&1 | head -30)",
+      "Bash(cd \"/c/Users/vevle/OneDrive/Documentos/g&l\" && npx vite build --mode development 2>&1 | tail -5)",
+      "Bash(cd \"/c/Users/vevle/OneDrive/Documentos/g&l\" && npx vite build --mode development 2>&1 | tail -3)",
+      "Bash(cd \"C:\\\\Users\\\\vevle\\\\OneDrive\\\\Documentos\\\\g&l\" && npx vite build 2>&1 | tail -20)",
+      "Bash(cd \"C:\\\\Users\\\\vevle\\\\OneDrive\\\\Documentos\\\\g&l\" && timeout 5 npx vite 2>&1 || true)",
+      "Bash(cd \"C:\\\\Users\\\\vevle\\\\OneDrive\\\\Documentos\\\\g&l\" && npx vite build 2>&1 | head -5)",
+      "Bash(ls -la \"C:/Users/vevle/OneDrive/Documentos/g&l/\")",
+      "Bash(find \"C:/Users/vevle/OneDrive/Documentos/g&l/src\" -type f -name \"*.js\" -o -name \"*.css\" -o -name \"*.html\" | head -80)",
+      "Bash(cd \"C:/Users/vevle/OneDrive/Documentos/g&l\" && npm run build 2>&1)",
+      "Bash(find \"C:/Users/vevle/OneDrive/Documentos/g&l/src\" -type f | sort)",
+      "Bash(find \"C:/Users/vevle/OneDrive/Documentos/g&l/public\" -type f | sort)",
+      "Bash(find \"C:/Users/vevle/OneDrive/Documentos/g&l/supabase\" -type f | sort 2>/dev/null; find \"C:/Users/vevle/OneDrive/Documentos/g&l/design_handoff_home_redesign\" -type f | head -5 2>/dev/null)",
+      "Bash(cd \"C:/Users/vevle/OneDrive/Documentos/g&l/src\" && mkdir -p core store utils pages/home pages/catalog pages/product pages/cart pages/checkout pages/admin)",
+      "Bash(cd \"C:/Users/vevle/OneDrive/Documentos/g&l/src\" && rmdir app 2>/dev/null; find . -type f -name \"*.js\" | sort)",
+      "Bash(cd \"C:/Users/vevle/OneDrive/Documentos/g&l/src\" && ls app/ 2>/dev/null && rmdir app 2>/dev/null; ls -d */ | sort)",
+      "Bash(cd \"C:\\\\Users\\\\vevle\\\\OneDrive\\\\Documentos\\\\g&l\" && rm -rf node_modules/.vite)"
+    ]
+  }
+}
