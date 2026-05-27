@@ -580,29 +580,12 @@ export function pageHome() {
         }
       }
 
-      // Cleanup on unmount
-      const origOnMount = root.__cursorCleanup
-      const observer2 = new MutationObserver(() => {
-        if (!document.body.contains(root)) {
-          if (origOnMount) origOnMount()
-          observer2.disconnect()
-        }
-      })
-      observer2.observe(document.body, { childList: true, subtree: true })
-
-      // ── Cleanup autorotate on route change ──
-      const navCleanup = () => {
+      // Return cleanup function for startApp to call on route change
+      return () => {
         clearInterval(autoTimer)
         if (progressAnim) progressAnim.cancel()
+        if (root.__cursorCleanup) root.__cursorCleanup()
       }
-      // Use same MutationObserver pattern
-      const observer3 = new MutationObserver(() => {
-        if (!document.body.contains(root)) {
-          navCleanup()
-          observer3.disconnect()
-        }
-      })
-      observer3.observe(document.body, { childList: true, subtree: true })
     },
   }
 }

@@ -107,15 +107,13 @@ p {
 }
 
 /* Prevent horizontal scroll */
-#app,
-#app > div,
-#app * {
-  max-width: 100%;
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
 #app,
 #app > div {
+  max-width: 100%;
   overflow-x: hidden !important;
   width: 100%;
 }
@@ -128,8 +126,9 @@ textarea {
   box-sizing: border-box;
 }
 
-/* Smooth transitions */
-* {
+/* Smooth transitions — scoped to interactive elements only */
+a, button, input, select, textarea, summary,
+[role="button"], [tabindex] {
   transition-property:
     background-color, border-color, color, fill, stroke, opacity, box-shadow,
     transform;
@@ -477,13 +476,11 @@ body.dark {
 
 /* ─── Product card styles (all screens) ─── */
 .product-card {
-  will-change: transform;
   -webkit-tap-highlight-color: transparent;
 }
 
 /* Quick Add button */
 .quick-add-btn {
-  will-change: opacity, transform, background-color;
   -webkit-tap-highlight-color: transparent;
 }
 .quick-add-btn:focus-visible {
@@ -772,6 +769,11 @@ body.dark {
 .marquee-track > * { max-width: none !important; flex-shrink: 0; }
 .marquee-track-rev { animation: scroll-x 56s linear infinite reverse; max-width: none !important; width: max-content; display: flex; }
 .marquee-track-rev > * { max-width: none !important; flex-shrink: 0; }
+
+/* Pause animations when off-screen to save GPU */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track, .marquee-track-rev, .hero-bg-animate, .badge-pulse { animation: none; }
+}
 
 /* Reveal on scroll */
 .reveal { opacity: 0; transform: translateY(28px); transition: opacity .9s ease, transform 1s cubic-bezier(.22,.61,.36,1); }

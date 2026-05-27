@@ -33,7 +33,13 @@ export function subscribe(fn) {
 }
 
 export function getState() {
-  return structuredClone(state)
+  return {
+    ...state,
+    cart: [...state.cart],
+    wishlist: [...state.wishlist],
+    products: state.products,
+    categories: state.categories,
+  }
 }
 
 import { supabase } from './supabase.js'
