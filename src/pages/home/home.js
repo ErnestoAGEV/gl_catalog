@@ -131,9 +131,9 @@ export function pageHome() {
     : Array.from({ length: 6 }, (_, i) => `
         <li class="grid grid-cols-12 items-center gap-4 py-6 px-3 border-b border-[#EAE9E4]">
           <span class="col-span-1 h-4 w-6 rounded skeleton-shimmer"></span>
-          <span class="col-span-10 md:col-span-6 h-8 w-3/4 rounded skeleton-shimmer"></span>
+          <span class="col-span-7 md:col-span-6 h-8 w-3/4 rounded skeleton-shimmer"></span>
           <span class="hidden md:block col-span-3 h-4 w-1/2 rounded skeleton-shimmer"></span>
-          <span class="col-span-1 md:col-span-2 h-4 w-16 rounded skeleton-shimmer ml-auto"></span>
+          <span class="col-span-4 md:col-span-2 h-4 w-16 rounded skeleton-shimmer ml-auto"></span>
         </li>
       `).join('')
 
