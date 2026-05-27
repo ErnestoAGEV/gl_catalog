@@ -6,8 +6,8 @@
  *   - Llama a addToCart y showMiniCart
  */
 
-import { addToCart, cartCount, getState } from '../app/store.js'
-import { showMiniCart } from '../app/miniCart.js'
+import { addToCart, cartCount, getState } from '../../store/index.js'
+import { showMiniCart } from '../../components/miniCart.js'
 import { sizeSelectionModal } from './catalogModals.js'
 
 /**

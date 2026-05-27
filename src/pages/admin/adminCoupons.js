@@ -1,6 +1,6 @@
-import { getAdminCoupons, createCoupon, updateCoupon, deleteCoupon, getState } from '../app/store.js'
-import { showToast } from '../app/toast.js'
-import { sanitizeCouponCode, sanitizeText, sanitizeNumber } from '../app/sanitize.js'
+import { getAdminCoupons, createCoupon, updateCoupon, deleteCoupon, getState } from '../../store/index.js'
+import { showToast } from '../../utils/toast.js'
+import { sanitizeCouponCode, sanitizeText, sanitizeNumber } from '../../utils/sanitize.js'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

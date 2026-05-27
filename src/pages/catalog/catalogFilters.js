@@ -1,5 +1,5 @@
 // Filter utilities for the catalog page
-import { getActiveCategories } from '../app/store.js'
+import { getActiveCategories } from '../../store/index.js'
 
 // Desired display order for product categories in the catalog
 // This is now dynamic from the database, with a hardcoded fallback

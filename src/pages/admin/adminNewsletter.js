@@ -1,4 +1,4 @@
-import { getAdminSubscribers } from '../app/store.js'
+import { getAdminSubscribers } from '../../store/index.js'
 
 function formatSubscriberDate(sub) {
   const raw = sub?.created_at

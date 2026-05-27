@@ -1,6 +1,6 @@
-import { getProductById, cartCount, getState } from './store.js'
-import { formatMoney } from './format.js'
-import { isPerfumeCategory } from '../pages/adminProductsData.js'
+import { getProductById, cartCount, getState } from '../store/index.js'
+import { formatMoney } from '../utils/format.js'
+import { isPerfumeCategory } from '../pages/admin/adminProductsData.js'
 
 let activeTimer = null
 let activeEl = null

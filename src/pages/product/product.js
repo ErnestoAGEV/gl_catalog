@@ -1,11 +1,11 @@
-import { getState, addToCart, trackProductView, getProductById } from '../app/store.js'
-import { navigate } from '../app/router.js'
-import { formatMoney } from '../app/format.js'
-import { showToast } from '../app/toast.js'
-import { BRAND } from '../app/config.js'
-import { getBadgeColor } from './catalogCard.js'
-import { handleQuickAdd } from './catalogQuickAdd.js'
-import { isPerfumeCategory } from './adminProductsData.js'
+import { getState, addToCart, trackProductView, getProductById } from '../../store/index.js'
+import { navigate } from '../../core/router.js'
+import { formatMoney } from '../../utils/format.js'
+import { showToast } from '../../utils/toast.js'
+import { BRAND } from '../../utils/config.js'
+import { getBadgeColor } from '../catalog/catalogCard.js'
+import { handleQuickAdd } from '../catalog/catalogQuickAdd.js'
+import { isPerfumeCategory } from '../admin/adminProductsData.js'
 
 /* ── Color name → hex map ── */
 const COLOR_HEX = {

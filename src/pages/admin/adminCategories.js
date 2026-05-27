@@ -1,5 +1,5 @@
-import { getCategories, addCategory, updateCategory, deleteCategory, reorderCategories, getState } from '../app/store.js'
-import { showToast } from '../app/toast.js'
+import { getCategories, addCategory, updateCategory, deleteCategory, reorderCategories, getState } from '../../store/index.js'
+import { showToast } from '../../utils/toast.js'
 
 function categoryRow(cat, index, total, productCounts) {
   const count = productCounts[cat.name] || 0

@@ -1,4 +1,4 @@
 import './style.css'
-import { startApp } from './app/startApp.js'
+import { startApp } from './core/startApp.js'
 
 startApp(document.querySelector('#app'))

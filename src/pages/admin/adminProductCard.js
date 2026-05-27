@@ -1,4 +1,4 @@
-import { formatMoney } from '../app/format.js'
+import { formatMoney } from '../../utils/format.js'
 import { getBadgeColor } from './adminProductsData.js'
 
 export function productCard(p) {

@@ -1,5 +1,5 @@
-import { formatMoney } from '../app/format.js'
-import { isPerfumeCategory } from './adminProductsData.js'
+import { formatMoney } from '../../utils/format.js'
+import { isPerfumeCategory } from '../admin/adminProductsData.js'
 
 export function getBadgeColor(badge) {
   const colors = {

@@ -1,7 +1,7 @@
-import { adminLogin } from '../app/store.js'
-import { navigate } from '../app/router.js'
-import { on, qs } from '../app/dom.js'
-import { sanitizeEmail } from '../app/sanitize.js'
+import { adminLogin } from '../../store/index.js'
+import { navigate } from '../../core/router.js'
+import { on, qs } from '../../utils/dom.js'
+import { sanitizeEmail } from '../../utils/sanitize.js'
 
 export function pageAdminLogin() {
   return {

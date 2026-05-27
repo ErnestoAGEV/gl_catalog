@@ -1,12 +1,12 @@
 import { layoutAdmin, layoutPublic } from '../components/layout.js'
-import { adminLogout, isAdminAuthed } from './store.js'
+import { adminLogout, isAdminAuthed } from '../store/index.js'
 import { navigate } from './router.js'
-import { pageHome } from '../pages/home.js'
-import { pageCatalog } from '../pages/catalog.js'
-import { pageProduct } from '../pages/product.js'
-import { pageCart } from '../pages/cart.js'
-import { pageCheckout, pageCheckoutSuccess } from '../pages/checkout.js'
-import { pageAdminLogin } from '../pages/adminLogin.js'
+import { pageHome } from '../pages/home/home.js'
+import { pageCatalog } from '../pages/catalog/catalog.js'
+import { pageProduct } from '../pages/product/product.js'
+import { pageCart } from '../pages/cart/cart.js'
+import { pageCheckout, pageCheckoutSuccess } from '../pages/checkout/checkout.js'
+import { pageAdminLogin } from '../pages/admin/adminLogin.js'
 
 function getSeoForRoute(path, basePath, state) {
   if (basePath === '/') {
@@ -113,13 +113,13 @@ const publicRoutes = {
 
 // Lazy-loaded admin pages — solo se descargan cuando el usuario visita el panel
 const lazyAdminRoutes = {
-  '/admin':            () => import('../pages/adminDashboard.js').then(m => m.pageAdminDashboard),
-  '/admin/dashboard':  () => import('../pages/adminDashboard.js').then(m => m.pageAdminDashboard),
-  '/admin/products':   () => import('../pages/adminProducts.js').then(m => m.pageAdminProducts),
-  '/admin/categories': () => import('../pages/adminCategories.js').then(m => m.pageAdminCategories),
-  '/admin/orders':     () => import('../pages/adminOrders.js').then(m => m.pageAdminOrders),
-  '/admin/coupons':    () => import('../pages/adminCoupons.js').then(m => m.pageAdminCoupons),
-  '/admin/newsletter': () => import('../pages/adminNewsletter.js').then(m => m.pageAdminNewsletter),
+  '/admin':            () => import('../pages/admin/adminDashboard.js').then(m => m.pageAdminDashboard),
+  '/admin/dashboard':  () => import('../pages/admin/adminDashboard.js').then(m => m.pageAdminDashboard),
+  '/admin/products':   () => import('../pages/admin/adminProducts.js').then(m => m.pageAdminProducts),
+  '/admin/categories': () => import('../pages/admin/adminCategories.js').then(m => m.pageAdminCategories),
+  '/admin/orders':     () => import('../pages/admin/adminOrders.js').then(m => m.pageAdminOrders),
+  '/admin/coupons':    () => import('../pages/admin/adminCoupons.js').then(m => m.pageAdminCoupons),
+  '/admin/newsletter': () => import('../pages/admin/adminNewsletter.js').then(m => m.pageAdminNewsletter),
 }
 
 export async function renderRoute(path, state) {

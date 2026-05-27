@@ -1,9 +1,9 @@
-import { formatMoney } from '../app/format.js'
-import { getProductById, removeCartItem, setCartItemQty, cartTotal, getState, getCoupon, getDiscountAmount, applyCoupon, removeCoupon, addToCart } from '../app/store.js'
-import { on, qs } from '../app/dom.js'
-import { BRAND } from '../app/config.js'
-import { navigate } from '../app/router.js'
-import { isPerfumeCategory } from './adminProductsData.js'
+import { formatMoney } from '../../utils/format.js'
+import { getProductById, removeCartItem, setCartItemQty, cartTotal, getState, getCoupon, getDiscountAmount, applyCoupon, removeCoupon, addToCart } from '../../store/index.js'
+import { on, qs } from '../../utils/dom.js'
+import { BRAND } from '../../utils/config.js'
+import { navigate } from '../../core/router.js'
+import { isPerfumeCategory } from '../admin/adminProductsData.js'
 
 function isInfiniteStock(stock) {
   return stock === undefined || stock === null || stock === '' || stock === '\u221E'

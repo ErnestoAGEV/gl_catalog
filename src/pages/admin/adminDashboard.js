@@ -1,5 +1,5 @@
-import { getAdminOrders, getAdminSubscribers } from '../app/store.js'
-import { formatMoney } from '../app/format.js'
+import { getAdminOrders, getAdminSubscribers } from '../../store/index.js'
+import { formatMoney } from '../../utils/format.js'
 
 function normalizeStatus(status) {
   return (status || '').toString().trim().toLowerCase()

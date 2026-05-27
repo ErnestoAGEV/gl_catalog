@@ -1,6 +1,6 @@
-import { STORAGE_KEYS } from './config.js'
-import { readJson, writeJson } from './storage.js'
-import { sanitizeEmail, sanitizeCouponCode } from './sanitize.js'
+import { STORAGE_KEYS } from '../utils/config.js'
+import { readJson, writeJson } from '../utils/storage.js'
+import { sanitizeEmail, sanitizeCouponCode } from '../utils/sanitize.js'
 
 const subscribers = new Set()
 const VALID_THEMES = new Set(['light', 'dark'])
@@ -42,7 +42,7 @@ export function getState() {
   }
 }
 
-import { supabase } from './supabase.js'
+import { supabase } from '../core/supabase.js'
 
 // Helper to map DB row -> App Product
 function mapRowToProduct(row) {

@@ -1,5 +1,5 @@
-import { BRAND } from '../app/config.js'
-import { getSearchQuery } from '../app/store.js'
+import { BRAND } from '../utils/config.js'
+import { getSearchQuery } from '../store/index.js'
 
 function container(children, theme = 'dark') {
   const isDark = theme === 'dark'

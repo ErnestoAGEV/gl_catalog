@@ -1,12 +1,12 @@
-import { searchProducts, setSearchQuery, getSearchQuery, subscribe, getState } from '../app/store.js'
-import { formatMoney } from '../app/format.js'
-import { on, qs } from '../app/dom.js'
-import { navigate } from '../app/router.js'
+import { searchProducts, setSearchQuery, getSearchQuery, subscribe, getState } from '../../store/index.js'
+import { formatMoney } from '../../utils/format.js'
+import { on, qs } from '../../utils/dom.js'
+import { navigate } from '../../core/router.js'
 import { uniqueSorted, getFilterState, applyFilters, getCategoryOrder } from './catalogFilters.js'
 import { skeletonGrid, productCard } from './catalogCard.js'
 import { handleQuickAdd } from './catalogQuickAdd.js'
-import { escapeHtml } from '../app/sanitize.js'
-import { BRAND } from '../app/config.js'
+import { escapeHtml } from '../../utils/sanitize.js'
+import { BRAND } from '../../utils/config.js'
 
 const TYPE_DESCRIPTIONS = {
   'Camisas': 'Oxford, lino y franela. Cortes slim y regular fit, en hueso, marino y negro.',

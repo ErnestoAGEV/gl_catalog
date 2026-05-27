@@ -1,9 +1,9 @@
 import { getRoute, onRouteChange, startRouter, navigate, scrollPositions } from './router.js'
-import { getState, isAdminAuthed, loadProducts, loadCategories, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession, getAdminOrders } from './store.js'
+import { getState, isAdminAuthed, loadProducts, loadCategories, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession, getAdminOrders } from '../store/index.js'
 import { renderRoute } from './views.js'
-import { showToast } from './toast.js'
+import { showToast } from '../utils/toast.js'
 import { supabase } from './supabase.js'
-import { formatMoney } from './format.js'
+import { formatMoney } from '../utils/format.js'
 import { applySeo } from './seo.js'
 
 function playOrderAlertSound() {

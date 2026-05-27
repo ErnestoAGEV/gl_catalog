@@ -1,7 +1,7 @@
-import { getAdminOrders, updateAdminOrderStatus } from '../app/store.js'
-import { formatMoney } from '../app/format.js'
-import { supabase } from '../app/supabase.js'
-import { showToast } from '../app/toast.js'
+import { getAdminOrders, updateAdminOrderStatus } from '../../store/index.js'
+import { formatMoney } from '../../utils/format.js'
+import { supabase } from '../../core/supabase.js'
+import { showToast } from '../../utils/toast.js'
 
 function getPaymentMeta(paymentMethod) {
   const raw = (paymentMethod || '').toString().trim()

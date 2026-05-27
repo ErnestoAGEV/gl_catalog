@@ -1,10 +1,10 @@
-import { BRAND } from '../app/config.js'
-import { getState, subscribeNewsletter, isSubscribedNewsletter, getMostViewedProducts } from '../app/store.js'
-import { on, qs } from '../app/dom.js'
-import { navigate } from '../app/router.js'
+import { BRAND } from '../../utils/config.js'
+import { getState, subscribeNewsletter, isSubscribedNewsletter, getMostViewedProducts } from '../../store/index.js'
+import { on, qs } from '../../utils/dom.js'
+import { navigate } from '../../core/router.js'
 import { bestSellerRow, homeSkeletonCard } from './homeCards.js'
-import { sanitizeEmail } from '../app/sanitize.js'
-import { formatMoney } from '../app/format.js'
+import { sanitizeEmail } from '../../utils/sanitize.js'
+import { formatMoney } from '../../utils/format.js'
 import { heroSlides, categoryTiles, stats, stores } from './homeData.js'
 
 export function pageHome() {
