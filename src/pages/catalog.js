@@ -126,9 +126,9 @@ export function pageCatalog(initialState) {
           </div>
           <!-- Search bar (below toolbar on mobile, inline on desktop) -->
           <div class="mt-2 md:mt-3 relative" id="search-container">
-            <div class="flex items-center w-full h-9 md:h-10 rounded-full border border-ink/10 bg-fog/50 px-3 md:px-4 gap-2">
+            <div class="flex items-center w-full h-10 rounded-full border border-ink/10 bg-fog/50 px-3 md:px-4 gap-2">
               <svg class="w-3.5 h-3.5 md:w-4 md:h-4 text-ink/40 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              <input type="search" id="catalog-search" class="flex-1 bg-transparent focus:outline-none text-[12px] md:text-[13px] font-mono min-w-0" autocomplete="off" placeholder="Buscar..." value="${getSearchQuery() || ''}" aria-label="Buscar productos" />
+              <input type="search" id="catalog-search" class="flex-1 bg-transparent focus:outline-none text-[16px] md:text-[13px] font-mono min-w-0" autocomplete="off" placeholder="Buscar..." value="${getSearchQuery() || ''}" aria-label="Buscar productos" />
             </div>
           </div>
         </div>
