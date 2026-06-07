@@ -92,7 +92,22 @@ export async function adminLogin(email, pass) {
   if (!supabase) return { error: 'No hay conexión con la base de datos.' }
   const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass })
   if (error) return { error: error.message }
-  state.isAdminAuthed = Boolean(data.session)
+
+  const userId = data.session?.user?.id
+  if (!userId) return { error: 'No se pudo obtener el usuario.' }
+
+  const { data: adminUser } = await supabase
+    .from('admin_users')
+    .select('user_id')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (!adminUser) {
+    await supabase.auth.signOut()
+    return { error: 'Tu usuario no está autorizado como administrador.' }
+  }
+
+  state.isAdminAuthed = true
   emit()
   return { ok: true }
 }

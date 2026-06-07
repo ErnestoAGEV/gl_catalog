@@ -253,19 +253,21 @@ export function pageCart(state) {
         }
         recommendedSection.classList.remove('hidden')
         upsellGrid.innerHTML = upsellProducts.map(p => {
-          const img = p.images?.[0] || 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&h=750&fit=crop'
+          const img = escapeHtml(p.images?.[0] || 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&h=750&fit=crop')
+          const safeName = escapeHtml(p.name)
+          const safeType = escapeHtml(p.type || '')
           const perfume = isPerfumeCategory(p.type)
           const bgClass = perfume ? 'bg-white' : 'bg-fog'
           const imgClass = perfume ? 'object-contain p-3' : 'object-cover'
           return `
             <a href="/producto/${p.id}" class="group block" data-upsell-link="${p.id}">
               <div class="aspect-[4/5] ${bgClass} rounded-md overflow-hidden">
-                <img src="${img}" alt="${p.name}" class="w-full h-full ${imgClass} group-hover:scale-105 transition-transform duration-700" loading="lazy"/>
+                <img src="${img}" alt="${safeName}" class="w-full h-full ${imgClass} group-hover:scale-105 transition-transform duration-700" loading="lazy"/>
               </div>
               <div class="mt-3 flex items-start justify-between gap-2">
                 <div class="min-w-0">
-                  <div class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink/55">${p.type || ''}</div>
-                  <div class="font-display font-bold text-[14px] md:text-[15px] leading-tight truncate">${p.name}</div>
+                  <div class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink/55">${safeType}</div>
+                  <div class="font-display font-bold text-[14px] md:text-[15px] leading-tight truncate">${safeName}</div>
                 </div>
                 <div class="font-mono text-[12px] md:text-[13px] font-semibold flex-shrink-0">${formatMoney(p.price)}</div>
               </div>

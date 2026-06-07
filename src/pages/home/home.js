@@ -404,6 +404,7 @@ export function pageHome() {
         })
         heroSection.addEventListener('mouseleave', () => {
           if (progressAnim) progressAnim.play()
+          clearInterval(autoTimer)
           autoTimer = setInterval(() => goToSlide(currentSlide + 1), 6000)
         })
       }

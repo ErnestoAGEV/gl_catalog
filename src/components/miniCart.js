@@ -1,6 +1,7 @@
 import { getProductById, cartCount, getState } from '../store/index.js'
 import { formatMoney } from '../utils/format.js'
 import { isPerfumeCategory } from '../pages/admin/adminProductsData.js'
+import { escapeHtml } from '../utils/sanitize.js'
 
 let activeTimer = null
 let activeEl = null
@@ -34,7 +35,8 @@ export function showMiniCart(productId) {
   if (!product) return
 
   const state = getState()
-  const img = product.images?.[0] || 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=120&h=150&fit=crop'
+  const img = escapeHtml(product.images?.[0] || 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=120&h=150&fit=crop')
+  const safeName = escapeHtml(product.name)
   const isPerfume = isPerfumeCategory(product.type)
   const imgFit = isPerfume ? 'object-contain bg-white' : 'object-cover'
   const isDark = state.theme === 'dark'
@@ -64,10 +66,10 @@ export function showMiniCart(productId) {
       <!-- Product row -->
       <div class="flex gap-3 px-4 py-2.5">
         <div class="w-14 h-[72px] md:w-12 md:h-16 rounded-lg overflow-hidden shrink-0 ${isDark ? 'bg-gray-800' : 'bg-gray-100'} border ${isDark ? 'border-gray-700' : 'border-gray-200'}">
-          <img src="${img}" alt="${product.name}" class="w-full h-full ${imgFit}" loading="lazy" />
+          <img src="${img}" alt="${safeName}" class="w-full h-full ${imgFit}" loading="lazy" />
         </div>
         <div class="flex-1 min-w-0">
-          <p class="text-[13px] font-medium truncate leading-snug">${product.name}</p>
+          <p class="text-[13px] font-medium truncate leading-snug">${safeName}</p>
           <p class="text-[12px] ${isDark ? 'text-gray-400' : 'text-gray-500'} mt-0.5">Cant: 1</p>
           <p class="text-[14px] font-bold mt-0.5">${formatMoney(product.price)}</p>
         </div>

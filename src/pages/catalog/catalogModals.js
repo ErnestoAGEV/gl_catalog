@@ -1,15 +1,18 @@
 import { getBadgeColor } from './catalogCard.js'
 import { formatMoney } from '../../utils/format.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
+import { escapeHtml } from '../../utils/sanitize.js'
 
 export function quickViewModal(p) {
-  const images = p.images && p.images.length > 0 
-    ? p.images 
+  const images = p.images && p.images.length > 0
+    ? p.images
     : ['https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&h=750&fit=crop']
   const isPerfume = isPerfumeCategory(p.type)
   const modalImageFitClass = isPerfume ? 'object-contain bg-transparent' : 'object-contain md:object-cover object-center bg-transparent'
-  
-  const colorOpts = (p.colors || []).map(c => `<option value="${c}">${c}</option>`).join('')
+  const safeName = escapeHtml(p.name)
+  const safeType = escapeHtml(p.type || '')
+
+  const colorOpts = (p.colors || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')
   const discount = p.originalPrice ? Math.round((1 - p.price / p.originalPrice) * 100) : 0
 
   // Modal carousel HTML (larger version)
@@ -17,7 +20,7 @@ export function quickViewModal(p) {
     <div class="modal-carousel relative overflow-hidden bg-transparent cursor-zoom-in w-full h-full flex items-center" data-modal-carousel>
       <div class="modal-carousel-track flex transition-transform duration-300 h-full w-full" data-modal-track>
         ${images.map((img, i) => `
-          <img src="${img}" alt="${p.name}" class="modal-img-zoomable w-full h-full ${modalImageFitClass} flex-shrink-0 min-w-full transition-transform duration-200" data-modal-slide="${i}"/>
+          <img src="${escapeHtml(img)}" alt="${safeName}" class="modal-img-zoomable w-full h-full ${modalImageFitClass} flex-shrink-0 min-w-full transition-transform duration-200" data-modal-slide="${i}"/>
         `).join('')}
       </div>
       
@@ -38,7 +41,7 @@ export function quickViewModal(p) {
       <div class="hidden md:flex absolute bottom-3 left-1/2 -translate-x-1/2 gap-2 z-10" data-modal-thumbs>
         ${images.map((img, i) => `
           <button class="w-12 h-12 rounded-lg overflow-hidden border-2 ${i === 0 ? 'border-white' : 'border-white/40'} hover:border-white transition-colors input-focus" data-modal-thumb="${i}">
-            <img src="${img}" alt="Thumb ${i+1}" class="w-full h-full object-cover"/>
+            <img src="${escapeHtml(img)}" alt="Thumb ${i+1}" class="w-full h-full object-cover"/>
           </button>
         `).join('')}
       </div>
@@ -49,7 +52,7 @@ export function quickViewModal(p) {
     </div>
   ` : `
     <div class="relative overflow-hidden bg-transparent cursor-zoom-in w-full h-full flex items-center justify-center" data-modal-single>
-      <img src="${images[0]}" alt="${p.name}" class="modal-img-zoomable w-full h-full ${modalImageFitClass} transition-transform duration-200"/>
+      <img src="${escapeHtml(images[0])}" alt="${safeName}" class="modal-img-zoomable w-full h-full ${modalImageFitClass} transition-transform duration-200"/>
       
       <!-- Sin badges en el modal -->
     </div>
@@ -89,11 +92,11 @@ export function quickViewModal(p) {
 
             <!-- Category -->
             <div class="mb-0.5">
-              <span class="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">${p.type}</span>
+              <span class="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">${safeType}</span>
             </div>
 
             <!-- Name -->
-            <h2 class="text-[22px] md:text-3xl font-extrabold text-gray-900 dark:text-white leading-tight mb-1.5 tracking-tight line-clamp-2">${p.name}</h2>
+            <h2 class="text-[22px] md:text-3xl font-extrabold text-gray-900 dark:text-white leading-tight mb-1.5 tracking-tight line-clamp-2">${safeName}</h2>
 
             <!-- Price row -->
             <div class="flex items-center gap-2 mb-3">
@@ -154,18 +157,20 @@ export function quickViewModal(p) {
 
 export function sizeSelectionModal(p) {
   const sizes = p.sizes || []
-  
+  const safeName = escapeHtml(p.name)
+  const safeImg = escapeHtml(p.images?.[0] || '')
+
   return `
     <div id="quick-add-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 sm:p-6 animate-fade-in">
       <div class="bg-white dark:bg-gray-900 w-full max-w-lg rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] overflow-hidden animate-slide-up border border-gray-100 dark:border-gray-800">
         <!-- Header -->
         <div class="p-5 sm:p-6 border-b border-gray-100 dark:border-gray-800 flex items-start gap-4 relative">
           <div class="w-16 h-16 rounded-2xl bg-gray-50 dark:bg-gray-800 overflow-hidden flex-shrink-0 shadow-sm">
-            <img src="${p.images?.[0] || ''}" alt="${p.name}" class="w-full h-full object-cover">
+            <img src="${safeImg}" alt="${safeName}" class="w-full h-full object-cover">
           </div>
           <div class="min-w-0 flex-1 pt-1 pr-8">
             <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">${sizes.length > 0 ? 'Selecciona tu talla' : 'Agregar al carrito'}</p>
-            <h3 class="font-manrope font-bold text-gray-900 dark:text-white text-lg leading-tight">${p.name}</h3>
+            <h3 class="font-manrope font-bold text-gray-900 dark:text-white text-lg leading-tight">${safeName}</h3>
           </div>
           <!-- Close Button -->
           <button id="close-quick-add" class="absolute top-5 right-5 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" aria-label="Cerrar modal">

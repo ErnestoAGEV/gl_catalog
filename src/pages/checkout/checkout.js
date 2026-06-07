@@ -1,4 +1,4 @@
-import { getProductById, cartTotal, getCoupon, getDiscountAmount, applyCoupon, removeCoupon, saveOrder, clearCart, addToCart } from '../../store/index.js'
+import { getProductById, getState, cartTotal, getCoupon, getDiscountAmount, applyCoupon, removeCoupon, saveOrder, clearCart, addToCart } from '../../store/index.js'
 import { BRAND } from '../../utils/config.js'
 import { buildOrderMessage, openWhatsAppWithMessage } from '../../utils/whatsapp.js'
 import { on, qs } from '../../utils/dom.js'
@@ -200,7 +200,8 @@ export function pageCheckout(state) {
         const currentDiscount = getDiscountAmount(currentCoupon)
         const currentTotal = currentSubtotal - currentDiscount
         const currentFreeShip = currentCoupon?.freeShipping || currentSubtotal >= BRAND.freeShippingMin
-        const currentItemCount = state.cart.reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
+        const liveCart = getState().cart
+        const currentItemCount = liveCart.reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
 
         // Find the wrapper and replace HTML
         const wrapper = root.querySelector('#checkout-summary-column')
@@ -338,7 +339,8 @@ export function pageCheckout(state) {
         clearFieldErrors(root)
 
         // ── Carrito vacío ──
-        if (!state.cart.length) {
+        const liveCart = getState().cart
+        if (!liveCart.length) {
           setError('Tu carrito está vacío. Volvé al catálogo para agregar productos.')
           return
         }
@@ -398,7 +400,7 @@ export function pageCheckout(state) {
         }
 
         // ── Construir y enviar el pedido ──
-        const cartLines = state.cart
+        const cartLines = liveCart
           .map((i) => {
             const p = getProductById(i.productId)
             if (!p) return null

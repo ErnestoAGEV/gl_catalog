@@ -41,8 +41,9 @@ export function pageCatalog(initialState) {
   }
 
   // Hero content
+  const safeInitialType = escapeHtml(initialType)
   const heroH1 = initialType
-    ? `Solo<br/><span class="text-brand">${initialType}</span>.`
+    ? `Solo<br/><span class="text-brand">${safeInitialType}</span>.`
     : `Todo el<br/><span class="text-brand">cat\u00E1logo</span>.`
   const heroDesc = initialType
     ? (TYPE_DESCRIPTIONS[initialType] || `Explora nuestra selecci\u00F3n de ${initialType.toLowerCase()}.`)
@@ -57,7 +58,7 @@ export function pageCatalog(initialState) {
   })
 
   const chipHtml = sortedTypes.map(t =>
-    `<button class="chip flex-shrink-0${initialType === t ? ' active' : ''}" data-cat="${t}">${t}</button>`
+    `<button class="chip flex-shrink-0${initialType === t ? ' active' : ''}" data-cat="${escapeHtml(t)}">${escapeHtml(t)}</button>`
   ).join('')
 
   return {
@@ -128,7 +129,7 @@ export function pageCatalog(initialState) {
           <div class="mt-2 md:mt-3 relative" id="search-container">
             <div class="flex items-center w-full h-10 rounded-full border border-ink/10 bg-fog/50 px-3 md:px-4 gap-2">
               <svg class="w-3.5 h-3.5 md:w-4 md:h-4 text-ink/40 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              <input type="search" id="catalog-search" class="flex-1 bg-transparent focus:outline-none text-[16px] md:text-[13px] font-mono min-w-0" autocomplete="off" placeholder="Buscar..." value="${getSearchQuery() || ''}" aria-label="Buscar productos" />
+              <input type="search" id="catalog-search" class="flex-1 bg-transparent focus:outline-none text-[16px] md:text-[13px] font-mono min-w-0" autocomplete="off" placeholder="Buscar..." value="${escapeHtml(getSearchQuery() || '')}" aria-label="Buscar productos" />
             </div>
           </div>
         </div>
@@ -503,7 +504,8 @@ export function pageCatalog(initialState) {
         // Update hero
         const h1 = root.querySelector('#hero-h1')
         const desc = root.querySelector('#hero-desc')
-        if (h1) h1.innerHTML = val ? `Solo<br/><span class="text-brand">${val}</span>.` : `Todo el<br/><span class="text-brand">cat\u00E1logo</span>.`
+        const safeVal = escapeHtml(val)
+        if (h1) h1.innerHTML = val ? `Solo<br/><span class="text-brand">${safeVal}</span>.` : `Todo el<br/><span class="text-brand">cat\u00E1logo</span>.`
         if (desc) desc.textContent = val ? (TYPE_DESCRIPTIONS[val] || `Explora nuestra selecci\u00F3n de ${val.toLowerCase()}.`) : 'Camisas, denim, polos, knits y fragancias. Curadas en Colima \u2014 al mejor precio.'
 
         renderGrid({ resetPage: true })
