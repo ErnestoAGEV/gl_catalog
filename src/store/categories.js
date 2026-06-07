@@ -26,6 +26,7 @@ export async function loadCategories() {
 async function loadCategoriesFromSupabase(isBackground = false) {
   if (!supabase) return
   try {
+    const previousJson = isBackground ? JSON.stringify(state.categories) : null
     const { data, error } = await supabase
       .from('categories')
       .select('*')
@@ -37,7 +38,7 @@ async function loadCategoriesFromSupabase(isBackground = false) {
         localStorage.setItem('gl_categories_cache', JSON.stringify(data))
         localStorage.setItem('gl_categories_cache_ts', Date.now().toString())
       } catch { /* ignore */ }
-      if (!isBackground || JSON.stringify(state.categories) !== JSON.stringify(data)) {
+      if (!isBackground || JSON.stringify(data) !== previousJson) {
         emit()
       }
     }

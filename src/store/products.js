@@ -83,7 +83,6 @@ async function loadProductsFromSupabase(isBackgroundUpdate = false) {
 
   try {
     const previousProductsJson = JSON.stringify(state.products)
-    const previousCartSize = state.cart.length
 
     const result = await Promise.race([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
@@ -95,6 +94,7 @@ async function loadProductsFromSupabase(isBackgroundUpdate = false) {
     if (error) throw error
 
     if (data) {
+      const cartSizeBeforeCleanup = state.cart.length
       state.products = data.map(mapRowToProduct)
       state.isLoading = false
 
@@ -106,16 +106,15 @@ async function loadProductsFromSupabase(isBackgroundUpdate = false) {
       }
 
       const validProductIds = new Set(state.products.map(p => p.id))
-      const initialCartSize = state.cart.length
       state.cart = state.cart.filter(item => validProductIds.has(item.productId))
 
-      if (state.cart.length !== initialCartSize) {
+      if (state.cart.length !== cartSizeBeforeCleanup) {
         writeJson(STORAGE_KEYS.cart, state.cart)
       }
 
       const productsChanged = JSON.stringify(state.products) !== previousProductsJson
-      const cartChanged = state.cart.length !== previousCartSize
-      if (!isBackgroundUpdate || productsChanged || cartChanged || state.isLoading) {
+      const cartChanged = state.cart.length !== cartSizeBeforeCleanup
+      if (!isBackgroundUpdate || productsChanged || cartChanged) {
         emit()
       }
     }

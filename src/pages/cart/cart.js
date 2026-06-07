@@ -4,6 +4,7 @@ import { on, qs } from '../../utils/dom.js'
 import { BRAND } from '../../utils/config.js'
 import { navigate } from '../../core/router.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
+import { escapeHtml } from '../../utils/sanitize.js'
 
 function isInfiniteStock(stock) {
   return stock === undefined || stock === null || stock === '' || stock === '\u221E'
@@ -24,28 +25,33 @@ function lineRow(item, idx) {
   const p = getProductById(item.productId)
   if (!p) return ''
 
-  const img = p.images?.[0] || 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400&h=500&fit=crop'
+  const img = escapeHtml(p.images?.[0] || 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400&h=500&fit=crop')
+  const safeName = escapeHtml(p.name)
+  const safeType = escapeHtml(p.type || '')
+  const safeColor = escapeHtml(item.color || '')
+  const safeSize = escapeHtml(item.size || '')
+  const safeKey = escapeHtml(item.key || '')
   const ord = String(idx + 1).padStart(2, '0')
   const sub = (p.price || 0) * (Number(item.qty) || 0)
   const hasDiscount = p.originalPrice && p.originalPrice > p.price
   const colorHex = colorNameToHex(item.color)
-  const sku = p.sku || `GL-${item.productId.slice(0, 8)}`
+  const sku = escapeHtml(p.sku || `GL-${String(item.productId).slice(0, 8)}`)
 
   return `
-    <div class="cart-row grid grid-cols-12 gap-4 items-center py-6" data-cart-item data-key="${item.key}">
+    <div class="cart-row grid grid-cols-12 gap-4 items-center py-6" data-cart-item data-key="${safeKey}">
       <div class="col-span-12 md:col-span-6 flex gap-4 md:gap-5">
         <div class="w-20 md:w-28 flex-shrink-0 rounded-md overflow-hidden bg-fog aspect-[4/5]">
-          <img src="${img}" alt="${p.name}" class="w-full h-full object-cover" loading="lazy"/>
+          <img src="${img}" alt="${safeName}" class="w-full h-full object-cover" loading="lazy"/>
         </div>
         <div class="flex-1 min-w-0">
           <div class="flex items-baseline gap-2 mb-1">
             <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink/45">${ord}</span>
-            <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink/55">${p.type || ''}</span>
+            <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink/55">${safeType}</span>
           </div>
-          <div class="font-display font-extrabold text-[clamp(18px,2vw,28px)] leading-[1] tracking-[-0.03em] mb-2 truncate">${p.name}</div>
+          <div class="font-display font-extrabold text-[clamp(18px,2vw,28px)] leading-[1] tracking-[-0.03em] mb-2 truncate">${safeName}</div>
           <div class="flex items-center gap-2 md:gap-3 font-mono text-[10px] md:text-[11px] text-ink/55 flex-wrap">
-            ${item.color ? `<span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-full border border-ink/15" style="background:${colorHex}"></span>${item.color}</span><span class="opacity-40">\u00B7</span>` : ''}
-            ${item.size ? `<span>Talla ${item.size}</span><span class="opacity-40">\u00B7</span>` : ''}
+            ${safeColor ? `<span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-full border border-ink/15" style="background:${colorHex}"></span>${safeColor}</span><span class="opacity-40">\u00B7</span>` : ''}
+            ${safeSize ? `<span>Talla ${safeSize}</span><span class="opacity-40">\u00B7</span>` : ''}
             <span class="hidden md:inline">${sku}</span>
           </div>
           <div class="mt-3 flex items-center gap-4 text-[12px]">

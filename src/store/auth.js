@@ -50,9 +50,39 @@ export function isAdminAuthed() {
 export async function initAdminSession() {
   if (!supabase) return
   const { data: { session } } = await supabase.auth.getSession()
-  state.isAdminAuthed = Boolean(session)
-  supabase.auth.onAuthStateChange((_event, session) => {
-    state.isAdminAuthed = Boolean(session)
+
+  if (session) {
+    const userId = session.user?.id
+    if (userId) {
+      const { data: adminUser } = await supabase
+        .from('admin_users')
+        .select('user_id')
+        .eq('user_id', userId)
+        .maybeSingle()
+      state.isAdminAuthed = Boolean(adminUser)
+    } else {
+      state.isAdminAuthed = false
+    }
+  } else {
+    state.isAdminAuthed = false
+  }
+
+  supabase.auth.onAuthStateChange(async (_event, session) => {
+    if (session) {
+      const userId = session.user?.id
+      if (userId) {
+        const { data: adminUser } = await supabase
+          .from('admin_users')
+          .select('user_id')
+          .eq('user_id', userId)
+          .maybeSingle()
+        state.isAdminAuthed = Boolean(adminUser)
+      } else {
+        state.isAdminAuthed = false
+      }
+    } else {
+      state.isAdminAuthed = false
+    }
     emit()
   })
   emit()

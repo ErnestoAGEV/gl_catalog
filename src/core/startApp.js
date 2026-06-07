@@ -382,19 +382,21 @@ export async function startApp(mountEl) {
   }
 
   const setupGlobalHandlers = () => {
-    // Theme toggle
+    // Theme toggle — avoid duplicates via data attribute
     const themeToggle = document.getElementById('theme-toggle')
-    if (themeToggle) {
+    if (themeToggle && !themeToggle.dataset.glBound) {
+      themeToggle.dataset.glBound = '1'
       themeToggle.addEventListener('click', () => {
         toggleTheme()
         applyTheme()
-        render(getRoute()) // Re-render with new theme
+        render(getRoute())
       })
     }
 
-    // Global search
+    // Global search — avoid duplicates via data attribute
     const searchInput = document.getElementById('global-search')
-    if (searchInput) {
+    if (searchInput && !searchInput.dataset.glBound) {
+      searchInput.dataset.glBound = '1'
       searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
           const query = e.target.value.trim()
@@ -405,18 +407,17 @@ export async function startApp(mountEl) {
     }
 
     // Navigation custom event listener (for coupon apply/remove)
-    // Avoid attaching duplicate event listeners if it already exists
     if (!window.__glNavigationListenerAdded) {
       window.__glNavigationListenerAdded = true
-      window.addEventListener('navigate', () => render(getRoute()), { once: true })
+      window.addEventListener('navigate', () => render(getRoute()))
     }
   }
 
   const stopRouteListener = onRouteChange(render)
   const stopRouter = startRouter()
 
-  // Ensure first paint even if hash doesn't change.
-  render(getRoute())
+  // startRouter() already calls notify() which triggers render via onRouteChange.
+  // No extra render(getRoute()) needed — avoids double render on startup.
 
   // ─── Smart re-render: only re-render a page when its relevant state slice changes ───
   // Catalog manages its own updates via its own subscribe, so we skip it here.

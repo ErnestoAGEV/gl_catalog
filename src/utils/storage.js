@@ -9,5 +9,9 @@ export function readJson(key, fallback) {
 }
 
 export function writeJson(key, value) {
-  localStorage.setItem(key, JSON.stringify(value))
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch {
+    // Silently fail on QuotaExceededError or other storage errors
+  }
 }

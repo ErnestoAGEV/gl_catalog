@@ -2,6 +2,7 @@ import { formatMoney } from '../../utils/format.js'
 import { BRAND } from '../../utils/config.js'
 import { getState, getProductById } from '../../store/index.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
+import { escapeHtml } from '../../utils/sanitize.js'
 
 const waIcon = `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`
 
@@ -16,15 +17,19 @@ function cartItemsHTML() {
     const qty = Number(item.qty) || 1
     const isPerfume = isPerfumeCategory(p.type)
     const imgClass = isPerfume ? 'w-full h-full object-contain p-2 bg-white' : 'w-full h-full object-cover'
+    const safeName = escapeHtml(p.name)
+    const safeImg = escapeHtml(p.images?.[0] || '')
+    const safeSize = escapeHtml(item.size || '')
+    const safeColor = escapeHtml(item.color || '')
     return `
       <li class="flex gap-4">
         <div class="relative w-16 h-20 flex-shrink-0 rounded bg-fog overflow-visible">
-          <img src="${p.images?.[0] || ''}" alt="${p.name}" loading="lazy" class="${imgClass} rounded"/>
+          <img src="${safeImg}" alt="${safeName}" loading="lazy" class="${imgClass} rounded"/>
           ${qty > 1 ? `<span class="absolute -top-1.5 -right-1.5 z-10 min-w-[20px] h-[20px] px-1 rounded-full bg-ink text-paper font-mono text-[10px] font-bold flex items-center justify-center">${qty}</span>` : ''}
         </div>
         <div class="flex-1 min-w-0">
-          <div class="font-display font-bold text-[15px] leading-tight tracking-[-0.02em]">${p.name}</div>
-          <div class="font-mono text-[11px] text-ink/55 mt-1">${item.size ? `Talla ${item.size}` : ''}${item.size && item.color ? ' · ' : ''}${item.color || ''}</div>
+          <div class="font-display font-bold text-[15px] leading-tight tracking-[-0.02em]">${safeName}</div>
+          <div class="font-mono text-[11px] text-ink/55 mt-1">${safeSize ? `Talla ${safeSize}` : ''}${safeSize && safeColor ? ' · ' : ''}${safeColor}</div>
         </div>
         <div class="text-right">
           <div class="font-mono text-[13px] font-semibold">${formatMoney(p.price * qty)}</div>
@@ -317,6 +322,8 @@ export function couponInputHTML() {
 }
 
 export function checkoutSuccessHTML({ name, waUrl }) {
+  const safeName = escapeHtml(name || 'Cliente')
+  const safeWaUrl = escapeHtml(waUrl || '')
   return `
     <div class="fixed inset-0 z-50 bg-paper flex flex-col items-center justify-center p-4">
       <div class="w-full max-w-md bg-paper rounded-lg p-10 text-center border border-ink/10">
@@ -329,11 +336,11 @@ export function checkoutSuccessHTML({ name, waUrl }) {
 
         <h2 class="font-display font-extrabold text-[clamp(36px,6vw,64px)] tracking-[-0.04em] leading-none mb-4">&iexcl;Pedido recibido!</h2>
         <p class="text-[15px] text-ink/70 max-w-sm mx-auto mb-8 leading-relaxed">
-          Gracias <strong>${name}</strong>, registramos tu pedido con &eacute;xito. Te escribimos por WhatsApp en los pr&oacute;ximos minutos.
+          Gracias <strong>${safeName}</strong>, registramos tu pedido con &eacute;xito. Te escribimos por WhatsApp en los pr&oacute;ximos minutos.
         </p>
 
         <a
-          href="${waUrl}"
+          href="${safeWaUrl}"
           target="_blank"
           rel="noopener noreferrer"
           class="flex items-center justify-between gap-3 bg-[#25D366] text-paper pl-7 pr-3 h-16 w-full rounded-full text-[17px] font-semibold hover:bg-[#1ebc59] transition-colors"

@@ -6,6 +6,7 @@ import { BRAND } from '../../utils/config.js'
 import { getBadgeColor } from '../catalog/catalogCard.js'
 import { handleQuickAdd } from '../catalog/catalogQuickAdd.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
+import { escapeHtml } from '../../utils/sanitize.js'
 
 /* ── Color name → hex map ── */
 const COLOR_HEX = {
@@ -52,7 +53,9 @@ function getRecommendedProducts(currentProduct, allProducts, limit = 4) {
 
 /* ── Editorial recommended card ── */
 function recommendedCard(p, i) {
-  const img = p.images?.[0] || '/placeholder.webp'
+  const img = escapeHtml(p.images?.[0] || '/placeholder.webp')
+  const safeName = escapeHtml(p.name)
+  const safeType = escapeHtml(p.type || '')
   const isPerfume = isPerfumeCategory(p.type)
   const imgCls = isPerfume ? 'object-contain p-3' : 'object-cover'
   const bgCls = isPerfume ? 'bg-white' : 'bg-paper'
@@ -62,7 +65,7 @@ function recommendedCard(p, i) {
   return `
     <a href="/producto/${p.id}" class="group block">
       <div class="aspect-[4/5] rounded-md overflow-hidden ${bgCls} relative">
-        <img src="${img}" alt="${p.name}" class="w-full h-full ${imgCls} transition-transform duration-700 group-hover:scale-105" loading="lazy" onerror="this.src='/placeholder.webp'"/>
+        <img src="${img}" alt="${safeName}" class="w-full h-full ${imgCls} transition-transform duration-700 group-hover:scale-105" loading="lazy" onerror="this.src='/placeholder.webp'"/>
         <div class="absolute top-3 right-3 font-mono text-[10px] tracking-[0.2em] uppercase text-ink/60 bg-paper/85 backdrop-blur px-2 py-1 rounded-full">${ord}</div>
         <button data-quick-add="${p.id}" type="button" class="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-paper/90 backdrop-blur flex items-center justify-center text-ink hover:bg-ink hover:text-paper transition-colors opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 z-10" onclick="event.preventDefault();event.stopPropagation();" aria-label="Agregar rápido">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
@@ -70,8 +73,8 @@ function recommendedCard(p, i) {
       </div>
       <div class="mt-4 flex items-start justify-between gap-2">
         <div class="min-w-0">
-          <div class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink/55 mb-1">${p.type || ''}</div>
-          <div class="font-display font-bold text-[16px] leading-tight tracking-[-0.02em] truncate">${p.name}</div>
+          <div class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink/55 mb-1">${safeType}</div>
+          <div class="font-display font-bold text-[16px] leading-tight tracking-[-0.02em] truncate">${safeName}</div>
         </div>
         <div class="text-right whitespace-nowrap flex-shrink-0">
           ${hasDiscount ? `<div class="font-mono text-[11px] text-ink/40 line-through">${formatMoney(p.originalPrice)}</div>` : ''}
@@ -120,9 +123,13 @@ export function pageProduct(initialState) {
   const discount = product.originalPrice ? Math.round((1 - product.price / product.originalPrice) * 100) : 0
   const hasSizes = product.sizes && product.sizes.length > 0
   const hasColors = product.colors && product.colors.length > 0
-  const sku = product.sku || 'GL-' + String(product.id).slice(0, 8)
+  const sku = escapeHtml(product.sku || 'GL-' + String(product.id).slice(0, 8))
   const ss = stockStatus(product)
   const categoryHref = product.type ? `/categoria/${encodeURIComponent(product.type)}` : '/catalog'
+  const safeName = escapeHtml(product.name)
+  const safeType = escapeHtml(product.type || '')
+  const safeDescription = escapeHtml(product.description || '')
+  const safeCuratorNote = escapeHtml(product.curatorNote || '')
 
   const publicProducts = state.products.filter(p => p.badge !== 'Borrador')
   const recommended = getRecommendedProducts(product, publicProducts, 4)
@@ -172,9 +179,9 @@ export function pageProduct(initialState) {
             <span class="text-ink/30">/</span>
             <a href="/catalog" class="text-ink/55 hover:text-ink ul-link">Tienda</a>
             <span class="text-ink/30">/</span>
-            <a href="${categoryHref}" class="text-ink/55 hover:text-ink ul-link">${product.type || 'General'}</a>
+            <a href="${categoryHref}" class="text-ink/55 hover:text-ink ul-link">${safeType || 'General'}</a>
             <span class="text-ink/30">/</span>
-            <span class="text-ink">${product.name}</span>
+            <span class="text-ink">${safeName}</span>
             <span class="h-px flex-1 bg-ink/15 mx-3 hidden sm:block"></span>
             <span class="text-ink/55 hidden sm:inline">SKU · ${sku}</span>
           </div>
@@ -191,7 +198,7 @@ export function pageProduct(initialState) {
               <div class="relative">
                 <!-- Stage -->
                 <div class="gallery-stage${isPerfume ? ' !bg-white' : ''}" id="pdp-stage">
-                  <img id="pdp-stage-img" src="${images[0]}" alt="${product.name}" class="${stageImgClass}${isPerfume ? ' p-6' : ''}"/>
+                  <img id="pdp-stage-img" src="${escapeHtml(images[0])}" alt="${safeName}" class="${stageImgClass}${isPerfume ? ' p-6' : ''}"/>
                   ${badgesHtml ? `<div class="absolute top-4 left-4 flex gap-2 z-10">${badgesHtml}</div>` : ''}
                   <div class="absolute top-4 right-4 flex items-center gap-1.5 z-10">
                     <span class="font-mono text-[10px] tracking-[0.2em] uppercase bg-paper/85 backdrop-blur px-2.5 py-1 rounded-full"><span id="pdp-cur">01</span> / <span id="pdp-tot">${String(images.length).padStart(2, '0')}</span></span>
@@ -222,7 +229,7 @@ export function pageProduct(initialState) {
 
                 <!-- Eyebrow -->
                 <div class="flex items-center gap-3 mb-5">
-                  <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55">${product.type || ''}${product.subtitle ? ' · ' + product.subtitle : ''}</span>
+                  <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55">${safeType}${product.subtitle ? ' · ' + escapeHtml(product.subtitle) : ''}</span>
                   <span class="h-px flex-1 bg-ink/15"></span>
                   <span class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.2em] uppercase ${ss.cls}">
                     <span class="w-1.5 h-1.5 rounded-full ${ss.dot}"></span>
@@ -231,7 +238,7 @@ export function pageProduct(initialState) {
                 </div>
 
                 <!-- Name -->
-                <h1 class="font-display font-extrabold text-[clamp(28px,5vw,72px)] leading-[0.92] tracking-[-0.04em] mb-3">${splitName(product.name)}</h1>
+                <h1 class="font-display font-extrabold text-[clamp(28px,5vw,72px)] leading-[0.92] tracking-[-0.04em] mb-3">${splitName(safeName)}</h1>
 
                 <!-- Price -->
                 <div class="flex items-baseline gap-4 mb-2">
@@ -307,7 +314,7 @@ export function pageProduct(initialState) {
                     <svg class="chev w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
                   </summary>
                   <div class="body">
-                    ${hasDescription ? `<p class="mb-4">${product.description}</p>` : ''}
+                    ${hasDescription ? `<p class="mb-4">${safeDescription}</p>` : ''}
                     ${specRows.length > 0 ? `<table class="specs">${specRows.map(r => `<tr><td class="k">${r.k}</td><td>${r.v}</td></tr>`).join('')}</table>` : ''}
                   </div>
                 </details>` : ''}
@@ -336,7 +343,7 @@ export function pageProduct(initialState) {
                 ${product.curatorNote ? `
                 <div class="mt-8 border border-ink/10 rounded-lg p-5">
                   <div class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55 mb-3">Nota del curador</div>
-                  <p class="font-display font-medium text-[16px] leading-snug tracking-[-0.01em]">"${product.curatorNote}"</p>
+                  <p class="font-display font-medium text-[16px] leading-snug tracking-[-0.01em]">"${safeCuratorNote}"</p>
                   <div class="mt-3 font-mono text-[10px] tracking-[0.24em] uppercase text-ink/55">— Equipo G&L</div>
                 </div>` : ''}
 
