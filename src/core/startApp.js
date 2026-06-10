@@ -5,6 +5,7 @@ import { showToast } from '../utils/toast.js'
 import { supabase } from './supabase.js'
 import { formatMoney } from '../utils/format.js'
 import { applySeo } from './seo.js'
+import { addNotification, getNotifications, getUnreadCount, markAllRead, subscribeNotifications } from '../utils/notifications.js'
 
 function playOrderAlertSound() {
   if (typeof window === 'undefined') return
@@ -44,6 +45,13 @@ function playOrderAlertSound() {
 function notifyIncomingOrder(order) {
   const customer = order?.customer_name || 'Cliente'
   const total = Number(order?.total || 0)
+
+  addNotification({
+    type: 'order',
+    title: 'Nuevo pedido',
+    body: `${customer} — ${formatMoney(total)}`,
+    orderId: order?.id,
+  })
 
   playOrderAlertSound()
   showToast(`Nuevo pedido de ${customer} (${formatMoney(total)})`, 'success', 6000)
@@ -404,6 +412,118 @@ export async function startApp(mountEl) {
           navigate('/catalog')
         }
       })
+    }
+
+    // ── Bell notification panel ──
+    const bellBtn = document.getElementById('admin-bell')
+    const bellPanel = document.getElementById('admin-bell-panel')
+    const bellBadge = document.getElementById('admin-bell-badge')
+    const bellList = document.getElementById('admin-bell-list')
+    const bellReadAll = document.getElementById('admin-bell-read-all')
+
+    if (bellBtn && !bellBtn.dataset.glBound) {
+      bellBtn.dataset.glBound = '1'
+
+      const updateBellBadge = () => {
+        const count = getUnreadCount()
+        if (!bellBadge) return
+        if (count > 0) {
+          bellBadge.classList.remove('hidden')
+          // Upgrade to numbered badge when count > 0
+          bellBadge.className = 'absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white ring-2 ring-paper'
+          bellBadge.textContent = count > 9 ? '9+' : count
+        } else {
+          bellBadge.classList.add('hidden')
+          bellBadge.textContent = ''
+        }
+      }
+
+      const timeAgo = (date) => {
+        const diff = (Date.now() - new Date(date).getTime()) / 1000
+        if (diff < 60) return 'Ahora'
+        if (diff < 3600) return `${Math.floor(diff / 60)}m`
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h`
+        return `${Math.floor(diff / 86400)}d`
+      }
+
+      const renderBellList = () => {
+        if (!bellList) return
+        const notifs = getNotifications()
+        if (!notifs.length) {
+          bellList.innerHTML = `
+            <div class="px-5 py-10 text-center">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 mx-auto mb-2 text-line-strong"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+              <p class="text-[13px] font-semibold text-body">Sin notificaciones</p>
+              <p class="text-[12px] text-faint mt-0.5">Los nuevos pedidos aparecerán aquí</p>
+            </div>`
+          return
+        }
+
+        bellList.innerHTML = notifs.map(n => `
+          <div class="flex items-start gap-3 px-4 py-3 border-b border-line last:border-0 hover:bg-canvas transition-colors ${n.read ? 'opacity-60' : ''}" ${n.orderId ? `data-bell-order="${n.orderId}" style="cursor:pointer"` : ''}>
+            <div class="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center mt-0.5 ${n.read ? 'bg-line text-muted' : 'bg-brand-tint text-brand'}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M6 2 4 6v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6l-2-4H6Z"/><path d="M4 6h16"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <span class="text-[13px] font-semibold text-ink">${n.title}</span>
+                ${!n.read ? '<span class="w-1.5 h-1.5 rounded-full bg-brand shrink-0"></span>' : ''}
+              </div>
+              <p class="text-[12.5px] text-muted mt-0.5 truncate">${n.body}</p>
+            </div>
+            <span class="text-[11px] text-faint shrink-0 tnum mt-0.5">${timeAgo(n.time)}</span>
+          </div>
+        `).join('')
+
+        // Clicking a notification navigates to orders
+        bellList.querySelectorAll('[data-bell-order]').forEach(el => {
+          el.addEventListener('click', () => {
+            bellPanel.classList.add('hidden')
+            navigate('/admin/orders')
+          })
+        })
+      }
+
+      // Toggle panel on click
+      bellBtn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const isOpen = !bellPanel.classList.contains('hidden')
+        if (isOpen) {
+          bellPanel.classList.add('hidden')
+        } else {
+          renderBellList()
+          bellPanel.classList.remove('hidden')
+        }
+      })
+
+      // Close panel on outside click
+      const closeBellPanel = (e) => {
+        if (bellPanel && !bellPanel.classList.contains('hidden') && !bellPanel.contains(e.target) && !bellBtn.contains(e.target)) {
+          bellPanel.classList.add('hidden')
+        }
+      }
+      document.addEventListener('click', closeBellPanel)
+      // Store reference for cleanup
+      bellBtn._glCleanup = () => document.removeEventListener('click', closeBellPanel)
+
+      // Mark all read
+      bellReadAll?.addEventListener('click', () => {
+        markAllRead()
+        renderBellList()
+        updateBellBadge()
+      })
+
+      // Subscribe to notification changes for badge updates
+      subscribeNotifications(() => {
+        updateBellBadge()
+        // If panel is open, re-render it
+        if (bellPanel && !bellPanel.classList.contains('hidden')) {
+          renderBellList()
+        }
+      })
+
+      // Initial badge state
+      updateBellBadge()
     }
 
     // Navigation custom event listener (for coupon apply/remove)

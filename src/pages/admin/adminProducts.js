@@ -5,6 +5,7 @@ import { showToast } from '../../utils/toast.js'
 import { parseList, isPerfumeCategory } from './adminProductsData.js'
 import { productCard, productCardMobile } from './adminProductCard.js'
 import { productFormHTML } from './adminProductForm.js'
+import { ICON } from './adminIcons.js'
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const MAX_IMAGE_SIZE_MB   = 5
@@ -55,95 +56,93 @@ export function pageAdminProducts(state) {
   // Get dynamic categories from DB (falls back to hardcoded in the form)
   const dynamicCategories = getCategoryNames()
 
+  const isInfStock = (s) => s === undefined || s === null || s === '' || s === '∞'
+  const lowStockCount = state.products.filter(p => !isInfStock(p.stock) && Number(p.stock) > 0 && Number(p.stock) <= 10).length
+  const outStockCount = state.products.filter(p => !isInfStock(p.stock) && Number(p.stock) <= 0).length
+
   return {
     title: 'Productos | Admin G&L',
     html: `
-      <div class="animate-fade-in space-y-6">
-        <!-- Header with Title and Button -->
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-8">
-          <div>
-            <h1 class="text-3xl font-manrope font-bold text-gray-900 dark:text-white">Productos</h1>
-            <p class="text-gray-500 mt-1">Gestiona tu catálogo</p>
-            <span id="products-count" class="text-sm text-gray-500 block">${productCount} en total</span>
+      <div class="admin-view-in space-y-5">
+        <!-- Header: KPIs + Add button -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="grid grid-cols-3 gap-2.5 flex-1 max-w-2xl">
+            <div class="bg-paper rounded-xl2 border border-line px-4 py-3">
+              <p class="eyebrow text-faint">Catálogo</p>
+              <p class="font-display font-bold text-ink text-[20px] tnum mt-0.5">${productCount}</p>
+            </div>
+            <div class="bg-paper rounded-xl2 border border-line px-4 py-3">
+              <p class="eyebrow text-faint">Bajo stock</p>
+              <p class="font-display font-bold text-warn text-[20px] tnum mt-0.5">${lowStockCount}</p>
+            </div>
+            <div class="bg-paper rounded-xl2 border border-line px-4 py-3">
+              <p class="eyebrow text-faint">Agotados</p>
+              <p class="font-display font-bold text-bad text-[20px] tnum mt-0.5">${outStockCount}</p>
+            </div>
           </div>
-          <button type="button" id="toggle-form-btn" class="w-full sm:w-auto self-start sm:self-auto flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl bg-brand text-white font-semibold hover:bg-brand-dark transition-colors text-sm lg:rounded-2xl lg:px-6 lg:py-3">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-            </svg>
+          <button type="button" id="toggle-form-btn" class="adm-btn adm-btn-primary shrink-0">
+            ${ICON.plus('w-[18px] h-[18px]')}
             <span id="toggle-form-text">Agregar producto</span>
           </button>
         </div>
 
-        <!-- Products List -->
-        <section>
-        
-        <!-- Search + Filters -->
-        <div class="mb-3 flex flex-col gap-2 lg:flex-row lg:items-center">
-          <div class="relative min-w-0 lg:flex-1">
-            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            <input id="search-products" type="text" class="w-full rounded-lg border border-gray-200 bg-white pl-10 pr-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-colors" placeholder="Buscar por nombre, categoría o badge..." />
+        <!-- Table card -->
+        <section class="bg-paper rounded-3xl border border-line shadow-card">
+          <!-- Toolbar -->
+          <div class="p-4 flex flex-col lg:flex-row lg:items-center gap-3 border-b border-line">
+            <div class="relative flex-1 min-w-0">
+              <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-faint pointer-events-none">${ICON.search('w-[18px] h-[18px]')}</span>
+              <input id="search-products" type="text" class="adm-fld pl-10" placeholder="Buscar producto..." />
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <select id="filter-type" class="adm-fld w-auto min-w-[120px]">
+                <option value="all">Categoría</option>
+                ${allTypes.map(type => `<option value="${type}">${type}</option>`).join('')}
+              </select>
+              <select id="filter-status" class="adm-fld w-auto min-w-[110px]">
+                <option value="all">Estado</option>
+                <option value="published">Publicados</option>
+                <option value="draft">Borradores</option>
+              </select>
+              <select id="filter-stock" class="adm-fld w-auto min-w-[110px]">
+                <option value="all">Stock</option>
+                <option value="in-stock">Con stock</option>
+                <option value="low">Bajo stock</option>
+                <option value="out">Agotados</option>
+                <option value="infinite">Infinito</option>
+              </select>
+              <button type="button" id="clear-filters" class="w-9 h-9 rounded-[10px] border border-line bg-paper flex items-center justify-center text-muted hover:text-ink hover:bg-canvas transition-colors shrink-0" title="Limpiar filtros">
+                ${ICON.close('w-4 h-4')}
+              </button>
+            </div>
           </div>
 
-          <div class="grid grid-cols-2 sm:grid-cols-4 lg:flex lg:items-center gap-2 lg:flex-none">
-            <select id="filter-type" class="w-full lg:w-36 rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-700 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-colors">
-              <option value="all">Categoría</option>
-              ${allTypes.map(type => `<option value="${type}">${type}</option>`).join('')}
-            </select>
-
-            <select id="filter-status" class="w-full lg:w-32 rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-700 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-colors">
-              <option value="all">Estado</option>
-              <option value="published">Publicados</option>
-              <option value="draft">Borradores</option>
-            </select>
-
-            <select id="filter-stock" class="w-full lg:w-32 rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-700 focus:border-brand focus:ring-1 focus:ring-brand/20 focus:outline-none transition-colors">
-              <option value="all">Stock</option>
-              <option value="in-stock">Con stock</option>
-              <option value="low">Bajo stock</option>
-              <option value="out">Agotados</option>
-              <option value="infinite">Infinito</option>
-            </select>
-
-            <button type="button" id="clear-filters" title="Limpiar filtros" aria-label="Limpiar filtros" class="w-full lg:w-9 h-9 lg:h-auto rounded-lg border border-gray-200 bg-white px-3 lg:px-0 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap inline-flex items-center justify-center gap-1.5">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-              <span class="lg:hidden">Limpiar</span>
-            </button>
-          </div>
-        </div>
-        
-        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden mb-6">
-          <!-- Desktop Table View -->
-          <div class="hidden md:block overflow-x-auto">
-            <table class="w-full text-left text-sm text-gray-600 dark:text-gray-400">
-              <thead class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 text-xs uppercase tracking-wider">
-                <tr>
-                  <th scope="col" class="px-6 py-4 font-semibold min-w-[200px]">Producto</th>
-                  <th scope="col" class="px-6 py-4 font-semibold min-w-[100px]">Categoría</th>
-                  <th scope="col" class="px-6 py-4 font-semibold min-w-[90px]">Precio</th>
-                  <th scope="col" class="px-6 py-4 font-semibold min-w-[100px]">Stock</th>
-                  <th scope="col" class="px-6 py-4 font-semibold min-w-[100px]">Estado</th>
-                  <th scope="col" class="px-6 py-4 font-semibold text-center min-w-[120px]">Acciones</th>
+          <!-- Desktop Table -->
+          <div class="hidden md:block overflow-x-auto adm-scroll-thin">
+            <table class="w-full min-w-[680px]">
+              <thead>
+                <tr class="text-left">
+                  <th class="eyebrow text-faint font-medium px-5 py-3">Producto</th>
+                  <th class="eyebrow text-faint font-medium px-5 py-3">Categoría</th>
+                  <th class="eyebrow text-faint font-medium px-5 py-3 text-right">Precio</th>
+                  <th class="eyebrow text-faint font-medium px-5 py-3">Stock</th>
+                  <th class="eyebrow text-faint font-medium px-5 py-3">Estado</th>
+                  <th class="eyebrow text-faint font-medium px-5 py-3 text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody id="products-list" class="divide-y divide-gray-100 dark:divide-gray-800">
-              </tbody>
+              <tbody id="products-list"></tbody>
             </table>
           </div>
 
-          <!-- Mobile Card View -->
-          <div id="products-mobile" class="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
-            <!-- Cards rendered here -->
-          </div>
+          <!-- Mobile Cards -->
+          <div id="products-mobile" class="md:hidden divide-y divide-line"></div>
 
-          <!-- Pagination Controls -->
-          <div id="pagination-controls" class="flex flex-col sm:flex-row items-center justify-between px-4 sm:px-6 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 min-h-[60px]">
+          <!-- Pagination -->
+          <div class="px-5 py-3 border-t border-line flex items-center justify-between text-[12.5px] text-muted min-h-[48px]">
+            <span id="products-count" class="tnum">${productCount} en total</span>
+            <div id="pagination-controls" class="flex gap-2"></div>
           </div>
-        </div>
-      </section>
+        </section>
       </div>
 
       ${productFormHTML(allColors, dynamicCategories)}
@@ -216,25 +215,17 @@ export function pageAdminProducts(state) {
 
         modal = document.createElement('div')
         modal.id = 'delete-confirm-modal'
-        modal.className = 'fixed inset-0 layer-modal hidden items-center justify-center bg-black/50 p-4'
+        modal.className = 'fixed inset-0 layer-modal hidden items-center justify-center bg-ink/50 backdrop-blur-sm p-4'
         modal.innerHTML = `
-          <div class="w-full max-w-sm rounded-2xl bg-white shadow-2xl border border-gray-100">
+          <div class="w-full max-w-sm bg-paper rounded-3xl border border-line shadow-pop overflow-hidden adm-anim-pop">
             <div class="p-5">
-              <div class="flex items-start gap-3">
-                <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
-                  <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-base font-semibold text-gray-900">¿Eliminar producto?</h3>
-                  <p class="text-sm text-gray-500 mt-1">Esta acción no se puede deshacer.</p>
-                </div>
-              </div>
+              <div class="w-11 h-11 rounded-xl2 bg-bad-tint text-bad flex items-center justify-center mb-3">${ICON.trash('w-5 h-5')}</div>
+              <h3 class="font-display font-bold text-ink text-[17px]">¿Eliminar producto?</h3>
+              <p class="text-[13.5px] text-muted mt-1">Esta acción no se puede deshacer.</p>
             </div>
-            <div class="flex items-center justify-end gap-2 px-5 pb-5">
-              <button type="button" id="delete-cancel" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100">Cancelar</button>
-              <button type="button" id="delete-confirm" class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-red-500 hover:bg-red-600">Eliminar</button>
+            <div class="px-5 pb-5 flex gap-2.5">
+              <button type="button" id="delete-cancel" class="adm-btn adm-btn-ghost flex-1">Cancelar</button>
+              <button type="button" id="delete-confirm" class="adm-btn flex-1" style="background:#D6453E;color:#fff">Eliminar</button>
             </div>
           </div>
         `
@@ -274,16 +265,16 @@ export function pageAdminProducts(state) {
 
         if (imagePreviewsContainer) {
           imagePreviewsContainer.innerHTML = items.map((item, i) => `
-            <div class="relative aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200 group">
+            <div class="relative aspect-square rounded-[10px] overflow-hidden bg-canvas border border-line group">
               <img src="${item.src}" alt="Preview ${i + 1}" class="w-full h-full object-cover"/>
-              <div class="absolute top-1 right-1 flex gap-1 z-10">
-                <button type="button" class="w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm" data-remove-kind="${item.kind}" data-remove-idx="${item.idx}" title="Eliminar imagen">
+              <div class="absolute top-1 right-1 z-10">
+                <button type="button" class="w-6 h-6 rounded-full bg-bad text-white flex items-center justify-center hover:bg-bad/80 transition-colors shadow-sm" data-remove-kind="${item.kind}" data-remove-idx="${item.idx}" title="Eliminar">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
               </div>
-              <div class="absolute top-1 left-1 bg-black/50 text-white text-[9px] px-1.5 py-0.5 rounded max-w-[calc(100%-2rem)] truncate backdrop-blur-sm">${item.label}</div>
-              <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] px-1.5 py-1 text-center backdrop-blur-sm">
-                ${i === 0 ? '<span class="font-bold">✓ Portada</span>' : `<button type="button" class="underline hover:text-brand-light w-full" data-cover-kind="${item.kind}" data-cover-idx="${item.idx}">Marcar portada</button>`}
+              <div class="absolute top-1 left-1 bg-ink/60 text-white text-[9px] px-1.5 py-0.5 rounded max-w-[calc(100%-2rem)] truncate backdrop-blur-sm">${item.label}</div>
+              <div class="absolute bottom-0 left-0 right-0 bg-ink/60 text-white text-[10px] px-1.5 py-1 text-center backdrop-blur-sm">
+                ${i === 0 ? '<span class="font-bold">Portada</span>' : `<button type="button" class="underline hover:text-brand-tint w-full" data-cover-kind="${item.kind}" data-cover-idx="${item.idx}">Marcar portada</button>`}
               </div>
             </div>
           `).join('')
@@ -332,9 +323,9 @@ export function pageAdminProducts(state) {
           badge.classList.toggle('bg-brand', selectedColorBadges.has(color))
           badge.classList.toggle('text-white', selectedColorBadges.has(color))
           badge.classList.toggle('border-brand', selectedColorBadges.has(color))
-          badge.classList.toggle('bg-gray-50', !selectedColorBadges.has(color))
-          badge.classList.toggle('text-gray-600', !selectedColorBadges.has(color))
-          badge.classList.toggle('border-gray-200', !selectedColorBadges.has(color))
+          badge.classList.toggle('bg-canvas', !selectedColorBadges.has(color))
+          badge.classList.toggle('text-body', !selectedColorBadges.has(color))
+          badge.classList.toggle('border-line', !selectedColorBadges.has(color))
         })
       }
 
@@ -514,14 +505,10 @@ export function pageAdminProducts(state) {
 
         if (!filtered.length) {
           const emptyState = `
-            <div class="text-center py-16">
-              <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                </svg>
-              </div>
-              <h3 class="text-lg font-semibold text-gray-900 mb-2">${hasActiveFilters ? 'Sin resultados' : 'No hay productos'}</h3>
-              <p class="text-sm text-gray-500">${hasActiveFilters ? 'Prueba con otra combinación de búsqueda/filtros' : 'Agrega tu primer producto usando el botón de arriba'}</p>
+            <div class="py-16 text-center">
+              ${ICON.products('w-12 h-12 mx-auto mb-4 text-line-strong')}
+              <p class="font-semibold text-body">${hasActiveFilters ? 'Sin resultados' : 'No hay productos'}</p>
+              <p class="text-[13px] text-muted mt-1">${hasActiveFilters ? 'Ajusta los filtros o la búsqueda' : 'Agrega tu primer producto con el botón de arriba'}</p>
             </div>
           `
           list.innerHTML = `<tr><td colspan="6" class="px-0 py-0">${emptyState}</td></tr>`
@@ -544,17 +531,12 @@ export function pageAdminProducts(state) {
         if (paginationContainer) {
           if (totalPages > 1) {
             paginationContainer.innerHTML = `
-              <div class="text-sm text-gray-500 mb-4 sm:mb-0">
-                Mostrando <span class="font-medium text-gray-900 dark:text-gray-100">${startIdx + 1}</span> a <span class="font-medium text-gray-900 dark:text-gray-100">${Math.min(startIdx + itemsPerPage, filtered.length)}</span> de <span class="font-medium text-gray-900 dark:text-gray-100">${filtered.length}</span> resultados
-              </div>
-              <div class="flex gap-2">
-                <button type="button" id="btn-prev-page" class="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 active:scale-95 transition-all disabled:opacity-40 disabled:active:scale-100 disabled:cursor-not-allowed shadow-sm" ${currentPage === 1 ? 'disabled' : ''}>
-                  Anterior
-                </button>
-                <button type="button" id="btn-next-page" class="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 active:scale-95 transition-all disabled:opacity-40 disabled:active:scale-100 disabled:cursor-not-allowed shadow-sm" ${currentPage === totalPages ? 'disabled' : ''}>
-                  Siguiente
-                </button>
-              </div>
+              <button type="button" id="btn-prev-page" class="adm-btn adm-btn-ghost py-1.5 px-3 text-[12px] disabled:opacity-40 disabled:cursor-not-allowed" ${currentPage === 1 ? 'disabled' : ''}>
+                Anterior
+              </button>
+              <button type="button" id="btn-next-page" class="adm-btn adm-btn-ghost py-1.5 px-3 text-[12px] disabled:opacity-40 disabled:cursor-not-allowed" ${currentPage === totalPages ? 'disabled' : ''}>
+                Siguiente
+              </button>
             `
           } else {
             paginationContainer.innerHTML = ''
@@ -572,7 +554,8 @@ export function pageAdminProducts(state) {
         formSection.classList.add('flex')
         document.body.style.overflow = 'hidden'
         formTitle.textContent = editing ? 'Editar producto' : 'Nuevo Producto'
-        submitText.textContent = editing ? 'Guardar cambios' : 'Guardar'
+        const freshSubmitText = qs(root, '#submit-text')
+        if (freshSubmitText) freshSubmitText.textContent = editing ? 'Guardar cambios' : 'Guardar'
         setError('')
       }
 
@@ -657,8 +640,8 @@ export function pageAdminProducts(state) {
       if (dropzone) {
         const setDropActive = (active) => {
           dropzone.classList.toggle('border-brand', active)
-          dropzone.classList.toggle('bg-brand/5', active)
-          dropzone.classList.toggle('border-gray-300', !active)
+          dropzone.classList.toggle('bg-brand-tint-2', active)
+          dropzone.classList.toggle('border-line-strong', !active)
         }
         ;['dragenter', 'dragover'].forEach(ev => dropzone.addEventListener(ev, (e) => { e.preventDefault(); setDropActive(true) }))
         ;['dragleave', 'drop'].forEach(ev => dropzone.addEventListener(ev, (e) => { e.preventDefault(); setDropActive(false) }))
@@ -814,21 +797,34 @@ export function pageAdminProducts(state) {
         const input = target.closest('input[data-toggle-publish]')
         if (!input) return
 
-        const id = input.closest('[data-product]')?.getAttribute('data-id')
+        const container = input.closest('[data-product]')
+        const id = container?.getAttribute('data-id')
         if (!id) return
 
         const isPublished = input.checked
         const badge = isPublished ? '' : 'Borrador'
 
+        // Update visual immediately
+        const toggleEl = container?.querySelector('.gl-toggle')
+        const statusLabel = container?.querySelector('[data-status-label]')
+        if (toggleEl) toggleEl.classList.toggle('on', isPublished)
+        if (statusLabel) {
+          statusLabel.textContent = isPublished ? 'Publicado' : 'Borrador'
+          statusLabel.className = `text-[12.5px] font-medium ${isPublished ? 'text-ink' : 'text-muted'}`
+        }
+
         try {
           const { error } = await updateProduct(id, { badge })
           if (error) throw new Error(error.message)
-
-          const statusLabel = input.closest('.flex')?.querySelector('span')
-          if (statusLabel) statusLabel.textContent = isPublished ? 'Publicado' : 'Borrador'
           showToast('Estado actualizado', 'success')
         } catch (_err) {
+          // Revert on error
           input.checked = !isPublished
+          if (toggleEl) toggleEl.classList.toggle('on', !isPublished)
+          if (statusLabel) {
+            statusLabel.textContent = !isPublished ? 'Publicado' : 'Borrador'
+            statusLabel.className = `text-[12.5px] font-medium ${!isPublished ? 'text-ink' : 'text-muted'}`
+          }
           showToast('Error al actualizar estado', 'error')
         }
       }

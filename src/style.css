@@ -7,14 +7,33 @@
   --color-brand: #214fc7;
   --color-brand-light: #4169e1;
   --color-brand-dark: #003baf;
-  --color-ink: #0A0A0F;
+  --color-brand-ink: #1A3E9E;
+  --color-brand-tint: #EAEFFB;
+  --color-brand-tint-2: #F3F6FD;
+  --color-ink: #15171C;
+  --color-ink-2: #1B1E25;
   --color-paper: #FFFFFF;
+  --color-canvas: #F5F6F8;
   --color-fog: #F2F1ED;
-  --color-brand-tint: #E8EDF9;
+  --color-line: #E9EAEE;
+  --color-line-strong: #DCDEE4;
+  --color-body: #2B2E36;
+  --color-muted: #767B86;
+  --color-faint: #A4A8B2;
+  --color-ok: #1E9E6A;
+  --color-ok-tint: #E8F6EF;
+  --color-warn: #C9821A;
+  --color-warn-tint: #FBF1DE;
+  --color-bad: #D6453E;
+  --color-bad-tint: #FBEAE9;
   --font-heading: 'Manrope', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Manrope', ui-sans-serif, system-ui, sans-serif;
   --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --shadow-card: 0 1px 2px rgba(20,23,28,0.04), 0 1px 1px rgba(20,23,28,0.03);
+  --shadow-float: 0 12px 32px -8px rgba(20,23,28,0.18), 0 4px 10px -4px rgba(20,23,28,0.10);
+  --shadow-pop: 0 20px 50px -12px rgba(20,23,28,0.28);
+  --radius-xl2: 14px;
 }
 
 :root {
@@ -935,3 +954,80 @@ details.acc .body { padding-bottom: 18px; font-size: 14px; color: rgba(10,10,15,
 
 :is(body.home, body.catalog, body.checkout, body.product).cursor-zoom .cursor-ring { width: 64px; height: 64px; background: transparent; mix-blend-mode: difference; border-color: var(--color-paper); }
 :is(body.home, body.catalog, body.checkout, body.product).cursor-zoom .cursor-dot { width: 0; height: 0; }
+
+/* ─── Admin Panel Utilities ─── */
+.tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+.eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; }
+
+/* Admin view entrance */
+@keyframes admin-view-in { from { transform: translateY(9px); } to { transform: translateY(0); } }
+.admin-view-in { animation: admin-view-in .34s cubic-bezier(.22,.61,.36,1) both; }
+@keyframes admin-row-in { from { transform: translateY(7px); } to { transform: translateY(0); } }
+.admin-stagger > * { animation: admin-row-in .4s cubic-bezier(.22,.61,.36,1) both; }
+.admin-stagger > *:nth-child(1){animation-delay:.02s}.admin-stagger > *:nth-child(2){animation-delay:.06s}.admin-stagger > *:nth-child(3){animation-delay:.10s}.admin-stagger > *:nth-child(4){animation-delay:.14s}.admin-stagger > *:nth-child(5){animation-delay:.18s}.admin-stagger > *:nth-child(6){animation-delay:.22s}.admin-stagger > *:nth-child(7){animation-delay:.26s}.admin-stagger > *:nth-child(8){animation-delay:.30s}
+@media (prefers-reduced-motion: reduce) { .admin-view-in, .admin-stagger > * { animation: none !important; } }
+
+/* Admin nav active rail */
+.admin-nav-link { position: relative; }
+.admin-nav-link .admin-rail { position:absolute; left:-12px; top:50%; transform:translateY(-50%) scaleY(0); width:3px; height:20px; border-radius:0 3px 3px 0; background:#fff; transition:transform .2s ease; }
+.admin-nav-link.active .admin-rail { transform:translateY(-50%) scaleY(1); }
+
+/* Admin toggle */
+.gl-toggle { display: inline-block; width: 38px; height: 22px; border-radius: 99px; background: #D6D9E0; position: relative; transition: background .2s; cursor: pointer; flex: none; vertical-align: middle; }
+.gl-toggle::after { content:''; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:99px; background:#fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform .2s; }
+.gl-toggle.on { background: var(--color-brand); }
+.gl-toggle.on::after { transform: translateX(16px); }
+
+/* Admin inputs — using @layer so Tailwind utilities (pl-*, w-auto) can override */
+@layer components {
+  .adm-fld { width:100%; background:#fff; border:1px solid #E1E3E9; border-radius:11px; padding-top:10px; padding-bottom:10px; padding-left:13px; padding-right:13px; font-size:14px; color:var(--color-body); transition: border-color .15s, box-shadow .15s; }
+  .adm-fld::placeholder { color:var(--color-faint); }
+  .adm-fld:focus { outline:none; border-color:var(--color-brand); box-shadow: 0 0 0 3px rgba(33,79,199,.12); }
+}
+
+/* Admin segmented control */
+.adm-seg { display:inline-flex; background:#EEEFF2; padding:3px; border-radius:11px; gap:2px; }
+.adm-seg button { padding:6px 13px; border-radius:8px; font-size:12.5px; font-weight:600; color:var(--color-muted); transition: all .15s; }
+.adm-seg button.active { background:#fff; color:var(--color-ink); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+
+/* Admin bar chart */
+.adm-bar { transition: height .6s cubic-bezier(.22,.61,.36,1); }
+.adm-bar-tip { opacity: 0; transition: opacity .15s ease; }
+[data-bar]:hover .adm-bar-tip { opacity: 1; }
+[data-bar]:hover .adm-bar { filter: brightness(1.05); }
+
+/* Admin drawer animation */
+@keyframes adm-drawer-in { from { transform: translateX(100%) } to { transform: translateX(0) } }
+@keyframes adm-drawer-left-in { from { transform: translateX(-100%) } to { transform: translateX(0) } }
+.adm-anim-drawer { animation: adm-drawer-in .32s cubic-bezier(.22,.61,.36,1) both; }
+.adm-anim-drawer-left { animation: adm-drawer-left-in .32s cubic-bezier(.22,.61,.36,1) both; }
+
+/* Admin scrollbar */
+.adm-scroll-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+.adm-scroll-thin::-webkit-scrollbar-thumb { background: #D2D5DC; border-radius: 99px; border: 2px solid transparent; background-clip: content-box; }
+.adm-scroll-thin::-webkit-scrollbar-thumb:hover { background: #B6BAC3; background-clip: content-box; }
+.adm-scroll-thin::-webkit-scrollbar-track { background: transparent; }
+
+/* Admin buttons — @layer so utilities can override padding/sizing */
+@layer components {
+  .adm-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; font-weight:600; font-size:14px; border-radius:11px; transition: all .15s; cursor:pointer; white-space:nowrap; }
+  .adm-btn-primary { background:var(--color-brand); color:#fff; padding:10px 16px; }
+  .adm-btn-primary:hover { background:var(--color-brand-ink); }
+  .adm-btn-ghost { background:#fff; color:var(--color-body); border:1px solid var(--color-line); padding:9px 15px; }
+  .adm-btn-ghost:hover { background:var(--color-canvas); border-color:var(--color-line-strong); }
+  .adm-btn-ink { background:var(--color-ink); color:#fff; padding:10px 16px; }
+  .adm-btn-ink:hover { background:#2B2E36; }
+}
+
+/* Admin labels */
+@layer components {
+  .adm-lbl { font-size:11px; font-weight:600; letter-spacing:.04em; color:var(--color-muted); text-transform:uppercase; margin-bottom:6px; display:block; }
+}
+
+/* Admin modal pop animation */
+@keyframes adm-pop-in { from { opacity:0; transform:translateY(10px) scale(.98); } to { opacity:1; transform:translateY(0) scale(1); } }
+.adm-anim-pop { animation: adm-pop-in .26s cubic-bezier(.22,.61,.36,1) both; }
+
+/* Admin fade backdrop */
+@keyframes adm-fade-in { from { opacity:0 } to { opacity:1 } }
+.adm-anim-fade { animation: adm-fade-in .2s ease both; }

@@ -1,148 +1,114 @@
 import { formatMoney } from '../../utils/format.js'
-import { getBadgeColor } from './adminProductsData.js'
+import { ICON } from './adminIcons.js'
+
+function stockBadge(p) {
+  const isInfinite = p.stock === undefined || p.stock === null || p.stock === '' || p.stock === '∞'
+  if (isInfinite) return `<span class="inline-flex items-center gap-1.5 px-2 h-[22px] rounded-md text-[11.5px] font-semibold bg-brand-tint text-brand tnum">∞ Ilimitado</span>`
+  const n = Number(p.stock)
+  if (n <= 0) return `<span class="inline-flex items-center gap-1.5 px-2 h-[22px] rounded-md text-[11.5px] font-semibold bg-bad-tint text-bad">Agotado</span>`
+  if (n <= 10) return `<span class="inline-flex items-center gap-1.5 px-2 h-[22px] rounded-md text-[11.5px] font-semibold bg-warn-tint text-warn tnum">${n} · bajo</span>`
+  return `<span class="text-[13px] font-semibold text-ink tnum">${n} <span class="text-faint font-normal">uds</span></span>`
+}
+
+function badgePill(badge) {
+  if (!badge) return ''
+  const map = {
+    Nuevo: 'bg-ok-tint text-ok',
+    Oferta: 'bg-bad-tint text-bad',
+    Popular: 'bg-warn-tint text-warn',
+    Premium: 'bg-ink text-white',
+    Borrador: 'bg-line text-muted',
+  }
+  return `<span class="inline-flex items-center px-1.5 h-[18px] rounded text-[10px] font-bold ${map[badge] || 'bg-line text-muted'}">${badge}</span>`
+}
 
 export function productCard(p) {
-  const img = p.images?.[0] || 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=200&h=200&fit=crop'
-  
-  const isInfinite = p.stock === undefined || p.stock === null || p.stock === '' || p.stock === '∞'
-  const stockValue = isInfinite ? '∞' : Number(p.stock)
-  
-  let stockBadgeHtml = ''
-  if (isInfinite || stockValue > 10) {
-    stockBadgeHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800">En Stock</span>`
-  } else if (stockValue > 0) {
-    stockBadgeHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-100 text-yellow-800">Bajo Stock</span>`
-  } else {
-    stockBadgeHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">Agotado</span>`
-  }
-  
-  const stockText = isInfinite ? '∞ uds.' : `${stockValue} uds.`
+  const img = p.images?.[0]
   const isPublished = p.badge !== 'Borrador'
 
   return `
-    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group bg-white dark:bg-gray-800" data-product data-id="${p.id}">
-      <td class="px-6 py-4">
+    <tr class="border-t border-line hover:bg-canvas transition-colors group" data-product data-id="${p.id}">
+      <td class="px-5 py-3">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
-            <img src="${img}" alt="${p.name}" class="w-full h-full object-cover"/>
+          ${img
+            ? `<div class="w-11 h-11 rounded-[10px] overflow-hidden bg-canvas border border-line shrink-0"><img src="${img}" alt="${p.name}" class="w-full h-full object-cover" loading="lazy"/></div>`
+            : `<div class="w-11 h-11 rounded-[10px] bg-canvas border border-line flex items-center justify-center shrink-0 text-faint">${ICON.products('w-5 h-5')}</div>`
+          }
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5">
+              <p class="text-[13.5px] font-semibold text-ink truncate max-w-[220px]">${p.name}</p>
+              ${badgePill(p.badge)}
+            </div>
+            <p class="text-[11.5px] text-faint mt-0.5 truncate">${(p.sizes || []).join(', ')}${p.colors?.length ? ' · ' + p.colors.slice(0, 3).join(', ') : ''}</p>
           </div>
-          <div>
-            <div class="font-medium text-gray-900 dark:text-white line-clamp-1">${p.name}</div>
-            <div class="text-[10px] text-gray-500 mt-0.5">${(p.sizes || []).join(', ')} ${p.colors?.length ? '• ' + p.colors.join(', ') : ''}</div>
-          </div>
         </div>
       </td>
-      
-      <td class="px-6 py-4">
-        <span class="text-gray-600 dark:text-gray-300">${p.type || 'Sin categoría'}</span>
+      <td class="px-5 py-3">
+        <span class="inline-flex items-center px-2 h-[24px] rounded-md bg-canvas border border-line text-[12px] font-medium text-body">${p.type || 'Sin categoría'}</span>
       </td>
-      
-      <td class="px-6 py-4 font-semibold text-gray-900 dark:text-white">
-        ${formatMoney(p.price)}
+      <td class="px-5 py-3 text-right">
+        <p class="text-[14px] font-bold text-ink tnum">${formatMoney(p.price)}</p>
+        ${p.originalPrice ? `<p class="text-[11.5px] text-faint line-through tnum">${formatMoney(p.originalPrice)}</p>` : ''}
       </td>
-      
-      <td class="px-6 py-4">
-        <div class="flex flex-col items-start gap-1">
-          ${stockBadgeHtml}
-          <span class="text-xs text-gray-500">${stockText}</span>
+      <td class="px-5 py-3">${stockBadge(p)}</td>
+      <td class="px-5 py-3">
+        <label class="inline-flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" class="sr-only" data-toggle-publish ${isPublished ? 'checked' : ''}>
+          <span class="gl-toggle ${isPublished ? 'on' : ''}"></span>
+          <span data-status-label class="text-[12.5px] font-medium ${isPublished ? 'text-ink' : 'text-muted'}">${isPublished ? 'Publicado' : 'Borrador'}</span>
+        </label>
+      </td>
+      <td class="px-5 py-3">
+        <div class="flex items-center justify-end gap-1">
+          <button data-edit class="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-brand hover:bg-brand-tint transition-colors">${ICON.edit('w-[17px] h-[17px]')}</button>
+          <button data-delete class="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-bad hover:bg-bad-tint transition-colors">${ICON.trash('w-[17px] h-[17px]')}</button>
         </div>
       </td>
-      
-      <td class="px-6 py-4">
-        <div class="flex items-center gap-2">
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" class="sr-only peer" data-toggle-publish ${isPublished ? 'checked' : ''}>
-            <div class="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600 peer-checked:bg-brand"></div>
-          </label>
-          <span class="text-xs font-medium text-gray-700 dark:text-gray-300">${isPublished ? 'Publicado' : 'Borrador'}</span>
-        </div>
-      </td>
-      
-      <td class="px-6 py-4 text-center">
-        <div class="flex items-center justify-center gap-3">
-          <button type="button" class="text-gray-400 hover:text-brand transition-colors p-1" data-edit title="Editar">
-             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-             </svg>
-          </button>
-          <button type="button" class="text-gray-400 hover:text-red-500 transition-colors p-1" data-delete title="Eliminar">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-            </svg>
-          </button>
-        </div>
-      </td>
-    </tr>
-  `
+    </tr>`
 }
 
 export function productCardMobile(p) {
-  const img = p.images?.[0] || 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=200&h=200&fit=crop'
-  
-  const isInfinite = p.stock === undefined || p.stock === null || p.stock === '' || p.stock === '∞'
-  const stockValue = isInfinite ? '∞' : Number(p.stock)
-  
-  let stockBadgeHtml = ''
-  if (isInfinite || stockValue > 10) {
-    stockBadgeHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800">En Stock</span>`
-  } else if (stockValue > 0) {
-    stockBadgeHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-100 text-yellow-800">Bajo Stock</span>`
-  } else {
-    stockBadgeHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">Agotado</span>`
-  }
-  
-  const stockText = isInfinite ? '∞ uds.' : `${stockValue} uds.`
+  const img = p.images?.[0]
   const isPublished = p.badge !== 'Borrador'
 
   return `
-    <div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors" data-product data-id="${p.id}">
+    <div class="p-4 hover:bg-canvas transition-colors" data-product data-id="${p.id}">
       <div class="space-y-3">
         <div class="flex items-start justify-between gap-3">
           <div class="flex items-center gap-3 flex-1 min-w-0">
-            <div class="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
-              <img src="${img}" alt="${p.name}" class="w-full h-full object-cover"/>
-            </div>
+            ${img
+              ? `<div class="w-12 h-12 rounded-[10px] overflow-hidden bg-canvas border border-line shrink-0"><img src="${img}" alt="${p.name}" class="w-full h-full object-cover" loading="lazy"/></div>`
+              : `<div class="w-12 h-12 rounded-[10px] bg-canvas border border-line flex items-center justify-center shrink-0 text-faint">${ICON.products('w-5 h-5')}</div>`
+            }
             <div class="min-w-0">
-              <p class="font-medium text-gray-900 dark:text-white line-clamp-2">${p.name}</p>
-              <p class="text-xs text-gray-500 mt-1 line-clamp-1">${p.type || 'Sin categoría'}</p>
+              <div class="flex items-center gap-1.5"><p class="font-semibold text-ink text-[13.5px] line-clamp-2">${p.name}</p>${badgePill(p.badge)}</div>
+              <p class="text-[12px] text-faint mt-0.5">${p.type || 'Sin categoría'}</p>
             </div>
           </div>
-          <div class="flex gap-1 flex-shrink-0">
-            <button type="button" class="text-gray-400 hover:text-brand transition-colors p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700" data-edit title="Editar">
-               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-               </svg>
-            </button>
-            <button type="button" class="text-gray-400 hover:text-red-500 transition-colors p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700" data-delete title="Eliminar">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-              </svg>
-            </button>
+          <div class="flex gap-1 shrink-0">
+            <button data-edit class="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-brand hover:bg-brand-tint transition-colors">${ICON.edit('w-4 h-4')}</button>
+            <button data-delete class="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-bad hover:bg-bad-tint transition-colors">${ICON.trash('w-4 h-4')}</button>
           </div>
         </div>
-
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-3 gap-3">
           <div>
-            <p class="text-xs text-gray-500 font-semibold">Precio</p>
-            <p class="font-semibold text-gray-900 dark:text-white">${formatMoney(p.price)}</p>
+            <p class="eyebrow text-faint">Precio</p>
+            <p class="font-bold text-ink tnum mt-0.5">${formatMoney(p.price)}</p>
           </div>
           <div>
-            <p class="text-xs text-gray-500 font-semibold">Stock</p>
-            <p class="text-xs text-gray-600 dark:text-gray-400">${stockText}</p>
+            <p class="eyebrow text-faint">Stock</p>
+            <div class="mt-0.5">${stockBadge(p)}</div>
           </div>
-        </div>
-
-        <div>
-          <p class="text-xs text-gray-500 font-semibold mb-1">Estado</p>
-          <div class="flex items-center justify-between">
-            ${stockBadgeHtml}
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" class="sr-only peer" data-toggle-publish ${isPublished ? 'checked' : ''}>
-              <div class="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-gray-600 peer-checked:bg-brand"></div>
-            </label>
+          <div>
+            <p class="eyebrow text-faint">Estado</p>
+            <div class="mt-0.5">
+              <label class="inline-flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" class="sr-only" data-toggle-publish ${isPublished ? 'checked' : ''}>
+                <span class="gl-toggle ${isPublished ? 'on' : ''}" style="width:32px;height:18px"></span>
+              </label>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  `
+    </div>`
 }

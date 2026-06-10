@@ -1,185 +1,83 @@
 import { getAdminCoupons, createCoupon, updateCoupon, deleteCoupon, getState } from '../../store/index.js'
 import { showToast } from '../../utils/toast.js'
 import { sanitizeCouponCode, sanitizeText, sanitizeNumber } from '../../utils/sanitize.js'
+import { ICON } from './adminIcons.js'
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ──
 
 function couponCard(c) {
   const discountPct = c.discount ? Math.round(c.discount * 100) : 0
+  const catLabel = c.categories && c.categories.length > 0
+    ? `<span class="inline-flex items-center px-2 h-[20px] rounded-md text-[10.5px] font-semibold bg-brand-tint text-brand">Solo aplicables</span>`
+    : `<span class="inline-flex items-center px-2 h-[20px] rounded-md text-[10.5px] font-semibold bg-canvas text-muted">Toda la tienda</span>`
+
   return `
-    <div class="bg-white border ${c.active ? 'border-brand/30' : 'border-gray-200 opacity-60'} rounded-2xl p-5 relative group flex flex-col gap-3" data-coupon-code="${c.code}">
-      <!-- Header -->
-      <div class="flex items-start justify-between gap-2">
+    <div class="relative bg-paper rounded-3xl border border-line shadow-card group overflow-hidden ${!c.active ? 'opacity-60' : ''}" data-coupon-code="${c.code}">
+      <!-- Notch circles -->
+      <div class="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-canvas border border-line"></div>
+      <div class="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-canvas border border-line"></div>
+
+      <div class="p-5 space-y-3">
+        <!-- Header row -->
+        <div class="flex items-start justify-between gap-2">
+          ${catLabel}
+          <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button data-edit="${c.code}" class="w-7 h-7 rounded-lg flex items-center justify-center text-muted hover:text-brand hover:bg-brand-tint transition-colors" title="Editar">${ICON.edit('w-4 h-4')}</button>
+            <button data-delete="${c.code}" class="w-7 h-7 rounded-lg flex items-center justify-center text-muted hover:text-bad hover:bg-bad-tint transition-colors" title="Eliminar">${ICON.trash('w-4 h-4')}</button>
+          </div>
+        </div>
+
+        <!-- Code -->
         <div>
-          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${c.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'}">${c.active ? 'Activo' : 'Inactivo'}</span>
+          <p class="font-mono font-bold text-[20px] tracking-widest ${c.active ? 'text-ink' : 'text-muted'}">${c.code}</p>
+          <p class="text-[12.5px] text-muted mt-0.5 truncate">${c.label || '—'}</p>
         </div>
-        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button data-edit="${c.code}" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-brand transition-colors" title="Editar">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-          </button>
-          <button data-delete="${c.code}" class="p-1.5 rounded-lg hover:bg-red-50 text-gray-500 hover:text-red-500 transition-colors" title="Eliminar">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-          </button>
-        </div>
-      </div>
 
-      <!-- Code -->
-      <div>
-        <p class="text-2xl font-bold font-manrope tracking-wider ${c.active ? 'text-brand' : 'text-gray-700'}">${c.code}</p>
-        <p class="text-sm text-gray-500 mt-0.5">${c.label || '—'}</p>
-      </div>
+        <!-- Dashed divider -->
+        <div class="border-t border-dashed border-line mx-2"></div>
 
-      <!-- Categories / Stats -->
-      <div class="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
-        <div class="col-span-full mb-1">
-           ${c.categories && c.categories.length > 0 
-              ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-600">Solo en aplicables</span>` 
-              : `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-600">Aplica a toda la tienda</span>`
-           }
+        <!-- Stats -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <div class="bg-canvas rounded-xl2 p-3 text-center">
+            <p class="font-display font-bold text-ink text-[18px] tnum">${discountPct ? discountPct + '%' : '—'}</p>
+            <p class="eyebrow text-faint mt-1">Descuento</p>
+          </div>
+          <div class="bg-canvas rounded-xl2 p-3 text-center">
+            <p class="font-display font-bold text-[18px] ${c.free_shipping ? 'text-ok' : 'text-faint'}">${c.free_shipping ? 'Sí' : 'No'}</p>
+            <p class="eyebrow text-faint mt-1">Envío gratis</p>
+          </div>
         </div>
-        <div class="bg-gray-50 rounded-xl p-3 text-center">
-          <p class="text-lg font-bold text-gray-900">${discountPct ? discountPct + '%' : '—'}</p>
-          <p class="text-[10px] text-gray-400 uppercase tracking-wide mt-0.5">Descuento</p>
-        </div>
-        <div class="bg-gray-50 rounded-xl p-3 text-center">
-          <p class="text-lg font-bold ${c.free_shipping ? 'text-green-600' : 'text-gray-400'}">${c.free_shipping ? '✓' : '✗'}</p>
-          <p class="text-[10px] text-gray-400 uppercase tracking-wide mt-0.5">Envío gratis</p>
-        </div>
-      </div>
 
-      <!-- Toggle activo -->
-      <div class="flex items-center justify-between pt-1">
-        <span class="text-xs text-gray-400">${new Date(c.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-        <label class="relative inline-flex items-center cursor-pointer">
-          <input type="checkbox" class="sr-only peer" data-toggle="${c.code}" ${c.active ? 'checked' : ''}>
-          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></div>
-        </label>
+        <!-- Footer -->
+        <div class="flex items-center justify-between pt-1">
+          <span class="text-[11.5px] text-faint tnum">${new Date(c.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+          <button type="button" data-toggle="${c.code}" class="gl-toggle ${c.active ? 'on' : ''}" title="${c.active ? 'Desactivar' : 'Activar'}"></button>
+        </div>
       </div>
-    </div>
-  `
+    </div>`
 }
 
-function modalHTML(c = null) {
-  const isEdit = !!c
-  const availableTypes = [...new Set(getState().products.map(p => p.type).filter(Boolean))].sort()
-  const selectedTypes = isEdit && c.categories ? c.categories : []
-
-  return `
-    <div id="coupon-modal" class="fixed inset-0 layer-modal flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in z-50">
-      <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden max-h-[90vh] flex flex-col">
-        <!-- Header -->
-        <div class="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 class="text-lg font-bold font-manrope text-gray-900">${isEdit ? 'Editar cupón' : 'Crear nuevo cupón'}</h2>
-          <button id="modal-close" class="p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
-        </div>
-
-        <!-- Form -->
-        <form id="coupon-form" method="post" class="p-6 space-y-4 overflow-y-auto">
-          ${isEdit ? `<input type="hidden" name="id" value="${c.id}">` : ''}
-
-          <div>
-            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Código *</label>
-            <input name="code" type="text" required maxlength="20" value="${isEdit ? c.code : ''}"
-              class="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-mono uppercase focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none transition-colors"
-              placeholder="VERANO25" ${isEdit ? 'readonly class="bg-gray-50 cursor-not-allowed"' : ''}/>
-            <p class="text-[10px] text-gray-400 mt-1">Solo letras y números, máx. 20 caracteres</p>
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Descripción</label>
-            <input name="label" type="text" maxlength="100" value="${isEdit ? (c.label || '') : ''}"
-              class="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none transition-colors"
-              placeholder="Descuento de verano 25%"/>
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Descuento (%)</label>
-            <input name="discount" type="number" min="0" max="100" step="1" value="${isEdit ? Math.round((c.discount || 0) * 100) : ''}"
-              onwheel="this.blur()"
-              class="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none transition-colors"
-              placeholder="25"/>
-          </div>
-
-          <!-- Product Categories Restriction -->
-          <div>
-            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Aplicar solo a Categorías (Opcional)</label>
-            <p class="text-[10px] text-gray-500 mb-2">Si cierras todo en blanco, aplicará a toda la tienda de forma general.</p>
-            <div class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-xl border border-gray-100 max-h-36 overflow-y-auto">
-              ${availableTypes.map(type => `
-                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-100 p-1.5 rounded transition-colors text-gray-700">
-                  <input type="checkbox" name="categories" value="${type}" class="rounded text-brand focus:ring-brand w-4 h-4" ${selectedTypes.includes(type) ? 'checked' : ''}>
-                  ${type}
-                </label>
-              `).join('')}
-            </div>
-          </div>
-
-          <div class="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
-            <div>
-              <p class="text-sm font-medium text-gray-900">Envío gratis</p>
-              <p class="text-xs text-gray-400">El cupón incluye envío gratuito</p>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" name="free_shipping" class="sr-only peer" ${isEdit && c.free_shipping ? 'checked' : ''}>
-              <div class="w-10 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand"></div>
-            </label>
-          </div>
-
-          <div class="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
-            <div>
-              <p class="text-sm font-medium text-gray-900">Cupón activo</p>
-              <p class="text-xs text-gray-400">Los clientes pueden usar este cupón</p>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" name="active" class="sr-only peer" ${!isEdit || c.active ? 'checked' : ''}>
-              <div class="w-10 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand"></div>
-            </label>
-          </div>
-
-          <!-- Error -->
-          <p id="coupon-form-error" class="hidden text-sm text-red-500 bg-red-50 rounded-xl px-4 py-2"></p>
-
-          <!-- Actions -->
-          <div class="flex gap-3 pt-2">
-            <button type="button" id="modal-cancel" class="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">Cancelar</button>
-            <button type="submit" id="coupon-submit" class="flex-1 px-4 py-3 rounded-xl bg-brand text-white text-sm font-semibold hover:bg-brand-dark transition-colors">
-              ${isEdit ? 'Guardar cambios' : 'Crear cupón'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  `
-}
-
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ── Page ──
 
 export function pageAdminCoupons() {
   return {
     title: 'Cupones | G&L Admin',
     html: `
-      <div class="animate-fade-in space-y-6">
+      <div class="admin-view-in space-y-6">
         <!-- Header -->
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 class="text-3xl font-manrope font-bold text-gray-900">Cupones</h1>
-            <p class="text-gray-500 mt-1 text-sm">Crea y gestiona códigos de descuento</p>
+            <p class="eyebrow text-faint">Catálogo</p>
+            <h1 class="font-display font-extrabold text-ink text-[24px] tracking-tight mt-0.5">Cupones</h1>
           </div>
-          <button id="open-create-modal" class="w-full sm:w-auto self-start sm:self-auto flex items-center justify-center gap-2 bg-brand text-white px-4 py-2.5 rounded-xl font-medium hover:bg-brand-dark transition-colors shadow-lg shadow-brand/20">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-            Crear cupón
-          </button>
+          <button id="open-create-modal" class="adm-btn adm-btn-primary">${ICON.plus('w-[18px] h-[18px]')} Crear cupón</button>
         </div>
 
         <!-- List -->
-        <div id="coupons-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          <div class="col-span-full py-12 text-center text-gray-400">
-            <div class="animate-pulse flex flex-col items-center gap-2">
-              <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
-              <span class="text-sm">Cargando cupones...</span>
-            </div>
+        <div id="coupons-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 admin-stagger">
+          <div class="col-span-full py-12 text-center text-faint animate-pulse">
+            ${ICON.coupon('w-8 h-8 mx-auto mb-2 text-line-strong')}
+            <span class="text-[13px] block">Cargando cupones...</span>
           </div>
         </div>
       </div>
@@ -189,50 +87,107 @@ export function pageAdminCoupons() {
       const listEl = root.querySelector('#coupons-list')
       let coupons = []
 
-      // ── Render list ──
       const renderList = () => {
-        if (coupons.length === 0) {
+        if (!coupons.length) {
           listEl.innerHTML = `
-            <div class="col-span-full py-16 text-center text-gray-400">
-              <svg class="w-12 h-12 mx-auto mb-4 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
-              <p class="font-medium text-gray-500">No hay cupones todavía</p>
-              <p class="text-sm text-gray-400 mt-1">Crea el primero con el botón de arriba</p>
-            </div>
-          `
+            <div class="col-span-full py-16 text-center">
+              ${ICON.coupon('w-12 h-12 mx-auto mb-4 text-line-strong')}
+              <p class="font-semibold text-body">No hay cupones</p>
+              <p class="text-[13px] text-muted mt-1">Crea el primero con el botón de arriba</p>
+            </div>`
           return
         }
         listEl.innerHTML = coupons.map(couponCard).join('')
       }
 
-      // ── Load ──
       coupons = await getAdminCoupons()
       renderList()
 
-      // ── Modal helpers ──
-      let activeModal = null
-
+      // ── Modal ──
       const openModal = (coupon = null) => {
-        // Eliminar modal previo si existe
+        const isEdit = !!coupon
         root.querySelector('#coupon-modal')?.remove()
 
-        const div = document.createElement('div')
-        div.innerHTML = modalHTML(coupon)
-        root.appendChild(div.firstElementChild)
+        const availableTypes = [...new Set(getState().products.map(p => p.type).filter(Boolean))].sort()
+        const selectedTypes = isEdit && coupon.categories ? coupon.categories : []
+
+        const wrap = document.createElement('div')
+        wrap.innerHTML = `
+          <div id="coupon-modal" class="fixed inset-0 layer-modal flex items-center justify-center bg-ink/50 backdrop-blur-sm p-4 adm-anim-fade">
+            <div class="w-full max-w-md bg-paper rounded-3xl border border-line shadow-pop adm-anim-pop overflow-hidden max-h-[90vh] flex flex-col">
+              <div class="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
+                <h2 class="font-display font-bold text-ink text-[17px]">${isEdit ? 'Editar cupón' : 'Crear nuevo cupón'}</h2>
+                <button data-close class="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-ink hover:bg-canvas transition-colors">${ICON.close('w-[18px] h-[18px]')}</button>
+              </div>
+              <form data-form class="px-5 pb-5 space-y-4 overflow-y-auto adm-scroll-thin flex-1">
+                ${isEdit ? `<input type="hidden" name="id" value="${coupon.id}">` : ''}
+                <div>
+                  <label class="adm-lbl">Código *</label>
+                  <input name="code" type="text" required maxlength="20" value="${isEdit ? coupon.code : ''}" class="adm-fld font-mono uppercase" placeholder="VERANO25" ${isEdit ? 'readonly style="background:#F5F6F8;cursor:not-allowed"' : ''} />
+                  <p class="text-[10.5px] text-faint mt-1">Solo letras y números, máx. 20 caracteres</p>
+                </div>
+                <div>
+                  <label class="adm-lbl">Descripción</label>
+                  <input name="label" type="text" maxlength="100" value="${isEdit ? (coupon.label || '') : ''}" class="adm-fld" placeholder="Descuento de verano 25%" />
+                </div>
+                <div>
+                  <label class="adm-lbl">Descuento (%)</label>
+                  <input name="discount" type="number" min="0" max="100" step="1" value="${isEdit ? Math.round((coupon.discount || 0) * 100) : ''}" class="adm-fld tnum" placeholder="25" onwheel="this.blur()" />
+                </div>
+
+                <!-- Categories -->
+                <div>
+                  <label class="adm-lbl">Aplicar solo a categorías (opcional)</label>
+                  <p class="text-[10.5px] text-faint mb-2">Si no seleccionas ninguna, aplica a toda la tienda.</p>
+                  <div class="grid grid-cols-2 gap-2 bg-canvas p-3 rounded-xl2 border border-line max-h-36 overflow-y-auto adm-scroll-thin">
+                    ${availableTypes.map(type => `
+                      <label class="flex items-center gap-2 text-[13px] cursor-pointer hover:bg-line/50 p-1.5 rounded-lg transition-colors text-body">
+                        <input type="checkbox" name="categories" value="${type}" class="rounded text-brand focus:ring-brand w-4 h-4 accent-brand" ${selectedTypes.includes(type) ? 'checked' : ''}>
+                        ${type}
+                      </label>
+                    `).join('')}
+                  </div>
+                </div>
+
+                <!-- Toggles -->
+                <div class="flex items-center justify-between bg-canvas rounded-xl2 px-4 py-3">
+                  <div><p class="text-[13.5px] font-semibold text-ink">Envío gratis</p><p class="text-[11.5px] text-faint">Incluye envío gratuito</p></div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" name="free_shipping" class="sr-only peer" ${isEdit && coupon.free_shipping ? 'checked' : ''}>
+                    <div class="w-10 h-6 bg-line-strong rounded-full peer peer-checked:bg-brand after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:shadow-sm after:transition-all peer-checked:after:translate-x-4"></div>
+                  </label>
+                </div>
+                <div class="flex items-center justify-between bg-canvas rounded-xl2 px-4 py-3">
+                  <div><p class="text-[13.5px] font-semibold text-ink">Cupón activo</p><p class="text-[11.5px] text-faint">Los clientes pueden usarlo</p></div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" name="active" class="sr-only peer" ${!isEdit || coupon.active ? 'checked' : ''}>
+                    <div class="w-10 h-6 bg-line-strong rounded-full peer peer-checked:bg-brand after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:shadow-sm after:transition-all peer-checked:after:translate-x-4"></div>
+                  </label>
+                </div>
+
+                <p data-error class="hidden text-[13px] text-bad bg-bad-tint rounded-xl2 px-4 py-2"></p>
+
+                <div class="flex gap-2.5 pt-2">
+                  <button type="button" data-cancel class="adm-btn adm-btn-ghost flex-1">Cancelar</button>
+                  <button type="submit" data-submit class="adm-btn adm-btn-primary flex-1">${isEdit ? 'Guardar cambios' : 'Crear cupón'}</button>
+                </div>
+              </form>
+            </div>
+          </div>`
+        root.appendChild(wrap.firstElementChild)
 
         const modal = root.querySelector('#coupon-modal')
-        const form = modal.querySelector('#coupon-form')
-        const errorEl = modal.querySelector('#coupon-form-error')
-        const submitBtn = modal.querySelector('#coupon-submit')
+        const form = modal.querySelector('[data-form]')
+        const errorEl = modal.querySelector('[data-error]')
+        const submitBtn = modal.querySelector('[data-submit]')
+        const close = () => modal.remove()
 
-        const closeModal = () => modal.remove()
+        modal.querySelector('[data-close]').addEventListener('click', close)
+        modal.querySelector('[data-cancel]').addEventListener('click', close)
+        modal.addEventListener('click', (e) => { if (e.target === modal) close() })
 
-        modal.querySelector('#modal-close').addEventListener('click', closeModal)
-        modal.querySelector('#modal-cancel').addEventListener('click', closeModal)
-        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal() })
-
-        // Auto-uppercase code
         const codeInput = form.querySelector('input[name="code"]')
-        codeInput.addEventListener('input', () => { codeInput.value = codeInput.value.toUpperCase() })
+        if (!isEdit) codeInput.addEventListener('input', () => { codeInput.value = codeInput.value.toUpperCase() })
 
         form.addEventListener('submit', async (e) => {
           e.preventDefault()
@@ -241,25 +196,18 @@ export function pageAdminCoupons() {
           const code = sanitizeCouponCode(codeInput.value)
           const label = sanitizeText(form.querySelector('input[name="label"]').value)
           const discountPct = sanitizeNumber(form.querySelector('input[name="discount"]').value, 0)
-          const discount = Math.round(discountPct) / 100  // guardar como decimal en DB
+          const discount = Math.round(discountPct) / 100
           const freeShipping = form.querySelector('input[name="free_shipping"]').checked
           const active = form.querySelector('input[name="active"]').checked
-          
-          const categoriesInputs = form.querySelectorAll('input[name="categories"]:checked')
-          const categories = Array.from(categoriesInputs).map(i => i.value)
+          const categories = Array.from(form.querySelectorAll('input[name="categories"]:checked')).map(i => i.value)
 
-          if (!code) {
-            errorEl.textContent = 'El código es requerido y solo puede tener letras y números.'
-            errorEl.classList.remove('hidden')
-            return
-          }
+          if (!code) { errorEl.textContent = 'El código es requerido y solo puede tener letras y números.'; errorEl.classList.remove('hidden'); return }
 
           submitBtn.disabled = true
           submitBtn.textContent = 'Guardando...'
 
           const originalCode = form.querySelector('input[name="id"]')?.value
           const payload = { label, discount, free_shipping: freeShipping, active, categories }
-          // Solo añadir code al payload si es creación (en edición el code es PK, no se puede cambiar)
           if (!originalCode) payload.code = code
 
           let result
@@ -282,59 +230,78 @@ export function pageAdminCoupons() {
           coupons = await getAdminCoupons()
           renderList()
           bindListEvents()
-          closeModal()
+          close()
         })
       }
 
-      // ── List event delegation ──
+      // ── List events ──
       const bindListEvents = () => {
-        // Edit
         listEl.querySelectorAll('[data-edit]').forEach(btn => {
           btn.addEventListener('click', () => {
-            const code = btn.dataset.edit
-            const coupon = coupons.find(c => c.code === code)
+            const coupon = coupons.find(c => c.code === btn.dataset.edit)
             if (coupon) openModal(coupon)
           })
         })
 
-        // Delete
         listEl.querySelectorAll('[data-delete]').forEach(btn => {
           btn.addEventListener('click', async () => {
             const code = btn.dataset.delete
             const coupon = coupons.find(c => c.code === code)
             if (!coupon) return
-            if (!confirm(`¿Eliminar el cupón "${coupon.code}"? Esta acción no se puede deshacer.`)) return
-            const { error } = await deleteCoupon(code)
-            if (error) { showToast('Error al eliminar el cupón', 'error'); return }
-            showToast('Cupón eliminado', 'success')
-            coupons = coupons.filter(c => c.code !== code)
-            renderList()
-            bindListEvents()
+            openDeleteConfirm(coupon)
           })
         })
 
-        // Toggle active
         listEl.querySelectorAll('[data-toggle]').forEach(toggle => {
-          toggle.addEventListener('change', async () => {
+          toggle.addEventListener('click', async () => {
             const code = toggle.dataset.toggle
-            const { error } = await updateCoupon(code, { active: toggle.checked })
-            if (error) {
-              showToast('Error al actualizar el estado', 'error')
-              toggle.checked = !toggle.checked
-              return
-            }
             const coupon = coupons.find(c => c.code === code)
-            if (coupon) coupon.active = toggle.checked
-            showToast(toggle.checked ? 'Cupón activado' : 'Cupón desactivado', 'success')
+            if (!coupon) return
+            const newActive = !coupon.active
+            const { error } = await updateCoupon(code, { active: newActive })
+            if (error) { showToast('Error al actualizar', 'error'); return }
+            coupon.active = newActive
+            showToast(newActive ? 'Cupón activado' : 'Cupón desactivado', 'success')
             renderList()
             bindListEvents()
           })
         })
       }
 
-      bindListEvents()
+      const openDeleteConfirm = (coupon) => {
+        root.querySelector('#coupon-delete-modal')?.remove()
+        const wrap = document.createElement('div')
+        wrap.innerHTML = `
+          <div id="coupon-delete-modal" class="fixed inset-0 layer-modal flex items-center justify-center bg-ink/50 backdrop-blur-sm p-4 adm-anim-fade">
+            <div class="w-full max-w-sm bg-paper rounded-3xl border border-line shadow-pop adm-anim-pop overflow-hidden">
+              <div class="p-5">
+                <div class="w-11 h-11 rounded-xl2 bg-bad-tint text-bad flex items-center justify-center mb-3">${ICON.trash('w-5 h-5')}</div>
+                <h3 class="font-display font-bold text-ink text-[17px]">¿Eliminar cupón?</h3>
+                <p class="text-[13.5px] text-muted mt-1">Vas a eliminar <span class="font-mono font-semibold text-body">"${coupon.code}"</span>. No se puede deshacer.</p>
+              </div>
+              <div class="px-5 pb-5 flex gap-2.5">
+                <button data-cancel class="adm-btn adm-btn-ghost flex-1">Cancelar</button>
+                <button data-confirm class="adm-btn flex-1" style="background:#D6453E;color:#fff">Eliminar</button>
+              </div>
+            </div>
+          </div>`
+        root.appendChild(wrap.firstElementChild)
+        const modal = root.querySelector('#coupon-delete-modal')
+        const close = () => modal.remove()
+        modal.querySelector('[data-cancel]').addEventListener('click', close)
+        modal.addEventListener('click', (e) => { if (e.target === modal) close() })
+        modal.querySelector('[data-confirm]').addEventListener('click', async () => {
+          const { error } = await deleteCoupon(coupon.code)
+          if (error) { showToast('Error al eliminar', 'error'); close(); return }
+          showToast('Cupón eliminado', 'success')
+          coupons = coupons.filter(c => c.code !== coupon.code)
+          renderList()
+          bindListEvents()
+          close()
+        })
+      }
 
-      // ── Open create modal ──
+      bindListEvents()
       root.querySelector('#open-create-modal').addEventListener('click', () => openModal())
     }
   }

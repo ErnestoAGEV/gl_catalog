@@ -1,80 +1,32 @@
 import { getCategories, addCategory, updateCategory, deleteCategory, reorderCategories, getState } from '../../store/index.js'
 import { showToast } from '../../utils/toast.js'
-
-function categoryRow(cat, index, total, productCounts) {
-  const count = productCounts[cat.name] || 0
-  return `
-    <div class="flex items-center gap-3 px-4 py-3.5 bg-white rounded-xl border border-gray-100 group hover:border-brand/20 hover:shadow-sm transition-all" data-category-id="${cat.id}" data-category-name="${cat.name}">
-      <!-- Drag Handle & Order -->
-      <div class="flex flex-col items-center gap-0.5 flex-shrink-0">
-        <button type="button" data-move-up="${cat.id}" class="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors disabled:opacity-20 disabled:cursor-not-allowed" ${index === 0 ? 'disabled' : ''} title="Mover arriba">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
-        </button>
-        <span class="text-[10px] font-bold text-gray-300 tabular-nums w-5 text-center">${index + 1}</span>
-        <button type="button" data-move-down="${cat.id}" class="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors disabled:opacity-20 disabled:cursor-not-allowed" ${index === total - 1 ? 'disabled' : ''} title="Mover abajo">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-        </button>
-      </div>
-
-      <!-- Category info -->
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2">
-          <span class="font-semibold text-gray-900 text-sm truncate">${cat.name}</span>
-          ${!cat.active ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-400 font-medium">Oculta</span>' : ''}
-        </div>
-        <span class="text-xs text-gray-400">${count} producto${count !== 1 ? 's' : ''}</span>
-      </div>
-
-      <!-- Actions -->
-      <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-        <!-- Toggle Active -->
-        <label class="relative inline-flex items-center cursor-pointer" title="${cat.active ? 'Ocultar' : 'Mostrar'} categoría">
-          <input type="checkbox" class="sr-only peer" data-toggle-cat="${cat.id}" ${cat.active ? 'checked' : ''}>
-          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></div>
-        </label>
-        <!-- Edit -->
-        <button type="button" data-edit-cat="${cat.id}" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-brand transition-colors" title="Editar nombre">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-        </button>
-        <!-- Delete -->
-        <button type="button" data-delete-cat="${cat.id}" class="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Eliminar">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-        </button>
-      </div>
-    </div>
-  `
-}
+import { ICON } from './adminIcons.js'
 
 export function pageAdminCategories(state) {
   return {
     title: 'Categorías | Admin G&L',
     html: `
-      <div class="animate-fade-in space-y-6">
+      <div class="admin-view-in max-w-2xl mx-auto space-y-6">
         <!-- Header -->
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 class="text-3xl font-manrope font-bold text-gray-900">Categorías</h1>
-            <p class="text-gray-500 mt-1 text-sm">Gestiona las categorías de tu catálogo</p>
+            <p class="eyebrow text-faint">Catálogo</p>
+            <h1 class="font-display font-extrabold text-ink text-[24px] tracking-tight mt-0.5">Categorías</h1>
           </div>
-          <button id="open-add-category" class="w-full sm:w-auto self-start sm:self-auto flex items-center justify-center gap-2 bg-brand text-white px-4 py-2.5 rounded-xl font-medium hover:bg-brand-dark transition-colors shadow-lg shadow-brand/20">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-            Nueva categoría
-          </button>
+          <button id="open-add-category" class="adm-btn adm-btn-primary">${ICON.plus('w-[18px] h-[18px]')} Nueva categoría</button>
         </div>
 
-        <!-- Info Banner -->
-        <div class="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
-          <svg class="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <p class="text-sm text-blue-700">El orden de las categorías aquí determina cómo se muestran los productos en el catálogo público. Usa las flechas para reordenar.</p>
+        <!-- Info banner -->
+        <div class="flex items-start gap-3 bg-brand-tint-2 border border-brand-tint rounded-xl2 px-4 py-3">
+          ${ICON.info('w-5 h-5 text-brand shrink-0 mt-0.5')}
+          <p class="text-[13px] text-brand-ink leading-relaxed">El orden aquí determina cómo se muestran en el catálogo público. Usa las flechas para reordenar.</p>
         </div>
 
-        <!-- Categories List -->
-        <div id="categories-list" class="space-y-2">
-          <div class="py-12 text-center text-gray-400">
-            <div class="animate-pulse flex flex-col items-center gap-2">
-              <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-              <span class="text-sm">Cargando categorías...</span>
-            </div>
+        <!-- List -->
+        <div id="categories-list" class="space-y-2 admin-stagger">
+          <div class="py-12 text-center text-faint animate-pulse">
+            ${ICON.tag('w-8 h-8 mx-auto mb-2 text-line-strong')}
+            <span class="text-[13px] block">Cargando categorías...</span>
           </div>
         </div>
       </div>
@@ -84,41 +36,56 @@ export function pageAdminCategories(state) {
       const listEl = root.querySelector('#categories-list')
       let categories = getCategories()
 
-      // Calculate product counts per category
       const getProductCounts = () => {
         const counts = {}
-        const products = getState().products || []
-        products.forEach(p => {
+        ;(getState().products || []).forEach(p => {
           const type = p.type || ''
           if (type) counts[type] = (counts[type] || 0) + 1
         })
         return counts
       }
 
-      // ── Render ──
       const renderList = () => {
         categories = getCategories()
         const productCounts = getProductCounts()
 
         if (!categories.length) {
           listEl.innerHTML = `
-            <div class="py-16 text-center text-gray-400">
-              <svg class="w-12 h-12 mx-auto mb-4 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-              <p class="font-medium text-gray-500">No hay categorías</p>
-              <p class="text-sm text-gray-400 mt-1">Crea la primera con el botón de arriba</p>
-            </div>
-          `
+            <div class="py-16 text-center">
+              ${ICON.tag('w-12 h-12 mx-auto mb-4 text-line-strong')}
+              <p class="font-semibold text-body">No hay categorías</p>
+              <p class="text-[13px] text-muted mt-1">Crea la primera con el botón de arriba</p>
+            </div>`
           return
         }
 
-        listEl.innerHTML = categories.map((cat, i) =>
-          categoryRow(cat, i, categories.length, productCounts)
-        ).join('')
+        listEl.innerHTML = categories.map((cat, i) => {
+          const count = productCounts[cat.name] || 0
+          return `
+          <div class="group flex items-center gap-3 bg-paper rounded-xl2 border border-line hover:border-line-strong hover:shadow-card px-3.5 py-3 transition-all" data-category-id="${cat.id}" data-category-name="${cat.name}">
+            <div class="flex flex-col items-center gap-0.5 shrink-0">
+              <button type="button" data-move-up="${cat.id}" class="w-6 h-6 rounded-md flex items-center justify-center text-faint hover:text-ink hover:bg-canvas transition-colors disabled:opacity-25 disabled:pointer-events-none" ${i === 0 ? 'disabled' : ''} title="Mover arriba">${ICON.chevUp('w-4 h-4')}</button>
+              <button type="button" data-move-down="${cat.id}" class="w-6 h-6 rounded-md flex items-center justify-center text-faint hover:text-ink hover:bg-canvas transition-colors disabled:opacity-25 disabled:pointer-events-none" ${i === categories.length - 1 ? 'disabled' : ''} title="Mover abajo">${ICON.chevDown('w-4 h-4')}</button>
+            </div>
+            <div class="w-8 h-8 rounded-lg bg-canvas border border-line flex items-center justify-center eyebrow text-muted tnum shrink-0">${String(i + 1).padStart(2, '0')}</div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-[14px] font-semibold text-ink truncate">${cat.name}</span>
+                ${!cat.active ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-line text-muted font-medium">Oculta</span>' : ''}
+              </div>
+              <span class="text-[12px] text-faint">${count} producto${count !== 1 ? 's' : ''}</span>
+            </div>
+            <div class="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 sm:opacity-100 transition-opacity shrink-0">
+              <button type="button" data-toggle-cat="${cat.id}" class="gl-toggle ${cat.active ? 'on' : ''}" title="${cat.active ? 'Ocultar' : 'Mostrar'}"></button>
+              <button type="button" data-edit-cat="${cat.id}" class="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-brand hover:bg-brand-tint transition-colors" title="Editar">${ICON.edit('w-[17px] h-[17px]')}</button>
+              <button type="button" data-delete-cat="${cat.id}" class="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-bad hover:bg-bad-tint transition-colors" title="Eliminar">${ICON.trash('w-[17px] h-[17px]')}</button>
+            </div>
+          </div>`
+        }).join('')
 
         bindEvents()
       }
 
-      // ── Event Bindings ──
       const bindEvents = () => {
         // Move Up
         listEl.querySelectorAll('[data-move-up]').forEach(btn => {
@@ -126,15 +93,11 @@ export function pageAdminCategories(state) {
             const id = btn.dataset.moveUp
             const idx = categories.findIndex(c => c.id === id)
             if (idx <= 0) return
-
             const ids = categories.map(c => c.id)
             ;[ids[idx - 1], ids[idx]] = [ids[idx], ids[idx - 1]]
-
             btn.disabled = true
             const { error } = await reorderCategories(ids)
-            if (error) {
-              showToast('Error al reordenar', 'error')
-            }
+            if (error) showToast('Error al reordenar', 'error')
             renderList()
           })
         })
@@ -145,41 +108,38 @@ export function pageAdminCategories(state) {
             const id = btn.dataset.moveDown
             const idx = categories.findIndex(c => c.id === id)
             if (idx === -1 || idx >= categories.length - 1) return
-
             const ids = categories.map(c => c.id)
             ;[ids[idx], ids[idx + 1]] = [ids[idx + 1], ids[idx]]
-
             btn.disabled = true
             const { error } = await reorderCategories(ids)
-            if (error) {
-              showToast('Error al reordenar', 'error')
-            }
+            if (error) showToast('Error al reordenar', 'error')
             renderList()
           })
         })
 
-        // Toggle Active
+        // Toggle Active (gl-toggle click)
         listEl.querySelectorAll('[data-toggle-cat]').forEach(toggle => {
-          toggle.addEventListener('change', async () => {
+          toggle.addEventListener('click', async () => {
             const id = toggle.dataset.toggleCat
-            const { error } = await updateCategory(id, { active: toggle.checked })
+            const cat = categories.find(c => c.id === id)
+            if (!cat) return
+            const newActive = !cat.active
+            const { error } = await updateCategory(id, { active: newActive })
             if (error) {
               showToast('Error al actualizar', 'error')
-              toggle.checked = !toggle.checked
               return
             }
-            showToast(toggle.checked ? 'Categoría visible' : 'Categoría oculta', 'success')
+            showToast(newActive ? 'Categoría visible' : 'Categoría oculta', 'success')
             renderList()
           })
         })
 
-        // Edit Name
+        // Edit
         listEl.querySelectorAll('[data-edit-cat]').forEach(btn => {
           btn.addEventListener('click', () => {
             const id = btn.dataset.editCat
             const cat = categories.find(c => c.id === id)
-            if (!cat) return
-            openEditModal(cat)
+            if (cat) openNameModal(cat)
           })
         })
 
@@ -189,193 +149,127 @@ export function pageAdminCategories(state) {
             const id = btn.dataset.deleteCat
             const cat = categories.find(c => c.id === id)
             if (!cat) return
-
-            const productCounts = getProductCounts()
-            const count = productCounts[cat.name] || 0
-
+            const count = (getProductCounts()[cat.name]) || 0
             if (count > 0) {
-              showToast(`No se puede eliminar "${cat.name}" porque tiene ${count} producto${count !== 1 ? 's' : ''} asignado${count !== 1 ? 's' : ''}. Reasigna los productos primero.`, 'error', 5000)
+              showToast(`No se puede eliminar "${cat.name}" porque tiene ${count} producto${count !== 1 ? 's' : ''}. Reasigna primero.`, 'error', 5000)
               return
             }
-
-            if (!confirm(`¿Eliminar la categoría "${cat.name}"? Esta acción no se puede deshacer.`)) return
-
-            const { error } = await deleteCategory(id)
-            if (error) {
-              showToast('Error al eliminar', 'error')
-              return
-            }
-            showToast('Categoría eliminada', 'success')
-            renderList()
+            openDeleteConfirm(cat)
           })
         })
       }
 
-      // ── Edit Modal ──
-      const openEditModal = (cat) => {
-        root.querySelector('#cat-edit-modal')?.remove()
-
-        const div = document.createElement('div')
-        div.innerHTML = `
-          <div id="cat-edit-modal" class="fixed inset-0 layer-modal flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in z-50">
-            <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-              <div class="flex items-center justify-between p-5 border-b border-gray-100">
-                <h2 class="text-lg font-bold font-manrope text-gray-900">Editar categoría</h2>
-                <button id="cat-edit-close" class="p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition-colors">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+      // ── Delete Confirm Modal ──
+      const openDeleteConfirm = (cat) => {
+        root.querySelector('#cat-delete-modal')?.remove()
+        const wrap = document.createElement('div')
+        wrap.innerHTML = `
+          <div id="cat-delete-modal" class="fixed inset-0 layer-modal flex items-center justify-center bg-ink/50 backdrop-blur-sm p-4 adm-anim-fade">
+            <div class="w-full max-w-sm bg-paper rounded-3xl border border-line shadow-pop adm-anim-pop overflow-hidden">
+              <div class="p-5">
+                <div class="w-11 h-11 rounded-xl2 bg-bad-tint text-bad flex items-center justify-center mb-3">${ICON.trash('w-5 h-5')}</div>
+                <h3 class="font-display font-bold text-ink text-[17px]">¿Eliminar categoría?</h3>
+                <p class="text-[13.5px] text-muted mt-1">Vas a eliminar <span class="font-semibold text-body">"${cat.name}"</span>. Esta acción no se puede deshacer.</p>
               </div>
-              <form id="cat-edit-form" class="p-5 space-y-4">
-                <div>
-                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nombre *</label>
-                  <input name="name" type="text" required maxlength="50" value="${cat.name}"
-                    class="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none transition-colors"
-                    placeholder="Ej: Camisas" />
-                </div>
-                <p id="cat-edit-error" class="hidden text-sm text-red-500 bg-red-50 rounded-xl px-4 py-2"></p>
-                <div class="flex gap-3 pt-1">
-                  <button type="button" id="cat-edit-cancel" class="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">Cancelar</button>
-                  <button type="submit" id="cat-edit-submit" class="flex-1 px-4 py-3 rounded-xl bg-brand text-white text-sm font-semibold hover:bg-brand-dark transition-colors">Guardar</button>
-                </div>
-              </form>
+              <div class="px-5 pb-5 flex gap-2.5">
+                <button data-cancel class="adm-btn adm-btn-ghost flex-1">Cancelar</button>
+                <button data-confirm class="adm-btn flex-1" style="background:#D6453E;color:#fff">Eliminar</button>
+              </div>
             </div>
-          </div>
-        `
-        root.appendChild(div.firstElementChild)
-
-        const modal = root.querySelector('#cat-edit-modal')
-        const form = modal.querySelector('#cat-edit-form')
-        const errorEl = modal.querySelector('#cat-edit-error')
-        const closeModal = () => modal.remove()
-
-        modal.querySelector('#cat-edit-close').addEventListener('click', closeModal)
-        modal.querySelector('#cat-edit-cancel').addEventListener('click', closeModal)
-        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal() })
-
-        form.addEventListener('submit', async (e) => {
-          e.preventDefault()
-          errorEl.classList.add('hidden')
-
-          const newName = form.querySelector('input[name="name"]').value.trim()
-          if (!newName) {
-            errorEl.textContent = 'El nombre es requerido.'
-            errorEl.classList.remove('hidden')
-            return
-          }
-
-          if (newName === cat.name) {
-            closeModal()
-            return
-          }
-
-          // Check for duplicates
-          if (categories.some(c => c.name.toLowerCase() === newName.toLowerCase() && c.id !== cat.id)) {
-            errorEl.textContent = 'Ya existe una categoría con ese nombre.'
-            errorEl.classList.remove('hidden')
-            return
-          }
-
-          const submitBtn = modal.querySelector('#cat-edit-submit')
-          submitBtn.disabled = true
-          submitBtn.textContent = 'Guardando...'
-
-          const { error } = await updateCategory(cat.id, { name: newName })
-          if (error) {
-            errorEl.textContent = 'Error al actualizar. Inténtalo de nuevo.'
-            errorEl.classList.remove('hidden')
-            submitBtn.disabled = false
-            submitBtn.textContent = 'Guardar'
-            return
-          }
-
-          showToast('Categoría actualizada', 'success')
-          closeModal()
+          </div>`
+        root.appendChild(wrap.firstElementChild)
+        const modal = root.querySelector('#cat-delete-modal')
+        const close = () => modal.remove()
+        modal.querySelector('[data-cancel]').addEventListener('click', close)
+        modal.addEventListener('click', (e) => { if (e.target === modal) close() })
+        modal.querySelector('[data-confirm]').addEventListener('click', async () => {
+          const { error } = await deleteCategory(cat.id)
+          if (error) { showToast('Error al eliminar', 'error'); close(); return }
+          showToast('Categoría eliminada', 'success')
+          close()
           renderList()
         })
       }
 
-      // ── Add New Category ──
-      const openAddModal = () => {
-        root.querySelector('#cat-add-modal')?.remove()
+      // ── Name Modal (add/edit) ──
+      const openNameModal = (cat = null) => {
+        const isEdit = !!cat
+        const modalId = isEdit ? 'cat-edit-modal' : 'cat-add-modal'
+        root.querySelector(`#${modalId}`)?.remove()
 
-        const div = document.createElement('div')
-        div.innerHTML = `
-          <div id="cat-add-modal" class="fixed inset-0 layer-modal flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in z-50">
-            <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-              <div class="flex items-center justify-between p-5 border-b border-gray-100">
-                <h2 class="text-lg font-bold font-manrope text-gray-900">Nueva categoría</h2>
-                <button id="cat-add-close" class="p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition-colors">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+        const wrap = document.createElement('div')
+        wrap.innerHTML = `
+          <div id="${modalId}" class="fixed inset-0 layer-modal flex items-center justify-center bg-ink/50 backdrop-blur-sm p-4 adm-anim-fade">
+            <div class="w-full max-w-sm bg-paper rounded-3xl border border-line shadow-pop adm-anim-pop overflow-hidden">
+              <div class="flex items-center justify-between px-5 pt-5 pb-3">
+                <h2 class="font-display font-bold text-ink text-[17px]">${isEdit ? 'Editar categoría' : 'Nueva categoría'}</h2>
+                <button data-close class="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-ink hover:bg-canvas transition-colors">${ICON.close('w-[18px] h-[18px]')}</button>
               </div>
-              <form id="cat-add-form" class="p-5 space-y-4">
+              <form data-form class="px-5 pb-5 space-y-4">
                 <div>
-                  <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nombre *</label>
-                  <input name="name" type="text" required maxlength="50" autofocus
-                    class="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none transition-colors"
-                    placeholder="Ej: Zapatos" />
+                  <label class="adm-lbl">Nombre *</label>
+                  <input name="name" type="text" required maxlength="50" value="${isEdit ? cat.name : ''}" class="adm-fld" placeholder="Ej: Camisas" autofocus />
                 </div>
-                <p id="cat-add-error" class="hidden text-sm text-red-500 bg-red-50 rounded-xl px-4 py-2"></p>
-                <div class="flex gap-3 pt-1">
-                  <button type="button" id="cat-add-cancel" class="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">Cancelar</button>
-                  <button type="submit" id="cat-add-submit" class="flex-1 px-4 py-3 rounded-xl bg-brand text-white text-sm font-semibold hover:bg-brand-dark transition-colors">Crear</button>
+                <p data-error class="hidden text-[13px] text-bad bg-bad-tint rounded-xl2 px-4 py-2"></p>
+                <div class="flex gap-2.5 pt-1">
+                  <button type="button" data-cancel class="adm-btn adm-btn-ghost flex-1">Cancelar</button>
+                  <button type="submit" data-submit class="adm-btn adm-btn-primary flex-1">${isEdit ? 'Guardar' : 'Crear'}</button>
                 </div>
               </form>
             </div>
-          </div>
-        `
-        root.appendChild(div.firstElementChild)
+          </div>`
+        root.appendChild(wrap.firstElementChild)
 
-        const modal = root.querySelector('#cat-add-modal')
-        const form = modal.querySelector('#cat-add-form')
-        const errorEl = modal.querySelector('#cat-add-error')
-        const closeModal = () => modal.remove()
+        const modal = root.querySelector(`#${modalId}`)
+        const form = modal.querySelector('[data-form]')
+        const errorEl = modal.querySelector('[data-error]')
+        const submitBtn = modal.querySelector('[data-submit]')
+        const close = () => modal.remove()
 
-        modal.querySelector('#cat-add-close').addEventListener('click', closeModal)
-        modal.querySelector('#cat-add-cancel').addEventListener('click', closeModal)
-        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal() })
+        modal.querySelector('[data-close]').addEventListener('click', close)
+        modal.querySelector('[data-cancel]').addEventListener('click', close)
+        modal.addEventListener('click', (e) => { if (e.target === modal) close() })
 
         form.addEventListener('submit', async (e) => {
           e.preventDefault()
           errorEl.classList.add('hidden')
-
           const name = form.querySelector('input[name="name"]').value.trim()
-          if (!name) {
-            errorEl.textContent = 'El nombre es requerido.'
-            errorEl.classList.remove('hidden')
-            return
-          }
 
-          // Check for duplicates
-          if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+          if (!name) { errorEl.textContent = 'El nombre es requerido.'; errorEl.classList.remove('hidden'); return }
+          if (isEdit && name === cat.name) { close(); return }
+          if (categories.some(c => c.name.toLowerCase() === name.toLowerCase() && (!isEdit || c.id !== cat.id))) {
             errorEl.textContent = 'Ya existe una categoría con ese nombre.'
             errorEl.classList.remove('hidden')
             return
           }
 
-          const submitBtn = modal.querySelector('#cat-add-submit')
           submitBtn.disabled = true
-          submitBtn.textContent = 'Creando...'
+          submitBtn.textContent = isEdit ? 'Guardando...' : 'Creando...'
 
-          const { error } = await addCategory(name)
-          if (error) {
-            const msg = error?.message || ''
-            errorEl.textContent = msg.includes('duplicate') || msg.includes('unique') ? 'Ya existe una categoría con ese nombre.' : 'Error al crear. Inténtalo de nuevo.'
+          let result
+          if (isEdit) {
+            result = await updateCategory(cat.id, { name })
+          } else {
+            result = await addCategory(name)
+          }
+
+          if (result.error) {
+            const msg = (result.error?.message || '').includes('duplicate') ? 'Ya existe una categoría con ese nombre.' : 'Error. Inténtalo de nuevo.'
+            errorEl.textContent = msg
             errorEl.classList.remove('hidden')
             submitBtn.disabled = false
-            submitBtn.textContent = 'Crear'
+            submitBtn.textContent = isEdit ? 'Guardar' : 'Crear'
             return
           }
 
-          showToast(`Categoría "${name}" creada`, 'success')
-          closeModal()
+          showToast(isEdit ? 'Categoría actualizada' : `Categoría "${name}" creada`, 'success')
+          close()
           renderList()
         })
       }
 
-      root.querySelector('#open-add-category').addEventListener('click', openAddModal)
+      root.querySelector('#open-add-category').addEventListener('click', () => openNameModal())
 
-      // Initial render
       renderList()
     },
   }

@@ -144,88 +144,146 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
   `, theme)
 }
 
-export function layoutAdmin({ contentHtml, state }) {
+export function layoutAdmin({ title, contentHtml, state }) {
   const authed = Boolean(state?.isAdminAuthed)
   const currentPath = window.location.pathname || ''
 
   if (!authed) {
-    return `<div class="min-h-dvh flex items-center justify-center bg-[#F8F9FA] text-[#191C1D]">
-      ${contentHtml}
-    </div>`
+    return `<div class="min-h-dvh bg-canvas text-body">${contentHtml}</div>`
   }
 
-  const links = [
-    { path: '/admin/dashboard', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/>', label: 'Dashboard' },
-    { path: '/admin/orders', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>', label: 'Órdenes' },
-    { path: '/admin/products', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>', label: 'Productos' },
-    { path: '/admin/categories', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>', label: 'Categorías' },
-    { path: '/admin/coupons', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>', label: 'Cupones' },
-    { path: '/admin/newsletter', icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>', label: 'Newsletter' },
+  const NAV = [
+    { path: '/admin/dashboard', icon: 'dashboard', label: 'Dashboard', group: 'Panel' },
+    { path: '/admin/orders', icon: 'orders', label: 'Órdenes', group: 'Operación' },
+    { path: '/admin/products', icon: 'products', label: 'Productos', group: 'Operación' },
+    { path: '/admin/categories', icon: 'tag', label: 'Categorías', group: 'Catálogo' },
+    { path: '/admin/coupons', icon: 'coupon', label: 'Cupones', group: 'Catálogo' },
+    { path: '/admin/newsletter', icon: 'mail', label: 'Newsletter', group: 'Clientes' },
   ]
 
-  const navHtml = links.map(l => {
-    const active = currentPath === l.path || (currentPath === '/admin' && l.path === '/admin/dashboard')
-    return `
-      <a href="${l.path}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${active ? 'bg-brand/10 text-brand font-semibold relative before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-8 before:bg-brand before:rounded-r-md' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">${l.icon}</svg>
-        ${l.label}
-      </a>
-    `
-  }).join('')
+  const TITLES = {
+    '/admin/dashboard': 'Dashboard',
+    '/admin/orders': 'Órdenes',
+    '/admin/products': 'Productos',
+    '/admin/categories': 'Categorías',
+    '/admin/coupons': 'Cupones',
+    '/admin/newsletter': 'Newsletter',
+  }
+
+  const I = (name, cls = 'w-[18px] h-[18px]') => {
+    const paths = {
+      dashboard: '<path d="M3 13h8V3H3v10Zm10 8h8V3h-8v18ZM3 21h8v-6H3v6Z"/>',
+      orders: '<path d="M6 2 4 6v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6l-2-4H6Z"/><path d="M4 6h16"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+      products: '<path d="M12.89 1.45 21 6v12l-8.11 4.55a2 2 0 0 1-1.78 0L3 18V6l8.11-4.55a2 2 0 0 1 1.78 0Z"/><path d="m3.3 6.5 8.7 5 8.7-5"/><path d="M12 22V11.5"/>',
+      tag: '<path d="M3 7v5.2a2 2 0 0 0 .6 1.4l7.8 7.8a2 2 0 0 0 2.8 0l5.2-5.2a2 2 0 0 0 0-2.8L12.4 5.6A2 2 0 0 0 11 5H6a3 3 0 0 0-3 2Z"/><circle cx="7.5" cy="9.5" r="1.4"/>',
+      coupon: '<path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V8Z"/><path d="M14 6v2m0 3v2m0 3v2" stroke-dasharray="0.1 3.6"/>',
+      mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 7.9 5.3a2 2 0 0 0 2.2 0L21 7"/>',
+      store: '<path d="M3 9 4.5 4h15L21 9M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9M4 9h16M9 20v-6h6v6"/>',
+      logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
+      menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+      close: '<path d="M18 6 6 18M6 6l12 12"/>',
+      bell: '<path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
+      calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/>',
+    }
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="${cls}">${paths[name] || ''}</svg>`
+  }
+
+  // Build grouped nav
+  const groups = []
+  NAV.forEach(n => {
+    let g = groups.find(x => x.name === n.group)
+    if (!g) { g = { name: n.group, items: [] }; groups.push(g) }
+    g.items.push(n)
+  })
+
+  const navHtml = groups.map(g => `
+    <div class="px-3 mb-1 mt-5 first:mt-0">
+      <p class="eyebrow text-white/35 px-3 mb-2">${g.name}</p>
+      <div class="space-y-0.5">
+        ${g.items.map(n => {
+          const on = currentPath === n.path || (currentPath === '/admin' && n.path === '/admin/dashboard')
+          return `<a href="${n.path}" class="admin-nav-link ${on ? 'active' : ''} group flex items-center gap-3 px-3 h-10 rounded-[11px] text-[14px] ${on ? 'font-semibold' : 'font-medium'} transition-colors ${on ? 'bg-white/10 text-white' : 'text-white/55 hover:text-white hover:bg-white/[0.06]'}">
+            <span class="admin-rail"></span>
+            <span class="${on ? 'text-white' : 'text-white/45 group-hover:text-white/80'} transition-colors">${I(n.icon)}</span>
+            ${n.label}
+          </a>`
+        }).join('')}
+      </div>
+    </div>`).join('')
+
+  const sidebarContent = `
+    <div class="flex flex-col h-full">
+      <div class="px-6 pt-6 pb-5">
+        <a href="/admin/dashboard" class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-[10px] bg-white flex items-center justify-center">
+            <span class="font-display font-extrabold text-ink text-[15px] tracking-tight">G&L</span>
+          </div>
+          <div class="leading-tight">
+            <p class="font-display font-bold text-white text-[14.5px] tracking-tight whitespace-nowrap">G&L Boutique</p>
+            <p class="eyebrow mt-1 whitespace-nowrap" style="color:#8CA2DC">Panel admin</p>
+          </div>
+        </a>
+      </div>
+      <nav class="flex-1 overflow-y-auto adm-scroll-thin pb-4">${navHtml}</nav>
+      <div class="px-4 pb-5 pt-3 mt-auto border-t border-white/[0.07]">
+        <a href="/" class="flex items-center gap-3 px-3 h-10 rounded-[11px] text-[14px] font-medium text-white/55 hover:text-white hover:bg-white/[0.06] transition-colors">
+          <span class="text-white/45">${I('store')}</span> Ver tienda
+        </a>
+        <div class="flex items-center gap-3 px-3 mt-3 pt-3 border-t border-white/[0.07]">
+          <div class="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-white text-[12px] font-bold">GL</div>
+          <div class="min-w-0 flex-1 leading-tight">
+            <p class="text-[13px] font-semibold text-white truncate">Gerencia</p>
+            <p class="text-[11px] text-white/40 truncate">admin@glboutique.mx</p>
+          </div>
+          <button id="admin-logout" title="Cerrar sesión" class="text-white/40 hover:text-white p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors">${I('logout', 'w-[17px] h-[17px]')}</button>
+        </div>
+      </div>
+    </div>`
+
+  const pageTitle = TITLES[currentPath] || TITLES['/admin/dashboard'] || title || 'Dashboard'
+  const today = new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })
 
   return `
-    <div class="min-h-screen bg-[#F8F9FA] text-[#191C1D] flex flex-col md:flex-row font-inter">
+    <div class="flex min-h-screen">
+      <!-- Sidebar desktop (fixed) -->
+      <aside class="hidden lg:flex w-[264px] shrink-0 bg-ink flex-col fixed inset-y-0 left-0 z-30">${sidebarContent}</aside>
 
-      <!-- Mobile Header -->
-      <header class="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-100 sticky top-0 layer-header">
-        <a href="/" class="flex items-center gap-2 group">
-          <span class="text-xl font-bold font-manrope">G&L</span>
-          <span class="text-[10px] tracking-wider uppercase px-2 py-0.5 rounded bg-brand text-white font-bold">Admin</span>
-        </a>
-        <button id="admin-mobile-menu" class="p-2 text-gray-500 hover:text-gray-900">
-          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-        </button>
-      </header>
+      <!-- Sidebar mobile (drawer) -->
+      <aside id="admin-sidebar" class="lg:hidden fixed inset-y-0 left-0 layer-admin-sidebar w-[272px] bg-ink flex flex-col transition-transform -translate-x-full z-50">${sidebarContent}</aside>
+      <div id="admin-sidebar-overlay" class="fixed inset-0 bg-ink/50 backdrop-blur-sm layer-admin-overlay hidden z-40"></div>
 
-      <!-- Sidebar Desktop / Drawer Mobile -->
-      <aside id="admin-sidebar" class="fixed inset-y-0 left-0 layer-admin-sidebar w-64 bg-white border-r border-gray-100 transition-transform -translate-x-full md:translate-x-0 md:static md:flex md:flex-col">
-        <div class="p-6 flex items-center justify-between">
-          <a href="/" class="flex items-center gap-2 group">
-             <span class="text-2xl font-bold font-manrope">G&L</span>
-             <span class="text-[10px] tracking-wider uppercase px-2 py-0.5 rounded bg-brand text-white font-bold">Admin</span>
-          </a>
-          <button id="close-admin-sidebar" class="md:hidden p-2 text-gray-500">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
-        </div>
-
-        <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-          <div class="mb-6 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Menú Principal</div>
-          ${navHtml}
-        </nav>
-
-        <div class="p-4 border-t border-gray-100">
-          <a href="/" class="flex items-center gap-3 w-full px-4 py-3 mb-2 text-sm font-medium text-gray-500 hover:text-brand hover:bg-brand/5 rounded-xl transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-            Ver Tienda
-          </a>
-          <button id="admin-logout" class="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-            Cerrar Sesión
-          </button>
-        </div>
-      </aside>
-
-      <!-- Overlay Mobile -->
-      <div id="admin-sidebar-overlay" class="fixed inset-0 bg-black/50 layer-admin-overlay hidden backdrop-blur-sm animate-fade-in"></div>
-
-      <!-- Main Content -->
-      <main class="flex-1 min-h-[calc(100vh-64px)] md:min-h-screen relative overflow-x-hidden">
-        <div class="max-w-7xl mx-auto p-4 md:p-8 lg:p-12">
+      <!-- Main -->
+      <div class="flex-1 lg:ml-[264px] min-w-0 flex flex-col">
+        <!-- Topbar -->
+        <header class="sticky top-0 z-20 backdrop-blur-md border-b border-line" style="background:rgba(245,246,248,0.85)">
+          <div class="h-16 px-4 md:px-8 flex items-center gap-4">
+            <button id="admin-mobile-menu" class="lg:hidden -ml-1 p-2 rounded-lg text-body hover:bg-line">${I('menu', 'w-5 h-5')}</button>
+            <div class="min-w-0">
+              <h1 class="font-display font-bold text-ink text-[17px] md:text-[19px] tracking-tight leading-none truncate">${pageTitle}</h1>
+            </div>
+            <div class="flex-1"></div>
+            <div class="hidden md:flex items-center gap-2 text-muted text-[12.5px] mr-1">
+              ${I('calendar', 'w-4 h-4 text-faint')}<span class="capitalize">${today}</span>
+            </div>
+            <div class="relative">
+              <button id="admin-bell" class="relative w-9 h-9 rounded-[10px] border border-line bg-paper flex items-center justify-center text-muted hover:text-ink hover:border-line-strong transition-colors">
+                ${I('bell', 'w-[18px] h-[18px]')}
+                <span id="admin-bell-badge" class="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-brand ring-2 ring-paper hidden"></span>
+              </button>
+              <div id="admin-bell-panel" class="hidden absolute right-0 top-[calc(100%+8px)] w-[340px] max-h-[420px] bg-paper rounded-2xl border border-line shadow-pop overflow-hidden z-50">
+                <div class="flex items-center justify-between px-4 py-3 border-b border-line">
+                  <h3 class="text-[14px] font-bold text-ink">Notificaciones</h3>
+                  <button id="admin-bell-read-all" class="text-[12px] font-semibold text-brand hover:text-brand/80 transition-colors">Marcar leídas</button>
+                </div>
+                <div id="admin-bell-list" class="overflow-y-auto adm-scroll-thin max-h-[340px]"></div>
+              </div>
+            </div>
+          </div>
+        </header>
+        <main class="flex-1 px-4 md:px-8 py-6 md:py-8 max-w-[1320px] w-full mx-auto">
           ${contentHtml}
-        </div>
-      </main>
-
+        </main>
+      </div>
     </div>
   `
 }

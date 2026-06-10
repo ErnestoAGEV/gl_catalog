@@ -2,736 +2,544 @@ import { getAdminOrders, updateAdminOrderStatus } from '../../store/index.js'
 import { formatMoney } from '../../utils/format.js'
 import { supabase } from '../../core/supabase.js'
 import { showToast } from '../../utils/toast.js'
+import { ICON, statusPill, statCard } from './adminIcons.js'
 
 function getPaymentMeta(paymentMethod) {
   const raw = (paymentMethod || '').toString().trim()
   const normalized = raw.toLowerCase()
+  if (!normalized) return { label: 'Sin definir', cls: 'bg-line text-muted', icon: 'card' }
+  if (normalized.includes('transfer')) return { label: raw, cls: 'bg-brand-tint text-brand', icon: 'cash' }
+  if (normalized.includes('efectivo') || normalized.includes('recoger')) return { label: raw, cls: 'bg-ok-tint text-ok', icon: 'cash' }
+  if (normalized === 'whatsapp') return { label: 'WhatsApp', cls: 'bg-ok-tint text-ok', icon: 'whatsapp' }
+  return { label: raw, cls: 'bg-brand-tint text-brand-ink', icon: 'card' }
+}
 
-  if (!normalized) {
-    return {
-      label: 'Sin definir',
-      className: 'bg-gray-100 text-gray-700',
-    }
-  }
+const STATUS_META = {
+  completado: { label: 'Completado', cls: 'text-ok bg-ok-tint', dot: '#1E9E6A' },
+  pendientedepago: { label: 'Pendiente', cls: 'text-warn bg-warn-tint', dot: '#C9821A' },
+  cancelado: { label: 'Cancelado', cls: 'text-bad bg-bad-tint', dot: '#D6453E' },
+}
+const STATUS_OPTS = [
+  { v: 'completado', label: 'Completado' },
+  { v: 'pendientedepago', label: 'Pendiente de pago' },
+  { v: 'cancelado', label: 'Cancelado' },
+]
 
-  if (normalized.includes('transfer')) {
-    return {
-      label: raw,
-      className: 'bg-blue-100 text-blue-800',
-    }
-  }
+function statusDropdownHtml(order) {
+  const s = (order.status || '').toLowerCase()
+  const m = STATUS_META[s] || { label: order.status || '—', cls: 'text-muted bg-line', dot: '#A4A8B2' }
+  return `
+    <div class="relative inline-block" data-status-wrap data-id="${order.id}">
+      <button type="button" data-status-btn class="inline-flex items-center gap-1.5 pl-2.5 pr-2 h-[30px] rounded-full text-[12px] font-semibold ${m.cls} hover:brightness-95 transition-colors cursor-pointer">
+        <span class="w-1.5 h-1.5 rounded-full" style="background:${m.dot}"></span>${m.label}
+        ${ICON.chevDown('w-3.5 h-3.5 opacity-60')}
+      </button>
+      <div data-status-menu class="hidden absolute right-0 top-[34px] z-30 w-[180px] bg-paper rounded-xl2 border border-line shadow-pop p-1 adm-anim-pop">
+        ${STATUS_OPTS.map(opt => `<button type="button" data-set="${opt.v}" class="w-full flex items-center gap-2 px-2.5 h-9 rounded-lg text-[13px] font-medium text-body hover:bg-canvas transition-colors ${opt.v === s ? 'bg-canvas' : ''}">
+          <span class="w-1.5 h-1.5 rounded-full" style="background:${(STATUS_META[opt.v] || {}).dot || '#A4A8B2'}"></span>${opt.label}
+          ${opt.v === s ? `<span class="ml-auto text-brand">${ICON.check('w-4 h-4')}</span>` : ''}
+        </button>`).join('')}
+      </div>
+    </div>`
+}
 
-  if (normalized.includes('efectivo') || normalized.includes('recoger')) {
-    return {
-      label: raw,
-      className: 'bg-emerald-100 text-emerald-800',
-    }
-  }
-
-  if (normalized === 'whatsapp') {
-    return {
-      label: 'WhatsApp',
-      className: 'bg-green-100 text-green-800',
-    }
-  }
-
-  return {
-    label: raw,
-    className: 'bg-indigo-100 text-indigo-800',
-  }
+function initials(name) {
+  return (name || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 }
 
 function notifyNewOrder(order) {
   const customer = order?.customer_name || 'Cliente'
   const total = Number(order?.total || 0)
-
   playNewOrderSound()
   showToast(`Nuevo pedido de ${customer} (${formatMoney(total)})`, 'success', 6000)
-
   if (typeof window === 'undefined' || typeof Notification === 'undefined') return
   if (Notification.permission !== 'granted') return
-
   try {
-    const notification = new Notification('Nuevo pedido recibido', {
-      body: `${customer} - ${formatMoney(total)}`,
-    })
-
-    notification.onclick = () => {
-      window.focus()
-    }
-  } catch (err) {
-    if (import.meta.env.DEV) console.warn('Browser notification failed', err)
-  }
+    const notification = new Notification('Nuevo pedido recibido', { body: `${customer} - ${formatMoney(total)}` })
+    notification.onclick = () => { window.focus() }
+  } catch (err) { if (import.meta.env.DEV) console.warn('Browser notification failed', err) }
 }
 
 function playNewOrderSound() {
   if (typeof window === 'undefined') return
-
   const AudioCtx = window.AudioContext || window.webkitAudioContext
   if (!AudioCtx) return
-
   try {
     const ctx = new AudioCtx()
     const now = ctx.currentTime
-
     const createBeep = (startAt, frequency, duration, gainValue) => {
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
-
       osc.type = 'sine'
       osc.frequency.setValueAtTime(frequency, startAt)
-
       gain.gain.setValueAtTime(0.0001, startAt)
       gain.gain.exponentialRampToValueAtTime(gainValue, startAt + 0.02)
       gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration)
-
       osc.connect(gain)
       gain.connect(ctx.destination)
-
       osc.start(startAt)
       osc.stop(startAt + duration)
     }
-
     createBeep(now, 880, 0.16, 0.12)
     createBeep(now + 0.2, 1046.5, 0.2, 0.1)
+    window.setTimeout(() => { ctx.close().catch(() => {}) }, 800)
+  } catch (err) { if (import.meta.env.DEV) console.warn('Audio notification failed', err) }
+}
 
-    window.setTimeout(() => {
-      ctx.close().catch(() => {})
-    }, 800)
-  } catch (err) {
-    if (import.meta.env.DEV) console.warn('Audio notification failed', err)
-  }
+function relTime(dateStr) {
+  const d = new Date(dateStr)
+  if (Number.isNaN(d.getTime())) return 'Sin fecha'
+  return `${d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+}
+
+function avatarColor(name) {
+  const colors = ['#214FC7', '#1E9E6A', '#C9821A', '#D6453E', '#7C3AED', '#0891B2']
+  let hash = 0
+  for (let i = 0; i < (name || '').length; i++) hash = ((hash << 5) - hash + name.charCodeAt(i)) | 0
+  return colors[Math.abs(hash) % colors.length]
 }
 
 export function pageAdminOrders(state) {
-  const html = `
-    <div class="animate-fade-in space-y-6">
-      <div class="flex items-center justify-between mb-8">
-        <div>
-          <h1 class="text-3xl font-manrope font-bold text-gray-900 dark:text-white">Órdenes</h1>
-          <p class="text-gray-500 mt-1">Gestiona los pedidos de los clientes</p>
+  return {
+    title: 'Órdenes | G&L Admin',
+    html: `
+      <div class="admin-view-in space-y-6">
+        <!-- KPIs -->
+        <div id="orders-kpis" class="grid grid-cols-2 lg:grid-cols-4 gap-4 admin-stagger">
+          ${statCard({ eyebrow: 'Total pedidos', value: '—', icon: 'orders', foot: 'Cargando...' })}
+          ${statCard({ eyebrow: 'Ingresos', value: '—', icon: 'cash', accent: '#1E9E6A' })}
+          ${statCard({ eyebrow: 'Pendientes', value: '—', icon: 'clock', accent: '#C9821A' })}
+          ${statCard({ eyebrow: 'Completados', value: '—', icon: 'check', accent: '#1E9E6A' })}
+        </div>
+
+        <!-- Toolbar + table -->
+        <div class="bg-paper rounded-3xl border border-line shadow-card">
+          <div class="p-4 flex flex-col sm:flex-row sm:items-center gap-3 border-b border-line">
+            <div class="relative flex-1 min-w-0">
+              <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-faint">${ICON.search('w-[18px] h-[18px]')}</span>
+              <input id="orders-search" placeholder="Buscar por cliente o pedido..." class="adm-fld pl-10" />
+            </div>
+            <div id="orders-filters" class="flex items-center gap-2 overflow-x-auto adm-scroll-thin -mx-1 px-1 pb-0.5 lg:pb-0">
+              <button data-filter="all" class="shrink-0 inline-flex items-center gap-1.5 px-3 h-9 rounded-[10px] text-[13px] font-semibold border transition-colors bg-ink text-white border-ink">Todos</button>
+              <button data-filter="pendientedepago" class="shrink-0 inline-flex items-center gap-1.5 px-3 h-9 rounded-[10px] text-[13px] font-semibold border transition-colors bg-paper text-body border-line hover:border-line-strong">Pendientes</button>
+              <button data-filter="completado" class="shrink-0 inline-flex items-center gap-1.5 px-3 h-9 rounded-[10px] text-[13px] font-semibold border transition-colors bg-paper text-body border-line hover:border-line-strong">Completados</button>
+              <button data-filter="cancelado" class="shrink-0 inline-flex items-center gap-1.5 px-3 h-9 rounded-[10px] text-[13px] font-semibold border transition-colors bg-paper text-body border-line hover:border-line-strong">Cancelados</button>
+            </div>
+          </div>
+
+          <!-- Desktop table -->
+          <div class="hidden md:block">
+            <table class="w-full">
+              <thead>
+                <tr class="text-left">
+                  <th class="eyebrow text-faint font-medium px-5 py-3">Pedido</th>
+                  <th class="eyebrow text-faint font-medium px-5 py-3">Cliente</th>
+                  <th class="eyebrow text-faint font-medium px-5 py-3">Fecha</th>
+                  <th class="eyebrow text-faint font-medium px-5 py-3 text-right">Total</th>
+                  <th class="eyebrow text-faint font-medium px-5 py-3">Estado</th>
+                  <th class="eyebrow text-faint font-medium px-5 py-3 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="orders-tbody"></tbody>
+            </table>
+          </div>
+
+          <!-- Mobile cards -->
+          <div id="orders-mobile" class="md:hidden divide-y divide-line"></div>
+
+          <!-- Footer -->
+          <div id="orders-footer" class="px-5 py-3 border-t border-line text-[12.5px] text-muted tnum"></div>
         </div>
       </div>
-      
-      <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-        
-        <!-- Desktop Table View -->
-        <div class="hidden md:block">
-          <table class="w-full text-left text-sm text-gray-600 dark:text-gray-400">
-            <thead class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 text-xs uppercase tracking-wider">
-              <tr>
-                <th scope="col" class="px-6 py-4 font-semibold">Pedido</th>
-                <th scope="col" class="px-6 py-4 font-semibold">Cliente</th>
-                <th scope="col" class="px-6 py-4 font-semibold">Fecha</th>
-                <th scope="col" class="px-6 py-4 font-semibold text-center">Total</th>
-                <th scope="col" class="px-6 py-4 font-semibold text-center">Estado</th>
-                <th scope="col" class="px-6 py-4 font-semibold text-center">Detalle</th>
-              </tr>
-            </thead>
-            <tbody id="orders-tbody" class="divide-y divide-gray-100 dark:divide-gray-800">
-               <tr>
-                <td colspan="6" class="px-6 py-12 text-center text-gray-400">
-                    <div class="animate-pulse flex flex-col items-center">
-                       <svg class="w-8 h-8 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                       <span>Cargando órdenes...</span>
-                    </div>
-                 </td>
-               </tr>
-            </tbody>
-          </table>
-        </div>
+    `,
 
-        <!-- Mobile Card View -->
-        <div id="orders-mobile" class="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
-          <!-- Cards rendered here -->
-        </div>
-
-      </div>
-    </div>
-  `
-
-  return { 
-    title: 'Órdenes | G&L Admin', 
-    html,
     onMount(root) {
       const tbody = root.querySelector('#orders-tbody')
       const mobileContainer = root.querySelector('#orders-mobile')
+      const kpis = root.querySelector('#orders-kpis')
+      const footerEl = root.querySelector('#orders-footer')
+      const searchInput = root.querySelector('#orders-search')
+      const filtersContainer = root.querySelector('#orders-filters')
+
       if (!tbody || !mobileContainer) return
 
       const globalNotifierActive = typeof window !== 'undefined' && window.__glGlobalOrderNotifierActive === true
       let knownOrderIds = new Set()
       const notifiedOrderIds = new Set()
       let ordersById = new Map()
+      let allOrders = []
       let pollingTimer = null
       let channel = null
       let isUnmounted = false
       let isCheckingOrders = false
+      let searchTerm = ''
+      let statusFilter = 'all'
 
-      const ensureOrderDetailsModal = () => {
-        let modal = document.getElementById('order-details-modal')
-        if (modal) return modal
+      const FILTER_CLS_ACTIVE = 'shrink-0 inline-flex items-center gap-1.5 px-3 h-9 rounded-[10px] text-[13px] font-semibold border transition-colors bg-ink text-white border-ink'
+      const FILTER_CLS_IDLE = 'shrink-0 inline-flex items-center gap-1.5 px-3 h-9 rounded-[10px] text-[13px] font-semibold border transition-colors bg-paper text-body border-line hover:border-line-strong'
+      const FILTER_LABELS = { all: 'Todos', pendientedepago: 'Pendientes', completado: 'Completados', cancelado: 'Cancelados' }
 
-        modal = document.createElement('div')
-        modal.id = 'order-details-modal'
-        modal.className = 'fixed inset-0 layer-modal hidden items-center justify-center bg-black/60 p-4'
-        modal.innerHTML = `
-          <div class="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-2xl">
-            <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between sticky top-0 bg-white dark:bg-gray-800">
-              <h3 class="text-base font-bold text-gray-900 dark:text-white">Detalle de orden</h3>
-              <button type="button" id="order-details-close" class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Cerrar">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-              </button>
+      // ── Detail Drawer ──
+      const ensureDetailDrawer = () => {
+        let drawer = document.getElementById('order-detail-drawer')
+        if (drawer) return drawer
+        drawer = document.createElement('div')
+        drawer.id = 'order-detail-drawer'
+        drawer.className = 'fixed inset-0 layer-modal hidden'
+        drawer.innerHTML = `
+          <div data-backdrop class="absolute inset-0 bg-ink/50 backdrop-blur-sm adm-anim-fade"></div>
+          <aside class="absolute top-0 right-0 h-full w-full max-w-lg bg-paper border-l border-line shadow-pop overflow-y-auto adm-scroll-thin adm-anim-drawer">
+            <div class="sticky top-0 bg-paper border-b border-line px-5 py-4 flex items-center justify-between z-10">
+              <h3 class="font-display font-bold text-ink text-[17px]">Detalle de orden</h3>
+              <button data-close class="w-9 h-9 rounded-[10px] border border-line bg-paper flex items-center justify-center text-muted hover:text-ink transition-colors">${ICON.close('w-[18px] h-[18px]')}</button>
             </div>
-            <div id="order-details-content" class="p-5"></div>
-          </div>
-        `
+            <div id="order-detail-content" class="p-5"></div>
+          </aside>`
+        document.body.appendChild(drawer)
 
-        document.body.appendChild(modal)
+        const close = () => { drawer.classList.add('hidden'); document.body.style.overflow = '' }
+        drawer.querySelector('[data-close]').addEventListener('click', close)
+        drawer.querySelector('[data-backdrop]').addEventListener('click', close)
 
-        const closeModal = () => {
-          modal.classList.add('hidden')
-          modal.classList.remove('flex')
-          document.body.style.overflow = ''
-        }
-
-        const normalizePhone = (value) => (value || '').toString().replace(/\D+/g, '')
-
+        const normalizePhone = (v) => (v || '').toString().replace(/\D+/g, '')
         const copyToClipboard = async (text) => {
           const value = (text || '').toString().trim()
           if (!value) return false
-
-          try {
-            if (navigator?.clipboard?.writeText) {
-              await navigator.clipboard.writeText(value)
-              return true
-            }
-          } catch {
-            // Fallback below.
-          }
-
-          try {
-            const ta = document.createElement('textarea')
-            ta.value = value
-            ta.setAttribute('readonly', '')
-            ta.style.position = 'absolute'
-            ta.style.left = '-9999px'
-            document.body.appendChild(ta)
-            ta.select()
-            const ok = document.execCommand('copy')
-            document.body.removeChild(ta)
-            return ok
-          } catch {
-            return false
-          }
+          try { if (navigator?.clipboard?.writeText) { await navigator.clipboard.writeText(value); return true } } catch {}
+          try { const ta = document.createElement('textarea'); ta.value = value; ta.setAttribute('readonly',''); ta.style.position='absolute'; ta.style.left='-9999px'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); document.body.removeChild(ta); return ok } catch { return false }
         }
 
-        modal.querySelector('#order-details-close')?.addEventListener('click', closeModal)
-        modal.addEventListener('click', (e) => {
-          if (e.target === modal) closeModal()
-        })
-
-        modal.addEventListener('click', async (e) => {
+        drawer.addEventListener('click', async (e) => {
           const btn = e.target?.closest?.('[data-order-action]')
           if (!btn) return
-
           const action = btn.getAttribute('data-order-action')
-          if (!action) return
-
-          if (action === 'copy-address') {
-            const encodedAddress = btn.getAttribute('data-address') || ''
-            const address = decodeURIComponent(encodedAddress)
-            const ok = await copyToClipboard(address)
-            showToast(ok ? 'Dirección copiada' : 'No se pudo copiar la dirección', ok ? 'success' : 'error')
-            return
-          }
-
-          if (action === 'copy-summary') {
-            const encodedSummary = btn.getAttribute('data-summary') || ''
-            const summary = decodeURIComponent(encodedSummary)
-            const ok = await copyToClipboard(summary)
-            showToast(ok ? 'Resumen copiado' : 'No se pudo copiar el resumen', ok ? 'success' : 'error')
-            return
-          }
-
-          if (action === 'open-whatsapp') {
-            const encodedPhone = btn.getAttribute('data-phone') || ''
-            const phoneRaw = decodeURIComponent(encodedPhone)
-            const phone = normalizePhone(phoneRaw)
-            if (!phone) {
-              showToast('No hay teléfono válido para WhatsApp', 'error')
-              return
-            }
-            window.open(`https://wa.me/${phone}`, '_blank', 'noopener,noreferrer')
-            return
-          }
-
+          if (action === 'copy-address') { const ok = await copyToClipboard(decodeURIComponent(btn.getAttribute('data-address') || '')); showToast(ok ? 'Dirección copiada' : 'No se pudo copiar', ok ? 'success' : 'error') }
+          if (action === 'copy-summary') { const ok = await copyToClipboard(decodeURIComponent(btn.getAttribute('data-summary') || '')); showToast(ok ? 'Resumen copiado' : 'No se pudo copiar', ok ? 'success' : 'error') }
+          if (action === 'open-whatsapp') { const phone = normalizePhone(decodeURIComponent(btn.getAttribute('data-phone') || '')); if (!phone) { showToast('Sin teléfono válido', 'error'); return }; window.open(`https://wa.me/${phone}`, '_blank', 'noopener,noreferrer') }
           if (action === 'print-order') {
-            const encoded = btn.getAttribute('data-print') || ''
-            if (!encoded) return
-
-            let data = null
-            try {
-              data = JSON.parse(decodeURIComponent(encoded))
-            } catch {
-              showToast('No se pudo preparar la impresión', 'error')
-              return
-            }
-
-            const printWindow = window.open('', '_blank', 'width=900,height=700')
-            if (!printWindow) {
-              showToast('El navegador bloqueó la ventana de impresión', 'error')
-              return
-            }
-
-            const itemsHtml = (data.items || []).map(item => `
-              <tr>
-                <td>${item.name || 'Producto'}</td>
-                <td>${item.size || 'Única'}</td>
-                <td>${item.qty || 0}</td>
-                <td>${formatMoney(item.price || 0)}</td>
-              </tr>
-            `).join('')
-
-            printWindow.document.write(`
-              <html>
-                <head>
-                  <title>Orden #${(data.id || '').toString().slice(0, 8)}</title>
-                  <style>
-                    body { font-family: Arial, sans-serif; padding: 24px; color: #111827; }
-                    h1 { margin: 0 0 8px; }
-                    .meta { margin: 4px 0; color: #374151; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-                    th, td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; font-size: 14px; }
-                    th { background: #f9fafb; }
-                  </style>
-                </head>
-                <body>
-                  <h1>Detalle de orden</h1>
-                  <p class="meta"><strong>Pedido:</strong> #${(data.id || '').toString().slice(0, 8)}</p>
-                  <p class="meta"><strong>Cliente:</strong> ${data.customerName || 'Sin nombre'}</p>
-                  <p class="meta"><strong>WhatsApp:</strong> ${data.customerWhatsapp || 'Sin teléfono'}</p>
-                  <p class="meta"><strong>Fecha:</strong> ${data.when || 'Sin fecha'}</p>
-                  <p class="meta"><strong>Entrega:</strong> ${data.deliveryMethod || 'Sin método'}</p>
-                  <p class="meta"><strong>Dirección:</strong> ${data.address || 'Sin dirección'}</p>
-                  <p class="meta"><strong>Pago:</strong> ${data.paymentLabel || 'Sin definir'}</p>
-                  <p class="meta"><strong>Total:</strong> ${formatMoney(data.total || 0)}</p>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Producto</th>
-                        <th>Talla</th>
-                        <th>Cantidad</th>
-                        <th>Precio</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${itemsHtml || '<tr><td colspan="4">Sin productos</td></tr>'}
-                    </tbody>
-                  </table>
-                </body>
-              </html>
-            `)
-            printWindow.document.close()
-            printWindow.focus()
-            printWindow.print()
+            let data; try { data = JSON.parse(decodeURIComponent(btn.getAttribute('data-print') || '')) } catch { showToast('Error al preparar impresión', 'error'); return }
+            const pw = window.open('', '_blank', 'width=900,height=700')
+            if (!pw) { showToast('Ventana bloqueada', 'error'); return }
+            const itemsH = (data.items || []).map(i => `<tr><td>${i.name||'Producto'}</td><td>${i.size||'Única'}</td><td>${i.qty||0}</td><td>${formatMoney(i.price||0)}</td></tr>`).join('')
+            pw.document.write(`<html><head><title>Orden #${(data.id||'').toString().slice(0,8)}</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111827}h1{margin:0 0 8px}.meta{margin:4px 0;color:#374151}table{width:100%;border-collapse:collapse;margin-top:16px}th,td{border:1px solid #e5e7eb;padding:8px;text-align:left;font-size:14px}th{background:#f9fafb}</style></head><body><h1>Detalle de orden</h1><p class="meta"><strong>Pedido:</strong> #${(data.id||'').toString().slice(0,8)}</p><p class="meta"><strong>Cliente:</strong> ${data.customerName||'Sin nombre'}</p><p class="meta"><strong>WhatsApp:</strong> ${data.customerWhatsapp||'Sin teléfono'}</p><p class="meta"><strong>Fecha:</strong> ${data.when||'Sin fecha'}</p><p class="meta"><strong>Entrega:</strong> ${data.deliveryMethod||'Sin método'}</p><p class="meta"><strong>Dirección:</strong> ${data.address||'Sin dirección'}</p><p class="meta"><strong>Pago:</strong> ${data.paymentLabel||'Sin definir'}</p><p class="meta"><strong>Total:</strong> ${formatMoney(data.total||0)}</p><table><thead><tr><th>Producto</th><th>Talla</th><th>Cantidad</th><th>Precio</th></tr></thead><tbody>${itemsH||'<tr><td colspan="4">Sin productos</td></tr>'}</tbody></table></body></html>`)
+            pw.document.close(); pw.focus(); pw.print()
           }
         })
-
-        return modal
+        return drawer
       }
 
       const openOrderDetails = (orderId) => {
-        const modal = ensureOrderDetailsModal()
-        const content = modal.querySelector('#order-details-content')
+        const drawer = ensureDetailDrawer()
+        const content = drawer.querySelector('#order-detail-content')
         const order = ordersById.get(String(orderId))
         if (!content || !order) return
-
         let items = []
-        try {
-          items = typeof order.cart_items === 'string' ? JSON.parse(order.cart_items) : (order.cart_items || [])
-        } catch {
-          items = []
-        }
-
+        try { items = typeof order.cart_items === 'string' ? JSON.parse(order.cart_items) : (order.cart_items || []) } catch { items = [] }
         const payment = getPaymentMeta(order.payment_method)
         const createdAt = new Date(order.created_at)
-        const when = Number.isNaN(createdAt.getTime())
-          ? 'Sin fecha'
-          : `${createdAt.toLocaleDateString()} ${createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-        const printPayload = encodeURIComponent(JSON.stringify({
-          id: order.id,
-          customerName: order.customer_name,
-          customerWhatsapp: order.customer_whatsapp,
-          when,
-          deliveryMethod: order.delivery_method,
-          address: order.address,
-          paymentLabel: payment.label,
-          total: Number(order.total) || 0,
-          items,
-        }))
-        const summaryLines = [
-          `Pedido #${String(order.id).slice(0, 8)}`,
-          `Cliente: ${order.customer_name || 'Sin nombre'}`,
-          `WhatsApp: ${order.customer_whatsapp || 'Sin teléfono'}`,
-          `Fecha: ${when}`,
-          `Entrega: ${order.delivery_method || 'Sin método'}`,
-          `Dirección: ${order.address || 'Sin dirección'}`,
-          `Pago: ${payment.label}`,
-          'Productos:',
-          ...(items.length
-            ? items.map(item => `- ${item?.qty || 0}x ${item?.name || 'Producto'} (${item?.size || 'Única'}) · ${formatMoney(item?.price || 0)}`)
-            : ['- Sin productos registrados']),
-          `Total: ${formatMoney(order.total || 0)}`,
-        ]
-        const encodedSummary = encodeURIComponent(summaryLines.join('\n'))
+        const when = Number.isNaN(createdAt.getTime()) ? 'Sin fecha' : `${createdAt.toLocaleDateString()} ${createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+        const printPayload = encodeURIComponent(JSON.stringify({ id: order.id, customerName: order.customer_name, customerWhatsapp: order.customer_whatsapp, when, deliveryMethod: order.delivery_method, address: order.address, paymentLabel: payment.label, total: Number(order.total) || 0, items }))
+        const summaryLines = [`Pedido #${String(order.id).slice(0,8)}`, `Cliente: ${order.customer_name||'Sin nombre'}`, `WhatsApp: ${order.customer_whatsapp||'Sin teléfono'}`, `Fecha: ${when}`, `Entrega: ${order.delivery_method||'Sin método'}`, `Dirección: ${order.address||'Sin dirección'}`, `Pago: ${payment.label}`, 'Productos:', ...(items.length ? items.map(i => `- ${i?.qty||0}x ${i?.name||'Producto'} (${i?.size||'Única'}) · ${formatMoney(i?.price||0)}`) : ['- Sin productos']), `Total: ${formatMoney(order.total||0)}`]
+
+        const itemsTotal = items.reduce((a, it) => a + (Number(it?.price) || 0) * (Number(it?.qty) || 0), 0)
+        const deliveryIcon = (order.delivery_method || '').includes('domicilio') ? 'truck' : 'store'
+        const deliveryLabel = (order.delivery_method || '').includes('domicilio') ? 'Domicilio' : 'En tienda'
 
         content.innerHTML = `
-          <div class="space-y-5">
-            <div class="flex flex-wrap gap-2">
-              <button type="button" data-order-action="open-whatsapp" data-phone="${encodeURIComponent(order.customer_whatsapp || '')}" class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a2 2 0 011.948 1.553l.638 2.87a2 2 0 01-.545 1.86l-1.27 1.27a16 16 0 006.364 6.364l1.27-1.27a2 2 0 011.86-.545l2.87.638A2 2 0 0121 15.72V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-                WhatsApp
-              </button>
-              <button type="button" data-order-action="copy-address" data-address="${encodeURIComponent(order.address || '')}" class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16h8M8 12h8m-8-4h8m2 12H6a2 2 0 01-2-2V6a2 2 0 012-2h8l6 6v8a2 2 0 01-2 2z"/></svg>
-                Copiar dirección
-              </button>
-              <button type="button" data-order-action="copy-summary" data-summary="${encodedSummary}" class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8m-8 4h8m-8 4h6M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/></svg>
-                Copiar resumen
-              </button>
-              <button type="button" data-order-action="print-order" data-print="${printPayload}" class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V4h12v5M6 14H4a2 2 0 00-2 2v4h4m0 0h12m-12 0v-4h12v4m0 0h4v-4a2 2 0 00-2-2h-2"/></svg>
-                Imprimir
-              </button>
+          <div class="space-y-4">
+            <!-- Actions -->
+            <div class="grid grid-cols-2 gap-2">
+              <button data-order-action="open-whatsapp" data-phone="${encodeURIComponent(order.customer_whatsapp||'')}" class="adm-btn adm-btn-ink h-10 text-[13px]">${ICON.whatsapp('w-[17px] h-[17px]')} WhatsApp</button>
+              <button data-order-action="print-order" data-print="${printPayload}" class="adm-btn adm-btn-ghost h-10 text-[13px]">${ICON.print('w-[17px] h-[17px]')} Imprimir</button>
+              <button data-order-action="copy-address" data-address="${encodeURIComponent(order.address||'')}" class="adm-btn adm-btn-ghost h-10 text-[13px]">${ICON.copy('w-[16px] h-[16px]')} Copiar dirección</button>
+              <button data-order-action="copy-summary" data-summary="${encodeURIComponent(summaryLines.join('\n'))}" class="adm-btn adm-btn-ghost h-10 text-[13px]">${ICON.list('w-[16px] h-[16px]')} Copiar resumen</button>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div class="rounded-xl border border-gray-100 dark:border-gray-700 p-4">
-                <p class="text-xs uppercase tracking-wide text-gray-500">Cliente</p>
-                <p class="mt-1 font-semibold text-gray-900 dark:text-white">${order.customer_name || 'Sin nombre'}</p>
-                <p class="text-sm text-brand mt-1">${order.customer_whatsapp || 'Sin teléfono'}</p>
-              </div>
-              <div class="rounded-xl border border-gray-100 dark:border-gray-700 p-4">
-                <p class="text-xs uppercase tracking-wide text-gray-500">Pedido</p>
-                <p class="mt-1 font-semibold text-gray-900 dark:text-white">#${String(order.id).slice(0, 8)}</p>
-                <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${when}</p>
+            <!-- Customer -->
+            <div class="bg-paper rounded-xl2 border border-line p-4">
+              <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[14px] font-bold">${initials(order.customer_name)}</div>
+                <div class="min-w-0">
+                  <p class="font-semibold text-ink text-[15px] truncate">${order.customer_name||'Sin nombre'}</p>
+                  <p class="text-[13px] text-brand tnum">${order.customer_whatsapp||'Sin teléfono'}</p>
+                </div>
               </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div class="rounded-xl border border-gray-100 dark:border-gray-700 p-4">
-                <p class="text-xs uppercase tracking-wide text-gray-500">Total</p>
-                <p class="mt-1 font-bold text-gray-900 dark:text-white">${formatMoney(order.total || 0)}</p>
+            <!-- Meta grid -->
+            <div class="grid grid-cols-2 gap-2">
+              <div class="bg-paper rounded-xl2 border border-line p-3.5">
+                <p class="eyebrow text-faint mb-1.5">Estado</p>
+                ${statusPill(order.status)}
               </div>
-              <div class="rounded-xl border border-gray-100 dark:border-gray-700 p-4">
-                <p class="text-xs uppercase tracking-wide text-gray-500">Pago</p>
-                <span class="mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${payment.className}">${payment.label}</span>
+              <div class="bg-paper rounded-xl2 border border-line p-3.5">
+                <p class="eyebrow text-faint mb-1.5">Pago</p>
+                <span class="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink">${ICON[payment.icon]('w-4 h-4 text-muted')}${payment.label}</span>
               </div>
-              <div class="rounded-xl border border-gray-100 dark:border-gray-700 p-4">
-                <p class="text-xs uppercase tracking-wide text-gray-500">Estado</p>
-                <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">${(order.status || 'sin estado').toString()}</p>
+              <div class="bg-paper rounded-xl2 border border-line p-3.5">
+                <p class="eyebrow text-faint mb-1.5">Fecha</p>
+                <p class="text-[13px] font-semibold text-ink">${createdAt.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                <p class="text-[11.5px] text-faint tnum">${createdAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</p>
+              </div>
+              <div class="bg-paper rounded-xl2 border border-line p-3.5">
+                <p class="eyebrow text-faint mb-1.5">Entrega</p>
+                <span class="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink">${ICON[deliveryIcon]('w-4 h-4 text-muted')}${deliveryLabel}</span>
               </div>
             </div>
 
-            <div class="rounded-xl border border-gray-100 dark:border-gray-700 p-4">
-              <p class="text-xs uppercase tracking-wide text-gray-500">Entrega</p>
-              <p class="mt-1 text-sm font-medium text-gray-900 dark:text-white">${order.delivery_method || 'Sin método'}</p>
-              ${order.address ? `<p class="mt-1 text-sm text-gray-600 dark:text-gray-300">${order.address}</p>` : '<p class="mt-1 text-sm text-gray-500">Sin dirección</p>'}
-            </div>
+            ${order.address ? `<div class="bg-paper rounded-xl2 border border-line p-4 flex items-start gap-3">
+              <span class="text-muted mt-0.5">${ICON.map('w-[18px] h-[18px]')}</span>
+              <div><p class="eyebrow text-faint mb-1">Dirección de envío</p><p class="text-[13.5px] text-body leading-relaxed">${order.address}</p></div>
+            </div>` : ''}
 
-            <div class="rounded-xl border border-gray-100 dark:border-gray-700 p-4">
-              <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">Productos</p>
-              <div class="space-y-2">
-                ${items.length
-                  ? items.map(item => `
-                    <div class="flex items-start justify-between gap-3 text-sm">
-                      <div class="min-w-0">
-                        <p class="font-medium text-gray-900 dark:text-white truncate">${item?.name || 'Producto'}</p>
-                        <p class="text-xs text-gray-500">Talla: ${item?.size || 'Única'}</p>
-                      </div>
-                      <div class="text-right flex-shrink-0">
-                        <p class="font-semibold text-gray-900 dark:text-white">${item?.qty || 0}x</p>
-                        <p class="text-xs text-gray-500">${formatMoney(item?.price || 0)}</p>
-                      </div>
-                    </div>
-                  `).join('')
-                  : '<p class="text-sm text-gray-500">Sin productos registrados en la orden.</p>'
-                }
+            <!-- Products -->
+            <div class="bg-paper rounded-xl2 border border-line overflow-hidden">
+              <div class="px-4 py-3 border-b border-line flex items-center justify-between">
+                <p class="font-semibold text-ink text-[14px]">Productos</p>
+                <span class="text-[12px] text-muted tnum">${items.length} artículo${items.length !== 1 ? 's' : ''}</span>
+              </div>
+              <div class="divide-y divide-line">
+                ${items.length ? items.map(item => `<div class="flex items-center gap-3 px-4 py-3">
+                  <div class="w-8 h-8 rounded-lg bg-canvas border border-line flex items-center justify-center text-[11px] font-bold text-muted tnum shrink-0">${item?.qty||0}×</div>
+                  <div class="min-w-0 flex-1"><p class="text-[13.5px] font-medium text-ink truncate">${item?.name||'Producto'}</p><p class="text-[11.5px] text-faint">Talla ${item?.size||'Única'}</p></div>
+                  <p class="text-[13px] font-semibold text-ink tnum shrink-0">${formatMoney((item?.price||0) * (item?.qty||0))}</p>
+                </div>`).join('') : '<div class="px-4 py-6 text-center text-[13px] text-muted">Sin productos registrados.</div>'}
               </div>
             </div>
-          </div>
-        `
 
-        modal.classList.remove('hidden')
-        modal.classList.add('flex')
+            <!-- Total -->
+            <div class="bg-paper rounded-xl2 border border-line px-4 py-3">
+              <div class="flex items-center justify-between text-[13px] text-muted mb-1"><span>Subtotal</span><span class="tnum">${formatMoney(itemsTotal)}</span></div>
+              <div class="flex items-center justify-between"><span class="font-display font-bold text-ink text-[16px]">Total</span><span class="font-display font-extrabold text-ink text-[20px] tnum">${formatMoney(order.total||0)}</span></div>
+            </div>
+          </div>`
+
+        drawer.classList.remove('hidden')
         document.body.style.overflow = 'hidden'
       }
 
-      const attachDetailHandlers = () => {
-        root.querySelectorAll('[data-order-detail]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const id = btn.getAttribute('data-order-detail')
-            if (!id) return
-            openOrderDetails(id)
-          })
-        })
+      // ── KPI Update ──
+      const updateKPIs = (orders) => {
+        const total = orders.length
+        const completedOrders = orders.filter(o => o.status === 'completado')
+        const revenue = completedOrders.reduce((s, o) => s + (Number(o.total) || 0), 0)
+        const pending = orders.filter(o => o.status === 'pendientedepago').length
+        const ticket = completedOrders.length ? revenue / completedOrders.length : 0
+        kpis.innerHTML = `
+          ${statCard({ eyebrow: 'Total pedidos', value: total.toLocaleString(), icon: 'orders', accent: '#214FC7', foot: 'histórico' })}
+          ${statCard({ eyebrow: 'Ingresos confirmados', value: formatMoney(revenue), icon: 'cash', foot: 'pedidos completados' })}
+          ${statCard({ eyebrow: 'Pendientes de pago', value: pending.toString(), icon: 'clock', accent: '#C9821A', foot: 'requieren seguimiento' })}
+          ${statCard({ eyebrow: 'Ticket promedio', value: formatMoney(ticket), icon: 'trendUp' })}
+        `
       }
 
-      const notifyOnce = (order) => {
-        const id = order?.id
-        if (!id) return
-        if (notifiedOrderIds.has(id)) return
-        notifiedOrderIds.add(id)
-        notifyNewOrder(order)
-      }
-
-      const attachStatusHandlers = () => {
-        root.querySelectorAll('.status-select').forEach(select => {
-          select.addEventListener('change', async (e) => {
-            const el = e.target
-            const newStatus = el.value
-            const orderId = el.dataset.id
-            const originalStatus = el.dataset.original
-
-            el.disabled = true
-
-            const { error } = await updateAdminOrderStatus(orderId, newStatus)
-
-            el.disabled = false
-
-            if (error) {
-              alert('Error al actualizar el estado: ' + error)
-              el.value = originalStatus
-              return
-            }
-
-            el.dataset.original = newStatus
-          })
+      // ── Render ──
+      const getFiltered = () => {
+        const term = searchTerm.toLowerCase()
+        return allOrders.filter(o => {
+          const matchStatus = statusFilter === 'all' || o.status === statusFilter
+          const matchSearch = !term || (o.customer_name || '').toLowerCase().includes(term) || String(o.id).toLowerCase().includes(term)
+          return matchStatus && matchSearch
         })
       }
 
       const renderOrders = (orders) => {
-        if (!orders.length) {
-          const emptyState = `
-            <div class="px-6 py-12 text-center text-gray-500">
-              <div class="w-16 h-16 mx-auto bg-gray-50 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4 text-gray-400">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-              </div>
-              Aún no hay pedidos registrados.
-            </div>
-          `
-          tbody.innerHTML = `<tr><td colspan="6" class="px-0 py-0">${emptyState}</td></tr>`
-          mobileContainer.innerHTML = emptyState
+        allOrders = orders
+        ordersById = new Map(orders.map(o => [String(o.id), o]))
+        updateKPIs(orders)
+        renderFiltered()
+      }
+
+      const renderFiltered = () => {
+        const filtered = getFiltered()
+
+        if (!filtered.length) {
+          const msg = allOrders.length ? 'Sin resultados' : 'No hay pedidos'
+          tbody.innerHTML = `<tr><td colspan="6" class="px-5 py-16 text-center"><div>${ICON.orders('w-10 h-10 mx-auto mb-3 text-line-strong')}<p class="text-[14px] font-semibold text-body">${msg}</p></div></td></tr>`
+          mobileContainer.innerHTML = `<div class="px-5 py-16 text-center">${ICON.orders('w-10 h-10 mx-auto mb-3 text-line-strong')}<p class="text-[14px] font-semibold text-body">${msg}</p></div>`
+          footerEl.textContent = `0 pedidos`
           return
         }
 
-        ordersById = new Map(orders.map(order => [String(order.id), order]))
-
-        // Desktop Table
-        tbody.innerHTML = orders.map(order => {
-          let items = []
-          try {
-             items = typeof order.cart_items === 'string' ? JSON.parse(order.cart_items) : (order.cart_items || [])
-          } catch(e) { console.error('Error parsing items for order', order.id) }
-
+        tbody.innerHTML = filtered.map(order => {
           const payment = getPaymentMeta(order.payment_method)
-
           return `
-          <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="font-semibold text-gray-900 dark:text-white">#${String(order.id).slice(0, 8)}</div>
-              <div class="text-xs text-gray-500 mt-1">${payment.label}</div>
+          <tr class="border-t border-line hover:bg-canvas transition-colors cursor-pointer group" data-row data-id="${order.id}">
+            <td class="px-5 py-3.5">
+              <p class="text-[13.5px] font-semibold text-ink tnum">#${String(order.id).slice(0,8)}</p>
+              <span class="inline-flex items-center gap-1 text-[11.5px] text-muted mt-0.5">${ICON[payment.icon]('w-3.5 h-3.5')}${payment.label}</span>
             </td>
-            <td class="px-6 py-4">
-              <div class="font-medium text-gray-900 dark:text-white">${order.customer_name}</div>
-              <div class="text-xs text-brand mt-1">${order.customer_whatsapp}</div>
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[11px] font-bold shrink-0">${initials(order.customer_name)}</div>
+                <div class="min-w-0"><p class="text-[13.5px] font-semibold text-ink truncate">${order.customer_name}</p><p class="text-[11.5px] text-faint tnum">${order.customer_whatsapp||''}</p></div>
+              </div>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
-              <div>${new Date(order.created_at).toLocaleDateString()}</div>
-              <div>${new Date(order.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-            </td>
-            <td class="px-6 py-4 text-center font-semibold text-gray-900 dark:text-white">
-              ${formatMoney(order.total || 0)}
-            </td>
-            <td class="px-6 py-4 text-center">
-               <select data-id="${order.id}" data-original="${order.status}" class="status-select outline-none bg-gray-50 border border-gray-200 text-gray-900 text-xs rounded-lg focus:ring-brand focus:border-brand block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
-                  <option value="pendientedepago" ${order.status === 'pendientedepago' ? 'selected' : ''}>Pendiente de pago</option>
-                  <option value="completado" ${order.status === 'completado' ? 'selected' : ''}>Completado</option>
-                  <option value="cancelado" ${order.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
-               </select>
-            </td>
-            <td class="px-6 py-4 text-center">
-              <button type="button" data-order-detail="${order.id}" class="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                Ver detalle
-              </button>
-            </td>
-          </tr>
-        `}).join('')
+            <td class="px-5 py-3.5"><p class="text-[13px] text-body">${new Date(order.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}</p><p class="text-[11.5px] text-faint tnum">${new Date(order.created_at).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</p></td>
+            <td class="px-5 py-3.5 text-right"><span class="font-bold text-ink text-[14px] tnum">${formatMoney(order.total||0)}</span></td>
+            <td class="px-5 py-3.5" data-stop>${statusDropdownHtml(order)}</td>
+            <td class="px-5 py-3.5 text-right"><span class="inline-flex items-center gap-1 text-[13px] font-semibold text-muted group-hover:text-brand transition-colors">Ver ${ICON.chevRight('w-4 h-4')}</span></td>
+          </tr>`
+        }).join('')
 
-        // Mobile Cards
-        mobileContainer.innerHTML = orders.map(order => {
-          let items = []
-          try {
-             items = typeof order.cart_items === 'string' ? JSON.parse(order.cart_items) : (order.cart_items || [])
-          } catch(e) { console.error('Error parsing items for order', order.id) }
-
+        mobileContainer.innerHTML = filtered.map(order => {
           const payment = getPaymentMeta(order.payment_method)
-
+          const deliveryLabel = (order.delivery_method || '').includes('domicilio') ? 'Envío' : 'Tienda'
           return `
-          <div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-            <div class="space-y-3">
-              <div>
-                <p class="text-xs text-gray-500 font-semibold">Cliente</p>
-                <p class="font-medium text-gray-900 dark:text-white">${order.customer_name}</p>
-                <p class="text-xs text-brand">${order.customer_whatsapp}</p>
+          <div class="p-4 active:bg-canvas transition-colors cursor-pointer" data-row data-id="${order.id}">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-9 h-9 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[12px] font-bold shrink-0">${initials(order.customer_name)}</div>
+                <div class="min-w-0"><p class="text-[14px] font-semibold text-ink truncate">${order.customer_name}</p><p class="text-[11.5px] text-faint tnum">#${String(order.id).slice(0,8)} · ${relTime(order.created_at)}</p></div>
               </div>
-              
-              <div>
-                <p class="text-xs text-gray-500 font-semibold">Productos</p>
-                <div class="flex flex-col gap-1 text-xs text-gray-600 dark:text-gray-400">
-                  ${items.map(item => `
-                     <div class="truncate" title="${item.name} (${item.size || 'Unica'})">
-                       <span class="font-semibold">${item.qty}x</span> ${item.name}
-                       ${item.size ? `<span class="text-gray-400">(${item.size})</span>` : ''}
-                     </div>
-                  `).join('')}
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <p class="text-xs text-gray-500 font-semibold">Fecha</p>
-                  <p class="text-xs text-gray-600 dark:text-gray-400">${new Date(order.created_at).toLocaleDateString()}</p>
-                </div>
-                <div>
-                  <p class="text-xs text-gray-500 font-semibold">Total</p>
-                  <p class="font-semibold text-gray-900 dark:text-white">${formatMoney(order.total || 0)}</p>
-                </div>
-              </div>
-
-              <div>
-                <p class="text-xs text-gray-500 font-semibold">Entrega</p>
-                <p class="text-xs text-gray-600 dark:text-gray-400">
-                  ${order.delivery_method === 'Envío a domicilio' ? '🚚 Envío a Domicilio' : '🏪 Recoge en Tienda'}
-                </p>
-                ${order.delivery_method === 'Envío a domicilio' && order.address ? `
-                  <p class="text-xs text-gray-500 mt-1 truncate">${order.address}</p>
-                ` : ''}
-              </div>
-
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <p class="text-xs text-gray-500 font-semibold">Pago</p>
-                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium ${payment.className}">
-                    ${payment.label}
-                  </span>
-                </div>
-                <div>
-                  <p class="text-xs text-gray-500 font-semibold">Estado</p>
-                  <select data-id="${order.id}" data-original="${order.status}" class="status-select outline-none bg-gray-50 border border-gray-200 text-gray-900 text-xs rounded w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                     <option value="pendientedepago" ${order.status === 'pendientedepago' ? 'selected' : ''}>Pendiente</option>
-                     <option value="completado" ${order.status === 'completado' ? 'selected' : ''}>Completado</option>
-                     <option value="cancelado" ${order.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
-                  </select>
-                </div>
-              </div>
-
-              <button type="button" data-order-detail="${order.id}" class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                Ver detalle completo
-              </button>
+              <p class="font-bold text-ink text-[15px] tnum shrink-0">${formatMoney(order.total||0)}</p>
             </div>
-          </div>
-        `}).join('')
+            <div class="flex items-center justify-between mt-3">
+              <span class="inline-flex items-center gap-1.5 text-[12px] text-muted">${ICON[payment.icon]('w-4 h-4')}${payment.label} · ${deliveryLabel}</span>
+              ${statusPill(order.status)}
+            </div>
+          </div>`
+        }).join('')
 
-        attachStatusHandlers()
-        attachDetailHandlers()
+        footerEl.textContent = searchTerm || statusFilter !== 'all'
+          ? `${filtered.length} de ${allOrders.length} pedidos`
+          : `${allOrders.length} pedidos`
+
+        // Update filter button counts + active state
+        const counts = { all: allOrders.length, completado: 0, pendientedepago: 0, cancelado: 0 }
+        allOrders.forEach(o => { const k = (o.status || '').toLowerCase(); if (counts[k] != null) counts[k]++ })
+        filtersContainer.querySelectorAll('[data-filter]').forEach(btn => {
+          const f = btn.dataset.filter
+          const isActive = f === statusFilter
+          btn.className = isActive ? FILTER_CLS_ACTIVE : FILTER_CLS_IDLE
+          btn.innerHTML = `${FILTER_LABELS[f] || f}<span class="tnum ${isActive ? 'text-white/55' : 'text-faint'}">${counts[f] ?? 0}</span>`
+        })
+
+        attachRowHandlers()
+        attachDropdownHandlers()
       }
 
+      const attachRowHandlers = () => {
+        root.querySelectorAll('[data-row]').forEach(row => {
+          row.addEventListener('click', (e) => {
+            if (e.target.closest('[data-stop]')) return
+            const id = row.dataset.id
+            if (id) openOrderDetails(id)
+          })
+        })
+      }
+
+      const attachDropdownHandlers = () => {
+        root.querySelectorAll('[data-status-wrap]').forEach(wrap => {
+          const btn = wrap.querySelector('[data-status-btn]')
+          const menu = wrap.querySelector('[data-status-menu]')
+          if (!btn || !menu) return
+
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation()
+            root.querySelectorAll('[data-status-menu]').forEach(m => { if (m !== menu) m.classList.add('hidden') })
+            menu.classList.toggle('hidden')
+          })
+
+          menu.querySelectorAll('[data-set]').forEach(opt => {
+            opt.addEventListener('click', async (e) => {
+              e.stopPropagation()
+              menu.classList.add('hidden')
+              const orderId = wrap.dataset.id
+              const newStatus = opt.dataset.set
+              const order = ordersById.get(String(orderId))
+              if (!order || order.status === newStatus) return
+              const oldStatus = order.status
+              order.status = newStatus
+              updateKPIs(allOrders)
+              renderFiltered()
+              const { error } = await updateAdminOrderStatus(orderId, newStatus)
+              if (error) {
+                order.status = oldStatus
+                updateKPIs(allOrders)
+                renderFiltered()
+                showToast('Error al actualizar estado', 'error')
+                return
+              }
+              showToast(`Estado actualizado a "${(STATUS_META[newStatus] || {}).label || newStatus}"`, 'success')
+            })
+          })
+        })
+
+      }
+
+      const notifyOnce = (order) => {
+        const id = order?.id
+        if (!id || notifiedOrderIds.has(id)) return
+        notifiedOrderIds.add(id)
+        notifyNewOrder(order)
+      }
+
+      // ── Close status dropdowns on outside click ──
+      const closeStatusMenus = () => root.querySelectorAll('[data-status-menu]').forEach(m => m.classList.add('hidden'))
+      document.addEventListener('click', closeStatusMenus)
+
+      // ── Search + Filters ──
+      searchInput?.addEventListener('input', (e) => { searchTerm = e.target.value.trim(); renderFiltered() })
+      filtersContainer?.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-filter]')
+        if (!btn) return
+        statusFilter = btn.dataset.filter
+        renderFiltered()
+      })
+
+      // ── Data loading ──
       const loadAndRender = async () => {
         const orders = await getAdminOrders()
         if (isUnmounted) return
-        knownOrderIds = new Set(orders.map(order => order.id))
+        knownOrderIds = new Set(orders.map(o => o.id))
         renderOrders(orders)
       }
 
       const checkForNewOrders = async () => {
         if (isUnmounted || isCheckingOrders) return
         isCheckingOrders = true
-
         try {
           const orders = await getAdminOrders()
           if (isUnmounted || !orders.length) return
-
-          const unseen = orders.filter(order => !knownOrderIds.has(order.id))
+          const unseen = orders.filter(o => !knownOrderIds.has(o.id))
           if (!unseen.length) return
-
-          // Show notifications in chronological order for a natural sequence.
-          unseen
-            .slice()
-            .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-            .forEach(order => {
-              knownOrderIds.add(order.id)
-              notifyOnce(order)
-            })
-
+          unseen.slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at)).forEach(order => { knownOrderIds.add(order.id); notifyOnce(order) })
           renderOrders(orders)
-        } catch (err) {
-          if (import.meta.env.DEV) console.warn('checkForNewOrders failed', err)
-        } finally {
-          isCheckingOrders = false
-        }
+        } catch (err) { if (import.meta.env.DEV) console.warn('checkForNewOrders failed', err) }
+        finally { isCheckingOrders = false }
       }
 
       ;(async () => {
         await loadAndRender()
         if (isUnmounted) return
-
-        if (typeof window !== 'undefined' && typeof Notification !== 'undefined' && Notification.permission === 'default') {
-          Notification.requestPermission().catch(() => {})
-        }
-
+        if (typeof window !== 'undefined' && typeof Notification !== 'undefined' && Notification.permission === 'default') { Notification.requestPermission().catch(() => {}) }
         if (globalNotifierActive) return
 
-        // Fallback polling always runs, even if realtime fails.
-        pollingTimer = window.setInterval(() => {
-          checkForNewOrders().catch(() => {})
-        }, 5000)
+        pollingTimer = window.setInterval(() => { checkForNewOrders().catch(() => {}) }, 5000)
 
         if (supabase) {
           try {
             channel = supabase
               .channel(`admin-orders-new-${Date.now()}`)
-              .on('postgres_changes', {
-                event: 'INSERT',
-                schema: 'public',
-                table: 'orders',
-              }, async (payload) => {
+              .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, async (payload) => {
                 const incoming = payload?.new
                 if (!payload || !incoming?.id || isUnmounted) return
                 if (knownOrderIds.has(incoming.id)) return
-
                 knownOrderIds.add(incoming.id)
                 notifyOnce(incoming)
                 await checkForNewOrders()
               })
               .subscribe()
-          } catch (err) {
-            if (import.meta.env.DEV) console.warn('Realtime subscription failed', err)
-          }
+          } catch (err) { if (import.meta.env.DEV) console.warn('Realtime subscription failed', err) }
         }
       })()
 
       return () => {
         isUnmounted = true
-        if (pollingTimer) {
-          window.clearInterval(pollingTimer)
-          pollingTimer = null
-        }
-        if (channel) {
-          supabase?.removeChannel(channel)
-          channel = null
-        }
+        document.removeEventListener('click', closeStatusMenus)
+        if (pollingTimer) { window.clearInterval(pollingTimer); pollingTimer = null }
+        if (channel) { supabase?.removeChannel(channel); channel = null }
       }
     }
   }
