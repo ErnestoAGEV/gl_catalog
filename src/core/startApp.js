@@ -266,6 +266,15 @@ export async function startApp(mountEl) {
 
     syncAdminOrderNotifier(path, authed)
 
+    // ── Save admin sidebar nav scroll before destroying views ──
+    const isAdminNav = path.startsWith('/admin') && path !== '/admin/login'
+    let sidebarNavScroll = 0
+    if (isAdminNav) {
+      document.querySelectorAll('aside nav').forEach(nav => {
+        if (nav.scrollTop > 0) sidebarNavScroll = nav.scrollTop
+      })
+    }
+
     // Hide all cached views
     cachedViews.forEach(v => { v.el.style.display = 'none' })
     if (currentNonCachedView) {
@@ -342,6 +351,15 @@ export async function startApp(mountEl) {
     mountEl.appendChild(pageContainer)
 
     const cleanup = onMount?.(pageContainer)
+
+    // ── Restore admin sidebar nav scroll ──
+    if (isAdminNav && sidebarNavScroll > 0) {
+      requestAnimationFrame(() => {
+        pageContainer.querySelectorAll('aside nav').forEach(nav => {
+          nav.scrollTop = sidebarNavScroll
+        })
+      })
+    }
 
     if (cacheKey) {
       cachedViews.set(cacheKey, { el: pageContainer, cleanup, seoConfig })

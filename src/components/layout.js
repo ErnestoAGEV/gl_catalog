@@ -159,6 +159,9 @@ export function layoutAdmin({ title, contentHtml, state }) {
     { path: '/admin/categories', icon: 'tag', label: 'Categorías', group: 'Catálogo' },
     { path: '/admin/coupons', icon: 'coupon', label: 'Cupones', group: 'Catálogo' },
     { path: '/admin/newsletter', icon: 'mail', label: 'Newsletter', group: 'Clientes' },
+    { path: '/admin/clientes', icon: 'users', label: 'Clientes', group: 'Clientes' },
+    { path: '/admin/reportes', icon: 'chart', label: 'Reportes', group: 'Análisis' },
+    { path: '/admin/banners', icon: 'image', label: 'Contenido', group: 'Sitio' },
   ]
 
   const TITLES = {
@@ -168,6 +171,9 @@ export function layoutAdmin({ title, contentHtml, state }) {
     '/admin/categories': 'Categorías',
     '/admin/coupons': 'Cupones',
     '/admin/newsletter': 'Newsletter',
+    '/admin/clientes': 'Clientes',
+    '/admin/reportes': 'Reportes',
+    '/admin/banners': 'Contenido',
   }
 
   const I = (name, cls = 'w-[18px] h-[18px]') => {
@@ -184,6 +190,9 @@ export function layoutAdmin({ title, contentHtml, state }) {
       close: '<path d="M18 6 6 18M6 6l12 12"/>',
       bell: '<path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
       calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/>',
+      users: '<circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 14a5 5 0 0 1 5 5"/><circle cx="17.5" cy="7.5" r="2.5"/>',
+      chart: '<path d="M3 3v18h18"/><path d="M7 16l4-5 4 3 5-6"/>',
+      image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
     }
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="${cls}">${paths[name] || ''}</svg>`
   }
