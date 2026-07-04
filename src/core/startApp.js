@@ -354,6 +354,9 @@ export async function startApp(mountEl) {
     const pageContainer = document.createElement('div')
     pageContainer.className = 'page-route-container'
     pageContainer.innerHTML = html
+    // Swap out the static prerender shell in the same synchronous task as the
+    // real mount so there is no blank frame in between.
+    document.getElementById('prerender-shell')?.remove()
     mountEl.appendChild(pageContainer)
 
     const cleanup = onMount?.(pageContainer)
