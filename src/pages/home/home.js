@@ -48,9 +48,9 @@ export function pageHome() {
   const heroSlidesRight = heroSlides.map((s, i) => `
     <div class="hero-img absolute inset-0 transition-opacity duration-[1200ms] ease ${i === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'}" data-slide="${i}">
       ${i === 0 ? `
-      <img src="${s.image}" ${s.srcset ? `srcset="${s.srcset}" sizes="(max-width: 768px) 100vw, 50vw"` : ''} alt="" class="w-full h-full object-cover" loading="eager" fetchpriority="high" />
+      <img src="${s.image}" ${s.srcset ? `srcset="${s.srcset}" sizes="(max-width: 768px) 200px, 50vw"` : ''} alt="" class="w-full h-full object-cover" loading="eager" fetchpriority="high" />
       ` : `
-      <img data-defer-src="${s.image}" ${s.srcset ? `data-defer-srcset="${s.srcset}" sizes="(max-width: 768px) 100vw, 50vw"` : ''} alt="" class="w-full h-full object-cover" decoding="async" />
+      <img data-defer-src="${s.image}" ${s.srcset ? `data-defer-srcset="${s.srcset}" sizes="(max-width: 768px) 200px, 50vw"` : ''} alt="" class="w-full h-full object-cover" decoding="async" />
       `}
       <div class="absolute bottom-4 left-4">
         <span class="${s.captionClass} text-paper text-[12px] font-mono px-3 py-1.5 rounded-full">${s.caption}</span>
