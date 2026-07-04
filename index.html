@@ -12,15 +12,12 @@
     <meta name="robots" content="index,follow" />
     <!-- canonical is set dynamically by seo.js per route — do NOT hardcode here -->
 
-    <!-- Preconnect to image CDNs used by the hero/categories -->
-    <link rel="preconnect" href="https://images.unsplash.com" />
-    <link rel="preconnect" href="https://i.pinimg.com" />
     <!-- Preload the first hero image (LCP) — keep in sync with heroSlides[0] in homeData.js -->
     <link
       rel="preload"
       as="image"
       fetchpriority="high"
-      imagesrcset="https://images.unsplash.com/photo-1490578474895-699cd4e2cf59?w=640&q=80&auto=format&fit=crop 640w, https://images.unsplash.com/photo-1490578474895-699cd4e2cf59?w=1080&q=80&auto=format&fit=crop 1080w, https://images.unsplash.com/photo-1490578474895-699cd4e2cf59?w=1600&q=80&auto=format&fit=crop 1600w"
+      imagesrcset="/img/hero-1-640.webp 640w, /img/hero-1-1080.webp 1080w, /img/hero-1-1600.webp 1600w"
       imagesizes="(max-width: 768px) 100vw, 50vw"
     />
 
@@ -30,12 +27,12 @@
     <link
       rel="preload"
       as="style"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap"
       onload="this.onload=null;this.rel='stylesheet'"
     />
     <noscript>
       <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap"
         rel="stylesheet"
       />
     </noscript>

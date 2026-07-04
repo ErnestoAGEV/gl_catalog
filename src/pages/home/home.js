@@ -48,9 +48,9 @@ export function pageHome() {
   const heroSlidesRight = heroSlides.map((s, i) => `
     <div class="hero-img absolute inset-0 transition-opacity duration-[1200ms] ease ${i === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'}" data-slide="${i}">
       ${i === 0 ? `
-      <img src="${s.image}" ${s.image.includes('images.unsplash.com') ? `srcset="${s.image.replace('w=1600', 'w=640')} 640w, ${s.image.replace('w=1600', 'w=1080')} 1080w, ${s.image} 1600w" sizes="(max-width: 768px) 100vw, 50vw"` : ''} alt="" class="w-full h-full object-cover" loading="eager" fetchpriority="high" />
+      <img src="${s.image}" ${s.srcset ? `srcset="${s.srcset}" sizes="(max-width: 768px) 100vw, 50vw"` : ''} alt="" class="w-full h-full object-cover" loading="eager" fetchpriority="high" />
       ` : `
-      <img data-defer-src="${s.image}" ${s.image.includes('images.unsplash.com') ? `data-defer-srcset="${s.image.replace('w=1600', 'w=640')} 640w, ${s.image.replace('w=1600', 'w=1080')} 1080w, ${s.image} 1600w" sizes="(max-width: 768px) 100vw, 50vw"` : ''} alt="" class="w-full h-full object-cover" decoding="async" />
+      <img data-defer-src="${s.image}" ${s.srcset ? `data-defer-srcset="${s.srcset}" sizes="(max-width: 768px) 100vw, 50vw"` : ''} alt="" class="w-full h-full object-cover" decoding="async" />
       `}
       <div class="absolute bottom-4 left-4">
         <span class="${s.captionClass} text-paper text-[12px] font-mono px-3 py-1.5 rounded-full">${s.caption}</span>
@@ -293,7 +293,7 @@ export function pageHome() {
               <p class="font-mono text-[11px] tracking-[0.32em] uppercase opacity-70 mt-1">G&L / 2026</p>
             </div>
             <div class="md:col-span-9">
-              <p class="font-heading font-medium text-[clamp(28px,3.6vw,52px)] leading-[1.1] tracking-[-0.03em]">
+              <p class="font-heading font-semibold text-[clamp(28px,3.6vw,52px)] leading-[1.1] tracking-[-0.03em]">
                 No llenamos el clóset. Curamos. Cada temporada elegimos a mano las mejores marcas — la camisa que se pone una y otra vez, los jeans que solo se ven mejor con el tiempo, la fragancia que la gente te pregunta. <span class="opacity-70">Marcas seleccionadas, al mejor precio. En Colima desde 1995.</span>
               </p>
               <a href="/catalog" class="ul-link text-[14px] font-medium opacity-80 hover:opacity-100 inline-block mt-8">Descubre nuestras marcas →</a>
