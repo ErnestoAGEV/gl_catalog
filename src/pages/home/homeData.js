@@ -37,7 +37,7 @@ export const categoryTiles = [
     span: 'col-span-12 md:col-span-8 row-span-2',
     eyebrow: '01 · Esenciales',
     subtitle: 'Oxford · lino · franela',
-    image: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=1600&q=80&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=1080&q=80&auto=format&fit=crop',
     headingSize: 'text-[clamp(56px,7vw,120px)]',
     type: 'image',
   },

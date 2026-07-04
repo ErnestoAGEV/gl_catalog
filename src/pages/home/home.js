@@ -47,7 +47,11 @@ export function pageHome() {
 
   const heroSlidesRight = heroSlides.map((s, i) => `
     <div class="hero-img absolute inset-0 transition-opacity duration-[1200ms] ease ${i === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'}" data-slide="${i}">
-      <img src="${s.image}" ${s.image.includes('images.unsplash.com') ? `srcset="${s.image.replace('w=1600', 'w=640')} 640w, ${s.image.replace('w=1600', 'w=1080')} 1080w, ${s.image} 1600w" sizes="(max-width: 768px) 100vw, 50vw"` : ''} alt="" class="w-full h-full object-cover" loading="${i === 0 ? 'eager' : 'lazy'}" ${i === 0 ? 'fetchpriority="high"' : 'decoding="async"'} />
+      ${i === 0 ? `
+      <img src="${s.image}" ${s.image.includes('images.unsplash.com') ? `srcset="${s.image.replace('w=1600', 'w=640')} 640w, ${s.image.replace('w=1600', 'w=1080')} 1080w, ${s.image} 1600w" sizes="(max-width: 768px) 100vw, 50vw"` : ''} alt="" class="w-full h-full object-cover" loading="eager" fetchpriority="high" />
+      ` : `
+      <img data-defer-src="${s.image}" ${s.image.includes('images.unsplash.com') ? `data-defer-srcset="${s.image.replace('w=1600', 'w=640')} 640w, ${s.image.replace('w=1600', 'w=1080')} 1080w, ${s.image} 1600w" sizes="(max-width: 768px) 100vw, 50vw"` : ''} alt="" class="w-full h-full object-cover" decoding="async" />
+      `}
       <div class="absolute bottom-4 left-4">
         <span class="${s.captionClass} text-paper text-[12px] font-mono px-3 py-1.5 rounded-full">${s.caption}</span>
       </div>
@@ -385,6 +389,28 @@ export function pageHome() {
         }
         clearInterval(autoTimer)
         autoTimer = setInterval(() => goToSlide(currentSlide + 1), 6000)
+      }
+
+      // Hidden slides don't get real src until the visible hero finished loading,
+      // so they never compete with the LCP image for bandwidth.
+      const hydrateDeferredImages = () => {
+        root.querySelectorAll('img[data-defer-src]').forEach(img => {
+          if (img.dataset.deferSrcset) {
+            img.srcset = img.dataset.deferSrcset
+            delete img.dataset.deferSrcset
+          }
+          img.src = img.dataset.deferSrc
+          delete img.dataset.deferSrc
+        })
+      }
+      const firstHeroImg = rightSlides[0]?.querySelector('img')
+      if (firstHeroImg && !firstHeroImg.complete) {
+        firstHeroImg.addEventListener('load', hydrateDeferredImages, { once: true })
+        firstHeroImg.addEventListener('error', hydrateDeferredImages, { once: true })
+        // Fallback in case load never fires
+        setTimeout(hydrateDeferredImages, 4000)
+      } else {
+        hydrateDeferredImages()
       }
 
       // Init
