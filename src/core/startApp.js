@@ -70,8 +70,14 @@ function notifyIncomingOrder(order) {
 }
 
 export async function startApp(mountEl) {
-  // Restore admin session from Supabase BEFORE first render so route guards work
-  await initAdminSession()
+  // Restore admin session BEFORE first render only on /admin routes (route guards).
+  // On public routes, run it in background so it never blocks the first paint.
+  const sessionPromise = initAdminSession()
+  if (window.location.pathname.startsWith('/admin')) {
+    await sessionPromise
+  } else {
+    sessionPromise.catch(() => {})
+  }
 
   // Listen for Supabase errors dispatched by store.js — show elegant toast instead of alert()
   window.addEventListener('gl:error', (e) => {

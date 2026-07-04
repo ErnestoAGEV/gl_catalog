@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gl-store-v1'
+const CACHE_NAME = 'gl-store-v2'
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -29,33 +29,54 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
-// Fetch - network first, fallback to cache
+// Hashed build assets and images never change for a given URL → cache-first
+function isImmutable(url) {
+  if (url.pathname.startsWith('/assets/')) return true
+  return /\.(png|jpg|jpeg|webp|svg|ico|woff2)$/.test(url.pathname)
+}
+
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
   if (event.request.method !== 'GET') return
 
-  // Skip external requests (like Unsplash images)
-  if (!event.request.url.startsWith(self.location.origin)) {
+  const url = new URL(event.request.url)
+
+  // Skip external requests (Supabase, image CDNs)
+  if (url.origin !== self.location.origin) return
+
+  if (isImmutable(url)) {
+    // Cache-first: instant repeat loads
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached
+        return fetch(event.request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone()
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
+          }
+          return response
+        })
+      })
+    )
     return
   }
 
+  // Network-first for HTML/navigation so deploys are picked up immediately
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Clone the response before caching
-        const responseClone = response.clone()
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseClone)
-        })
+        if (response.ok) {
+          const responseClone = response.clone()
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone)
+          })
+        }
         return response
       })
       .catch(() => {
-        // Fallback to cache
         return caches.match(event.request).then((cachedResponse) => {
           if (cachedResponse) {
             return cachedResponse
           }
-          // Return a basic offline page for navigation requests
           if (event.request.mode === 'navigate') {
             return caches.match('/')
           }

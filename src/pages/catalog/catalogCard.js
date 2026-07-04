@@ -67,8 +67,8 @@ export function productCard(p, idx) {
   return `
     <a href="/producto/${p.id}" class="pcard group block" data-product-id="${p.id}">
       <div class="pimg-wrap${isPerfume ? ' bg-white' : ''}">
-        <img src="${img1}" alt="${p.name}" class="${imgClass}" loading="lazy" />
-        <img src="${img2}" alt="" class="${imgAltClass}" loading="lazy" />
+        <img src="${img1}" alt="${p.name}" class="${imgClass}" loading="lazy" decoding="async" />
+        <img src="${img2}" alt="" class="${imgAltClass}" loading="lazy" decoding="async" />
         <div class="badge-wrap">${badges.join('')}</div>
         <div class="absolute top-3 right-3 font-mono text-[10px] tracking-[0.2em] uppercase text-ink/60 bg-paper/80 backdrop-blur px-2 py-1 rounded-full">${ord}</div>
         <div class="quick-add">

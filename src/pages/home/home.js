@@ -47,7 +47,7 @@ export function pageHome() {
 
   const heroSlidesRight = heroSlides.map((s, i) => `
     <div class="hero-img absolute inset-0 transition-opacity duration-[1200ms] ease ${i === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'}" data-slide="${i}">
-      <img src="${s.image}" alt="" class="w-full h-full object-cover" loading="${i === 0 ? 'eager' : 'lazy'}" />
+      <img src="${s.image}" ${s.image.includes('images.unsplash.com') ? `srcset="${s.image.replace('w=1600', 'w=640')} 640w, ${s.image.replace('w=1600', 'w=1080')} 1080w, ${s.image} 1600w" sizes="(max-width: 768px) 100vw, 50vw"` : ''} alt="" class="w-full h-full object-cover" loading="${i === 0 ? 'eager' : 'lazy'}" ${i === 0 ? 'fetchpriority="high"' : 'decoding="async"'} />
       <div class="absolute bottom-4 left-4">
         <span class="${s.captionClass} text-paper text-[12px] font-mono px-3 py-1.5 rounded-full">${s.caption}</span>
       </div>
@@ -74,7 +74,7 @@ export function pageHome() {
     if (tile.type === 'image-brand') {
       return `
         <a href="${tile.href}" class="ct ${tile.span} relative bg-ink text-paper rounded-md p-5 flex flex-col justify-between overflow-hidden group">
-          <img src="${tile.image}" alt="${tile.name}" class="ct-img absolute inset-0 w-full h-full object-cover" loading="lazy" />
+          <img src="${tile.image}" alt="${tile.name}" class="ct-img absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
           <div class="absolute inset-0 bg-ink/35"></div>
           <span class="font-mono text-[10px] tracking-[0.22em] uppercase opacity-80 relative z-10">${tile.eyebrow}</span>
           <div class="ct-label relative z-10">
@@ -87,7 +87,7 @@ export function pageHome() {
     if (tile.type === 'image-ink') {
       return `
         <a href="${tile.href}" class="ct ${tile.span} relative bg-ink text-paper rounded-md p-5 flex flex-col justify-between overflow-hidden group">
-          <img src="${tile.image}" alt="${tile.name}" class="ct-img absolute inset-0 w-full h-full object-cover opacity-30" loading="lazy" />
+          <img src="${tile.image}" alt="${tile.name}" class="ct-img absolute inset-0 w-full h-full object-cover opacity-30" loading="lazy" decoding="async" />
           <div class="absolute inset-0 bg-ink/40"></div>
           <span class="font-mono text-[10px] tracking-[0.22em] uppercase opacity-70 relative z-10">${tile.eyebrow}</span>
           <div class="ct-label relative z-10">
@@ -104,7 +104,7 @@ export function pageHome() {
       : 'bg-gradient-to-t from-ink/35 to-ink/0'
     return `
       <a href="${tile.href}" class="ct ${tile.span} relative rounded-md overflow-hidden group">
-        <img src="${tile.image}" alt="${tile.name}" class="ct-img absolute inset-0 w-full h-full object-cover" loading="lazy" />
+        <img src="${tile.image}" alt="${tile.name}" class="ct-img absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
         <div class="absolute inset-0 ${gradient}"></div>
         <div class="relative h-full flex flex-col justify-between p-5 text-paper">
           ${isLarge ? `
