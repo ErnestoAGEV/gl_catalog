@@ -165,16 +165,10 @@ export async function addProduct(product) {
   const row = mapProductToRow(product)
   let { data, error } = await supabase.from('products').insert(row).select().single()
 
-  if (error && (error.message?.includes('original_price') || error.message?.includes('originalPrice') || error.message?.includes('originalprice'))) {
-    if (error.message.includes('original_price')) {
-      delete row.original_price
-      if (detectedOriginalPriceColumn === 'original_price') detectedOriginalPriceColumn = 'originalPrice'
-    } else if (error.message.includes('originalPrice')) {
-      delete row.originalPrice
-      if (detectedOriginalPriceColumn === 'originalPrice') detectedOriginalPriceColumn = 'original_price'
-    } else if (error.message.includes('originalprice')) {
-      delete row.originalprice
-    }
+  if (error && (error.message?.includes('original_price') || error.message?.includes('originalPrice') || error.message?.includes('originalprice') || error.code === 'PGRST204')) {
+    delete row.original_price
+    delete row.originalPrice
+    delete row.originalprice
     const retry = await supabase.from('products').insert(row).select().single()
     data = retry.data
     error = retry.error
@@ -202,16 +196,10 @@ export async function updateProduct(id, updates) {
   const row = mapProductToRow({ ...getProductById(id), ...updates })
   let { error } = await supabase.from('products').update(row).eq('id', id)
 
-  if (error && (error.message?.includes('original_price') || error.message?.includes('originalPrice') || error.message?.includes('originalprice'))) {
-    if (error.message.includes('original_price')) {
-      delete row.original_price
-      if (detectedOriginalPriceColumn === 'original_price') detectedOriginalPriceColumn = 'originalPrice'
-    } else if (error.message.includes('originalPrice')) {
-      delete row.originalPrice
-      if (detectedOriginalPriceColumn === 'originalPrice') detectedOriginalPriceColumn = 'original_price'
-    } else if (error.message.includes('originalprice')) {
-      delete row.originalprice
-    }
+  if (error && (error.message?.includes('original_price') || error.message?.includes('originalPrice') || error.message?.includes('originalprice') || error.code === 'PGRST204')) {
+    delete row.original_price
+    delete row.originalPrice
+    delete row.originalprice
     const retry = await supabase.from('products').update(row).eq('id', id)
     error = retry.error
   }

@@ -567,14 +567,13 @@ export async function startApp(mountEl) {
   // No extra render(getRoute()) needed — avoids double render on startup.
 
   // ─── Smart re-render: only re-render a page when its relevant state slice changes ───
-  // Catalog manages its own updates via its own subscribe, so we skip it here.
+  // Catalog and Admin products manage their own updates via their own subscribe, so we skip full-page rebuilds here.
   const routeRelevantKeys = {
     '/':              (s) => `${s.products.length}|${s.isLoading}|${s.products.filter(p => p.badge !== 'Borrador').length}`,
     '/producto':      (s) => `${s.products.length}|${s.isLoading}`,
     '/cart':          (s) => `${JSON.stringify(s.cart)}|${JSON.stringify(s.coupon)}|${s.products.length}`,
     '/wishlist':      (s) => JSON.stringify(s.wishlist),
     '/checkout':      (s) => `${JSON.stringify(s.cart)}|${JSON.stringify(s.coupon)}|${s.products.length}`,
-    '/admin/products':(s) => JSON.stringify(s.products),
   }
 
   let prevSignatures = {}
