@@ -38,7 +38,7 @@ export function bestSellerRow(p, idx) {
         <span class="ls-name col-span-7 md:col-span-6 font-heading font-bold text-[clamp(24px,2.5vw,40px)] tracking-[-0.03em] leading-tight">${p.name}</span>
         <span class="hidden md:block col-span-3 font-mono text-[12px] text-ink/55 uppercase tracking-wider">${descriptor}</span>
         <div class="col-span-4 md:col-span-2 flex flex-col md:flex-row items-end md:items-center justify-end gap-0 md:gap-1.5 font-mono text-[15px] font-semibold">
-          ${p.originalPrice ? `<span class="text-ink/40 line-through font-normal text-[12px]">${formatMoney(p.originalPrice)}</span>` : ''}
+          ${(p.originalPrice && Number(p.originalPrice) > Number(p.price)) ? `<span class="text-ink/40 line-through font-normal text-[12px]">${formatMoney(p.originalPrice)}</span>` : ''}
           <span>${formatMoney(p.price)}</span>
         </div>
       </div>

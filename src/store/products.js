@@ -4,13 +4,26 @@ import { readJson, writeJson } from '../utils/storage.js'
 import { supabase } from '../core/supabase.js'
 import { ensureAdminAccess } from './auth.js'
 
+let detectedOriginalPriceColumn = null
+
 function mapRowToProduct(row) {
+  if (detectedOriginalPriceColumn === null) {
+    if ('originalPrice' in row) detectedOriginalPriceColumn = 'originalPrice'
+    else if ('original_price' in row) detectedOriginalPriceColumn = 'original_price'
+    else if ('originalprice' in row) detectedOriginalPriceColumn = 'originalprice'
+  }
+
+  const rawOriginalPrice = row.originalPrice ?? row.original_price ?? row.originalprice
+  const originalPrice = (rawOriginalPrice != null && rawOriginalPrice !== '' && !isNaN(Number(rawOriginalPrice)))
+    ? Number(rawOriginalPrice)
+    : null
+
   return {
     ...row,
     id: row.id,
     name: row.name,
     price: Number(row.price),
-    originalPrice: row.originalPrice ? Number(row.originalPrice) : null,
+    originalPrice,
     stock: row.stock,
     type: row.type,
     category: row.category,
@@ -24,7 +37,11 @@ function mapRowToProduct(row) {
 }
 
 function mapProductToRow(p) {
-  return {
+  const origPriceVal = (p.originalPrice != null && p.originalPrice !== '' && !isNaN(Number(p.originalPrice)))
+    ? Number(p.originalPrice)
+    : null
+
+  const row = {
     name: p.name,
     price: p.price,
     type: p.type,
@@ -36,6 +53,15 @@ function mapProductToRow(p) {
     stock: p.stock,
     badge: p.badge,
   }
+
+  if (detectedOriginalPriceColumn) {
+    row[detectedOriginalPriceColumn] = origPriceVal
+  } else {
+    row.originalPrice = origPriceVal
+    row.original_price = origPriceVal
+  }
+
+  return row
 }
 
 export async function loadProducts() {
@@ -137,7 +163,22 @@ export async function addProduct(product) {
   if (!access.ok) return { error: access.error }
 
   const row = mapProductToRow(product)
-  const { data, error } = await supabase.from('products').insert(row).select().single()
+  let { data, error } = await supabase.from('products').insert(row).select().single()
+
+  if (error && (error.message?.includes('original_price') || error.message?.includes('originalPrice') || error.message?.includes('originalprice'))) {
+    if (error.message.includes('original_price')) {
+      delete row.original_price
+      if (detectedOriginalPriceColumn === 'original_price') detectedOriginalPriceColumn = 'originalPrice'
+    } else if (error.message.includes('originalPrice')) {
+      delete row.originalPrice
+      if (detectedOriginalPriceColumn === 'originalPrice') detectedOriginalPriceColumn = 'original_price'
+    } else if (error.message.includes('originalprice')) {
+      delete row.originalprice
+    }
+    const retry = await supabase.from('products').insert(row).select().single()
+    data = retry.data
+    error = retry.error
+  }
 
   if (error) {
     if (import.meta.env.DEV) console.error('Error creating product:', error)
@@ -159,7 +200,21 @@ export async function updateProduct(id, updates) {
   if (!access.ok) return { error: access.error }
 
   const row = mapProductToRow({ ...getProductById(id), ...updates })
-  const { error } = await supabase.from('products').update(row).eq('id', id)
+  let { error } = await supabase.from('products').update(row).eq('id', id)
+
+  if (error && (error.message?.includes('original_price') || error.message?.includes('originalPrice') || error.message?.includes('originalprice'))) {
+    if (error.message.includes('original_price')) {
+      delete row.original_price
+      if (detectedOriginalPriceColumn === 'original_price') detectedOriginalPriceColumn = 'originalPrice'
+    } else if (error.message.includes('originalPrice')) {
+      delete row.originalPrice
+      if (detectedOriginalPriceColumn === 'originalPrice') detectedOriginalPriceColumn = 'original_price'
+    } else if (error.message.includes('originalprice')) {
+      delete row.originalprice
+    }
+    const retry = await supabase.from('products').update(row).eq('id', id)
+    error = retry.error
+  }
 
   if (error) {
     if (import.meta.env.DEV) console.error('Error updating product:', error)

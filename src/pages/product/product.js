@@ -243,7 +243,7 @@ export function pageProduct(initialState) {
                 <!-- Price -->
                 <div class="flex items-baseline gap-4 mb-2">
                   <span class="font-display font-extrabold text-[clamp(32px,4vw,56px)] leading-none tracking-[-0.04em] digit-tabular${discount > 0 ? ' text-brand' : ''}">${formatMoney(product.price)}</span>
-                  ${product.originalPrice ? `<span class="font-mono text-[16px] text-ink/40 line-through digit-tabular">${formatMoney(product.originalPrice)}</span>` : ''}
+                  ${(product.originalPrice && Number(product.originalPrice) > Number(product.price)) ? `<span class="font-mono text-[16px] text-ink/40 line-through digit-tabular">${formatMoney(product.originalPrice)}</span>` : ''}
                 </div>
                 ${discount > 0 ? `
                 <div class="flex items-center gap-3 mb-8">
