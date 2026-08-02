@@ -20,6 +20,10 @@ export async function ensureAdminAccess() {
     return { ok: false, error: createStoreError('No autorizado', 'NOT_AUTHORIZED') }
   }
 
+  if (state.isAdminAuthed) {
+    return { ok: true }
+  }
+
   const { data: adminUser, error: adminError } = await supabase
     .from('admin_users')
     .select('user_id')

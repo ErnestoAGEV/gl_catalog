@@ -163,13 +163,33 @@ export async function addProduct(product) {
   if (!access.ok) return { error: access.error }
 
   const row = mapProductToRow(product)
-  let { data, error } = await supabase.from('products').insert(row).select().single()
+
+  const executeInsert = async (payload) => {
+    try {
+      return await supabase.from('products').insert(payload).select().single()
+    } catch (e) {
+      if (e.name === 'AbortError' || e.message?.includes('aborted')) {
+        await new Promise(r => setTimeout(r, 250))
+        return await supabase.from('products').insert(payload).select().single()
+      }
+      throw e
+    }
+  }
+
+  let { data, error } = await executeInsert(row)
+
+  if (error && (error.message?.includes('aborted') || error.name === 'AbortError')) {
+    await new Promise(r => setTimeout(r, 300))
+    const retry = await executeInsert(row)
+    data = retry.data
+    error = retry.error
+  }
 
   if (error && (error.message?.includes('original_price') || error.message?.includes('originalPrice') || error.message?.includes('originalprice') || error.code === 'PGRST204')) {
     delete row.original_price
     delete row.originalPrice
     delete row.originalprice
-    const retry = await supabase.from('products').insert(row).select().single()
+    const retry = await executeInsert(row)
     data = retry.data
     error = retry.error
   }
@@ -194,13 +214,32 @@ export async function updateProduct(id, updates) {
   if (!access.ok) return { error: access.error }
 
   const row = mapProductToRow({ ...getProductById(id), ...updates })
-  let { error } = await supabase.from('products').update(row).eq('id', id)
+
+  const executeUpdate = async (payload) => {
+    try {
+      return await supabase.from('products').update(payload).eq('id', id)
+    } catch (e) {
+      if (e.name === 'AbortError' || e.message?.includes('aborted')) {
+        await new Promise(r => setTimeout(r, 250))
+        return await supabase.from('products').update(payload).eq('id', id)
+      }
+      throw e
+    }
+  }
+
+  let { error } = await executeUpdate(row)
+
+  if (error && (error.message?.includes('aborted') || error.name === 'AbortError')) {
+    await new Promise(r => setTimeout(r, 300))
+    const retry = await executeUpdate(row)
+    error = retry.error
+  }
 
   if (error && (error.message?.includes('original_price') || error.message?.includes('originalPrice') || error.message?.includes('originalprice') || error.code === 'PGRST204')) {
     delete row.original_price
     delete row.originalPrice
     delete row.originalprice
-    const retry = await supabase.from('products').update(row).eq('id', id)
+    const retry = await executeUpdate(row)
     error = retry.error
   }
 
@@ -225,7 +264,19 @@ export async function deleteProduct(id) {
   const access = await ensureAdminAccess()
   if (!access.ok) return { error: access.error }
 
-  const { error } = await supabase.from('products').delete().eq('id', id)
+  let error
+  try {
+    const res = await supabase.from('products').delete().eq('id', id)
+    error = res.error
+  } catch (e) {
+    if (e.name === 'AbortError' || e.message?.includes('aborted')) {
+      await new Promise(r => setTimeout(r, 250))
+      const retry = await supabase.from('products').delete().eq('id', id)
+      error = retry.error
+    } else {
+      throw e
+    }
+  }
 
   if (error) {
     if (import.meta.env.DEV) console.error('Error deleting product:', error)
@@ -252,12 +303,26 @@ export async function uploadProductImage(file) {
     .replace(/[^a-zA-Z0-9._-]/g, '')
     .toLowerCase()
   const fileName = `${Date.now()}-${safeName || 'image.jpg'}`
-  const { data, error } = await supabase.storage
-    .from('products')
-    .upload(fileName, file, {
-      cacheControl: '3600',
-      upsert: false
-    })
+
+  let data, error
+  try {
+    const res = await supabase.storage
+      .from('products')
+      .upload(fileName, file, { cacheControl: '3600', upsert: false })
+    data = res.data
+    error = res.error
+  } catch (e) {
+    if (e.name === 'AbortError' || e.message?.includes('aborted')) {
+      await new Promise(r => setTimeout(r, 300))
+      const retry = await supabase.storage
+        .from('products')
+        .upload(fileName, file, { cacheControl: '3600', upsert: false })
+      data = retry.data
+      error = retry.error
+    } else {
+      throw e
+    }
+  }
 
   if (error) {
     if (import.meta.env.DEV) console.error('Error uploading image:', error)

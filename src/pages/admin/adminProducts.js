@@ -734,7 +734,8 @@ export function pageAdminProducts(state) {
 
         } catch (err) {
           console.error(err)
-          setError(err.message || 'Error al guardar. Revisa la consola.')
+          const isAbort = err?.name === 'AbortError' || err?.message?.includes('aborted')
+          setError(isAbort ? 'La conexión se interrumpió brevemente. Intenta hacer clic en Guardar de nuevo.' : (err?.message || 'Error al guardar. Revisa la consola.'))
         } finally {
           submitBtn.disabled = false
           submitBtn.innerHTML = originalBtnText
