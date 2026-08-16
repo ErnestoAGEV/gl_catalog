@@ -162,9 +162,9 @@ export function pageCatalog(initialState) {
             <input name="minPrice" inputmode="numeric" type="number" min="0" placeholder="Precio m\u00EDn." class="flex-1 h-11 rounded-full border border-ink/10 px-4 font-mono text-[12px]" />
             <input name="maxPrice" inputmode="numeric" type="number" min="0" placeholder="Precio m\u00E1x." class="flex-1 h-11 rounded-full border border-ink/10 px-4 font-mono text-[12px]" />
           </div>
-          <div class="sheet-actions flex gap-3">
-            <button id="close-filters" type="button" class="flex-1 h-12 rounded-full bg-fog hover:bg-ink hover:text-paper text-[13px] font-semibold transition-colors">Cerrar</button>
-            <button id="reset-filters-mobile" type="button" class="flex-1 h-12 rounded-full bg-ink text-paper hover:bg-brand text-[13px] font-semibold transition-colors">Limpiar</button>
+          <div class="sheet-actions flex gap-3 items-center">
+            <button id="reset-filters-mobile" type="button" class="h-12 px-5 rounded-full border border-ink/15 text-ink/55 hover:text-ink hover:border-ink/40 text-[13px] font-semibold transition-colors cursor-pointer">Limpiar</button>
+            <button id="close-filters" type="button" class="flex-1 h-12 rounded-full bg-ink text-paper hover:bg-brand text-[13px] font-semibold transition-colors cursor-pointer"><span id="sheet-result-count">Ver ${publicProducts.length} productos</span></button>
           </div>
         </div>
       </div>
@@ -435,6 +435,9 @@ export function pageCatalog(initialState) {
           if (activeType) mtext += ` \u00B7 ${activeType}`
           resultElMobile.textContent = mtext
         }
+        // Primary CTA in filter sheet: reflect live result count
+        const sheetCountEl = root.querySelector('#sheet-result-count')
+        if (sheetCountEl) sheetCountEl.textContent = `Ver ${count} ${count === 1 ? 'producto' : 'productos'}`
 
         // Total count chip
         const totalEl = root.querySelector('#totalCount')
