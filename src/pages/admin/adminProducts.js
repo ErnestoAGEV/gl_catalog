@@ -1,4 +1,4 @@
-import { adminLogout, addProduct, updateProduct, deleteProduct, uploadProductImage, getCategoryNames } from '../../store/index.js'
+import { adminLogout, addProduct, updateProduct, deleteProduct, uploadProductImage, getCategoryNames, subscribe } from '../../store/index.js'
 import { navigate } from '../../core/router.js'
 import { on, qs } from '../../utils/dom.js'
 import { showToast } from '../../utils/toast.js'
@@ -69,15 +69,15 @@ export function pageAdminProducts(state) {
           <div class="grid grid-cols-3 gap-2.5 flex-1 max-w-2xl">
             <div class="bg-paper rounded-xl2 border border-line px-4 py-3">
               <p class="eyebrow text-faint">Catálogo</p>
-              <p class="font-display font-bold text-ink text-[20px] tnum mt-0.5">${productCount}</p>
+              <p id="kpi-total" class="font-display font-bold text-ink text-[20px] tnum mt-0.5">${productCount}</p>
             </div>
             <div class="bg-paper rounded-xl2 border border-line px-4 py-3">
               <p class="eyebrow text-faint">Bajo stock</p>
-              <p class="font-display font-bold text-warn text-[20px] tnum mt-0.5">${lowStockCount}</p>
+              <p id="kpi-low" class="font-display font-bold text-warn text-[20px] tnum mt-0.5">${lowStockCount}</p>
             </div>
             <div class="bg-paper rounded-xl2 border border-line px-4 py-3">
               <p class="eyebrow text-faint">Agotados</p>
-              <p class="font-display font-bold text-bad text-[20px] tnum mt-0.5">${outStockCount}</p>
+              <p id="kpi-out" class="font-display font-bold text-bad text-[20px] tnum mt-0.5">${outStockCount}</p>
             </div>
           </div>
           <button type="button" id="toggle-form-btn" class="adm-btn adm-btn-primary shrink-0">
@@ -242,7 +242,8 @@ export function pageAdminProducts(state) {
           pendingDeleteId = null
           isDeleteModalOpen = false
           modal.classList.add('hidden')
-          await deleteProduct(idToDelete)
+          const { error } = await deleteProduct(idToDelete)
+          showToast(error ? (error.message || 'No se pudo eliminar el producto') : 'Producto eliminado', error ? 'error' : 'success')
         })
         modal.addEventListener('click', (e) => {
           if (e.target === modal) {
@@ -464,6 +465,13 @@ export function pageAdminProducts(state) {
         if (searchTerm !== null) currentSearchTerm = searchTerm
         if (page !== null) currentPage = page
         
+        const kpiTotal = qs(root, '#kpi-total')
+        const kpiLow = qs(root, '#kpi-low')
+        const kpiOut = qs(root, '#kpi-out')
+        if (kpiTotal) kpiTotal.textContent = state.products.length
+        if (kpiLow) kpiLow.textContent = state.products.filter(p => !isInfiniteStock(p.stock) && stockAsNumber(p.stock) > 0 && stockAsNumber(p.stock) <= 10).length
+        if (kpiOut) kpiOut.textContent = state.products.filter(p => !isInfiniteStock(p.stock) && stockAsNumber(p.stock) <= 0).length
+
         const term = currentSearchTerm.toLowerCase()
         const filtered = state.products.filter(p => {
           const matchesTerm = !term
@@ -699,7 +707,13 @@ export function pageAdminProducts(state) {
         const submitBtn = qs(root, 'button[type="submit"]')
         const originalBtnText = submitBtn.innerHTML
         submitBtn.disabled = true
-        submitBtn.innerHTML = '<span class="animate-spin">⌛</span> Subiendo & Guardando...'
+        submitBtn.setAttribute('aria-busy', 'true')
+        // Mismo spinner que el resto del admin (dashboard, banners, clientes),
+        // en border-current para que herede el blanco del boton primario.
+        submitBtn.innerHTML = `
+          <span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" aria-hidden="true"></span>
+          <span>${idInput.value ? 'Guardando cambios' : 'Guardando'}</span>
+        `
 
         try {
           if (selectedFiles && selectedFiles.length > 0) {
@@ -735,9 +749,15 @@ export function pageAdminProducts(state) {
         } catch (err) {
           console.error(err)
           const isAbort = err?.name === 'AbortError' || err?.message?.includes('aborted')
-          setError(isAbort ? 'La conexión se interrumpió brevemente. Intenta hacer clic en Guardar de nuevo.' : (err?.message || 'Error al guardar. Revisa la consola.'))
+          const isTimeout = err?.name === 'TimeoutError'
+          setError(
+            isTimeout ? `${err.message} Recarga la página para verificar si alcanzó a guardarse antes de volver a intentar.`
+            : isAbort ? 'La conexión se interrumpió brevemente. Intenta hacer clic en Guardar de nuevo.'
+            : (err?.message || 'Error al guardar. Revisa la consola.')
+          )
         } finally {
           submitBtn.disabled = false
+          submitBtn.removeAttribute('aria-busy')
           submitBtn.innerHTML = originalBtnText
         }
       })
@@ -832,6 +852,18 @@ export function pageAdminProducts(state) {
 
       root[TOGGLE_PUBLISH_HANDLER_KEY] = togglePublishHandler
       root.addEventListener('change', togglePublishHandler)
+
+      // El store reasigna state.products (delete, refresco en segundo plano), asi que
+      // el snapshot recibido en onMount se queda viejo. Re-render con cada emit().
+      const unsubscribe = subscribe((newState) => {
+        state = newState
+        renderList()
+      })
+
+      return () => {
+        unsubscribe()
+        document.getElementById('delete-confirm-modal')?.remove()
+      }
     },
   }
 }

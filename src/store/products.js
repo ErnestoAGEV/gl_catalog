@@ -3,6 +3,25 @@ import { STORAGE_KEYS } from '../utils/config.js'
 import { readJson, writeJson } from '../utils/storage.js'
 import { supabase } from '../core/supabase.js'
 import { ensureAdminAccess } from './auth.js'
+import { withTimeout } from '../utils/async.js'
+
+const CACHE_KEY = 'gl_products_cache'
+const CACHE_TIMESTAMP_KEY = 'gl_products_cache_timestamp'
+
+/** Reescribe el caché local tras cada mutación; si no, al recargar se ve la lista vieja. */
+function cacheProducts() {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(state.products))
+    localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString())
+  } catch (cacheError) {
+    console.warn('Failed to cache products:', cacheError)
+  }
+}
+
+/** Valida permisos de admin sin poder colgarse indefinidamente. */
+function checkAdmin() {
+  return withTimeout(ensureAdminAccess(), 15000, 'La validación de permisos')
+}
 
 let detectedOriginalPriceColumn = null
 
@@ -65,8 +84,6 @@ function mapProductToRow(p) {
 }
 
 export async function loadProducts() {
-  const CACHE_KEY = 'gl_products_cache'
-  const CACHE_TIMESTAMP_KEY = 'gl_products_cache_timestamp'
   const CACHE_TTL = 60 * 60 * 1000
 
   try {
@@ -124,12 +141,7 @@ async function loadProductsFromSupabase(isBackgroundUpdate = false) {
       state.products = data.map(mapRowToProduct)
       state.isLoading = false
 
-      try {
-        localStorage.setItem('gl_products_cache', JSON.stringify(state.products))
-        localStorage.setItem('gl_products_cache_timestamp', Date.now().toString())
-      } catch (cacheError) {
-        console.warn('Failed to cache products:', cacheError)
-      }
+      cacheProducts()
 
       const validProductIds = new Set(state.products.map(p => p.id))
       state.cart = state.cart.filter(item => validProductIds.has(item.productId))
@@ -159,18 +171,24 @@ export async function addProduct(product) {
     return { error: createStoreError('No hay conexión con la base de datos.', 'SUPABASE_UNAVAILABLE') }
   }
 
-  const access = await ensureAdminAccess()
+  const access = await checkAdmin()
   if (!access.ok) return { error: access.error }
 
   const row = mapProductToRow(product)
 
+  const insert = (payload) => withTimeout(
+    supabase.from('products').insert(payload).select().single(),
+    20000,
+    'El guardado'
+  )
+
   const executeInsert = async (payload) => {
     try {
-      return await supabase.from('products').insert(payload).select().single()
+      return await insert(payload)
     } catch (e) {
       if (e.name === 'AbortError' || e.message?.includes('aborted')) {
         await new Promise(r => setTimeout(r, 250))
-        return await supabase.from('products').insert(payload).select().single()
+        return await insert(payload)
       }
       throw e
     }
@@ -201,6 +219,7 @@ export async function addProduct(product) {
 
   const newProduct = mapRowToProduct(data)
   state.products.unshift(newProduct)
+  cacheProducts()
   emit()
   return { success: true }
 }
@@ -210,18 +229,24 @@ export async function updateProduct(id, updates) {
     return { error: createStoreError('No hay conexión con la base de datos.', 'SUPABASE_UNAVAILABLE') }
   }
 
-  const access = await ensureAdminAccess()
+  const access = await checkAdmin()
   if (!access.ok) return { error: access.error }
 
   const row = mapProductToRow({ ...getProductById(id), ...updates })
 
+  const update = (payload) => withTimeout(
+    supabase.from('products').update(payload).eq('id', id),
+    20000,
+    'La actualización'
+  )
+
   const executeUpdate = async (payload) => {
     try {
-      return await supabase.from('products').update(payload).eq('id', id)
+      return await update(payload)
     } catch (e) {
       if (e.name === 'AbortError' || e.message?.includes('aborted')) {
         await new Promise(r => setTimeout(r, 250))
-        return await supabase.from('products').update(payload).eq('id', id)
+        return await update(payload)
       }
       throw e
     }
@@ -251,6 +276,7 @@ export async function updateProduct(id, updates) {
   const idx = state.products.findIndex(p => p.id === id)
   if (idx !== -1) {
     state.products[idx] = { ...state.products[idx], ...updates }
+    cacheProducts()
     emit()
   }
   return { success: true }
@@ -261,17 +287,19 @@ export async function deleteProduct(id) {
     return { error: createStoreError('No hay conexión con la base de datos.', 'SUPABASE_UNAVAILABLE') }
   }
 
-  const access = await ensureAdminAccess()
+  const access = await checkAdmin()
   if (!access.ok) return { error: access.error }
+
+  const del = () => withTimeout(supabase.from('products').delete().eq('id', id), 20000, 'El borrado')
 
   let error
   try {
-    const res = await supabase.from('products').delete().eq('id', id)
+    const res = await del()
     error = res.error
   } catch (e) {
     if (e.name === 'AbortError' || e.message?.includes('aborted')) {
       await new Promise(r => setTimeout(r, 250))
-      const retry = await supabase.from('products').delete().eq('id', id)
+      const retry = await del()
       error = retry.error
     } else {
       throw e
@@ -284,6 +312,7 @@ export async function deleteProduct(id) {
   }
 
   state.products = state.products.filter(p => p.id !== id)
+  cacheProducts()
   emit()
   return { success: true }
 }
@@ -293,7 +322,7 @@ export async function uploadProductImage(file) {
     return { error: createStoreError('No hay conexión con la base de datos.', 'SUPABASE_UNAVAILABLE') }
   }
 
-  const access = await ensureAdminAccess()
+  const access = await checkAdmin()
   if (!access.ok) return { error: access.error }
 
   const safeName = file.name
@@ -304,19 +333,21 @@ export async function uploadProductImage(file) {
     .toLowerCase()
   const fileName = `${Date.now()}-${safeName || 'image.jpg'}`
 
+  const upload = () => withTimeout(
+    supabase.storage.from('products').upload(fileName, file, { cacheControl: '3600', upsert: false }),
+    60000,
+    `La subida de ${file.name}`
+  )
+
   let data, error
   try {
-    const res = await supabase.storage
-      .from('products')
-      .upload(fileName, file, { cacheControl: '3600', upsert: false })
+    const res = await upload()
     data = res.data
     error = res.error
   } catch (e) {
     if (e.name === 'AbortError' || e.message?.includes('aborted')) {
       await new Promise(r => setTimeout(r, 300))
-      const retry = await supabase.storage
-        .from('products')
-        .upload(fileName, file, { cacheControl: '3600', upsert: false })
+      const retry = await upload()
       data = retry.data
       error = retry.error
     } else {

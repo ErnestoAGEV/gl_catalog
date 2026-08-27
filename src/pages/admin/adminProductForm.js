@@ -173,7 +173,7 @@ export function productFormHTML(allColors, dynamicCategories) {
             </div>
             <div class="flex items-center gap-3">
               <button type="button" id="product-cancel" class="adm-btn adm-btn-ghost flex-1">Cancelar</button>
-              <button type="submit" class="adm-btn adm-btn-primary flex-1">
+              <button type="submit" class="adm-btn adm-btn-primary flex-1 disabled:opacity-70 disabled:cursor-not-allowed">
                 <span id="submit-text">Guardar</span>
               </button>
             </div>
