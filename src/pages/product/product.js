@@ -7,6 +7,7 @@ import { getBadgeColor } from '../catalog/catalogCard.js'
 import { handleQuickAdd } from '../catalog/catalogQuickAdd.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 import { escapeHtml } from '../../utils/sanitize.js'
+import { pageNotFound } from '../notFound/notFound.js'
 
 /* ── Color name → hex map ── */
 const COLOR_HEX = {
@@ -94,24 +95,72 @@ export function pageProduct(initialState) {
   const productId = path.split('/producto/')[1]
   const product = state.products.find(p => String(p.id) === String(productId))
 
-  /* ── 404 ── */
-  if (!product) {
+  /* ── Cargando ──
+     En un link compartido el catálogo aún no ha llegado, así que product es
+     undefined y sin esto se pintaba el 404 durante un instante. */
+  if (!product && state.isLoading) {
+    const thumbs = Array.from({ length: 4 }, () => '<div class="aspect-square rounded-md skeleton-shimmer"></div>').join('')
     return {
-      title: 'Producto no encontrado | G&L',
+      title: 'Cargando… | G&L',
       noPaddingTop: true,
       fullWidth: true,
       forceLight: true,
       html: `
-        <div class="min-h-[70vh] flex flex-col items-center justify-center text-center px-6">
-          <h1 class="font-display font-extrabold text-[clamp(48px,8vw,120px)] leading-[0.88] tracking-[-0.04em] outline-text mb-6">404.</h1>
-          <p class="font-mono text-[11px] tracking-[0.22em] uppercase text-ink/55 mb-8">Producto no encontrado</p>
-          <a href="/catalog" class="inline-flex items-center gap-2 bg-ink text-paper px-6 h-12 rounded-full text-[13px] font-semibold hover:bg-brand transition-colors">
-            Ir al catálogo <span class="arrow-walk">→</span>
-          </a>
+        <div aria-busy="true">
+          <span class="sr-only">Cargando producto…</span>
+
+          <section class="pt-6 pb-2 border-b border-ink/5">
+            <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
+              <div class="flex items-center gap-3">
+                <span class="h-3 w-14 rounded skeleton-shimmer"></span>
+                <span class="h-3 w-16 rounded skeleton-shimmer"></span>
+                <span class="h-3 w-24 rounded skeleton-shimmer"></span>
+              </div>
+            </div>
+          </section>
+
+          <section class="py-8 lg:py-14">
+            <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
+              <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14">
+                <div class="lg:col-span-7">
+                  <div class="aspect-[4/5] rounded-md skeleton-shimmer"></div>
+                  <div class="mt-4 grid grid-cols-4 gap-3">${thumbs}</div>
+                </div>
+                <div class="lg:col-span-5">
+                  <span class="block h-3 w-24 rounded skeleton-shimmer"></span>
+                  <div class="mt-6 space-y-3">
+                    <div class="h-10 lg:h-12 w-4/5 rounded skeleton-shimmer"></div>
+                    <div class="h-10 lg:h-12 w-3/5 rounded skeleton-shimmer"></div>
+                  </div>
+                  <div class="mt-8 h-7 w-32 rounded skeleton-shimmer"></div>
+                  <div class="mt-8 space-y-2.5">
+                    <div class="h-3 w-full rounded skeleton-shimmer"></div>
+                    <div class="h-3 w-11/12 rounded skeleton-shimmer"></div>
+                    <div class="h-3 w-2/3 rounded skeleton-shimmer"></div>
+                  </div>
+                  <div class="mt-10 flex gap-2.5">
+                    <div class="h-11 w-16 rounded-full skeleton-shimmer"></div>
+                    <div class="h-11 w-16 rounded-full skeleton-shimmer"></div>
+                    <div class="h-11 w-16 rounded-full skeleton-shimmer"></div>
+                  </div>
+                  <div class="mt-8 h-14 w-full rounded-full skeleton-shimmer"></div>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       `,
       onMount() {}
     }
+  }
+
+  /* ── 404 ── */
+  if (!product) {
+    return pageNotFound(state, {
+      title: 'Producto no encontrado | G&L',
+      heading: 'Este producto<br/>ya no <span class="text-brand">está</span>.',
+      body: 'Puede que se haya agotado o que el enlace esté incompleto. Mira lo que hay ahora en la tienda.',
+    })
   }
 
   /* ── Data prep ── */

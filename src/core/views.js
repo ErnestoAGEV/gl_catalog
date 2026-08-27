@@ -7,6 +7,7 @@ import { pageProduct } from '../pages/product/product.js'
 import { pageCart } from '../pages/cart/cart.js'
 import { pageCheckout, pageCheckoutSuccess } from '../pages/checkout/checkout.js'
 import { pageAdminLogin } from '../pages/admin/adminLogin.js'
+import { pageNotFound } from '../pages/notFound/notFound.js'
 
 function getSeoForRoute(path, basePath, state) {
   if (basePath === '/') {
@@ -95,11 +96,13 @@ function getSeoForRoute(path, basePath, state) {
     }
   }
 
+  // Ruta desconocida: antes caía aquí con canonical '/' e index,follow, asi que
+  // cada URL rota se indexaba como copia de la home.
   return {
-    title: 'G&L | Tu fit perfecto',
-    description: 'Moda masculina premium en Colima. Compra camisas, polos, jeans y perfumes en G&L.',
-    canonicalPath: '/',
-    robots: 'index,follow',
+    title: 'Página no encontrada | G&L',
+    description: 'La página que buscas no existe. Explora el catálogo de G&L.',
+    canonicalPath: basePath,
+    robots: 'noindex,follow',
   }
 }
 
@@ -149,7 +152,7 @@ export async function renderRoute(path, state) {
   } else if (basePath.startsWith('/categoria/')) {
     page = pageCatalog
   } else {
-    page = publicRoutes[basePath] || pageHome
+    page = publicRoutes[basePath] || pageNotFound
   }
 
   const view = page(state)
@@ -163,6 +166,7 @@ export async function renderRoute(path, state) {
       html: layoutAdmin({ title, contentHtml: view.html, state }),
       onMount: (root) => {
         // Ejecutar el onMount de la vista específica
+        let viewCleanup = null
         if (view.onMount) {
           try {
             const maybePromise = view.onMount(root)
@@ -170,6 +174,8 @@ export async function renderRoute(path, state) {
               maybePromise.catch(err => {
                 console.error(`Error in async onMount for ${title}:`, err)
               })
+            } else if (typeof maybePromise === 'function') {
+              viewCleanup = maybePromise
             }
           } catch (err) {
             console.error(`Error in onMount for ${title}:`, err)
@@ -204,6 +210,11 @@ export async function renderRoute(path, state) {
           await adminLogout()
           navigate('/admin/login')
         })
+
+        // Devolver el cleanup de la vista: sin esto quedaban vivos los
+        // suscriptores al store, los timers de pedidos y los modales que
+        // viven en document.body.
+        return viewCleanup
       },
     }
   }

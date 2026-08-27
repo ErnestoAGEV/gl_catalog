@@ -6,6 +6,7 @@ import { supabase } from './supabase.js'
 import { formatMoney } from '../utils/format.js'
 import { applySeo } from './seo.js'
 import { addNotification, getNotifications, getUnreadCount, markAllRead, subscribeNotifications } from '../utils/notifications.js'
+import { withTimeout } from '../utils/async.js'
 
 function playOrderAlertSound() {
   if (typeof window === 'undefined') return
@@ -73,10 +74,15 @@ export async function startApp(mountEl) {
   // Restore admin session BEFORE first render only on /admin routes (route guards).
   // On public routes, run it in background so it never blocks the first paint.
   const sessionPromise = initAdminSession()
+  sessionPromise.catch(() => {})
   if (window.location.pathname.startsWith('/admin')) {
-    await sessionPromise
-  } else {
-    sessionPromise.catch(() => {})
+    // supabase.auth.getSession() coordina el refresco de token entre pestañas
+    // con navigator.locks: si otra pestaña tiene el lock, no resuelve nunca y
+    // la app no llegaba a arrancar (pantalla en negro). Arrancamos igual; el
+    // onAuthStateChange de initAdminSession repinta cuando la sesión llegue.
+    await withTimeout(sessionPromise, 8000, 'La restauración de sesión').catch((err) => {
+      console.warn('Sesión admin no restaurada a tiempo:', err?.message || err)
+    })
   }
 
   // Listen for Supabase errors dispatched by store.js — show elegant toast instead of alert()
@@ -228,9 +234,35 @@ export async function startApp(mountEl) {
 
     try {
       await _render(path, options)
+      sessionStorage.removeItem('gl_stale_chunk_reload')
+    } catch (err) {
+      console.error('Render failed:', err)
+      renderFatal(err)
     } finally {
       resolveNext()
     }
+  }
+
+  // Un chunk que ya no existe (deploy nuevo con el index.html viejo en caché)
+  // rompe el import dinámico. Recargar una vez lo resuelve; el flag evita el bucle.
+  const renderFatal = (err) => {
+    const msg = String(err?.message || err)
+    const isStaleChunk = /dynamically imported module|Importing a module script failed|Failed to fetch/i.test(msg)
+    if (isStaleChunk && !sessionStorage.getItem('gl_stale_chunk_reload')) {
+      sessionStorage.setItem('gl_stale_chunk_reload', '1')
+      window.location.reload()
+      return
+    }
+    document.getElementById('prerender-shell')?.remove()
+    mountEl.innerHTML = `
+      <div class="min-h-dvh flex flex-col items-center justify-center text-center px-6 bg-paper text-ink">
+        <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55 mb-4">Algo salió mal</span>
+        <h1 class="font-display font-extrabold text-[clamp(28px,5vw,48px)] leading-[0.95] tracking-[-0.035em] mb-6">No pudimos cargar<br/>esta página.</h1>
+        <button type="button" onclick="window.location.reload()" class="inline-flex items-center gap-2 bg-ink text-paper px-7 h-[52px] rounded-full text-[13px] font-semibold hover:bg-brand transition-colors">
+          Reintentar
+        </button>
+      </div>
+    `
   }
 
   const _render = async (path, options = {}) => {
@@ -252,6 +284,7 @@ export async function startApp(mountEl) {
     // interaction on the new page.
     document.getElementById('fs-viewer')?.remove()          // fullscreen image viewer
     document.getElementById('order-details-modal')?.remove() // admin order detail modal
+    document.getElementById('delete-confirm-modal')?.remove() // admin delete confirm
 
     const cacheKey = path === '/' ? '/' : (path.startsWith('/catalog') || path.startsWith('/categoria/') ? '/catalog' : null)
 
@@ -577,6 +610,7 @@ export async function startApp(mountEl) {
   }
 
   let prevSignatures = {}
+  let prevAdminAuthed = isAdminAuthed()
 
   const unsub = subscribe((state) => {
     // 1. Global badge update — always runs, no full re-render
@@ -608,6 +642,16 @@ export async function startApp(mountEl) {
 
     // 2. Selective page re-render
     const currentPath = getRoute()
+
+    // La sesión admin puede resolverse después del primer render (ver el
+    // withTimeout del arranque); en cuanto llega, repintar la ruta admin.
+    if (state.isAdminAuthed !== prevAdminAuthed) {
+      prevAdminAuthed = state.isAdminAuthed
+      if (currentPath.startsWith('/admin')) {
+        render(currentPath, { forceRebuild: true })
+        return
+      }
+    }
     // Match dynamic routes like /producto/{id}
     const keyFn = routeRelevantKeys[currentPath] || (currentPath.startsWith('/producto/') ? routeRelevantKeys['/producto'] : null)
     if (!keyFn) return  // catalog and other self-managed pages → skip
