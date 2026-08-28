@@ -48,55 +48,128 @@
     />
     <meta property="og:image" content="https://www.glboutique.com.mx/bannergl.webp" />
 
-    <!-- Datos estructurados: identidad y dirección oficiales del negocio -->
+    <!-- Datos estructurados: identidad y las dos sucursales del negocio -->
     <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "ClothingStore",
-        "@id": "https://www.glboutique.com.mx/#tienda",
-        "name": "G&L",
-        "description": "Moda masculina premium en Colima. Camisas, polos, jeans y perfumes.",
-        "url": "https://www.glboutique.com.mx/",
-        "logo": "https://www.glboutique.com.mx/icon-512.png?v=2",
-        "image": "https://www.glboutique.com.mx/icon-512.png?v=2",
-        "telephone": "+52 312 101 8263",
-        "priceRange": "$$",
-        "currenciesAccepted": "MXN",
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": "Zaragoza 140, Col. Centro",
-          "addressLocality": "Colima",
-          "addressRegion": "Colima",
-          "postalCode": "28000",
-          "addressCountry": "MX"
-        },
-        "geo": {
-          "@type": "GeoCoordinates",
-          "latitude": 19.2424015,
-          "longitude": -103.725432
-        },
-        "hasMap": "https://www.google.com/maps/place/G%26L+Colima/@19.2424015,-103.7280069,17z",
-        "openingHoursSpecification": [
-          {
-            "@type": "OpeningHoursSpecification",
-            "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
-            "opens": "10:30",
-            "closes": "14:00"
+      [
+        {
+          "@context": "https://schema.org",
+          "@type": "ClothingStore",
+          "@id": "https://www.glboutique.com.mx/#tienda",
+          "name": "G&L Colima Centro",
+          "description": "Moda masculina premium en Colima. Camisas, polos, jeans y perfumes.",
+          "url": "https://www.glboutique.com.mx/",
+          "logo": "https://www.glboutique.com.mx/icon-512.png?v=2",
+          "image": "https://www.glboutique.com.mx/icon-512.png?v=2",
+          "telephone": "+52 312 101 8263",
+          "priceRange": "$$",
+          "currenciesAccepted": "MXN",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Zaragoza 140, Col. Centro",
+            "addressLocality": "Colima",
+            "addressRegion": "Colima",
+            "postalCode": "28000",
+            "addressCountry": "MX"
           },
-          {
-            "@type": "OpeningHoursSpecification",
-            "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
-            "opens": "16:30",
-            "closes": "20:00"
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 19.2424015,
+            "longitude": -103.725432
           },
-          {
-            "@type": "OpeningHoursSpecification",
-            "dayOfWeek": "Sunday",
-            "opens": "10:30",
-            "closes": "14:00"
+          "hasMap": "https://www.google.com/maps/place/G%26L+Colima/@19.2424015,-103.7280069,17z",
+          "openingHoursSpecification": [
+            {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday"
+              ],
+              "opens": "10:30",
+              "closes": "14:00"
+            },
+            {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday"
+              ],
+              "opens": "16:30",
+              "closes": "20:00"
+            },
+            {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": "Sunday",
+              "opens": "10:30",
+              "closes": "14:00"
+            }
+          ],
+          "branchOf": {
+            "@type": "Organization",
+            "@id": "https://www.glboutique.com.mx/#marca",
+            "name": "G&L"
           }
-        ]
-      }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "ClothingStore",
+          "@id": "https://www.glboutique.com.mx/#tienda-villa",
+          "name": "G&L Villa de Álvarez",
+          "description": "Moda masculina premium en Colima. Camisas, polos, jeans y perfumes.",
+          "url": "https://www.glboutique.com.mx/",
+          "logo": "https://www.glboutique.com.mx/icon-512.png?v=2",
+          "image": "https://www.glboutique.com.mx/icon-512.png?v=2",
+          "telephone": "+52 312 101 8263",
+          "priceRange": "$$",
+          "currenciesAccepted": "MXN",
+          "branchOf": {
+            "@type": "Organization",
+            "@id": "https://www.glboutique.com.mx/#marca",
+            "name": "G&L"
+          },
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "María Ahumada de Gómez 30, Local 6",
+            "addressLocality": "Villa de Álvarez",
+            "addressRegion": "Colima",
+            "addressCountry": "MX"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 19.2713167,
+            "longitude": -103.7332035
+          },
+          "hasMap": "https://www.google.com/maps/place/G%26L+Villa+de+%C3%81lvarez/@19.271313,-103.770113,14z",
+          "openingHoursSpecification": [
+            {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday"
+              ],
+              "opens": "09:00",
+              "closes": "20:00"
+            },
+            {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": "Sunday",
+              "opens": "10:30",
+              "closes": "14:00"
+            }
+          ]
+        }
+      ]
     </script>
 
     <!-- PWA -->
