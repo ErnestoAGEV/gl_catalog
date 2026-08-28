@@ -2,7 +2,8 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/icon-192.png" />
+    <link rel="icon" type="image/png" href="/icon-192.png?v=2" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png?v=2" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>G&L | Tu fit perfecto</title>
     <meta
@@ -47,6 +48,57 @@
     />
     <meta property="og:image" content="https://www.glboutique.com.mx/bannergl.webp" />
 
+    <!-- Datos estructurados: identidad y dirección oficiales del negocio -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "ClothingStore",
+        "@id": "https://www.glboutique.com.mx/#tienda",
+        "name": "G&L",
+        "description": "Moda masculina premium en Colima. Camisas, polos, jeans y perfumes.",
+        "url": "https://www.glboutique.com.mx/",
+        "logo": "https://www.glboutique.com.mx/icon-512.png?v=2",
+        "image": "https://www.glboutique.com.mx/icon-512.png?v=2",
+        "telephone": "+52 312 101 8263",
+        "priceRange": "$$",
+        "currenciesAccepted": "MXN",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Zaragoza 140, Col. Centro",
+          "addressLocality": "Colima",
+          "addressRegion": "Colima",
+          "postalCode": "28000",
+          "addressCountry": "MX"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 19.2424015,
+          "longitude": -103.725432
+        },
+        "hasMap": "https://www.google.com/maps/place/G%26L+Colima/@19.2424015,-103.7280069,17z",
+        "openingHoursSpecification": [
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+            "opens": "10:30",
+            "closes": "14:00"
+          },
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+            "opens": "16:30",
+            "closes": "20:00"
+          },
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": "Sunday",
+            "opens": "10:30",
+            "closes": "14:00"
+          }
+        ]
+      }
+    </script>
+
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#000000" />
@@ -56,7 +108,7 @@
       content="black-translucent"
     />
     <meta name="apple-mobile-web-app-title" content="G&L" />
-    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png?v=2" />
 
     <!-- Inline script: set canonical dynamically BEFORE app loads (for crawlers) -->
     <script>
