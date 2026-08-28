@@ -234,7 +234,7 @@ export async function startApp(mountEl) {
 
     try {
       await _render(path, options)
-      sessionStorage.removeItem('gl_stale_chunk_reload')
+      try { sessionStorage.removeItem('gl_stale_chunk_reload') } catch { /* Safari puede bloquear storage */ }
     } catch (err) {
       console.error('Render failed:', err)
       renderFatal(err)
@@ -246,10 +246,14 @@ export async function startApp(mountEl) {
   // Un chunk que ya no existe (deploy nuevo con el index.html viejo en caché)
   // rompe el import dinámico. Recargar una vez lo resuelve; el flag evita el bucle.
   const renderFatal = (err) => {
-    const msg = String(err?.message || err)
+    const msg = String(err?.message || err).slice(0, 300)
     const isStaleChunk = /dynamically imported module|Importing a module script failed|Failed to fetch/i.test(msg)
-    if (isStaleChunk && !sessionStorage.getItem('gl_stale_chunk_reload')) {
-      sessionStorage.setItem('gl_stale_chunk_reload', '1')
+    let alreadyReloaded = true
+    try {
+      alreadyReloaded = Boolean(sessionStorage.getItem('gl_stale_chunk_reload'))
+      if (isStaleChunk && !alreadyReloaded) sessionStorage.setItem('gl_stale_chunk_reload', '1')
+    } catch { /* Safari puede bloquear storage: sin flag, no recargamos */ }
+    if (isStaleChunk && !alreadyReloaded) {
       window.location.reload()
       return
     }
@@ -261,6 +265,7 @@ export async function startApp(mountEl) {
         <button type="button" onclick="window.location.reload()" class="inline-flex items-center gap-2 bg-ink text-paper px-7 h-[52px] rounded-full text-[13px] font-semibold hover:bg-brand transition-colors">
           Reintentar
         </button>
+        <p class="mt-8 font-mono text-[10px] text-ink/40 max-w-[60ch] break-words">${msg}</p>
       </div>
     `
   }

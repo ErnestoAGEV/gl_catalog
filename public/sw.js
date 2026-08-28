@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gl-store-v2'
+const CACHE_NAME = 'gl-store-v3'
 const STATIC_ASSETS = [
   '/',
   '/index.html',
