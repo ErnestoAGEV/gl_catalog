@@ -6,6 +6,7 @@ import { BRAND } from '../../utils/config.js'
 import { handleQuickAdd } from '../catalog/catalogQuickAdd.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 import { escapeHtml } from '../../utils/sanitize.js'
+import { splitGalleryImages } from '../../utils/productImages.js'
 import { flyToCart } from '../../utils/dom.js'
 import { pageNotFound } from '../notFound/notFound.js'
 
@@ -40,7 +41,7 @@ function splitName(name) {
 function stockStatus(product) {
   const s = product.stock
   if (s === undefined || s === null || s > 3) return { label: 'En stock', cls: 'text-brand', dot: 'bg-brand' }
-  if (s <= 0) return { label: 'Agotado', cls: 'text-ink/40', dot: 'bg-ink/40' }
+  if (s <= 0) return { label: 'Agotado', cls: 'text-ink/60', dot: 'bg-ink/60' }
   return { label: 'Últimas piezas', cls: 'text-amber-500', dot: 'bg-amber-500' }
 }
 
@@ -78,7 +79,7 @@ function recommendedCard(p, i) {
           <div class="font-display font-bold text-[16px] leading-tight tracking-[-0.02em] truncate">${safeName}</div>
         </div>
         <div class="text-right whitespace-nowrap flex-shrink-0">
-          ${hasDiscount ? `<div class="font-mono text-[11px] text-ink/40 line-through">${formatMoney(p.originalPrice)}</div>` : ''}
+          ${hasDiscount ? `<div class="font-mono text-[11px] text-ink/60 line-through">${formatMoney(p.originalPrice)}</div>` : ''}
           <div class="font-mono text-[14px] font-semibold ${hasDiscount ? 'text-brand' : ''}">${formatMoney(p.price)}</div>
         </div>
       </div>
@@ -164,9 +165,10 @@ export function pageProduct(initialState) {
   }
 
   /* ── Data prep ── */
-  const images = product.images?.length > 0
+  const allImages = product.images?.length > 0
     ? product.images
     : ['https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&h=750&fit=crop']
+  const { gallery: images, sizeGuide: sizeGuideImage } = splitGalleryImages(allImages)
   const isPerfume = isPerfumeCategory(product.type)
   const stageImgClass = 'object-contain'   // todo el escenario va en contain: cover recortaba la prenda
   const discount = product.originalPrice ? Math.round((1 - product.price / product.originalPrice) * 100) : 0
@@ -193,12 +195,12 @@ export function pageProduct(initialState) {
 
   /* ── Swatches ── */
   const swatchesHtml = hasColors ? product.colors.map((c, i) =>
-    `<button type="button" class="swatch-btn${i === 0 ? ' active' : ''}" data-color="${c}"><span class="swatch-chip" style="background:${hexFor(c)}"></span><span class="name">${c}</span></button>`
+    `<button type="button" class="swatch-btn${i === 0 ? ' active' : ''}" aria-pressed="${i === 0}" data-color="${c}"><span class="swatch-chip" style="background:${hexFor(c)}"></span><span class="name">${c}</span></button>`
   ).join('') : ''
 
   /* ── Sizes ── */
   const sizePillsHtml = hasSizes ? product.sizes.map(s =>
-    `<button type="button" class="size-pill" data-size="${s}">${s}</button>`
+    `<button type="button" class="size-pill" aria-pressed="false" data-size="${s}">${s}</button>`
   ).join('') : ''
 
   /* ── Specs ── */
@@ -267,7 +269,7 @@ export function pageProduct(initialState) {
                   ` : ''}
                   <div class="absolute left-4 bottom-4 right-4 flex items-end justify-between text-paper z-10">
                     <span class="font-mono text-[10px] tracking-[0.24em] uppercase bg-ink/75 px-2 py-1 rounded" id="pdp-caption">Imagen 01 de ${String(images.length).padStart(2, '0')}</span>
-                    <span class="font-mono text-[10px] tracking-[0.18em] uppercase bg-ink/75 px-2 py-1 rounded hidden md:inline">Click para zoom</span>
+                    <button type="button" id="pdp-zoom" aria-pressed="false" class="press font-mono text-[10px] tracking-[0.18em] uppercase bg-ink/75 px-2 py-1 rounded hidden md:inline">Click para zoom</button>
                   </div>
                 </div>
                 ${images.length > 1 ? `<div class="thumb-rail mt-4 overflow-x-auto pb-1" id="pdp-thumbs"></div>` : ''}
@@ -294,7 +296,7 @@ export function pageProduct(initialState) {
                 <!-- Price -->
                 <div class="flex items-baseline gap-4 mb-2">
                   <span class="font-display font-extrabold text-[clamp(28px,2.4vw,40px)] leading-none tracking-[-0.04em] digit-tabular${discount > 0 ? ' text-brand' : ''}">${formatMoney(product.price)}</span>
-                  ${(product.originalPrice && Number(product.originalPrice) > Number(product.price)) ? `<span class="font-mono text-[16px] text-ink/40 line-through digit-tabular">${formatMoney(product.originalPrice)}</span>` : ''}
+                  ${(product.originalPrice && Number(product.originalPrice) > Number(product.price)) ? `<span class="font-mono text-[16px] text-ink/60 line-through digit-tabular">${formatMoney(product.originalPrice)}</span>` : ''}
                 </div>
                 ${discount > 0 ? `
                 <div class="flex items-center gap-3 mb-4">
@@ -306,7 +308,7 @@ export function pageProduct(initialState) {
                 <div class="mb-4">
                   <div class="flex items-center justify-between mb-2">
                     <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55">Color · <span class="text-ink" id="pdp-color-name">${product.colors[0]}</span></span>
-                    <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink/45">${product.colors.length} disponible${product.colors.length > 1 ? 's' : ''}</span>
+                    <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink/60">${product.colors.length} disponible${product.colors.length > 1 ? 's' : ''}</span>
                   </div>
                   <div class="flex items-center gap-2.5 flex-wrap" id="pdp-colors">${swatchesHtml}</div>
                 </div>` : ''}
@@ -316,17 +318,18 @@ export function pageProduct(initialState) {
                 <div class="mb-5">
                   <div class="flex items-center justify-between mb-2">
                     <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55">Talla · <span class="text-ink" id="pdp-size-name">Selecciona</span></span>
-                    <button class="ul-link font-mono text-[10px] tracking-[0.22em] uppercase text-ink/65 hover:text-ink inline-flex items-center gap-1.5">
+                    ${sizeGuideImage ? `
+                    <button type="button" id="pdp-size-guide" class="ul-link font-mono text-[10px] tracking-[0.22em] uppercase text-ink/65 hover:text-ink inline-flex items-center gap-1.5">
                       <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/></svg>
                       Guía de tallas
-                    </button>
+                    </button>` : ''}
                   </div>
                   <div class="flex items-center gap-2 flex-wrap" id="pdp-sizes">${sizePillsHtml}</div>
                 </div>` : ''}
 
                 <!-- CTAs -->
                 <div class="space-y-2 mb-6">
-                  <button id="qv-add-to-cart" data-product-id="${product.id}" class="group relative flex items-center justify-center w-full bg-ink text-paper h-14 rounded-full text-[15px] font-semibold hover:bg-brand transition-colors disabled:opacity-40 disabled:cursor-not-allowed"${hasSizes ? ' disabled' : ''}>
+                  <button id="qv-add-to-cart" data-product-id="${product.id}" class="press group relative flex items-center justify-center w-full bg-ink text-paper h-14 rounded-full text-[15px] font-semibold hover:bg-brand transition-colors disabled:opacity-40 disabled:cursor-not-allowed"${hasSizes ? ' disabled' : ''}>
                     <span id="pdp-add-label" class="inline-flex items-center gap-2.5">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                       ${hasSizes ? 'Selecciona una talla' : 'Agregar a la bolsa'}
@@ -513,7 +516,7 @@ export function pageProduct(initialState) {
       function paintThumbs() {
         if (!thumbsEl) return
         thumbsEl.innerHTML = images.map((img, i) => `
-          <button class="thumb${i === idx ? ' active' : ''}${isPerfume ? ' !bg-white' : ''}" data-i="${i}">
+          <button type="button" class="thumb${i === idx ? ' active' : ''}${isPerfume ? ' !bg-white' : ''}" data-i="${i}" aria-label="Ver imagen ${i + 1} de ${images.length}"${i === idx ? ' aria-current="true"' : ''}>
             <span class="idx">${String(i + 1).padStart(2, '0')}</span>
             <img src="${img}" alt="thumb ${i + 1}" class="${isPerfume ? 'object-contain p-1' : ''}"/>
           </button>
@@ -535,21 +538,70 @@ export function pageProduct(initialState) {
       root.querySelector('#pdp-next')?.addEventListener('click', () => go(idx + 1))
 
       const onKey = (e) => {
+        // Sin esto, mover el cursor dentro de un campo cambiaría la foto
+        if (e.target.closest?.('input, textarea, select, [contenteditable]')) return
         if (e.key === 'ArrowLeft') go(idx - 1)
         if (e.key === 'ArrowRight') go(idx + 1)
       }
       window.addEventListener('keydown', onKey)
 
       // Click-to-zoom
+      const zoomBtn = root.querySelector('#pdp-zoom')
+      const toggleZoom = () => {
+        const on = stage.classList.toggle('zoomed')
+        document.body.classList.toggle('cursor-zoom', on)
+        zoomBtn?.setAttribute('aria-pressed', String(on))
+        if (zoomBtn) zoomBtn.textContent = on ? 'Click para reducir' : 'Click para zoom'
+      }
       if (stage) {
         stage.addEventListener('click', (e) => {
           if (e.target.closest('button')) return
-          stage.classList.toggle('zoomed')
-          document.body.classList.toggle('cursor-zoom', stage.classList.contains('zoomed'))
+          toggleZoom()
         })
       }
+      zoomBtn?.addEventListener('click', toggleZoom)
 
       paintThumbs()
+
+      // ── Guía de tallas ──
+      // Vive en document.body para que no lo recorte ningún contenedor del
+      // layout; startApp lo borra al navegar, junto al resto de overlays.
+      const sizeGuideBtn = root.querySelector('#pdp-size-guide')
+      if (sizeGuideBtn && sizeGuideImage) {
+        sizeGuideBtn.addEventListener('click', () => {
+          const prevFocus = document.activeElement
+          const modal = document.createElement('div')
+          modal.id = 'size-guide-modal'
+          modal.className = 'fixed inset-0 z-[110] flex items-center justify-center p-4 bg-ink/70'
+          modal.setAttribute('role', 'dialog')
+          modal.setAttribute('aria-modal', 'true')
+          modal.setAttribute('aria-label', 'Guía de tallas')
+          modal.innerHTML = `
+            <div class="relative bg-paper rounded-lg max-w-3xl w-full max-h-[88vh] overflow-auto p-4">
+              <div class="flex items-center justify-between mb-3">
+                <span class="font-mono text-[11px] tracking-[0.24em] uppercase text-ink/60">Guía de tallas</span>
+                <button type="button" data-close class="press stage-btn w-9 h-9 rounded-full flex items-center justify-center" aria-label="Cerrar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
+              </div>
+              <img src="${escapeHtml(sizeGuideImage)}" alt="Guía de tallas de ${safeName}" class="w-full h-auto rounded"/>
+            </div>`
+          const close = () => {
+            modal.remove()
+            document.body.style.overflow = ''
+            document.removeEventListener('keydown', onEsc)
+            prevFocus?.focus?.()
+          }
+          const onEsc = (e) => { if (e.key === 'Escape') close() }
+          modal.addEventListener('click', (e) => {
+            if (e.target === modal || e.target.closest('[data-close]')) close()
+          })
+          document.addEventListener('keydown', onEsc)
+          document.body.appendChild(modal)
+          document.body.style.overflow = 'hidden'
+          modal.querySelector('[data-close]')?.focus()
+        })
+      }
 
       // ── Share ──
       root.querySelector('#pdp-share')?.addEventListener('click', () => {
@@ -570,8 +622,12 @@ export function pageProduct(initialState) {
         colorsEl.addEventListener('click', (e) => {
           const btn = e.target.closest('.swatch-btn')
           if (!btn) return
-          colorsEl.querySelectorAll('.swatch-btn').forEach(x => x.classList.remove('active'))
+          colorsEl.querySelectorAll('.swatch-btn').forEach(x => {
+            x.classList.remove('active')
+            x.setAttribute('aria-pressed', 'false')
+          })
           btn.classList.add('active')
+          btn.setAttribute('aria-pressed', 'true')
           selectedColor = btn.dataset.color
           if (colorNameEl) colorNameEl.textContent = selectedColor
           bindCursor()
@@ -589,8 +645,12 @@ export function pageProduct(initialState) {
         sizesEl.addEventListener('click', (e) => {
           const btn = e.target.closest('.size-pill')
           if (!btn || btn.classList.contains('disabled')) return
-          sizesEl.querySelectorAll('.size-pill').forEach(x => x.classList.remove('active'))
+          sizesEl.querySelectorAll('.size-pill').forEach(x => {
+            x.classList.remove('active')
+            x.setAttribute('aria-pressed', 'false')
+          })
           btn.classList.add('active')
+          btn.setAttribute('aria-pressed', 'true')
           selectedSize = btn.dataset.size
           if (sizeNameEl) sizeNameEl.textContent = selectedSize
           if (addBtn) {

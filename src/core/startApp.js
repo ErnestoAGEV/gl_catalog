@@ -344,6 +344,7 @@ export async function startApp(mountEl) {
     document.getElementById('fs-viewer')?.remove()          // fullscreen image viewer
     document.getElementById('order-details-modal')?.remove() // admin order detail modal
     document.getElementById('delete-confirm-modal')?.remove() // admin delete confirm
+    document.getElementById('size-guide-modal')?.remove()    // guía de tallas de la ficha
 
     const cacheKey = path === '/' ? '/' : (path.startsWith('/catalog') || path.startsWith('/categoria/') ? '/catalog' : null)
 

@@ -946,17 +946,17 @@ select.bare { -webkit-appearance: none; appearance: none; }
 .thumb-rail .thumb { position: relative; width: 92px; aspect-ratio: 4/5; border-radius: 6px; overflow: hidden; flex-shrink: 0; border: 1px solid rgba(10,10,15,.1); transition: border-color .25s, transform .25s; }
 .thumb-rail .thumb img { width: 100%; height: 100%; object-fit: contain; padding: 4px; background: #fff; }
 .thumb-rail .thumb.active { border-color: var(--color-ink); }
-.thumb-rail .thumb:hover { transform: translateY(-2px); border-color: var(--color-ink); }
+@media (hover: hover) { .thumb-rail .thumb:hover { transform: translateY(-2px); border-color: var(--color-ink); } }
 .thumb-rail .thumb .idx { position: absolute; top: 6px; left: 6px; font-family: var(--font-mono); font-size: 9px; letter-spacing: .14em; color: white; background: rgba(10,10,15,.5); backdrop-filter: blur(4px); padding: 2px 5px; border-radius: 2px; }
 
-.size-pill { min-width: 56px; height: 44px; padding: 0 14px; border-radius: 9999px; border: 1px solid rgba(10,10,15,.15); background: white; font-family: var(--font-mono); font-size: 12px; letter-spacing: .04em; transition: all .2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
-.size-pill:hover { border-color: var(--color-ink); }
+.size-pill { min-width: 56px; height: 44px; padding: 0 14px; border-radius: 9999px; border: 1px solid rgba(10,10,15,.15); background: white; font-family: var(--font-mono); font-size: 12px; letter-spacing: .04em; transition: background-color .2s, border-color .2s, color .2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+@media (hover: hover) { .size-pill:hover { border-color: var(--color-ink); } }
 .size-pill.active { background: var(--color-ink); color: var(--color-paper); border-color: var(--color-ink); }
 .size-pill.disabled { opacity: .35; text-decoration: line-through; cursor: not-allowed; }
 .size-pill .stock-dot { width: 5px; height: 5px; border-radius: 50%; }
 
-.swatch-btn { display: inline-flex; align-items: center; gap: 10px; padding: 6px 14px 6px 6px; border-radius: 9999px; border: 1px solid rgba(10,10,15,.15); background: white; transition: all .2s; }
-.swatch-btn:hover { border-color: var(--color-ink); }
+.swatch-btn { display: inline-flex; align-items: center; gap: 10px; padding: 6px 14px 6px 6px; border-radius: 9999px; border: 1px solid rgba(10,10,15,.15); background: white; transition: background-color .2s, border-color .2s, color .2s; }
+@media (hover: hover) { .swatch-btn:hover { border-color: var(--color-ink); } }
 .swatch-btn.active { border-color: var(--color-ink); background: var(--color-ink); color: var(--color-paper); }
 .swatch-btn .swatch-chip { width: 28px; height: 28px; border-radius: 9999px; border: 2px solid rgba(255,255,255,.85); box-shadow: 0 0 0 1px rgba(10,10,15,.15); }
 .swatch-btn.active .swatch-chip { box-shadow: 0 0 0 1px rgba(255,255,255,.3); }
@@ -1127,7 +1127,7 @@ details.acc .body { padding-bottom: 18px; font-size: 14px; color: rgba(10,10,15,
   box-shadow: 0 2px 8px rgba(10,10,15,.10), 0 1px 2px rgba(10,10,15,.06);
 }
 .stage-btn { transition: background-color .2s, color .2s, transform .2s; }
-.stage-btn:hover { background: var(--color-ink); color: var(--color-paper); }
+@media (hover: hover) { .stage-btn:hover { background: var(--color-ink); color: var(--color-paper); } }
 .stage-btn:active { transform: scale(.94); }
 
 /* ── Foco de teclado ──
