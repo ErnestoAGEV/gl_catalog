@@ -334,7 +334,7 @@ function openFullscreenViewer(container, allImgs) {
 
       ${srcs.length > 1 ? `
         <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-[110]" id="fs-dots">
-          ${srcs.map((_, i) => `<span class="w-2 h-2 rounded-full transition-all ${i === currentIndex ? 'bg-gray-900 dark:bg-white scale-110' : 'bg-gray-300 dark:bg-gray-600'}" data-fs-dot="${i}"></span>`).join('')}
+          ${srcs.map((_, i) => `<span class="w-2 h-2 rounded-full transition-[transform,background-color] duration-200 ${i === currentIndex ? 'bg-gray-900 dark:bg-white scale-110' : 'bg-gray-300 dark:bg-gray-600'}" data-fs-dot="${i}"></span>`).join('')}
         </div>
       ` : ''}
     </div>
@@ -371,9 +371,9 @@ function openFullscreenViewer(container, allImgs) {
       if (fsCounter) fsCounter.textContent = `${idx + 1} / ${srcs.length}`
       fsDots.forEach((dot, i) => {
         if (i === idx) {
-          dot.className = 'w-2 h-2 rounded-full transition-all bg-gray-900 dark:bg-white scale-110'
+          dot.className = 'w-2 h-2 rounded-full transition-[transform,background-color] duration-200 bg-gray-900 dark:bg-white scale-110'
         } else {
-          dot.className = 'w-2 h-2 rounded-full transition-all bg-gray-300 dark:bg-gray-600'
+          dot.className = 'w-2 h-2 rounded-full transition-[transform,background-color] duration-200 bg-gray-300 dark:bg-gray-600'
         }
       })
     })

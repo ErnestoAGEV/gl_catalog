@@ -7,6 +7,8 @@ import { sanitizeEmail } from '../../utils/sanitize.js'
 import { formatMoney } from '../../utils/format.js'
 import { heroSlides, categoryTiles, stats, stores } from './homeData.js'
 
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
 export function pageHome() {
   const state = getState()
   const isSubscribed = isSubscribedNewsletter()
@@ -30,7 +32,7 @@ export function pageHome() {
       ` : `<p class="text-[17px] text-ink/70 max-w-[460px] leading-relaxed">${s.body}</p>`}
       <div class="flex items-center gap-6 mt-8">
         ${s.cta.isCopy ? `
-          <button id="hero-copy-coupon" class="group inline-flex items-center gap-2.5 h-14 px-7 rounded-full bg-brand text-paper text-[15px] font-semibold hover:bg-ink transition-colors">
+          <button id="hero-copy-coupon" class="press group inline-flex items-center gap-2.5 h-14 px-7 rounded-full bg-brand text-paper text-[15px] font-semibold hover:bg-ink transition-colors">
             <span class="copy-label">${s.cta.label}</span>
             <span class="arrow-walk">→</span>
           </button>
@@ -60,7 +62,7 @@ export function pageHome() {
 
   // "Más vendido" card (inline, goes next to ticker)
   const topProductCard = topProduct ? `
-    <a href="/producto/${topProduct.id}" class="hidden lg:flex items-center gap-4 bg-paper border border-ink/10 shadow-lg rounded-lg px-4 py-3 hover:shadow-xl hover:-translate-y-0.5 transition-all cursor-pointer">
+    <a href="/producto/${topProduct.id}" class="hidden lg:flex items-center gap-4 bg-paper border border-ink/10 shadow-lg rounded-lg px-4 py-3 hover:shadow-xl hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200 ease-out cursor-pointer">
       <div class="flex items-center gap-2">
         <span class="w-1.5 h-1.5 rounded-full bg-brand"></span>
         <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink/60">Más vendido</span>
@@ -151,7 +153,7 @@ export function pageHome() {
 
   // Stores HTML
   const storesHtml = stores.map(s => `
-    <div class="group bg-fog hover:bg-ink hover:text-paper p-10 rounded-md min-h-[340px] flex flex-col justify-between transition-all duration-[350ms]">
+    <div class="group bg-fog hover:bg-ink hover:text-paper p-10 rounded-md min-h-[340px] flex flex-col justify-between transition-[background-color,color] duration-[350ms]">
       <div>
         <div class="flex items-center justify-between mb-4">
           <span class="font-mono text-[11px] tracking-[0.22em] uppercase opacity-60">Sucursal — ${s.id}</span>
@@ -210,10 +212,10 @@ export function pageHome() {
           </div>
           ${topProductCard}
           <div class="flex items-center gap-2 shrink-0">
-            <button id="hero-prev" class="w-11 h-11 rounded-full border border-ink/15 flex items-center justify-center text-ink hover:bg-ink hover:text-paper transition-colors">
+            <button id="hero-prev" aria-label="Slide anterior" class="press w-11 h-11 rounded-full border border-ink/15 flex items-center justify-center text-ink hover:bg-ink hover:text-paper transition-colors">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             </button>
-            <button id="hero-next" class="w-11 h-11 rounded-full border border-ink/15 flex items-center justify-center text-ink hover:bg-ink hover:text-paper transition-colors">
+            <button id="hero-next" aria-label="Slide siguiente" class="press w-11 h-11 rounded-full border border-ink/15 flex items-center justify-center text-ink hover:bg-ink hover:text-paper transition-colors">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </button>
           </div>
@@ -388,7 +390,9 @@ export function pageHome() {
           )
         }
         clearInterval(autoTimer)
-        autoTimer = setInterval(() => goToSlide(currentSlide + 1), 6000)
+        if (!prefersReducedMotion()) {
+          autoTimer = setInterval(() => goToSlide(currentSlide + 1), 6000)
+        }
       }
 
       // Hidden slides don't get real src until the visible hero finished loading,
@@ -424,14 +428,18 @@ export function pageHome() {
       // Pause on hover
       const heroSection = root.querySelector('#hero-section')
       if (heroSection) {
-        heroSection.addEventListener('mouseenter', () => {
+        const pause = () => {
           clearInterval(autoTimer)
           if (progressAnim) progressAnim.pause()
-        })
+        }
+        heroSection.addEventListener('mouseenter', pause)
+        heroSection.addEventListener('focusin', pause)
         heroSection.addEventListener('mouseleave', () => {
           if (progressAnim) progressAnim.play()
           clearInterval(autoTimer)
-          autoTimer = setInterval(() => goToSlide(currentSlide + 1), 6000)
+          if (!prefersReducedMotion()) {
+            autoTimer = setInterval(() => goToSlide(currentSlide + 1), 6000)
+          }
         })
       }
 

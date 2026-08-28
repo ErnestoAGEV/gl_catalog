@@ -35,7 +35,7 @@ export function quickViewModal(p) {
       
       <!-- Dots -->
       <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 md:hidden" data-modal-dots>
-        ${images.map((_, i) => `<span class="w-2 h-2 rounded-full ${i === 0 ? 'bg-white shadow-md' : 'bg-white/50'} transition-all" data-modal-dot="${i}"></span>`).join('')}
+        ${images.map((_, i) => `<span class="w-2 h-2 rounded-full ${i === 0 ? 'bg-white shadow-md' : 'bg-white/50'} transition-[transform,background-color] duration-200" data-modal-dot="${i}"></span>`).join('')}
       </div>
       
       <!-- Thumbnails (Desktop only) -->
@@ -118,7 +118,7 @@ export function quickViewModal(p) {
                   <div class="flex overflow-x-auto gap-2 pb-1 hide-scrollbar" id="qv-size-buttons">
                     ${p.sizes.map(size => `
                       <button
-                        class="qv-size-btn flex-shrink-0 h-9 px-4 rounded-full border border-gray-200 dark:border-gray-700 transition-all text-[13px] font-semibold
+                        class="qv-size-btn flex-shrink-0 h-9 px-4 rounded-full border border-gray-200 dark:border-gray-700 transition-[transform,background-color] duration-200 text-[13px] font-semibold
                                hover:border-brand dark:hover:border-brand text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 active:scale-95"
                         data-size="${size}"
                         type="button">
@@ -145,7 +145,7 @@ export function quickViewModal(p) {
 
             <!-- Add to cart button -->
             <button id="qv-add-to-cart" data-product-id="${p.id}"
-              class="w-full flex items-center justify-center gap-2 rounded-full bg-brand px-4 py-3.5 mt-auto text-[15px] font-bold text-white hover:opacity-90 active:scale-[0.98] transition-all shadow-md shadow-brand/20">
+              class="w-full flex items-center justify-center gap-2 rounded-full bg-brand px-4 py-3.5 mt-auto text-[15px] font-bold text-white hover:opacity-90 active:scale-[0.98] transition-[transform,background-color] duration-200 shadow-md shadow-brand/20">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
               Agregar al carrito
             </button>
@@ -185,13 +185,13 @@ export function sizeSelectionModal(p) {
             <!-- Horizontal wrapping list of sizes -->
             <div class="flex flex-wrap justify-center gap-2.5">
               ${sizes.map(size => `
-                <button class="size-select-btn flex-shrink-0 min-w-[3.5rem] h-10 px-4 rounded-full border border-gray-200 dark:border-gray-700 transition-all text-[13px] font-semibold hover:border-brand dark:hover:border-brand hover:text-brand text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 active:scale-95 shadow-sm hover:shadow" data-size="${size}">
+                <button class="size-select-btn flex-shrink-0 min-w-[3.5rem] h-10 px-4 rounded-full border border-gray-200 dark:border-gray-700 transition-[transform,background-color] duration-200 text-[13px] font-semibold hover:border-brand dark:hover:border-brand hover:text-brand text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 active:scale-95 shadow-sm hover:shadow" data-size="${size}">
                   ${size}
                 </button>
               `).join('')}
             </div>
           ` : `
-            <button class="size-select-btn w-full py-3.5 rounded-xl bg-gray-900 dark:bg-white hover:bg-black dark:hover:bg-gray-100 text-white dark:text-gray-900 text-sm font-bold tracking-wide active:scale-[0.98] transition-all shadow-lg hover:shadow-xl" data-size="">
+            <button class="size-select-btn w-full py-3.5 rounded-xl bg-gray-900 dark:bg-white hover:bg-black dark:hover:bg-gray-100 text-white dark:text-gray-900 text-sm font-bold tracking-wide active:scale-[0.98] transition-[transform,background-color] duration-200 shadow-lg hover:shadow-xl" data-size="">
               Agregar a la bolsa
             </button>
           `}
