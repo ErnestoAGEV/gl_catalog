@@ -41,8 +41,3 @@ export function parseList(value) {
     .map((x) => x.trim())
     .filter(Boolean)
 }
-
-export function getBadgeColor(badge) {
-  const found = BADGE_OPTIONS.find(b => b.value === badge)
-  return found?.color || 'bg-gray-500'
-}

@@ -1,4 +1,3 @@
-import { getBadgeColor } from './catalogCard.js'
 import { formatMoney } from '../../utils/format.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 import { escapeHtml } from '../../utils/sanitize.js'

@@ -1,16 +1,6 @@
 import { formatMoney } from '../../utils/format.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 
-export function getBadgeColor(badge) {
-  const colors = {
-    'Nuevo': 'bg-blue-500',
-    'Oferta': 'bg-red-500',
-    'Popular': 'bg-amber-500',
-    'Premium': 'bg-purple-500',
-  }
-  return colors[badge] || 'bg-gray-700'
-}
-
 export function homeSkeletonCard() {
   return `
     <article class="bg-white dark:bg-gray-900 rounded-xl md:rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 h-full flex flex-col">

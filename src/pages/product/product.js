@@ -3,7 +3,6 @@ import { navigate } from '../../core/router.js'
 import { formatMoney } from '../../utils/format.js'
 import { showToast } from '../../utils/toast.js'
 import { BRAND } from '../../utils/config.js'
-import { getBadgeColor } from '../catalog/catalogCard.js'
 import { handleQuickAdd } from '../catalog/catalogQuickAdd.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 import { escapeHtml } from '../../utils/sanitize.js'
@@ -187,6 +186,7 @@ export function pageProduct(initialState) {
   /* ── Badges ── */
   const badges = []
   if (discount > 0) badges.push(`<span class="font-mono text-[10px] tracking-[0.18em] uppercase bg-brand text-paper px-2.5 py-1 rounded-full">\u2212${discount}%</span>`)
+  else if (product.badge === 'Oferta') badges.push(`<span class="font-mono text-[10px] tracking-[0.18em] uppercase bg-brand text-paper px-2.5 py-1 rounded-full">Oferta</span>`)
   if (product.badge === 'Nuevo') badges.push(`<span class="font-mono text-[10px] tracking-[0.18em] uppercase bg-paper text-ink px-2.5 py-1 rounded-full">Nuevo</span>`)
   if (product.badge === 'Más vendido' || product.badge === 'Popular') badges.push(`<span class="font-mono text-[10px] tracking-[0.18em] uppercase bg-ink text-paper px-2.5 py-1 rounded-full">Top</span>`)
   const badgesHtml = badges.join('')
