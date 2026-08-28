@@ -910,13 +910,25 @@ select.bare { -webkit-appearance: none; appearance: none; }
 }
 
 /* ─── PDP Redesign v2 (Bold Editorial) ─── */
-.gallery-stage { position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: var(--color-fog); border-radius: 8px; }
-.gallery-stage img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s cubic-bezier(.22,.61,.36,1); }
-.gallery-stage.zoomed img { transform: scale(1.6); }
+.gallery-stage { position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: #fff; border-radius: 8px; }
+/* contain, no cover: con cover cualquier foto que no fuera 4:5 se recortaba y
+   la prenda parecía ampliada. Ahora se ve entera, cueste algo de margen. */
+.gallery-stage .stage-main { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: contain; padding: 20px; transition: transform .5s cubic-bezier(.22,.61,.36,1); }
+/* Relleno: la misma foto, ampliada y desenfocada, ocupando el hueco que deja
+   contain. Sin esto, una foto de fondo gris deja un cerco contra el blanco del
+   escenario y los controles quedan flotando sobre la nada. */
+.gallery-stage .stage-fill { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.2); filter: blur(36px) saturate(1.08); opacity: .9; }
+/* El tope va en el envoltorio, no en el escenario: si solo se limita la foto,
+   la tira de miniaturas sigue ocupando la columna entera y queda descuadrada
+   debajo. Alineado a la izquierda para compartir eje con el breadcrumb. */
+@media (min-width: 1024px) {
+  .pdp-gallery { max-width: calc((100svh - 120px) * 0.8); margin-inline-end: auto; }
+}
+.gallery-stage.zoomed .stage-main { transform: scale(1.6); }
 
 .thumb-rail { display: flex; gap: 10px; }
 .thumb-rail .thumb { position: relative; width: 92px; aspect-ratio: 4/5; border-radius: 6px; overflow: hidden; flex-shrink: 0; border: 1px solid rgba(10,10,15,.1); transition: border-color .25s, transform .25s; }
-.thumb-rail .thumb img { width: 100%; height: 100%; object-fit: cover; }
+.thumb-rail .thumb img { width: 100%; height: 100%; object-fit: contain; padding: 4px; background: #fff; }
 .thumb-rail .thumb.active { border-color: var(--color-ink); }
 .thumb-rail .thumb:hover { transform: translateY(-2px); border-color: var(--color-ink); }
 .thumb-rail .thumb .idx { position: absolute; top: 6px; left: 6px; font-family: var(--font-mono); font-size: 9px; letter-spacing: .14em; color: white; background: rgba(10,10,15,.5); backdrop-filter: blur(4px); padding: 2px 5px; border-radius: 2px; }
@@ -1031,3 +1043,73 @@ details.acc .body { padding-bottom: 18px; font-size: 14px; color: rgba(10,10,15,
 /* Admin fade backdrop */
 @keyframes adm-fade-in { from { opacity:0 } to { opacity:1 } }
 .adm-anim-fade { animation: adm-fade-in .2s ease both; }
+
+/* ── Transiciones entre páginas (View Transitions API, solo lado público) ── */
+/* Lateral tipo app nativa: la nueva entra desde la derecha y la anterior
+   retrocede a menor velocidad (parallax) en vez de irse del todo. */
+@keyframes gl-page-in {
+  from { transform:translateX(100%); }
+  to   { transform:none; }
+}
+@keyframes gl-page-out {
+  from { transform:none; opacity:1; }
+  to   { transform:translateX(-28%); opacity:.55; }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  /* Sin esto el navegador mezcla los dos fotogramas y el solape se ve lavado */
+  mix-blend-mode: normal;
+  animation: gl-page-in .42s cubic-bezier(.32,.72,0,1) both;
+}
+::view-transition-old(root) {
+  animation-name: gl-page-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) { animation: none; }
+}
+
+/* La foto del producto viaja de la card a la ficha */
+::view-transition-group(gl-product-hero) {
+  animation-duration: .38s;
+  animation-timing-function: cubic-bezier(.22,.61,.36,1);
+}
+::view-transition-old(gl-product-hero),
+::view-transition-new(gl-product-hero) {
+  /* El recorte cambia (card 4/5 → stage): un cross-fade corto lo disimula */
+  animation-duration: .28s;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── Cambio de categoría en la tienda: cascada de tarjetas ── */
+@keyframes gl-cat-in { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+
+/* El titular y la bajada entran enteros; la rejilla no, para que no se sumen
+   su opacidad y la de cada tarjeta */
+.cat-enter { animation: gl-cat-in .38s cubic-bezier(.22,.61,.36,1) both; }
+.cat-enter-grid > .pcard {
+  animation: gl-cat-in .42s cubic-bezier(.22,.61,.36,1) both;
+  /* El tope evita que la última tarjeta de un catálogo largo tarde segundos */
+  animation-delay: calc(min(var(--i, 0), 11) * 35ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cat-enter, .cat-enter-grid > .pcard { animation: none; }
+}
+
+/* ── Controles sobre la foto ──
+   Superficie propia con borde y sombra: el translúcido sin borde desaparecía
+   sobre fotos claras y se ensuciaba sobre las oscuras. */
+.stage-chip, .stage-btn {
+  position: relative; z-index: 10;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  border: 1px solid rgba(10,10,15,.10);
+  box-shadow: 0 2px 8px rgba(10,10,15,.10), 0 1px 2px rgba(10,10,15,.06);
+}
+.stage-btn { transition: background-color .2s, color .2s, transform .2s; }
+.stage-btn:hover { background: var(--color-ink); color: var(--color-paper); }
+.stage-btn:active { transform: scale(.94); }

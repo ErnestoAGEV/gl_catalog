@@ -324,6 +324,25 @@ export function pageCatalog(initialState) {
       let allFilteredProducts = []
 
       // ── Render ──
+      /**
+       * Cascada de entrada al cambiar de categoría. Solo ahí: en búsqueda en
+       * vivo se dispararía en cada tecla y en "cargar más" volvería a animar
+       * las tarjetas que ya estaban en pantalla.
+       */
+      const animateCategoryChange = () => {
+        const targets = [
+          [grid, 'cat-enter-grid'],
+          [root.querySelector('#hero-h1'), 'cat-enter'],
+          [root.querySelector('#hero-desc'), 'cat-enter'],
+        ]
+        targets.forEach(([el, cls]) => {
+          if (!el) return
+          el.classList.remove(cls)
+          void el.offsetWidth   // reinicia la animación si se cambia rápido de categoría
+          el.classList.add(cls)
+        })
+      }
+
       const renderGrid = (options = {}) => {
         const filters = getFilterState(root)
         const searchQuery = getSearchQuery()
@@ -512,6 +531,7 @@ export function pageCatalog(initialState) {
         if (desc) desc.textContent = val ? (TYPE_DESCRIPTIONS[val] || `Explora nuestra selecci\u00F3n de ${val.toLowerCase()}.`) : 'Camisas, denim, polos, knits y fragancias. Curadas en Colima \u2014 al mejor precio.'
 
         renderGrid({ resetPage: true })
+        animateCategoryChange()
       })
 
       // ── Sort ──
@@ -603,6 +623,7 @@ export function pageCatalog(initialState) {
         }
 
         renderGrid({ resetPage: true })
+        if (name === 'type') animateCategoryChange()
       })
 
       // ── Search (live filter) ──

@@ -9,6 +9,7 @@
 import { addToCart, cartCount, getState } from '../../store/index.js'
 import { showMiniCart } from '../../components/miniCart.js'
 import { sizeSelectionModal } from './catalogModals.js'
+import { flyToCart } from '../../utils/dom.js'
 
 /**
  * Maneja un clic en [data-quick-add].
@@ -31,6 +32,7 @@ export function handleQuickAdd(ev, btn, modalContainer) {
     btn.dataset.busy = '1'
 
     addToCart({ productId: id, size, color: '', qty: 1 })
+    flyToCart(btn.closest('a')?.querySelector('img'))
 
     // Actualizar badge del carrito
     const count = cartCount()

@@ -7,6 +7,7 @@ import { getBadgeColor } from '../catalog/catalogCard.js'
 import { handleQuickAdd } from '../catalog/catalogQuickAdd.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 import { escapeHtml } from '../../utils/sanitize.js'
+import { flyToCart } from '../../utils/dom.js'
 import { pageNotFound } from '../notFound/notFound.js'
 
 /* ── Color name → hex map ── */
@@ -109,7 +110,7 @@ export function pageProduct(initialState) {
         <div aria-busy="true">
           <span class="sr-only">Cargando producto…</span>
 
-          <section class="pt-6 pb-2 border-b border-ink/5">
+          <section class="pt-4 pb-2 border-b border-ink/5">
             <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
               <div class="flex items-center gap-3">
                 <span class="h-3 w-14 rounded skeleton-shimmer"></span>
@@ -119,14 +120,14 @@ export function pageProduct(initialState) {
             </div>
           </section>
 
-          <section class="py-8 lg:py-14">
+          <section class="py-5 lg:py-8">
             <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
               <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14">
-                <div class="lg:col-span-7">
+                <div class="lg:col-span-6">
                   <div class="aspect-[4/5] rounded-md skeleton-shimmer"></div>
                   <div class="mt-4 grid grid-cols-4 gap-3">${thumbs}</div>
                 </div>
-                <div class="lg:col-span-5">
+                <div class="lg:col-span-6">
                   <span class="block h-3 w-24 rounded skeleton-shimmer"></span>
                   <div class="mt-6 space-y-3">
                     <div class="h-10 lg:h-12 w-4/5 rounded skeleton-shimmer"></div>
@@ -168,7 +169,7 @@ export function pageProduct(initialState) {
     ? product.images
     : ['https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&h=750&fit=crop']
   const isPerfume = isPerfumeCategory(product.type)
-  const stageImgClass = isPerfume ? 'object-contain' : 'object-cover'
+  const stageImgClass = 'object-contain'   // todo el escenario va en contain: cover recortaba la prenda
   const discount = product.originalPrice ? Math.round((1 - product.price / product.originalPrice) * 100) : 0
   const hasSizes = product.sizes && product.sizes.length > 0
   const hasColors = product.colors && product.colors.length > 0
@@ -221,7 +222,7 @@ export function pageProduct(initialState) {
     forceLight: true,
     html: `
       <!-- ── BREADCRUMB ── -->
-      <section class="pt-6 pb-2 border-b border-ink/5">
+      <section class="pt-4 pb-2 border-b border-ink/5">
         <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
           <div class="flex items-center gap-2 sm:gap-3 font-mono text-[10px] sm:text-[11px] tracking-[0.28em] uppercase flex-wrap">
             <a href="/" class="text-ink/55 hover:text-ink ul-link">Inicio</a>
@@ -238,34 +239,35 @@ export function pageProduct(initialState) {
       </section>
 
       <!-- ── PRODUCT GRID ── -->
-      <section class="py-8 lg:py-14">
+      <section class="py-5 lg:py-8">
         <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14">
 
             <!-- LEFT: Gallery -->
-            <div class="lg:col-span-7 reveal">
-              <div class="relative">
+            <div class="lg:col-span-6 reveal">
+              <div class="relative pdp-gallery">
                 <!-- Stage -->
                 <div class="gallery-stage${isPerfume ? ' !bg-white' : ''}" id="pdp-stage">
-                  <img id="pdp-stage-img" src="${escapeHtml(images[0])}" alt="${safeName}" class="${stageImgClass}${isPerfume ? ' p-6' : ''}"/>
+                  <img id="pdp-stage-fill" class="stage-fill" src="${escapeHtml(images[0])}" alt="" aria-hidden="true"/>
+                  <img id="pdp-stage-img" data-vt-hero style="view-transition-name:gl-product-hero" src="${escapeHtml(images[0])}" alt="${safeName}" class="stage-main ${stageImgClass}"/>
                   ${badgesHtml ? `<div class="absolute top-4 left-4 flex gap-2 z-10">${badgesHtml}</div>` : ''}
                   <div class="absolute top-4 right-4 flex items-center gap-1.5 z-10">
-                    <span class="font-mono text-[10px] tracking-[0.2em] uppercase bg-paper/85 backdrop-blur px-2.5 py-1 rounded-full"><span id="pdp-cur">01</span> / <span id="pdp-tot">${String(images.length).padStart(2, '0')}</span></span>
-                    <button id="pdp-share" class="w-9 h-9 rounded-full bg-paper/85 backdrop-blur flex items-center justify-center hover:bg-ink hover:text-paper transition-colors" aria-label="Compartir">
+                    <span class="stage-chip font-mono text-[10px] tracking-[0.2em] uppercase px-2.5 py-1 rounded-full"><span id="pdp-cur">01</span> / <span id="pdp-tot">${String(images.length).padStart(2, '0')}</span></span>
+                    <button id="pdp-share" class="stage-btn w-9 h-9 rounded-full flex items-center justify-center" aria-label="Compartir">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                     </button>
                   </div>
                   ${images.length > 1 ? `
-                  <button id="pdp-prev" class="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-paper/85 backdrop-blur flex items-center justify-center hover:bg-ink hover:text-paper transition-colors z-10">
+                  <button id="pdp-prev" class="stage-btn absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center z-10" aria-label="Imagen anterior">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                   </button>
-                  <button id="pdp-next" class="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-paper/85 backdrop-blur flex items-center justify-center hover:bg-ink hover:text-paper transition-colors z-10">
+                  <button id="pdp-next" class="stage-btn absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center z-10" aria-label="Imagen siguiente">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                   </button>
                   ` : ''}
                   <div class="absolute left-4 bottom-4 right-4 flex items-end justify-between text-paper z-10">
-                    <span class="font-mono text-[10px] tracking-[0.24em] uppercase bg-ink/40 backdrop-blur px-2 py-1 rounded" id="pdp-caption">Imagen 01 de ${String(images.length).padStart(2, '0')}</span>
-                    <span class="font-mono text-[10px] tracking-[0.18em] uppercase bg-ink/40 backdrop-blur px-2 py-1 rounded hidden md:inline">Click para zoom</span>
+                    <span class="font-mono text-[10px] tracking-[0.24em] uppercase bg-ink/75 px-2 py-1 rounded" id="pdp-caption">Imagen 01 de ${String(images.length).padStart(2, '0')}</span>
+                    <span class="font-mono text-[10px] tracking-[0.18em] uppercase bg-ink/75 px-2 py-1 rounded hidden md:inline">Click para zoom</span>
                   </div>
                 </div>
                 ${images.length > 1 ? `<div class="thumb-rail mt-4 overflow-x-auto pb-1" id="pdp-thumbs"></div>` : ''}
@@ -273,11 +275,11 @@ export function pageProduct(initialState) {
             </div>
 
             <!-- RIGHT: Info -->
-            <div class="lg:col-span-5 reveal">
+            <div class="lg:col-span-6 reveal">
               <div class="lg:sticky lg:top-[88px]">
 
                 <!-- Eyebrow -->
-                <div class="flex items-center gap-3 mb-5">
+                <div class="flex items-center gap-3 mb-3">
                   <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55">${safeType}${product.subtitle ? ' · ' + escapeHtml(product.subtitle) : ''}</span>
                   <span class="h-px flex-1 bg-ink/15"></span>
                   <span class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.2em] uppercase ${ss.cls}">
@@ -287,22 +289,22 @@ export function pageProduct(initialState) {
                 </div>
 
                 <!-- Name -->
-                <h1 class="font-display font-extrabold text-[clamp(28px,5vw,72px)] leading-[0.92] tracking-[-0.04em] mb-3">${splitName(safeName)}</h1>
+                <h1 class="font-display font-extrabold text-[clamp(26px,3.2vw,46px)] leading-[0.95] tracking-[-0.035em] mb-2">${splitName(safeName)}</h1>
 
                 <!-- Price -->
                 <div class="flex items-baseline gap-4 mb-2">
-                  <span class="font-display font-extrabold text-[clamp(32px,4vw,56px)] leading-none tracking-[-0.04em] digit-tabular${discount > 0 ? ' text-brand' : ''}">${formatMoney(product.price)}</span>
+                  <span class="font-display font-extrabold text-[clamp(28px,2.4vw,40px)] leading-none tracking-[-0.04em] digit-tabular${discount > 0 ? ' text-brand' : ''}">${formatMoney(product.price)}</span>
                   ${(product.originalPrice && Number(product.originalPrice) > Number(product.price)) ? `<span class="font-mono text-[16px] text-ink/40 line-through digit-tabular">${formatMoney(product.originalPrice)}</span>` : ''}
                 </div>
                 ${discount > 0 ? `
-                <div class="flex items-center gap-3 mb-8">
+                <div class="flex items-center gap-3 mb-4">
                   <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-brand">Ahorras ${formatMoney(product.originalPrice - product.price)} · ${discount}%</span>
-                </div>` : '<div class="mb-8"></div>'}
+                </div>` : '<div class="mb-4"></div>'}
 
                 <!-- Colors -->
                 ${hasColors ? `
-                <div class="mb-6">
-                  <div class="flex items-center justify-between mb-3">
+                <div class="mb-4">
+                  <div class="flex items-center justify-between mb-2">
                     <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55">Color · <span class="text-ink" id="pdp-color-name">${product.colors[0]}</span></span>
                     <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink/45">${product.colors.length} disponible${product.colors.length > 1 ? 's' : ''}</span>
                   </div>
@@ -311,8 +313,8 @@ export function pageProduct(initialState) {
 
                 <!-- Sizes -->
                 ${hasSizes ? `
-                <div class="mb-7">
-                  <div class="flex items-center justify-between mb-3">
+                <div class="mb-5">
+                  <div class="flex items-center justify-between mb-2">
                     <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55">Talla · <span class="text-ink" id="pdp-size-name">Selecciona</span></span>
                     <button class="ul-link font-mono text-[10px] tracking-[0.22em] uppercase text-ink/65 hover:text-ink inline-flex items-center gap-1.5">
                       <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/></svg>
@@ -323,17 +325,17 @@ export function pageProduct(initialState) {
                 </div>` : ''}
 
                 <!-- CTAs -->
-                <div class="space-y-2.5 mb-7">
-                  <button id="qv-add-to-cart" data-product-id="${product.id}" class="group relative flex items-center justify-center w-full bg-ink text-paper h-16 rounded-full text-[15px] font-semibold hover:bg-brand transition-colors disabled:opacity-40 disabled:cursor-not-allowed"${hasSizes ? ' disabled' : ''}>
+                <div class="space-y-2 mb-6">
+                  <button id="qv-add-to-cart" data-product-id="${product.id}" class="group relative flex items-center justify-center w-full bg-ink text-paper h-14 rounded-full text-[15px] font-semibold hover:bg-brand transition-colors disabled:opacity-40 disabled:cursor-not-allowed"${hasSizes ? ' disabled' : ''}>
                     <span id="pdp-add-label" class="inline-flex items-center gap-2.5">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                       ${hasSizes ? 'Selecciona una talla' : 'Agregar a la bolsa'}
                     </span>
-                    <span class="absolute right-2 inset-y-0 my-auto w-12 h-12 rounded-full bg-paper text-ink flex items-center justify-center">
+                    <span class="absolute right-2 inset-y-0 my-auto w-10 h-10 rounded-full bg-paper text-ink flex items-center justify-center">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg>
                     </span>
                   </button>
-                  <a href="https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent('Hola, me interesa ' + product.name)}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 w-full bg-paper text-ink border border-ink/15 hover:border-ink h-14 rounded-full text-[14px] font-semibold transition-colors">
+                  <a href="https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent('Hola, me interesa ' + product.name)}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 w-full bg-paper text-ink border border-ink/15 hover:border-ink h-12 rounded-full text-[14px] font-semibold transition-colors">
                     <svg class="w-5 h-5 text-[#25D366]" fill="currentColor" viewBox="0 0 24 24"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.2s-.8 1-.9 1.2-.3.2-.6.1-1.3-.5-2.4-1.5c-.9-.8-1.5-1.8-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5s0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4s-1 1-1 2.5 1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4s.2-1.3.2-1.4-.3-.2-.6-.4M12 21.8a9.9 9.9 0 01-5-1.4l-.4-.2-3.7 1 1-3.7-.2-.4a9.9 9.9 0 01-1.5-5.3c0-5.5 4.4-9.9 9.9-9.9 2.6 0 5.1 1 7 2.9a9.8 9.8 0 012.9 7c0 5.5-4.4 9.9-9.9 9.9m8.4-18.3A11.8 11.8 0 0012 0C5.5 0 .2 5.3.2 11.9c0 2.1.5 4.1 1.6 6L0 24l6.3-1.7a11.9 11.9 0 005.7 1.5c6.6 0 11.9-5.3 11.9-11.9a11.8 11.8 0 00-3.5-8.4z"/></svg>
                     Pregunta por WhatsApp
                   </a>
@@ -357,7 +359,9 @@ export function pageProduct(initialState) {
 
                 <!-- Accordions -->
                 ${showDetailsAccordion ? `
-                <details class="acc" open>
+                <!-- Cerrado a propósito: abierto la columna crece ~250px y el
+                     panel se queda sin recorrido para fijarse -->
+                <details class="acc">
                   <summary>
                     <span class="font-display font-bold text-[15px] tracking-[-0.02em]">Detalles del producto</span>
                     <svg class="chev w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
@@ -501,6 +505,7 @@ export function pageProduct(initialState) {
       let idx = 0
       const stage = root.querySelector('#pdp-stage')
       const stageImg = root.querySelector('#pdp-stage-img')
+      const stageFill = root.querySelector('#pdp-stage-fill')
       const curEl = root.querySelector('#pdp-cur')
       const captionEl = root.querySelector('#pdp-caption')
       const thumbsEl = root.querySelector('#pdp-thumbs')
@@ -519,6 +524,7 @@ export function pageProduct(initialState) {
       function go(i) {
         idx = (i + images.length) % images.length
         stageImg.src = images[idx]
+        if (stageFill) stageFill.src = images[idx]
         if (curEl) curEl.textContent = String(idx + 1).padStart(2, '0')
         if (captionEl) captionEl.textContent = `Imagen ${String(idx + 1).padStart(2, '0')} de ${String(images.length).padStart(2, '0')}`
         paintThumbs()
@@ -602,6 +608,7 @@ export function pageProduct(initialState) {
       function handleAdd() {
         if (hasSizes && !selectedSize) return
         addToCart({ productId: product.id, size: selectedSize || '', color: selectedColor, qty: 1 })
+        flyToCart(root.querySelector('#pdp-stage-img'))
         showToast('¡Producto agregado al carrito!')
 
         const origLabel = addLabel ? addLabel.innerHTML : ''

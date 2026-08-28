@@ -31,14 +31,15 @@ function resetZoom() {
   })
 }
 
-function notify() {
+/** isPop: la navegación viene del botón atrás/adelante del navegador */
+function notify(isPop = false) {
   // Always clear body scroll lock left by modals/overlays from the previous route
   document.body.style.overflow = ''
 
   // Reset any pinch-to-zoom so the new page renders at 1×
   resetZoom()
 
-  for (const fn of listeners) fn(getRoute())
+  for (const fn of listeners) fn(getRoute(), { isPop })
 }
 
 export function getRoute() {
@@ -77,7 +78,7 @@ export function startRouter() {
     window.history.replaceState(null, '', legacyRoute)
   }
 
-  const onPopState = () => notify()
+  const onPopState = () => notify(true)
 
   const onDocumentClick = (event) => {
     if (event.defaultPrevented) return

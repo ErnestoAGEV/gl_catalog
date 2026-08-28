@@ -8,7 +8,7 @@ export const heroSlides = [
     secondary: { label: 'Ver lookbook', href: '/catalog' },
     image: '/img/hero-1-1080.webp',
     srcset: '/img/hero-1-640.webp 640w, /img/hero-1-1080.webp 1080w, /img/hero-1-1600.webp 1600w',
-    caption: 'Look 01 — Camisa hueso',
+    caption: 'Look 01 — Polo gris + khaki',
     captionClass: 'bg-ink/40 backdrop-blur',
   },
   {

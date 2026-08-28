@@ -226,6 +226,60 @@ export async function startApp(mountEl) {
 
   let renderPromise = Promise.resolve()
 
+  /**
+   * Transición nativa entre páginas (View Transitions API). Solo en el lado
+   * público y solo en navegación hacia adelante: los re-render internos
+   * (forceRebuild) parpadearían, y al volver atrás restauramos el scroll con
+   * timers que pelearían con la animación. Donde no exista la API, se renderiza
+   * igual, sin animar.
+   */
+  /**
+   * El nombre de transición debe ser único en el documento: si la card y la
+   * ficha lo llevan a la vez, el navegador cancela la transición entera.
+   */
+  const clearHeroName = () => {
+    document.querySelectorAll('[data-vt-hero]').forEach(el => {
+      el.style.viewTransitionName = ''
+      el.removeAttribute('data-vt-hero')
+    })
+  }
+
+  // Al pulsar una card de producto, su foto se marca para que "vuele" hasta la
+  // imagen grande de la ficha. En captura para correr antes que el router.
+  document.addEventListener('click', (event) => {
+    const anchor = event.target.closest?.('a[href^="/producto/"]')
+    if (!anchor) return
+    const img = anchor.querySelector('img')
+    if (!img) return
+    clearHeroName()
+    img.style.viewTransitionName = 'gl-product-hero'
+    img.dataset.vtHero = '1'
+  }, true)
+
+  let firstRender = true
+
+  const withTransition = async (path, options, run) => {
+    const wasFirst = firstRender
+    firstRender = false
+    if (
+      wasFirst ||
+      options.forceRebuild ||
+      options.isPop ||
+      path.startsWith('/admin') ||
+      !document.startViewTransition ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      await run()
+      clearHeroName()
+      return
+    }
+    const transition = document.startViewTransition(run)
+    // Limpiar solo cuando la animación acabó: antes, el nuevo fotograma
+    // todavía no se ha capturado.
+    transition.finished.catch(() => {}).then(clearHeroName)
+    await transition.updateCallbackDone
+  }
+
   const render = async (path, options = {}) => {
     const currentPromise = renderPromise
     let resolveNext
@@ -233,7 +287,7 @@ export async function startApp(mountEl) {
     await currentPromise
 
     try {
-      await _render(path, options)
+      await withTransition(path, options, () => _render(path, options))
       try { sessionStorage.removeItem('gl_stale_chunk_reload') } catch { /* Safari puede bloquear storage */ }
     } catch (err) {
       console.error('Render failed:', err)
@@ -609,7 +663,9 @@ export async function startApp(mountEl) {
   const routeRelevantKeys = {
     '/':              (s) => `${s.products.length}|${s.isLoading}|${s.products.filter(p => p.badge !== 'Borrador').length}`,
     '/producto':      (s) => `${s.products.length}|${s.isLoading}`,
-    '/cart':          (s) => `${JSON.stringify(s.cart)}|${JSON.stringify(s.coupon)}|${s.products.length}`,
+    // La página del carrito se repinta sola en cada +/-; incluir el carrito
+    // aquí forzaba además un rebuild completo que se veía como una recarga.
+    '/cart':          (s) => `${s.products.length}|${s.isLoading}`,
     '/wishlist':      (s) => JSON.stringify(s.wishlist),
     '/checkout':      (s) => `${JSON.stringify(s.cart)}|${JSON.stringify(s.coupon)}|${s.products.length}`,
   }
