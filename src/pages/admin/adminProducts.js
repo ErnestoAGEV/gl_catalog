@@ -1,6 +1,6 @@
 import { adminLogout, addProduct, updateProduct, deleteProduct, uploadProductImage, getCategoryNames, subscribe } from '../../store/index.js'
 import { navigate } from '../../core/router.js'
-import { on, qs } from '../../utils/dom.js'
+import { on, qs, lockScroll, unlockScroll } from '../../utils/dom.js'
 import { showToast } from '../../utils/toast.js'
 import { parseList, isPerfumeCategory } from './adminProductsData.js'
 import { productCard, productCardMobile } from './adminProductCard.js'
@@ -560,7 +560,7 @@ export function pageAdminProducts(state) {
         isEditing = editing
         formSection.classList.remove('hidden')
         formSection.classList.add('flex')
-        document.body.style.overflow = 'hidden'
+        lockScroll()
         formTitle.textContent = editing ? 'Editar producto' : 'Nuevo Producto'
         const freshSubmitText = qs(root, '#submit-text')
         if (freshSubmitText) freshSubmitText.textContent = editing ? 'Guardar cambios' : 'Guardar'
@@ -571,7 +571,7 @@ export function pageAdminProducts(state) {
         isEditing = false
         formSection.classList.add('hidden')
         formSection.classList.remove('flex')
-        document.body.style.overflow = ''
+        unlockScroll()
         form.reset()
         selectedFiles = []
         fileInput.value = ''

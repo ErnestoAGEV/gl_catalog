@@ -1,5 +1,6 @@
 import { getAdminOrders, updateAdminOrderStatus } from '../../store/index.js'
 import { formatMoney } from '../../utils/format.js'
+import { lockScroll, unlockScroll } from '../../utils/dom.js'
 import { supabase } from '../../core/supabase.js'
 import { showToast } from '../../utils/toast.js'
 import { ICON, statusPill, statCard } from './adminIcons.js'
@@ -197,7 +198,7 @@ export function pageAdminOrders(state) {
           </aside>`
         document.body.appendChild(drawer)
 
-        const close = () => { drawer.classList.add('hidden'); document.body.style.overflow = '' }
+        const close = () => { drawer.classList.add('hidden'); unlockScroll() }
         drawer.querySelector('[data-close]').addEventListener('click', close)
         drawer.querySelector('[data-backdrop]').addEventListener('click', close)
 
@@ -315,7 +316,7 @@ export function pageAdminOrders(state) {
           </div>`
 
         drawer.classList.remove('hidden')
-        document.body.style.overflow = 'hidden'
+        lockScroll()
       }
 
       // ── KPI Update ──

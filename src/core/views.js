@@ -1,5 +1,6 @@
 import { layoutAdmin, layoutPublic } from '../components/layout.js'
 import { adminLogout, isAdminAuthed } from '../store/index.js'
+import { lockScroll, unlockScroll } from '../utils/dom.js'
 import { navigate } from './router.js'
 import { pageHome } from '../pages/home/home.js'
 import { pageCatalog } from '../pages/catalog/catalog.js'
@@ -191,13 +192,13 @@ export async function renderRoute(path, state) {
         const openSidebar = () => {
           sidebar?.classList.remove('-translate-x-full')
           overlay?.classList.remove('hidden')
-          document.body.style.overflow = 'hidden'
+          lockScroll()
         }
 
         const closeSidebar = () => {
           sidebar?.classList.add('-translate-x-full')
           overlay?.classList.add('hidden')
-          document.body.style.overflow = ''
+          unlockScroll()
         }
 
         openBtn?.addEventListener('click', openSidebar)

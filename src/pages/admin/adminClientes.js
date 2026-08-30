@@ -1,5 +1,6 @@
 import { getAdminOrders } from '../../store/index.js'
 import { formatMoney } from '../../utils/format.js'
+import { lockScroll, unlockScroll } from '../../utils/dom.js'
 import { ICON, statCard, statusPill } from './adminIcons.js'
 
 function initials(name) {
@@ -374,11 +375,11 @@ export function pageAdminClientes(state) {
           </aside>
         `
         document.body.appendChild(drawer)
-        document.body.style.overflow = 'hidden'
+        lockScroll()
 
         const close = () => {
           drawer.remove()
-          document.body.style.overflow = ''
+          unlockScroll()
         }
         drawer.querySelector('[data-close]').addEventListener('click', close)
         drawer.querySelector('[data-backdrop]').addEventListener('click', close)
