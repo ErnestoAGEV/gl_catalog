@@ -48,3 +48,39 @@ export function flyToCart(sourceEl) {
   anim.onfinish = () => ghost.remove()
   anim.oncancel = () => ghost.remove()
 }
+
+/**
+ * Bloqueo de scroll para modales y paneles.
+ *
+ * `body { overflow: hidden }` no sirve aqui: con `height: 100%` en body el
+ * documento se encoge a la altura del viewport, el navegador recorta el
+ * scrollTop a 0 y al cerrar el modal apareces arriba del todo. Se fija el body
+ * y se compensa con `top`, que es la unica forma que conserva la posicion.
+ */
+let scrollLocks = 0
+let lockedScrollY = 0
+
+export function lockScroll() {
+  if (scrollLocks++ > 0) return
+  lockedScrollY = window.scrollY || document.documentElement.scrollTop || 0
+  // Al salir el body del flujo desaparece la barra de scroll: sin esto la
+  // pagina entera salta ~15px a la derecha en Windows.
+  const gutter = window.innerWidth - document.documentElement.clientWidth
+  document.body.style.position = 'fixed'
+  document.body.style.top = `-${lockedScrollY}px`
+  document.body.style.width = '100%'
+  if (gutter > 0) document.body.style.paddingRight = `${gutter}px`
+}
+
+/** force: limpia el bloqueo sin devolver el scroll (para navegacion entre rutas) */
+export function unlockScroll(force = false) {
+  if (force) scrollLocks = 0
+  else if (--scrollLocks > 0) return
+  if (scrollLocks < 0) scrollLocks = 0
+  if (document.body.style.position !== 'fixed') return
+  document.body.style.position = ''
+  document.body.style.top = ''
+  document.body.style.width = ''
+  document.body.style.paddingRight = ''
+  if (!force) window.scrollTo(0, lockedScrollY)
+}

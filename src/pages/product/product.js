@@ -7,7 +7,7 @@ import { handleQuickAdd } from '../catalog/catalogQuickAdd.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 import { escapeHtml } from '../../utils/sanitize.js'
 import { splitGalleryImages } from '../../utils/productImages.js'
-import { flyToCart } from '../../utils/dom.js'
+import { flyToCart, lockScroll, unlockScroll } from '../../utils/dom.js'
 import { pageNotFound } from '../notFound/notFound.js'
 
 /* ── Color name → hex map ── */
@@ -588,7 +588,7 @@ export function pageProduct(initialState) {
             </div>`
           const close = () => {
             modal.remove()
-            document.body.style.overflow = ''
+            unlockScroll()
             document.removeEventListener('keydown', onEsc)
             prevFocus?.focus?.()
           }
@@ -598,7 +598,7 @@ export function pageProduct(initialState) {
           })
           document.addEventListener('keydown', onEsc)
           document.body.appendChild(modal)
-          document.body.style.overflow = 'hidden'
+          lockScroll()
           modal.querySelector('[data-close]')?.focus()
         })
       }

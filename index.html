@@ -196,8 +196,8 @@
       })();
     </script>
   </head>
-  <body class="bg-black overflow-x-hidden">
-    <div id="app" class="overflow-x-hidden">
+  <body class="bg-black overflow-x-clip">
+    <div id="app" class="overflow-x-clip">
       <!-- prerender-shell:start — static snapshot of the home page so the first paint
            does not wait for JS. Regenerate with: npm run build && npx vite preview --port 4173
            + node scripts/prerender-snapshot.mjs whenever the home layout changes. -->
@@ -208,7 +208,7 @@
       
       
       <!-- prerender-shell:end -->
-    <div class="page-route-container"><div class="min-h-dvh overflow-x-hidden bg-paper text-ink">
+    <div class="page-route-container"><div class="min-h-dvh overflow-x-clip bg-paper text-ink">
     
     <!-- Marquee Announcement Bar -->
     <div class="bg-ink text-paper border-b border-white/10 overflow-hidden ">
@@ -220,7 +220,7 @@
       </div>
     </div>
 
-    <header class="sticky top-0 z-40 bg-paper/95 backdrop-blur-lg border-b border-ink/10 ">
+    <header class="relative md:sticky md:top-0 z-40 bg-paper/95 backdrop-blur-lg border-b border-ink/10 ">
       <div class="mx-auto flex w-full max-w-[1440px] items-center justify-between px-6 lg:px-10 py-3">
         <!-- Logo -->
         <a href="/" class="flex items-center hover:opacity-80 transition-opacity">
@@ -249,7 +249,7 @@
       </div>
     </header>
 
-    <main class="w-full pt-0 pb-24 md:pb-24 overflow-x-hidden mb-16 md:mb-0" id="main-content">
+    <main class="w-full pt-0 pb-24 md:pb-24 overflow-x-clip mb-16 md:mb-0" id="main-content">
       
       <!-- §3 — Hero -->
       <section class="max-w-[1440px] mx-auto px-6 lg:px-10 pt-10 lg:pt-14 pb-16 lg:pb-20" id="hero-section">

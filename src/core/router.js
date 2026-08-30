@@ -1,3 +1,5 @@
+import { unlockScroll } from '../utils/dom.js'
+
 const listeners = new Set()
 
 // Scroll position memory: key = normalized path, value = scrollY
@@ -34,7 +36,7 @@ function resetZoom() {
 /** isPop: la navegación viene del botón atrás/adelante del navegador */
 function notify(isPop = false) {
   // Always clear body scroll lock left by modals/overlays from the previous route
-  document.body.style.overflow = ''
+  unlockScroll(true)
 
   // Reset any pinch-to-zoom so the new page renders at 1×
   resetZoom()

@@ -3,7 +3,7 @@ import { getSearchQuery } from '../store/index.js'
 
 function container(children, theme = 'dark') {
   const isDark = theme === 'dark'
-  return `<div class="min-h-dvh overflow-x-hidden ${isDark ? 'bg-black text-white' : 'bg-paper text-ink'}">
+  return `<div class="min-h-dvh overflow-x-clip ${isDark ? 'bg-black text-white' : 'bg-paper text-ink'}">
     ${children}
   </div>`
 }
@@ -18,8 +18,8 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
 
   const bottomMargin = hideHeader ? '' : 'mb-16 md:mb-0'
   const mainClasses = fullWidth
-    ? `w-full ${noPaddingTop ? 'pt-0' : 'pt-3 md:pt-5'} pb-24 md:pb-24 overflow-x-hidden ${bottomMargin}`
-    : `mx-auto w-full max-w-screen-xl px-3 md:px-4 ${noPaddingTop ? 'pt-0' : 'pt-3 md:pt-5'} pb-24 md:pb-24 overflow-x-hidden ${bottomMargin}`
+    ? `w-full ${noPaddingTop ? 'pt-0' : 'pt-3 md:pt-5'} pb-24 md:pb-24 overflow-x-clip ${bottomMargin}`
+    : `mx-auto w-full max-w-screen-xl px-3 md:px-4 ${noPaddingTop ? 'pt-0' : 'pt-3 md:pt-5'} pb-24 md:pb-24 overflow-x-clip ${bottomMargin}`
 
   return container(`
     <!-- Marquee Announcement Bar -->
@@ -32,7 +32,7 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
       </div>
     </div>
 
-    <header class="sticky top-0 z-40 bg-paper/95 backdrop-blur-lg border-b border-ink/10 ${hideHeader ? 'hidden' : (hideHeaderOnMobile ? 'hidden md:block' : '')}">
+    <header class="relative md:sticky md:top-0 z-40 bg-paper/95 backdrop-blur-lg border-b border-ink/10 ${hideHeader ? 'hidden' : (hideHeaderOnMobile ? 'hidden md:block' : '')}">
       <div class="mx-auto flex w-full max-w-[1440px] items-center justify-between px-6 lg:px-10 py-3">
         <!-- Logo -->
         <a href="/" class="flex items-center hover:opacity-80 transition-opacity">
@@ -48,7 +48,7 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
 
         <!-- Right: Search + Bolsa -->
         <div class="hidden md:flex items-center gap-3">
-          <a href="/catalog" class="group flex items-center gap-2 h-10 px-4 rounded-full bg-fog text-ink text-[13px] font-medium hover:bg-ink hover:text-paper transition-colors">
+          <a href="/catalog" data-focus-search class="group flex items-center gap-2 h-10 px-4 rounded-full bg-fog text-ink text-[13px] font-medium hover:bg-ink hover:text-paper transition-colors">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             Buscar
           </a>
@@ -95,9 +95,9 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
             <h4 class="font-mono text-[11px] tracking-[0.24em] uppercase opacity-60 mb-4">Soporte</h4>
             <ul class="space-y-2.5 text-[14px]">
               <li><a href="https://wa.me/${BRAND.whatsapp}" target="_blank" rel="noopener noreferrer" class="ul-link opacity-80 hover:opacity-100">WhatsApp</a></li>
-              <li><a href="#" class="ul-link opacity-80 hover:opacity-100">Envíos</a></li>
-              <li><a href="#" class="ul-link opacity-80 hover:opacity-100">Cambios</a></li>
-              <li><a href="#" class="ul-link opacity-80 hover:opacity-100">FAQ</a></li>
+              <li><a href="https://wa.me/${BRAND.whatsapp}?text=Hola,%20tengo%20una%20duda%20sobre%20env%C3%ADos" target="_blank" rel="noopener noreferrer" class="ul-link opacity-80 hover:opacity-100">Envíos</a></li>
+              <li><a href="https://wa.me/${BRAND.whatsapp}?text=Hola,%20quiero%20hacer%20un%20cambio" target="_blank" rel="noopener noreferrer" class="ul-link opacity-80 hover:opacity-100">Cambios</a></li>
+              <li><a href="/#sucursales" class="ul-link opacity-80 hover:opacity-100">Sucursales</a></li>
             </ul>
           </div>
           <div class="md:col-span-2">

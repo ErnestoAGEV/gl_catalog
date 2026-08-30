@@ -6,6 +6,8 @@
  *   - initModalZoom()       → zoom en hover (desktop) y pinch-to-zoom (mobile) del modal
  */
 
+import { lockScroll, unlockScroll } from '../../utils/dom.js'
+
 // ── Grid card carousels ──────────────────────────────────────────────────────
 
 /**
@@ -347,14 +349,14 @@ function openFullscreenViewer(container, allImgs) {
   const fsCounter = viewer.querySelector('#fs-counter')
   const fsDots = viewer.querySelectorAll('[data-fs-dot]')
 
-  document.body.style.overflow = 'hidden' // Prevenir body scroll debajo
+  lockScroll()
 
   fsClose.addEventListener('click', () => {
     viewer.classList.replace('animate-fade-in', 'animate-fade-out')
     setTimeout(() => {
       viewer.remove()
       // Si se cerró el modal principal mientras tanto, no restaurar overflow aquí, pero el closeModal del main modal lo hará.
-      if (!document.getElementById('quick-view-modal')) document.body.style.overflow = ''
+      if (!document.getElementById('quick-view-modal')) unlockScroll()
     }, 200)
   })
 

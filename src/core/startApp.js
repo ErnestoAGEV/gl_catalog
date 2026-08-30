@@ -7,6 +7,7 @@ import { formatMoney } from '../utils/format.js'
 import { applySeo } from './seo.js'
 import { addNotification, getNotifications, getUnreadCount, markAllRead, subscribeNotifications } from '../utils/notifications.js'
 import { withTimeout } from '../utils/async.js'
+import { unlockScroll } from '../utils/dom.js'
 
 function playOrderAlertSound() {
   if (typeof window === 'undefined') return
@@ -337,7 +338,7 @@ export async function startApp(mountEl) {
     }
 
     // ── Always reset body scroll lock on navigation ──
-    document.body.style.overflow = ''
+    unlockScroll(true)
 
     // Remove orphaned overlays that live outside #app and could block
     // interaction on the new page.
@@ -508,6 +509,15 @@ export async function startApp(mountEl) {
     // Setup global event listeners after render
     setupGlobalHandlers()
   }
+
+  // "Buscar" del header: aterrizar en el catalogo con el cursor ya en el campo
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest?.('[data-focus-search]')) return
+    setTimeout(() => {
+      const input = document.getElementById('catalog-search')
+      if (input) { input.focus(); input.select() }
+    }, 120)
+  })
 
   const setupGlobalHandlers = () => {
     // Theme toggle — avoid duplicates via data attribute
