@@ -553,8 +553,27 @@ export function pageProduct(initialState) {
         zoomBtn?.setAttribute('aria-pressed', String(on))
         if (zoomBtn) zoomBtn.textContent = on ? 'Click para reducir' : 'Click para zoom'
       }
+      // Swipe horizontal en movil: el click de zoom no debe dispararse tras arrastrar
+      let swiped = false
+      if (stage && images.length > 1) {
+        let sx = 0, sy = 0
+        stage.addEventListener('touchstart', (e) => {
+          swiped = false
+          sx = e.changedTouches[0].clientX
+          sy = e.changedTouches[0].clientY
+        }, { passive: true })
+        stage.addEventListener('touchend', (e) => {
+          const dx = e.changedTouches[0].clientX - sx
+          const dy = e.changedTouches[0].clientY - sy
+          if (Math.abs(dx) < 40 || Math.abs(dx) <= Math.abs(dy)) return
+          swiped = true
+          go(dx < 0 ? idx + 1 : idx - 1)
+        }, { passive: true })
+      }
+
       if (stage) {
         stage.addEventListener('click', (e) => {
+          if (swiped) { swiped = false; return }
           if (e.target.closest('button')) return
           toggleZoom()
         })
