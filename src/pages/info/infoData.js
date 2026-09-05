@@ -15,7 +15,7 @@ export const infoPages = {
   '/nosotros': {
     eyebrow: 'Desde 1995 · Colima',
     heading: 'Vistiendo a los<br/>hombres <span class="text-brand">colimenses</span>.',
-    lead: 'Treinta años detrás del mostrador dan para conocer a la gente. Sabemos qué camisa aguanta el calor de mayo, qué jean se ve bien el viernes y también el lunes, y qué le queda a un señor que lleva viniendo desde que era chamaco.',
+    lead: 'Treinta años detrás del mostrador dan para conocer a la gente. Sabemos qué camisa aguanta el calor de mayo, qué jean se ve bien el viernes y también el lunes, y qué busca cada cliente que cruza la puerta.',
     sections: [
       {
         h: 'Lo que hacemos',
@@ -23,7 +23,7 @@ export const infoPages = {
       },
       {
         h: 'Dos tiendas, la misma gente',
-        body: 'Una en el Centro, a media cuadra del Jardín Libertad. Otra en Villa de Álvarez, sobre la avenida principal. En las dos te atiende alguien que conoce el inventario de memoria y te va a decir si esa talla te queda o no, aunque perdamos la venta.',
+        body: 'Una en el Centro, a media cuadra del Jardín Libertad. Otra en Villa de Álvarez, sobre la avenida principal. En las dos te atiende alguien que conoce el inventario de memoria y te orienta con la talla: cómo viene cada marca, si encoge, si conviene subir o bajar. La idea es que te lleves la correcta a la primera.',
       },
       {
         h: 'Y por WhatsApp, igual',
