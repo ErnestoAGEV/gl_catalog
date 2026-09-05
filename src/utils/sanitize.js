@@ -17,6 +17,7 @@ export function sanitizeText(val) {
   return val
     .trim()
     .replace(/<[^>]*>/g, '') // strip HTML tags
+    .replace(/[<>]/g, '') // y cualquier < o > suelto: un tag sin cerrar tambien inyecta
     .replace(/&(lt|gt|amp|quot|#x27);/gi, '') // strip HTML entities
     .slice(0, 500) // límite razonable de longitud
 }

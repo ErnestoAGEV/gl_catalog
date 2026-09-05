@@ -5,6 +5,7 @@ import { showToast } from '../../utils/toast.js'
 import { parseList, isPerfumeCategory, isShoeCategory } from './adminProductsData.js'
 import { productCard, productCardMobile } from './adminProductCard.js'
 import { productFormHTML } from './adminProductForm.js'
+import { confirmDelete } from './adminConfirm.js'
 import { ICON } from './adminIcons.js'
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -171,7 +172,6 @@ export function pageAdminProducts(state) {
       const clearImagesBtn = qs(root, '#clear-images')
       const existingColorsContainer = qs(root, '#existing-colors-container')
 
-      let pendingDeleteId = null
       let isDeleteModalOpen = false
       let selectedColorBadges = new Set()
       let isEditing = false
@@ -207,55 +207,6 @@ export function pageAdminProducts(state) {
       const stockAsNumber = (stock) => {
         const n = Number(stock)
         return Number.isFinite(n) ? n : 0
-      }
-
-      // ── Delete Confirm Modal ──
-      const closeDeleteModal = () => {
-        pendingDeleteId = null
-        isDeleteModalOpen = false
-        const modal = document.getElementById('delete-confirm-modal')
-        if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex') }
-        unlockScroll()
-      }
-
-      const ensureDeleteModal = () => {
-        let modal = document.getElementById('delete-confirm-modal')
-        if (modal) return modal
-
-        modal = document.createElement('div')
-        modal.id = 'delete-confirm-modal'
-        modal.className = 'fixed inset-0 layer-modal hidden items-center justify-center bg-ink/50 backdrop-blur-sm p-4'
-        modal.innerHTML = `
-          <div class="w-full max-w-sm bg-paper rounded-3xl border border-line shadow-pop overflow-hidden adm-anim-pop">
-            <div class="p-5 text-center">
-              <div class="w-11 h-11 rounded-xl2 bg-bad-tint text-bad flex items-center justify-center mx-auto mb-3">${ICON.trash('w-5 h-5')}</div>
-              <h3 class="font-display font-bold text-ink text-[17px]">¿Eliminar producto?</h3>
-              <p class="text-[13.5px] text-muted mt-1">Esta acción no se puede deshacer.</p>
-            </div>
-            <div class="px-5 pb-5 flex gap-2.5">
-              <button type="button" id="delete-cancel" class="adm-btn adm-btn-ghost flex-1">Cancelar</button>
-              <button type="button" id="delete-confirm" class="adm-btn flex-1" style="background:#D6453E;color:#fff">Eliminar</button>
-            </div>
-          </div>
-        `
-        document.body.appendChild(modal)
-
-        modal.querySelector('#delete-cancel').addEventListener('click', () => closeDeleteModal())
-        modal.querySelector('#delete-confirm').addEventListener('click', async () => {
-          if (!pendingDeleteId) return
-          const idToDelete = pendingDeleteId
-          closeDeleteModal()
-          const { error } = await deleteProduct(idToDelete)
-          showToast(error ? (error.message || 'No se pudo eliminar el producto') : 'Producto eliminado', error ? 'error' : 'success')
-        })
-        modal.addEventListener('click', (e) => {
-          if (e.target === modal) closeDeleteModal()
-        })
-        document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape' && isDeleteModalOpen) closeDeleteModal()
-        })
-
-        return modal
       }
 
       // ── Image Previews ──
@@ -807,11 +758,11 @@ export function pageAdminProducts(state) {
         const id = btn.closest('[data-product]')?.getAttribute('data-id')
         if (!id || isDeleteModalOpen) return
         isDeleteModalOpen = true
-        pendingDeleteId = id
-        const modal = ensureDeleteModal()
-        modal.classList.remove('hidden')
-        modal.classList.add('flex')
-        lockScroll()
+        const ok = await confirmDelete({ title: '¿Eliminar producto?', message: 'Esta acción no se puede deshacer.' })
+        isDeleteModalOpen = false
+        if (!ok) return
+        const { error } = await deleteProduct(id)
+        showToast(error ? (error.message || 'No se pudo eliminar el producto') : 'Producto eliminado', error ? 'error' : 'success')
       })
 
       // ── Toggle Status (single listener, avoids duplicate toasts) ──

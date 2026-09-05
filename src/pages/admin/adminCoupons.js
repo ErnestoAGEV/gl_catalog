@@ -1,6 +1,7 @@
 import { getAdminCoupons, createCoupon, updateCoupon, deleteCoupon, getState } from '../../store/index.js'
 import { showToast } from '../../utils/toast.js'
 import { sanitizeCouponCode, sanitizeText, sanitizeNumber } from '../../utils/sanitize.js'
+import { confirmDelete } from './adminConfirm.js'
 import { ICON } from './adminIcons.js'
 
 // ── Helpers ──
@@ -268,37 +269,14 @@ export function pageAdminCoupons() {
         })
       }
 
-      const openDeleteConfirm = (coupon) => {
-        root.querySelector('#coupon-delete-modal')?.remove()
-        const wrap = document.createElement('div')
-        wrap.innerHTML = `
-          <div id="coupon-delete-modal" class="fixed inset-0 layer-modal flex items-center justify-center bg-ink/50 backdrop-blur-sm p-4 adm-anim-fade">
-            <div class="w-full max-w-sm bg-paper rounded-3xl border border-line shadow-pop adm-anim-pop overflow-hidden">
-              <div class="p-5 text-center">
-                <div class="w-11 h-11 rounded-xl2 bg-bad-tint text-bad flex items-center justify-center mx-auto mb-3">${ICON.trash('w-5 h-5')}</div>
-                <h3 class="font-display font-bold text-ink text-[17px]">¿Eliminar cupón?</h3>
-                <p class="text-[13.5px] text-muted mt-1">Vas a eliminar <span class="font-mono font-semibold text-body">"${coupon.code}"</span>. No se puede deshacer.</p>
-              </div>
-              <div class="px-5 pb-5 flex gap-2.5">
-                <button data-cancel class="adm-btn adm-btn-ghost flex-1">Cancelar</button>
-                <button data-confirm class="adm-btn flex-1" style="background:#D6453E;color:#fff">Eliminar</button>
-              </div>
-            </div>
-          </div>`
-        root.appendChild(wrap.firstElementChild)
-        const modal = root.querySelector('#coupon-delete-modal')
-        const close = () => modal.remove()
-        modal.querySelector('[data-cancel]').addEventListener('click', close)
-        modal.addEventListener('click', (e) => { if (e.target === modal) close() })
-        modal.querySelector('[data-confirm]').addEventListener('click', async () => {
-          const { error } = await deleteCoupon(coupon.code)
-          if (error) { showToast('Error al eliminar', 'error'); close(); return }
-          showToast('Cupón eliminado', 'success')
-          coupons = coupons.filter(c => c.code !== coupon.code)
-          renderList()
-          bindListEvents()
-          close()
-        })
+      const openDeleteConfirm = async (coupon) => {
+        if (!await confirmDelete({ title: '¿Eliminar cupón?', highlight: coupon.code, message: 'No se puede deshacer.' })) return
+        const { error } = await deleteCoupon(coupon.code)
+        if (error) { showToast('Error al eliminar', 'error'); return }
+        showToast('Cupón eliminado', 'success')
+        coupons = coupons.filter(c => c.code !== coupon.code)
+        renderList()
+        bindListEvents()
       }
 
       bindListEvents()

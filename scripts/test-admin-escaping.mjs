@@ -4,7 +4,7 @@
 // Un bloque precedido por "// not-html:" va en texto plano (CSV, portapapeles) y se omite.
 import assert from 'node:assert/strict'
 import { readdirSync, readFileSync } from 'node:fs'
-import { escapeHtml } from '../src/utils/sanitize.js'
+import { escapeHtml, sanitizeText } from '../src/utils/sanitize.js'
 
 const DIR = 'src/pages/admin'
 // Campos que llena el cliente, no el admin
@@ -27,5 +27,12 @@ assert.deepEqual(leaks, [], `Datos del cliente sin escapar:\n${leaks.join('\n')}
 
 assert.equal(escapeHtml('<img src=x onerror=alert(1)>'), '&lt;img src=x onerror=alert(1)&gt;')
 assert.equal(escapeHtml('" onmouseover="x'), '&quot; onmouseover=&quot;x')
+
+// sanitizeText: un tag SIN cerrar tambien inyecta, porque el markup de alrededor
+// lo cierra por el. No debe sobrevivir ningun < ni >.
+assert.equal(sanitizeText('<img src=x onerror=alert(1)'), 'img src=x onerror=alert(1)')
+assert.equal(sanitizeText('<b>Juan</b> Perez'), 'Juan Perez')
+assert.equal(sanitizeText('  Calle 5 de Mayo #12  '), 'Calle 5 de Mayo #12')
+assert.ok(!/[<>]/.test(sanitizeText('a<b>c<d')))
 
 console.log('ok')

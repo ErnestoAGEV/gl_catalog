@@ -1,5 +1,6 @@
 import { getSiteContent, addSiteContent, updateSiteContent, deleteSiteContent, reorderSiteContent, uploadSiteImage } from '../../store/index.js'
 import { showToast } from '../../utils/toast.js'
+import { confirmDelete } from './adminConfirm.js'
 import { ICON } from './adminIcons.js'
 import { heroSlides as defaultSlides, stats as defaultStats } from '../../pages/home/homeData.js'
 import { BRAND } from '../../utils/config.js'
@@ -751,40 +752,13 @@ export function pageAdminBanners(state) {
       // ══════════════════════════════════════
       // DELETE CONFIRM
       // ══════════════════════════════════════
-      function openDeleteConfirm(item, label) {
-        root.querySelector('#content-delete-modal')?.remove()
-        const wrap = document.createElement('div')
-        wrap.innerHTML = `
-          <div id="content-delete-modal" class="fixed inset-0 layer-modal flex items-center justify-center bg-ink/50 backdrop-blur-sm p-4 adm-anim-fade">
-            <div class="w-full max-w-sm bg-paper rounded-3xl border border-line shadow-pop adm-anim-pop overflow-hidden">
-              <div class="p-5 text-center">
-                <div class="w-11 h-11 rounded-xl2 bg-bad-tint text-bad flex items-center justify-center mx-auto mb-3">${ICON.trash('w-5 h-5')}</div>
-                <h3 class="font-display font-bold text-ink text-[17px]">Eliminar ${escHtml(label)}?</h3>
-                <p class="text-[13.5px] text-muted mt-1">Vas a eliminar este ${escHtml(label)}${item.title ? ': <span class="font-semibold text-body">"' + escHtml(item.title) + '"</span>' : ''}. Esta accion no se puede deshacer.</p>
-              </div>
-              <div class="px-5 pb-5 flex gap-2.5">
-                <button data-cancel class="adm-btn adm-btn-ghost flex-1">Cancelar</button>
-                <button data-confirm class="adm-btn flex-1" style="background:#D6453E;color:#fff">Eliminar</button>
-              </div>
-            </div>
-          </div>`
-        root.appendChild(wrap.firstElementChild)
-
-        const modal = root.querySelector('#content-delete-modal')
-        const close = () => modal.remove()
-        modal.querySelector('[data-cancel]').addEventListener('click', close)
-        modal.addEventListener('click', (e) => { if (e.target === modal) close() })
-        modal.querySelector('[data-confirm]').addEventListener('click', async () => {
-          const confirmBtn = modal.querySelector('[data-confirm]')
-          confirmBtn.disabled = true
-          confirmBtn.textContent = 'Eliminando...'
-          const { error } = await deleteSiteContent(item.id)
-          if (error) { showToast('Error al eliminar', 'error'); close(); return }
-          showToast(`${label.charAt(0).toUpperCase() + label.slice(1)} eliminado`, 'success')
-          close()
-          allContent = await getSiteContent()
-          render()
-        })
+      async function openDeleteConfirm(item, label) {
+        if (!await confirmDelete({ title: `¿Eliminar ${label}?`, highlight: item.title || '', message: 'Esta acción no se puede deshacer.' })) return
+        const { error } = await deleteSiteContent(item.id)
+        if (error) { showToast('Error al eliminar', 'error'); return }
+        showToast(`${label.charAt(0).toUpperCase() + label.slice(1)} eliminado`, 'success')
+        allContent = await getSiteContent()
+        render()
       }
 
       // Initial render
