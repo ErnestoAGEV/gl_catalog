@@ -37,7 +37,7 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
       <div class="mx-auto flex w-full max-w-[1440px] items-center justify-between px-6 lg:px-10 py-3">
         <!-- Logo -->
         <a href="/" class="flex items-center hover:opacity-80 transition-opacity">
-          <img src="/logo.webp" alt="${BRAND.name}" class="h-11 w-auto object-contain" />
+          <img src="/logo.webp" alt="${BRAND.name}" width="500" height="500" class="h-11 w-auto object-contain" />
         </a>
 
         <!-- Nav (desktop) -->

@@ -24,7 +24,7 @@ export function pageHome() {
   // Hero slides HTML
   const heroSlidesLeft = heroSlides.map((s, i) => `
     <div class="hero-slide absolute inset-0 flex flex-col justify-center transition-opacity duration-[1200ms] ease ${i === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'}" data-slide="${i}">
-      <h1 class="font-heading font-[800] text-[clamp(72px,11vw,184px)] leading-[0.86] tracking-[-0.04em] text-ink mb-6">${s.headline}</h1>
+      <${i === 0 ? 'h1' : 'p'} class="font-heading font-[800] text-[clamp(72px,11vw,184px)] leading-[0.86] tracking-[-0.04em] text-ink mb-6">${s.headline}</${i === 0 ? 'h1' : 'p'}>
       ${s.couponBody ? `
         <p class="text-[17px] text-ink/70 max-w-[460px] leading-relaxed">
           Aplica <span class="bg-fog font-mono rounded-md px-2 py-1 text-[15px]">WELCOME10</span> en checkout. Válido para clientes nuevos en cualquier categoría.
@@ -50,9 +50,9 @@ export function pageHome() {
   const heroSlidesRight = heroSlides.map((s, i) => `
     <div class="hero-img absolute inset-0 transition-opacity duration-[1200ms] ease ${i === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'}" data-slide="${i}">
       ${i === 0 ? `
-      <img src="${s.image}" ${s.srcset ? `srcset="${s.srcset}" sizes="(max-width: 768px) 200px, 50vw"` : ''} alt="" class="w-full h-full object-cover" loading="eager" fetchpriority="high" />
+      <img src="${s.image}" ${s.srcset ? `srcset="${s.srcset}" sizes="(max-width: 768px) 200px, 50vw"` : ''} width="${s.w}" height="${s.h}" alt="${s.caption}" class="w-full h-full object-cover" loading="eager" fetchpriority="high" />
       ` : `
-      <img data-defer-src="${s.image}" ${s.srcset ? `data-defer-srcset="${s.srcset}" sizes="(max-width: 768px) 200px, 50vw"` : ''} alt="" class="w-full h-full object-cover" decoding="async" />
+      <img data-defer-src="${s.image}" ${s.srcset ? `data-defer-srcset="${s.srcset}" sizes="(max-width: 768px) 200px, 50vw"` : ''} width="${s.w}" height="${s.h}" alt="${s.caption}" class="w-full h-full object-cover" decoding="async" />
       `}
       <div class="absolute bottom-4 left-4">
         <span class="${s.captionClass} text-paper text-[12px] font-mono px-3 py-1.5 rounded-full">${s.caption}</span>
@@ -80,7 +80,7 @@ export function pageHome() {
     if (tile.type === 'image-brand') {
       return `
         <a href="${tile.href}" class="ct ${tile.span} relative bg-ink text-paper rounded-md p-5 flex flex-col justify-between overflow-hidden group">
-          <img src="${tile.image}" alt="${tile.name}" class="ct-img absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
+          <img src="${tile.image}" alt="${tile.name}" width="${tile.w}" height="${tile.h}" class="ct-img absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
           <div class="absolute inset-0 bg-ink/35"></div>
           <span class="font-mono text-[10px] tracking-[0.22em] uppercase opacity-80 relative z-10">${tile.eyebrow}</span>
           <div class="ct-label relative z-10">
@@ -93,7 +93,7 @@ export function pageHome() {
     if (tile.type === 'image-ink') {
       return `
         <a href="${tile.href}" class="ct ${tile.span} relative bg-ink text-paper rounded-md p-5 flex flex-col justify-between overflow-hidden group">
-          <img src="${tile.image}" alt="${tile.name}" class="ct-img absolute inset-0 w-full h-full object-cover opacity-30" loading="lazy" decoding="async" />
+          <img src="${tile.image}" alt="${tile.name}" width="${tile.w}" height="${tile.h}" class="ct-img absolute inset-0 w-full h-full object-cover opacity-30" loading="lazy" decoding="async" />
           <div class="absolute inset-0 bg-ink/40"></div>
           <span class="font-mono text-[10px] tracking-[0.22em] uppercase opacity-70 relative z-10">${tile.eyebrow}</span>
           <div class="ct-label relative z-10">
@@ -110,7 +110,7 @@ export function pageHome() {
       : 'bg-gradient-to-t from-ink/35 to-ink/0'
     return `
       <a href="${tile.href}" class="ct ${tile.span} relative rounded-md overflow-hidden group">
-        <img src="${tile.image}" alt="${tile.name}" class="ct-img absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
+        <img src="${tile.image}" alt="${tile.name}" width="${tile.w}" height="${tile.h}" class="ct-img absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
         <div class="absolute inset-0 ${gradient}"></div>
         <div class="relative h-full flex flex-col justify-between p-5 text-paper">
           ${isLarge ? `
