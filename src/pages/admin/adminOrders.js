@@ -1,4 +1,6 @@
-import { getAdminOrders, updateAdminOrderStatus } from '../../store/index.js'
+import { getAdminOrders, updateAdminOrderStatus, getProductById, getState } from '../../store/index.js'
+import { splitGalleryImages } from '../../utils/productImages.js'
+import { isPerfumeCategory } from './adminProductsData.js'
 import { formatMoney } from '../../utils/format.js'
 import { lockScroll, unlockScroll } from '../../utils/dom.js'
 import { supabase } from '../../core/supabase.js'
@@ -43,6 +45,20 @@ function statusDropdownHtml(order) {
         </button>`).join('')}
       </div>
     </div>`
+}
+
+/**
+ * Foto del producto pedido. El pedido guarda productId nulo cuando el stock es
+ * ilimitado, asi que ahi se busca por nombre. splitGalleryImages aparta la
+ * tabla de tallas para no enseñarla como si fuera el producto.
+ */
+function itemThumb(item) {
+  const byId = item?.productId ? getProductById(item.productId) : null
+  const product = byId || getState().products.find(p => p.name === item?.name) || null
+  const { gallery } = splitGalleryImages(product?.images || [])
+  if (!gallery.length) return ''
+  const fit = isPerfumeCategory(product?.type) ? 'object-contain bg-white p-0.5' : 'object-cover'
+  return `<img src="${esc(gallery[0])}" alt="" loading="lazy" class="w-full h-full ${fit}" />`
 }
 
 function initials(name) {
@@ -303,7 +319,12 @@ export function pageAdminOrders(state) {
               </div>
               <div class="divide-y divide-line">
                 ${items.length ? items.map(item => `<div class="flex items-center gap-3 px-4 py-3">
-                  <div class="w-8 h-8 rounded-lg bg-canvas border border-line flex items-center justify-center text-[11px] font-bold text-muted tnum shrink-0">${item?.qty||0}×</div>
+                  <div class="relative w-12 h-12 shrink-0">
+                    <div class="w-full h-full rounded-lg bg-canvas border border-line overflow-hidden">
+                      ${itemThumb(item) || `<span class="w-full h-full flex items-center justify-center text-muted">${ICON.image('w-4 h-4')}</span>`}
+                    </div>
+                    <span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-ink text-white text-[10px] font-bold flex items-center justify-center tnum">${Number(item?.qty)||0}</span>
+                  </div>
                   <div class="min-w-0 flex-1"><p class="text-[13.5px] font-medium text-ink truncate">${esc(item?.name)||'Producto'}</p><p class="text-[11.5px] text-faint">Talla ${esc(item?.size)||'Única'}</p></div>
                   <p class="text-[13px] font-semibold text-ink tnum shrink-0">${formatMoney((item?.price||0) * (item?.qty||0))}</p>
                 </div>`).join('') : '<div class="px-4 py-6 text-center text-[13px] text-muted">Sin productos registrados.</div>'}
