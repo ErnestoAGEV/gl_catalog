@@ -4,6 +4,7 @@ import {
   SIZE_OPTIONS,
   PANTS_SIZE_OPTIONS,
   PERFUME_SIZE_OPTIONS,
+  SHOE_SIZE_OPTIONS,
 } from './adminProductsData.js'
 import { ICON } from './adminIcons.js'
 
@@ -125,6 +126,18 @@ export function productFormHTML(allColors, dynamicCategories) {
                   ${PANTS_SIZE_OPTIONS.map(size => `
                     <label class="inline-flex items-center">
                       <input type="checkbox" name="sizes" value="${size}" class="sr-only peer" data-size-group="clothing" />
+                      <span class="px-3.5 h-9 rounded-[10px] border border-line bg-paper text-[13px] font-semibold text-body cursor-pointer peer-checked:bg-ink peer-checked:text-white peer-checked:border-ink hover:border-line-strong transition-all inline-flex items-center tnum">${size}</span>
+                    </label>
+                  `).join('')}
+                </div>
+              </div>
+
+              <div id="sizes-shoes" class="hidden">
+                <p class="eyebrow text-faint mb-2">Calzado (MX)</p>
+                <div class="flex flex-wrap gap-1.5">
+                  ${SHOE_SIZE_OPTIONS.map(size => `
+                    <label class="inline-flex items-center">
+                      <input type="checkbox" name="sizes" value="${size}" class="sr-only peer" data-size-group="shoes" />
                       <span class="px-3.5 h-9 rounded-[10px] border border-line bg-paper text-[13px] font-semibold text-body cursor-pointer peer-checked:bg-ink peer-checked:text-white peer-checked:border-ink hover:border-line-strong transition-all inline-flex items-center tnum">${size}</span>
                     </label>
                   `).join('')}

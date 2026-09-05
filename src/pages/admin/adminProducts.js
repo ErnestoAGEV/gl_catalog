@@ -2,7 +2,7 @@ import { adminLogout, addProduct, updateProduct, deleteProduct, uploadProductIma
 import { navigate } from '../../core/router.js'
 import { on, qs, lockScroll, unlockScroll } from '../../utils/dom.js'
 import { showToast } from '../../utils/toast.js'
-import { parseList, isPerfumeCategory } from './adminProductsData.js'
+import { parseList, isPerfumeCategory, isShoeCategory } from './adminProductsData.js'
 import { productCard, productCardMobile } from './adminProductCard.js'
 import { productFormHTML } from './adminProductForm.js'
 import { ICON } from './adminIcons.js'
@@ -162,6 +162,7 @@ export function pageAdminProducts(state) {
       const colorsHelp = root.querySelector('#colors-help')
       const clothingSizesSection = qs(root, '#sizes-clothing')
       const perfumeSizesSection = qs(root, '#sizes-perfume')
+      const shoeSizesSection = qs(root, '#sizes-shoes')
       const cancelBtn = qs(root, '#product-cancel')
       const fileInput = qs(root, '#file-input')
       const imageUrlsTextarea = qs(root, 'textarea[name="imageUrls"]')
@@ -342,13 +343,17 @@ export function pageAdminProducts(state) {
       // ── Type Change Handler ──
       const handleTypeChange = () => {
         const isPerfume = isPerfumeCategory(typeSelect?.value)
-        if (clothingSizesSection) clothingSizesSection.classList.toggle('hidden', isPerfume)
-        if (perfumeSizesSection) perfumeSizesSection.classList.toggle('hidden', !isPerfume)
+        const isShoe = !isPerfume && isShoeCategory(typeSelect?.value)
+        const activeGroup = isPerfume ? 'perfume' : isShoe ? 'shoes' : 'clothing'
 
-        const clothingSizeInputs = root.querySelectorAll('input[name="sizes"][data-size-group="clothing"]')
-        const perfumeSizeInputs = root.querySelectorAll('input[name="sizes"][data-size-group="perfume"]')
-        if (isPerfume) { clothingSizeInputs.forEach(cb => { cb.checked = false }) }
-        else { perfumeSizeInputs.forEach(cb => { cb.checked = false }) }
+        if (clothingSizesSection) clothingSizesSection.classList.toggle('hidden', activeGroup !== 'clothing')
+        if (perfumeSizesSection) perfumeSizesSection.classList.toggle('hidden', activeGroup !== 'perfume')
+        if (shoeSizesSection) shoeSizesSection.classList.toggle('hidden', activeGroup !== 'shoes')
+
+        // Limpia las tallas de los grupos que quedaron ocultos
+        root.querySelectorAll('input[name="sizes"]').forEach(cb => {
+          if (cb.dataset.sizeGroup !== activeGroup) cb.checked = false
+        })
 
         if (colorsInput) {
           colorsInput.disabled = isPerfume
