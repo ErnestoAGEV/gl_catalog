@@ -441,25 +441,31 @@ export function pageCheckout(state) {
           total: currentTotal,
         })
 
+        // Solo QUE se compra; los precios y el total los calcula place_order en
+        // la base. Aca va el productId real siempre: es la llave para releer el
+        // precio (el nulo de stock infinito lo pone la funcion al guardar).
         const orderData = {
-          customer_name: name,
-          customer_whatsapp: whatsapp,
-          payment_method: paymentMethod,
-          delivery_method: deliveryMethod,
+          name,
+          whatsapp,
+          paymentMethod,
+          deliveryMethod,
           address: requireAddress ? fullAddress : null,
-          cart_items: cartLines,
-          subtotal: currentSubtotal,
-          discount: currentDiscount,
-          coupon_code: appliedCoupon?.code || null,
-          total: currentTotal,
-          status: 'pendientedepago'
+          couponCode: appliedCoupon?.code || null,
+          items: liveCart.map(i => ({
+            productId: i.productId,
+            size: i.size,
+            color: i.color,
+            qty: Number(i.qty) || 0,
+          })),
         }
 
         setSubmitting(true)
         
         saveOrder(orderData).then(({ error }) => {
           if (error) {
-            setError('No se pudo registrar tu pedido. Intenta de nuevo por favor.')
+            // place_order devuelve mensajes en claro (carrito vacio, limite de
+            // pedidos, producto no disponible); si no, un texto generico.
+            setError(error.message || 'No se pudo registrar tu pedido. Intenta de nuevo por favor.')
             setSubmitting(false)
             return
           }
