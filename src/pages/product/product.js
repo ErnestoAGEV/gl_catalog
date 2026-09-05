@@ -1,5 +1,5 @@
 import { getState, addToCart, trackProductView, getProductById } from '../../store/index.js'
-import { navigate } from '../../core/router.js'
+import { navigate, normalizePath } from '../../core/router.js'
 import { formatMoney } from '../../utils/format.js'
 import { showToast } from '../../utils/toast.js'
 import { BRAND } from '../../utils/config.js'
@@ -92,7 +92,7 @@ function recommendedCard(p, i) {
    ══════════════════════════════════════════════ */
 export function pageProduct(initialState) {
   const state = initialState
-  const path = window.location.pathname
+  const path = normalizePath(window.location.pathname)
   const productId = path.split('/producto/')[1]
   const product = state.products.find(p => String(p.id) === String(productId))
 

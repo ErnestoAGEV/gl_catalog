@@ -1,7 +1,7 @@
 import { searchProducts, setSearchQuery, getSearchQuery, subscribe, getState } from '../../store/index.js'
 import { formatMoney } from '../../utils/format.js'
 import { on, qs, lockScroll, unlockScroll } from '../../utils/dom.js'
-import { navigate } from '../../core/router.js'
+import { navigate, normalizePath } from '../../core/router.js'
 import { uniqueSorted, getFilterState, applyFilters, getCategoryOrder } from './catalogFilters.js'
 import { skeletonGrid, productCard } from './catalogCard.js'
 import { handleQuickAdd } from './catalogQuickAdd.js'
@@ -34,7 +34,7 @@ export function pageCatalog(initialState) {
   const options = (items, label) => [`<option value="">${label}</option>`, ...items.map(x => `<option value="${x}">${x}</option>`)].join('')
 
   // Determine initial category from URL
-  const basePath = window.location.pathname
+  const basePath = normalizePath(window.location.pathname)
   let initialType = ''
   if (basePath.startsWith('/categoria/')) {
     initialType = decodeURIComponent(basePath.split('/categoria/')[1]) || ''

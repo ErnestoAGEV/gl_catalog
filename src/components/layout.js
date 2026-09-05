@@ -1,4 +1,5 @@
 import { BRAND } from '../utils/config.js'
+import { normalizePath } from '../core/router.js'
 import { getSearchQuery } from '../store/index.js'
 
 function container(children, theme = 'dark') {
@@ -12,7 +13,7 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
   const count = (state.cart || []).reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
   const theme = forceLight ? 'light' : (state.theme || 'dark')
   const isDark = theme === 'dark'
-  const currentPath = window.location.pathname || '/'
+  const currentPath = normalizePath(window.location.pathname || '/')
 
   const marqueeItems = `★ Envío gratis +$${BRAND.freeShippingMin} MXN — Nueva temporada 2026 — Cierre por WhatsApp en minutos — 2 tiendas físicas en Colima — Use WELCOME10 · 10% off 1ª compra — `
 
@@ -146,7 +147,7 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
 
 export function layoutAdmin({ title, contentHtml, state }) {
   const authed = Boolean(state?.isAdminAuthed)
-  const currentPath = window.location.pathname || ''
+  const currentPath = normalizePath(window.location.pathname || '')
 
   if (!authed) {
     return `<div class="min-h-dvh bg-canvas text-body">${contentHtml}</div>`

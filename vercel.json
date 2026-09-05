@@ -1,9 +1,9 @@
 {
   "rewrites": [
-    {
-      "source": "/((?!.*\\..*).*)",
-      "destination": "/"
-    }
+    { "source": "/admin", "destination": "/" },
+    { "source": "/admin/:path*", "destination": "/" },
+    { "source": "/producto/:id", "destination": "/" },
+    { "source": "/categoria/:name", "destination": "/" }
   ],
   "headers": [
     {

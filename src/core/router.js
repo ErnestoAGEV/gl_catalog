@@ -5,7 +5,7 @@ const listeners = new Set()
 // Scroll position memory: key = normalized path, value = scrollY
 export const scrollPositions = new Map()
 
-function normalizePath(path) {
+export function normalizePath(path) {
   if (!path) return '/'
   const withSlash = path.startsWith('/') ? path : `/${path}`
   return withSlash.length > 1 && withSlash.endsWith('/') ? withSlash.slice(0, -1) : withSlash
