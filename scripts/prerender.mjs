@@ -45,6 +45,64 @@ const jsonLd = (data) =>
 
 const absolute = (path) => new URL(path, BASE_URL).toString()
 
+// Politica comercial real de la tienda. Google Shopping la muestra al comprador,
+// asi que estos numeros tienen que cuadrar con lo que dice la tienda.
+// freeShippingMin duplica el valor de src/utils/config.js (ese usa
+// import.meta.env y no se puede importar desde node).
+const FREE_SHIPPING_MIN = 1499
+const SHIPPING_COST = 150
+
+const shippingDetails = [
+  {
+    '@type': 'OfferShippingDetails',
+    shippingRate: { '@type': 'MonetaryAmount', value: SHIPPING_COST, currency: 'MXN' },
+    shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'MX' },
+    deliveryTime: {
+      '@type': 'ShippingDeliveryTime',
+      handlingTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 1, unitCode: 'DAY' },
+      transitTime: { '@type': 'QuantitativeValue', minValue: 3, maxValue: 4, unitCode: 'DAY' },
+    },
+  },
+  {
+    '@type': 'OfferShippingDetails',
+    shippingRate: {
+      '@type': 'MonetaryAmount',
+      value: 0,
+      currency: 'MXN',
+      // Envio gratis a partir de este subtotal
+      eligibleTransactionVolume: {
+        '@type': 'PriceSpecification',
+        minPrice: FREE_SHIPPING_MIN,
+        priceCurrency: 'MXN',
+      },
+    },
+    shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'MX' },
+    deliveryTime: {
+      '@type': 'ShippingDeliveryTime',
+      handlingTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 1, unitCode: 'DAY' },
+      transitTime: { '@type': 'QuantitativeValue', minValue: 3, maxValue: 4, unitCode: 'DAY' },
+    },
+  },
+]
+
+// No hay devoluciones con reembolso: solo cambios, dentro de 8 dias desde la
+// entrega, con el envio a cargo del cliente (salvo error de talla nuestro,
+// matiz que schema.org no sabe expresar).
+const returnPolicy = {
+  '@type': 'MerchantReturnPolicy',
+  applicableCountry: 'MX',
+  returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+  merchantReturnDays: 8,
+  returnMethod: 'https://schema.org/ReturnByMail',
+  refundType: 'https://schema.org/ExchangeRefund',
+  returnFees: 'https://schema.org/ReturnShippingFees',
+  returnShippingFeesAmount: {
+    '@type': 'MonetaryAmount',
+    value: SHIPPING_COST,
+    currency: 'MXN',
+  },
+}
+
 async function supabaseSelect(table, query) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
     headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
@@ -304,7 +362,7 @@ for (const product of products) {
                 <p class="text-[16px] text-ink/70 leading-relaxed mb-6">${escapeHtml(product.description || `${product.name} disponible en G&L, moda masculina premium en Colima.`)}</p>
                 ${product.sizes?.length ? `<p class="text-[14px] text-ink/60 mb-2">Tallas: ${escapeHtml(product.sizes.join(', '))}</p>` : ''}
                 ${product.colors?.length ? `<p class="text-[14px] text-ink/60 mb-6">Colores: ${escapeHtml(product.colors.join(', '))}</p>` : ''}
-                <p class="text-[14px] text-ink/60">${inStock ? 'Disponible' : 'Agotado'} · Envío gratis en compras +$1,499 MXN · 2 tiendas físicas en Colima</p>
+                <p class="text-[14px] text-ink/60">${inStock ? 'Disponible' : 'Agotado'} · Envío $${SHIPPING_COST} MXN a todo México, gratis en compras +$${FREE_SHIPPING_MIN.toLocaleString('es-MX')} · Entrega en 3-4 días hábiles · Cambios dentro de 8 días · 2 tiendas físicas en Colima</p>
               </div>
             </div>`),
     ld: [
@@ -329,6 +387,8 @@ for (const product of products) {
           availability: `https://schema.org/${inStock ? 'InStock' : 'OutOfStock'}`,
           itemCondition: 'https://schema.org/NewCondition',
           seller: { '@type': 'Organization', '@id': `${BASE_URL}/#marca`, name: 'G&L' },
+          shippingDetails,
+          hasMerchantReturnPolicy: returnPolicy,
         },
       },
       breadcrumbLd(trail),
