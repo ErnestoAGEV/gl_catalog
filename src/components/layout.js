@@ -43,8 +43,8 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
         <!-- Nav (desktop) -->
         <nav class="hidden md:flex items-center gap-8">
           <a class="text-[14px] font-medium text-ink/70 hover:text-ink transition-colors ul-link" href="/catalog">Tienda</a>
-          <a class="text-[14px] font-medium text-ink/70 hover:text-ink transition-colors ul-link" href="/#sucursales">Sucursales</a>
-          <a class="text-[14px] font-medium text-ink/70 hover:text-ink transition-colors ul-link" href="https://wa.me/${BRAND.whatsapp}" target="_blank" rel="noopener noreferrer">Contacto</a>
+          <a class="text-[14px] font-medium text-ink/70 hover:text-ink transition-colors ul-link" href="/nosotros">Nosotros</a>
+          <a class="text-[14px] font-medium text-ink/70 hover:text-ink transition-colors ul-link" href="/contacto">Contacto</a>
         </nav>
 
         <!-- Right: Search + Bolsa -->
@@ -95,10 +95,10 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
           <div class="md:col-span-2">
             <h4 class="font-mono text-[11px] tracking-[0.24em] uppercase opacity-60 mb-4">Soporte</h4>
             <ul class="space-y-2.5 text-[14px]">
-              <li><a href="https://wa.me/${BRAND.whatsapp}" target="_blank" rel="noopener noreferrer" class="ul-link opacity-80 hover:opacity-100">WhatsApp</a></li>
-              <li><a href="https://wa.me/${BRAND.whatsapp}?text=Hola,%20tengo%20una%20duda%20sobre%20env%C3%ADos" target="_blank" rel="noopener noreferrer" class="ul-link opacity-80 hover:opacity-100">Envíos</a></li>
-              <li><a href="https://wa.me/${BRAND.whatsapp}?text=Hola,%20quiero%20hacer%20un%20cambio" target="_blank" rel="noopener noreferrer" class="ul-link opacity-80 hover:opacity-100">Cambios</a></li>
-              <li><a href="/#sucursales" class="ul-link opacity-80 hover:opacity-100">Sucursales</a></li>
+              <li><a href="/envios" class="ul-link opacity-80 hover:opacity-100">Envíos y pagos</a></li>
+              <li><a href="/cambios" class="ul-link opacity-80 hover:opacity-100">Cambios</a></li>
+              <li><a href="/contacto" class="ul-link opacity-80 hover:opacity-100">Contacto</a></li>
+              <li><a href="/nosotros" class="ul-link opacity-80 hover:opacity-100">Nosotros</a></li>
             </ul>
           </div>
           <div class="md:col-span-2">

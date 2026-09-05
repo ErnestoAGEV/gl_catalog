@@ -12,6 +12,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { getSeoForRoute } from '../src/core/routeSeo.js'
+import { infoPages } from '../src/pages/info/infoData.js'
 
 const BASE_URL = 'https://www.glboutique.com.mx'
 const DIST = 'dist'
@@ -396,6 +397,36 @@ for (const product of products) {
   })
 }
 
+// Paginas de confianza: el copy vive en infoData.js, aqui se vuelca a HTML
+// plano para el crawler que no ejecuta JS.
+for (const [path, page] of Object.entries(infoPages)) {
+  const trail = [
+    { name: 'Inicio', path: '/' },
+    { name: page.eyebrow, path },
+  ]
+  const body = page.sections
+    .map(
+      (sec) =>
+        `<h2 class="font-heading font-[800] text-[clamp(24px,3vw,34px)] tracking-[-0.02em] mt-10 mb-4">${sec.h}</h2>` +
+        (sec.list
+          ? `<ul class="space-y-3 max-w-[640px]">${sec.list
+              .map((i) => `<li class="text-[16px] text-ink/75 leading-relaxed">— ${i}</li>`)
+              .join('')}</ul>`
+          : `<p class="text-[16px] text-ink/75 max-w-[640px] leading-relaxed">${sec.body}</p>`)
+    )
+    .join('\n              ')
+
+  routes.push({
+    path,
+    shell: contentShell(`
+            ${breadcrumbNav(trail)}
+            <h1 class="font-heading font-[800] text-[clamp(44px,7vw,92px)] leading-[0.92] tracking-[-0.035em] mb-6">${page.heading}</h1>
+            <p class="text-[18px] text-ink/70 max-w-[640px] leading-relaxed">${page.lead}</p>
+            ${body}`),
+    ld: [breadcrumbLd(trail)],
+  })
+}
+
 // Rutas de carrito/checkout: noindex, pero necesitan HTML propio para no
 // depender del rewrite catch-all
 for (const path of ['/cart', '/checkout', '/checkout/success']) {
@@ -469,6 +500,12 @@ const urls = [
     lastmod: today,
     changefreq: 'weekly',
     priority: '0.8',
+  })),
+  ...Object.keys(infoPages).map((path) => ({
+    loc: `${BASE_URL}${path}`,
+    lastmod: today,
+    changefreq: 'monthly',
+    priority: '0.6',
   })),
   ...products.map((p) => ({
     loc: `${BASE_URL}/producto/${p.id}`,

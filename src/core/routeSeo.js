@@ -52,6 +52,29 @@ export function getSeoForRoute(path, basePath, state) {
     }
   }
 
+  const infoSeo = {
+    '/nosotros': {
+      title: 'Nosotros | Boutique de moda masculina en Colima | G&L',
+      description: 'G&L viste a los hombres colimenses desde 1995. Dos tiendas fisicas, marcas escogidas a mano y atencion por WhatsApp.',
+    },
+    '/envios': {
+      title: 'Envios y formas de pago | G&L',
+      description: 'Envio $150 MXN a todo Mexico, gratis desde $1,499. Entrega en 3 a 4 dias habiles. Efectivo, transferencia, tarjeta y link de pago.',
+    },
+    '/cambios': {
+      title: 'Cambios y garantia | G&L',
+      description: 'Cambia tu prenda dentro de los 8 dias siguientes a la entrega. Si el error fue nuestro, el envio corre por nuestra cuenta.',
+    },
+    '/contacto': {
+      title: 'Contacto y sucursales en Colima | G&L',
+      description: 'Escribenos por WhatsApp o visitanos en Colima Centro y Villa de Alvarez. Horarios, direcciones y como llegar.',
+    },
+  }
+
+  if (infoSeo[basePath]) {
+    return { ...infoSeo[basePath], canonicalPath: basePath, robots: 'index,follow' }
+  }
+
   if (basePath === '/cart') {
     return {
       title: 'Carrito de Compra | G&L',

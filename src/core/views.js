@@ -9,8 +9,12 @@ import { pageCart } from '../pages/cart/cart.js'
 import { pageCheckout, pageCheckoutSuccess } from '../pages/checkout/checkout.js'
 import { pageAdminLogin } from '../pages/admin/adminLogin.js'
 import { pageNotFound } from '../pages/notFound/notFound.js'
+import { pageInfo } from '../pages/info/info.js'
 import { getSeoForRoute } from './routeSeo.js'
 
+
+// Paginas de confianza: comparten renderer, se distinguen por la ruta
+const infoRoutes = new Set(['/nosotros', '/envios', '/cambios', '/contacto'])
 
 const publicRoutes = {
   '/': pageHome,
@@ -57,6 +61,8 @@ export async function renderRoute(path, state) {
     page = pageProduct
   } else if (basePath.startsWith('/categoria/')) {
     page = pageCatalog
+  } else if (infoRoutes.has(basePath)) {
+    page = (st) => pageInfo(st, basePath)
   } else {
     page = publicRoutes[basePath] || pageNotFound
   }
