@@ -3,6 +3,7 @@ import { formatMoney } from '../../utils/format.js'
 import { lockScroll, unlockScroll } from '../../utils/dom.js'
 import { supabase } from '../../core/supabase.js'
 import { showToast } from '../../utils/toast.js'
+import { escapeHtml as esc } from '../../utils/sanitize.js'
 import { ICON, statusPill, statCard } from './adminIcons.js'
 
 function getPaymentMeta(paymentMethod) {
@@ -32,7 +33,7 @@ function statusDropdownHtml(order) {
   return `
     <div class="relative inline-block" data-status-wrap data-id="${order.id}">
       <button type="button" data-status-btn class="inline-flex items-center gap-1.5 pl-2.5 pr-2 h-[30px] rounded-full text-[12px] font-semibold ${m.cls} hover:brightness-95 transition-colors cursor-pointer">
-        <span class="w-1.5 h-1.5 rounded-full" style="background:${m.dot}"></span>${m.label}
+        <span class="w-1.5 h-1.5 rounded-full" style="background:${m.dot}"></span>${esc(m.label)}
         ${ICON.chevDown('w-3.5 h-3.5 opacity-60')}
       </button>
       <div data-status-menu class="hidden absolute right-0 top-[34px] z-30 w-[180px] bg-paper rounded-xl2 border border-line shadow-pop p-1 adm-anim-pop">
@@ -52,7 +53,7 @@ function notifyNewOrder(order) {
   const customer = order?.customer_name || 'Cliente'
   const total = Number(order?.total || 0)
   playNewOrderSound()
-  showToast(`Nuevo pedido de ${customer} (${formatMoney(total)})`, 'success', 6000)
+  showToast(`Nuevo pedido de ${esc(customer)} (${formatMoney(total)})`, 'success', 6000)
   if (typeof window === 'undefined' || typeof Notification === 'undefined') return
   if (Notification.permission !== 'granted') return
   try {
@@ -221,8 +222,8 @@ export function pageAdminOrders(state) {
             let data; try { data = JSON.parse(decodeURIComponent(btn.getAttribute('data-print') || '')) } catch { showToast('Error al preparar impresión', 'error'); return }
             const pw = window.open('', '_blank', 'width=900,height=700')
             if (!pw) { showToast('Ventana bloqueada', 'error'); return }
-            const itemsH = (data.items || []).map(i => `<tr><td>${i.name||'Producto'}</td><td>${i.size||'Única'}</td><td>${i.qty||0}</td><td>${formatMoney(i.price||0)}</td></tr>`).join('')
-            pw.document.write(`<html><head><title>Orden #${(data.id||'').toString().slice(0,8)}</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111827}h1{margin:0 0 8px}.meta{margin:4px 0;color:#374151}table{width:100%;border-collapse:collapse;margin-top:16px}th,td{border:1px solid #e5e7eb;padding:8px;text-align:left;font-size:14px}th{background:#f9fafb}</style></head><body><h1>Detalle de orden</h1><p class="meta"><strong>Pedido:</strong> #${(data.id||'').toString().slice(0,8)}</p><p class="meta"><strong>Cliente:</strong> ${data.customerName||'Sin nombre'}</p><p class="meta"><strong>WhatsApp:</strong> ${data.customerWhatsapp||'Sin teléfono'}</p><p class="meta"><strong>Fecha:</strong> ${data.when||'Sin fecha'}</p><p class="meta"><strong>Entrega:</strong> ${data.deliveryMethod||'Sin método'}</p><p class="meta"><strong>Dirección:</strong> ${data.address||'Sin dirección'}</p><p class="meta"><strong>Pago:</strong> ${data.paymentLabel||'Sin definir'}</p><p class="meta"><strong>Total:</strong> ${formatMoney(data.total||0)}</p><table><thead><tr><th>Producto</th><th>Talla</th><th>Cantidad</th><th>Precio</th></tr></thead><tbody>${itemsH||'<tr><td colspan="4">Sin productos</td></tr>'}</tbody></table></body></html>`)
+            const itemsH = (data.items || []).map(i => `<tr><td>${esc(i.name)||'Producto'}</td><td>${esc(i.size)||'Única'}</td><td>${Number(i.qty)||0}</td><td>${formatMoney(i.price||0)}</td></tr>`).join('')
+            pw.document.write(`<html><head><title>Orden #${(data.id||'').toString().slice(0,8)}</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111827}h1{margin:0 0 8px}.meta{margin:4px 0;color:#374151}table{width:100%;border-collapse:collapse;margin-top:16px}th,td{border:1px solid #e5e7eb;padding:8px;text-align:left;font-size:14px}th{background:#f9fafb}</style></head><body><h1>Detalle de orden</h1><p class="meta"><strong>Pedido:</strong> #${(data.id||'').toString().slice(0,8)}</p><p class="meta"><strong>Cliente:</strong> ${esc(data.customerName)||'Sin nombre'}</p><p class="meta"><strong>WhatsApp:</strong> ${esc(data.customerWhatsapp)||'Sin teléfono'}</p><p class="meta"><strong>Fecha:</strong> ${esc(data.when)||'Sin fecha'}</p><p class="meta"><strong>Entrega:</strong> ${esc(data.deliveryMethod)||'Sin método'}</p><p class="meta"><strong>Dirección:</strong> ${esc(data.address)||'Sin dirección'}</p><p class="meta"><strong>Pago:</strong> ${esc(data.paymentLabel)||'Sin definir'}</p><p class="meta"><strong>Total:</strong> ${formatMoney(data.total||0)}</p><table><thead><tr><th>Producto</th><th>Talla</th><th>Cantidad</th><th>Precio</th></tr></thead><tbody>${itemsH||'<tr><td colspan="4">Sin productos</td></tr>'}</tbody></table></body></html>`)
             pw.document.close(); pw.focus(); pw.print()
           }
         })
@@ -240,6 +241,7 @@ export function pageAdminOrders(state) {
         const createdAt = new Date(order.created_at)
         const when = Number.isNaN(createdAt.getTime()) ? 'Sin fecha' : `${createdAt.toLocaleDateString()} ${createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
         const printPayload = encodeURIComponent(JSON.stringify({ id: order.id, customerName: order.customer_name, customerWhatsapp: order.customer_whatsapp, when, deliveryMethod: order.delivery_method, address: order.address, paymentLabel: payment.label, total: Number(order.total) || 0, items }))
+        // not-html: se copia al portapapeles como texto plano
         const summaryLines = [`Pedido #${String(order.id).slice(0,8)}`, `Cliente: ${order.customer_name||'Sin nombre'}`, `WhatsApp: ${order.customer_whatsapp||'Sin teléfono'}`, `Fecha: ${when}`, `Entrega: ${order.delivery_method||'Sin método'}`, `Dirección: ${order.address||'Sin dirección'}`, `Pago: ${payment.label}`, 'Productos:', ...(items.length ? items.map(i => `- ${i?.qty||0}x ${i?.name||'Producto'} (${i?.size||'Única'}) · ${formatMoney(i?.price||0)}`) : ['- Sin productos']), `Total: ${formatMoney(order.total||0)}`]
 
         const itemsTotal = items.reduce((a, it) => a + (Number(it?.price) || 0) * (Number(it?.qty) || 0), 0)
@@ -259,10 +261,10 @@ export function pageAdminOrders(state) {
             <!-- Customer -->
             <div class="bg-paper rounded-xl2 border border-line p-4">
               <div class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[14px] font-bold">${initials(order.customer_name)}</div>
+                <div class="w-11 h-11 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[14px] font-bold">${esc(initials(order.customer_name))}</div>
                 <div class="min-w-0">
-                  <p class="font-semibold text-ink text-[15px] truncate">${order.customer_name||'Sin nombre'}</p>
-                  <p class="text-[13px] text-brand tnum">${order.customer_whatsapp||'Sin teléfono'}</p>
+                  <p class="font-semibold text-ink text-[15px] truncate">${esc(order.customer_name)||'Sin nombre'}</p>
+                  <p class="text-[13px] text-brand tnum">${esc(order.customer_whatsapp)||'Sin teléfono'}</p>
                 </div>
               </div>
             </div>
@@ -275,7 +277,7 @@ export function pageAdminOrders(state) {
               </div>
               <div class="bg-paper rounded-xl2 border border-line p-3.5">
                 <p class="eyebrow text-faint mb-1.5">Pago</p>
-                <span class="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink">${ICON[payment.icon]('w-4 h-4 text-muted')}${payment.label}</span>
+                <span class="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink">${ICON[payment.icon]('w-4 h-4 text-muted')}${esc(payment.label)}</span>
               </div>
               <div class="bg-paper rounded-xl2 border border-line p-3.5">
                 <p class="eyebrow text-faint mb-1.5">Fecha</p>
@@ -290,7 +292,7 @@ export function pageAdminOrders(state) {
 
             ${order.address ? `<div class="bg-paper rounded-xl2 border border-line p-4 flex items-start gap-3">
               <span class="text-muted mt-0.5">${ICON.map('w-[18px] h-[18px]')}</span>
-              <div><p class="eyebrow text-faint mb-1">Dirección de envío</p><p class="text-[13.5px] text-body leading-relaxed">${order.address}</p></div>
+              <div><p class="eyebrow text-faint mb-1">Dirección de envío</p><p class="text-[13.5px] text-body leading-relaxed">${esc(order.address)}</p></div>
             </div>` : ''}
 
             <!-- Products -->
@@ -302,7 +304,7 @@ export function pageAdminOrders(state) {
               <div class="divide-y divide-line">
                 ${items.length ? items.map(item => `<div class="flex items-center gap-3 px-4 py-3">
                   <div class="w-8 h-8 rounded-lg bg-canvas border border-line flex items-center justify-center text-[11px] font-bold text-muted tnum shrink-0">${item?.qty||0}×</div>
-                  <div class="min-w-0 flex-1"><p class="text-[13.5px] font-medium text-ink truncate">${item?.name||'Producto'}</p><p class="text-[11.5px] text-faint">Talla ${item?.size||'Única'}</p></div>
+                  <div class="min-w-0 flex-1"><p class="text-[13.5px] font-medium text-ink truncate">${esc(item?.name)||'Producto'}</p><p class="text-[11.5px] text-faint">Talla ${esc(item?.size)||'Única'}</p></div>
                   <p class="text-[13px] font-semibold text-ink tnum shrink-0">${formatMoney((item?.price||0) * (item?.qty||0))}</p>
                 </div>`).join('') : '<div class="px-4 py-6 text-center text-[13px] text-muted">Sin productos registrados.</div>'}
               </div>
@@ -368,12 +370,12 @@ export function pageAdminOrders(state) {
           <tr class="border-t border-line hover:bg-canvas transition-colors cursor-pointer group" data-row data-id="${order.id}">
             <td class="px-5 py-3.5">
               <p class="text-[13.5px] font-semibold text-ink tnum">#${String(order.id).slice(0,8)}</p>
-              <span class="inline-flex items-center gap-1 text-[11.5px] text-muted mt-0.5">${ICON[payment.icon]('w-3.5 h-3.5')}${payment.label}</span>
+              <span class="inline-flex items-center gap-1 text-[11.5px] text-muted mt-0.5">${ICON[payment.icon]('w-3.5 h-3.5')}${esc(payment.label)}</span>
             </td>
             <td class="px-5 py-3.5">
               <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[11px] font-bold shrink-0">${initials(order.customer_name)}</div>
-                <div class="min-w-0"><p class="text-[13.5px] font-semibold text-ink truncate">${order.customer_name}</p><p class="text-[11.5px] text-faint tnum">${order.customer_whatsapp||''}</p></div>
+                <div class="w-8 h-8 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[11px] font-bold shrink-0">${esc(initials(order.customer_name))}</div>
+                <div class="min-w-0"><p class="text-[13.5px] font-semibold text-ink truncate">${esc(order.customer_name)}</p><p class="text-[11.5px] text-faint tnum">${esc(order.customer_whatsapp)}</p></div>
               </div>
             </td>
             <td class="px-5 py-3.5"><p class="text-[13px] text-body">${new Date(order.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}</p><p class="text-[11.5px] text-faint tnum">${new Date(order.created_at).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</p></td>
@@ -390,13 +392,13 @@ export function pageAdminOrders(state) {
           <div class="p-4 active:bg-canvas transition-colors cursor-pointer" data-row data-id="${order.id}">
             <div class="flex items-start justify-between gap-3">
               <div class="flex items-center gap-2.5 min-w-0">
-                <div class="w-9 h-9 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[12px] font-bold shrink-0">${initials(order.customer_name)}</div>
-                <div class="min-w-0"><p class="text-[14px] font-semibold text-ink truncate">${order.customer_name}</p><p class="text-[11.5px] text-faint tnum">#${String(order.id).slice(0,8)} · ${relTime(order.created_at)}</p></div>
+                <div class="w-9 h-9 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[12px] font-bold shrink-0">${esc(initials(order.customer_name))}</div>
+                <div class="min-w-0"><p class="text-[14px] font-semibold text-ink truncate">${esc(order.customer_name)}</p><p class="text-[11.5px] text-faint tnum">#${String(order.id).slice(0,8)} · ${relTime(order.created_at)}</p></div>
               </div>
               <p class="font-bold text-ink text-[15px] tnum shrink-0">${formatMoney(order.total||0)}</p>
             </div>
             <div class="flex items-center justify-between mt-3">
-              <span class="inline-flex items-center gap-1.5 text-[12px] text-muted">${ICON[payment.icon]('w-4 h-4')}${payment.label} · ${deliveryLabel}</span>
+              <span class="inline-flex items-center gap-1.5 text-[12px] text-muted">${ICON[payment.icon]('w-4 h-4')}${esc(payment.label)} · ${deliveryLabel}</span>
               ${statusPill(order.status)}
             </div>
           </div>`

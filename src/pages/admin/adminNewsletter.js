@@ -1,4 +1,5 @@
 import { getAdminSubscribers } from '../../store/index.js'
+import { escapeHtml as esc } from '../../utils/sanitize.js'
 import { ICON, statCard } from './adminIcons.js'
 
 function formatSubscriberDate(sub) {
@@ -125,8 +126,8 @@ export function pageAdminNewsletter(state) {
         tbody.innerHTML = filtered.map(sub => {
           return `<tr class="border-t border-line hover:bg-canvas transition-colors">
             <td class="px-5 py-3"><div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[13px] font-bold uppercase shrink-0">${sub.email[0]}</div>
-              <span class="text-[13.5px] font-medium text-ink truncate">${sub.email}</span>
+              <div class="w-9 h-9 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[13px] font-bold uppercase shrink-0">${esc(sub.email[0])}</div>
+              <span class="text-[13.5px] font-medium text-ink truncate">${esc(sub.email)}</span>
             </div></td>
             <td class="px-5 py-3"><span class="text-[13px] text-muted tnum">${formatSubscriberDate(sub)}</span> <span class="text-[11px] text-faint">${formatSubscriberTime(sub)}</span></td>
             <td class="px-5 py-3"><span class="inline-flex items-center gap-1.5 px-2.5 h-[22px] rounded-full text-[11px] font-semibold text-ok bg-ok-tint"><span class="w-1.5 h-1.5 rounded-full bg-ok"></span>Activo</span></td>
@@ -135,9 +136,9 @@ export function pageAdminNewsletter(state) {
 
         mobileList.innerHTML = filtered.map(sub => {
           return `<div class="px-4 py-3 hover:bg-canvas transition-colors"><div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[13px] font-bold uppercase shrink-0">${sub.email[0]}</div>
+            <div class="w-9 h-9 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[13px] font-bold uppercase shrink-0">${esc(sub.email[0])}</div>
             <div class="min-w-0 flex-1">
-              <p class="text-[13px] font-medium text-ink truncate">${sub.email}</p>
+              <p class="text-[13px] font-medium text-ink truncate">${esc(sub.email)}</p>
               <p class="text-[11.5px] text-faint mt-0.5 tnum">${formatSubscriberDate(sub)}</p>
             </div>
             <span class="inline-flex items-center gap-1 px-2 h-[20px] rounded-full text-[10px] font-semibold text-ok bg-ok-tint shrink-0">Activo</span>

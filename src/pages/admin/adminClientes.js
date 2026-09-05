@@ -1,6 +1,7 @@
 import { getAdminOrders } from '../../store/index.js'
 import { formatMoney } from '../../utils/format.js'
 import { lockScroll, unlockScroll } from '../../utils/dom.js'
+import { escapeHtml as esc } from '../../utils/sanitize.js'
 import { ICON, statCard, statusPill } from './adminIcons.js'
 
 function initials(name) {
@@ -183,14 +184,14 @@ export function pageAdminClientes(state) {
                   </thead>
                   <tbody>
                     ${filtered.length ? filtered.map(c => `
-                      <tr class="border-t border-line hover:bg-canvas transition-colors cursor-pointer" data-client-row data-wa="${c.whatsapp}">
+                      <tr class="border-t border-line hover:bg-canvas transition-colors cursor-pointer" data-client-row data-wa="${esc(c.whatsapp)}">
                         <td class="px-5 py-3.5">
                           <div class="flex items-center gap-2.5">
-                            <div class="w-9 h-9 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[12px] font-bold shrink-0">${initials(c.name)}</div>
-                            <span class="text-[13.5px] font-semibold text-ink truncate">${c.name}</span>
+                            <div class="w-9 h-9 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[12px] font-bold shrink-0">${esc(initials(c.name))}</div>
+                            <span class="text-[13.5px] font-semibold text-ink truncate">${esc(c.name)}</span>
                           </div>
                         </td>
-                        <td class="px-5 py-3.5"><span class="text-[13px] text-body tnum">${c.whatsapp}</span></td>
+                        <td class="px-5 py-3.5"><span class="text-[13px] text-body tnum">${esc(c.whatsapp)}</span></td>
                         <td class="px-5 py-3.5"><span class="text-[13.5px] font-semibold text-ink tnum">${c.orderCount}</span></td>
                         <td class="px-5 py-3.5 text-right"><span class="font-bold text-ink text-[14px] tnum">${formatMoney(c.totalSpent)}</span></td>
                         <td class="px-5 py-3.5"><span class="text-[13px] text-body">${relTime(c.lastOrder)}</span></td>
@@ -210,13 +211,13 @@ export function pageAdminClientes(state) {
               <!-- Mobile cards -->
               <div class="md:hidden divide-y divide-line">
                 ${filtered.length ? filtered.map(c => `
-                  <div class="p-4 active:bg-canvas transition-colors cursor-pointer" data-client-row data-wa="${c.whatsapp}">
+                  <div class="p-4 active:bg-canvas transition-colors cursor-pointer" data-client-row data-wa="${esc(c.whatsapp)}">
                     <div class="flex items-start justify-between gap-3">
                       <div class="flex items-center gap-2.5 min-w-0">
-                        <div class="w-9 h-9 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[12px] font-bold shrink-0">${initials(c.name)}</div>
+                        <div class="w-9 h-9 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[12px] font-bold shrink-0">${esc(initials(c.name))}</div>
                         <div class="min-w-0">
-                          <p class="text-[14px] font-semibold text-ink truncate">${c.name}</p>
-                          <p class="text-[11.5px] text-faint tnum">${c.whatsapp}</p>
+                          <p class="text-[14px] font-semibold text-ink truncate">${esc(c.name)}</p>
+                          <p class="text-[11.5px] text-faint tnum">${esc(c.whatsapp)}</p>
                         </div>
                       </div>
                       <p class="font-bold text-ink text-[15px] tnum shrink-0">${formatMoney(c.totalSpent)}</p>
@@ -270,6 +271,7 @@ export function pageAdminClientes(state) {
           const rows = [
             'Cliente,WhatsApp,Ordenes,Total gastado,Ultima compra,Ticket promedio',
             ...getFiltered().map(c =>
+              // not-html: fila de CSV en texto plano
               `"${c.name}",${c.whatsapp},${c.orderCount},${c.totalSpent.toFixed(2)},${formatDate(c.lastOrder)},${c.ticketAvg.toFixed(2)}`
             ),
           ].join('\n')
@@ -311,11 +313,11 @@ export function pageAdminClientes(state) {
               <!-- Customer header -->
               <div class="bg-paper rounded-xl2 border border-line p-4">
                 <div class="flex items-center gap-3">
-                  <div class="w-12 h-12 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[16px] font-bold">${initials(customer.name)}</div>
+                  <div class="w-12 h-12 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[16px] font-bold">${esc(initials(customer.name))}</div>
                   <div class="min-w-0 flex-1">
-                    <p class="font-semibold text-ink text-[16px] truncate">${customer.name}</p>
+                    <p class="font-semibold text-ink text-[16px] truncate">${esc(customer.name)}</p>
                     <a href="https://wa.me/${customer.whatsapp.replace(/\D+/g, '')}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-[13px] text-brand hover:text-brand-ink transition-colors tnum">
-                      ${ICON.whatsapp('w-4 h-4')}${customer.whatsapp}
+                      ${ICON.whatsapp('w-4 h-4')}${esc(customer.whatsapp)}
                     </a>
                   </div>
                 </div>
@@ -366,7 +368,7 @@ export function pageAdminClientes(state) {
                             <span class="text-[12px] text-muted">${formatDate(o.created_at)}</span>
                             <span class="text-[13px] font-bold text-ink tnum">${formatMoney(o.total || 0)}</span>
                           </div>
-                          <p class="text-[11.5px] text-faint mt-1 truncate">${summary}</p>
+                          <p class="text-[11.5px] text-faint mt-1 truncate">${esc(summary)}</p>
                         </div>`
                     }).join('')}
                 </div>

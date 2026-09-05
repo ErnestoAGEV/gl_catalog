@@ -1,5 +1,6 @@
 import { getAdminOrders, getAdminSubscribers } from '../../store/index.js'
 import { formatMoney } from '../../utils/format.js'
+import { escapeHtml as esc } from '../../utils/sanitize.js'
 import { ICON, statCard, statusPill } from './adminIcons.js'
 
 function normalizeStatus(status) {
@@ -313,9 +314,9 @@ export function pageAdminDashboard(state) {
                     ? `<div class="text-center py-12"><div class="w-14 h-14 mx-auto rounded-2xl bg-canvas border border-line flex items-center justify-center text-faint mb-4">${ICON.orders('w-7 h-7')}</div><p class="font-display font-bold text-ink text-[15px]">Sin pedidos</p><p class="text-[13.5px] text-muted mt-1">Aún no hay pedidos registrados.</p></div>`
                     : orders.slice(0, 6).map(o => `
                     <a href="/admin/orders" class="flex items-center gap-3 px-2 -mx-2 h-[52px] rounded-xl2 hover:bg-canvas transition-colors">
-                      <div class="w-9 h-9 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[12px] font-bold shrink-0">${initials(o.customer_name)}</div>
+                      <div class="w-9 h-9 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[12px] font-bold shrink-0">${esc(initials(o.customer_name))}</div>
                       <div class="min-w-0 flex-1">
-                        <p class="text-[13.5px] font-semibold text-ink truncate">${o.customer_name}</p>
+                        <p class="text-[13.5px] font-semibold text-ink truncate">${esc(o.customer_name)}</p>
                         <p class="text-[11.5px] text-faint tnum">#${o.id} · ${relTime(o.created_at)}</p>
                       </div>
                       <div class="text-right shrink-0">
