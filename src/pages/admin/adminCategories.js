@@ -166,8 +166,8 @@ export function pageAdminCategories(state) {
         wrap.innerHTML = `
           <div id="cat-delete-modal" class="fixed inset-0 layer-modal flex items-center justify-center bg-ink/50 backdrop-blur-sm p-4 adm-anim-fade">
             <div class="w-full max-w-sm bg-paper rounded-3xl border border-line shadow-pop adm-anim-pop overflow-hidden">
-              <div class="p-5">
-                <div class="w-11 h-11 rounded-xl2 bg-bad-tint text-bad flex items-center justify-center mb-3">${ICON.trash('w-5 h-5')}</div>
+              <div class="p-5 text-center">
+                <div class="w-11 h-11 rounded-xl2 bg-bad-tint text-bad flex items-center justify-center mx-auto mb-3">${ICON.trash('w-5 h-5')}</div>
                 <h3 class="font-display font-bold text-ink text-[17px]">¿Eliminar categoría?</h3>
                 <p class="text-[13.5px] text-muted mt-1">Vas a eliminar <span class="font-semibold text-body">"${cat.name}"</span>. Esta acción no se puede deshacer.</p>
               </div>

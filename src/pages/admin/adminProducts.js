@@ -210,6 +210,14 @@ export function pageAdminProducts(state) {
       }
 
       // ── Delete Confirm Modal ──
+      const closeDeleteModal = () => {
+        pendingDeleteId = null
+        isDeleteModalOpen = false
+        const modal = document.getElementById('delete-confirm-modal')
+        if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex') }
+        unlockScroll()
+      }
+
       const ensureDeleteModal = () => {
         let modal = document.getElementById('delete-confirm-modal')
         if (modal) return modal
@@ -219,8 +227,8 @@ export function pageAdminProducts(state) {
         modal.className = 'fixed inset-0 layer-modal hidden items-center justify-center bg-ink/50 backdrop-blur-sm p-4'
         modal.innerHTML = `
           <div class="w-full max-w-sm bg-paper rounded-3xl border border-line shadow-pop overflow-hidden adm-anim-pop">
-            <div class="p-5">
-              <div class="w-11 h-11 rounded-xl2 bg-bad-tint text-bad flex items-center justify-center mb-3">${ICON.trash('w-5 h-5')}</div>
+            <div class="p-5 text-center">
+              <div class="w-11 h-11 rounded-xl2 bg-bad-tint text-bad flex items-center justify-center mx-auto mb-3">${ICON.trash('w-5 h-5')}</div>
               <h3 class="font-display font-bold text-ink text-[17px]">¿Eliminar producto?</h3>
               <p class="text-[13.5px] text-muted mt-1">Esta acción no se puede deshacer.</p>
             </div>
@@ -232,26 +240,19 @@ export function pageAdminProducts(state) {
         `
         document.body.appendChild(modal)
 
-        modal.querySelector('#delete-cancel').addEventListener('click', () => {
-          pendingDeleteId = null
-          isDeleteModalOpen = false
-          modal.classList.add('hidden')
-        })
+        modal.querySelector('#delete-cancel').addEventListener('click', () => closeDeleteModal())
         modal.querySelector('#delete-confirm').addEventListener('click', async () => {
           if (!pendingDeleteId) return
           const idToDelete = pendingDeleteId
-          pendingDeleteId = null
-          isDeleteModalOpen = false
-          modal.classList.add('hidden')
+          closeDeleteModal()
           const { error } = await deleteProduct(idToDelete)
           showToast(error ? (error.message || 'No se pudo eliminar el producto') : 'Producto eliminado', error ? 'error' : 'success')
         })
         modal.addEventListener('click', (e) => {
-          if (e.target === modal) {
-            pendingDeleteId = null
-            isDeleteModalOpen = false
-            modal.classList.add('hidden')
-          }
+          if (e.target === modal) closeDeleteModal()
+        })
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && isDeleteModalOpen) closeDeleteModal()
         })
 
         return modal
@@ -809,6 +810,8 @@ export function pageAdminProducts(state) {
         pendingDeleteId = id
         const modal = ensureDeleteModal()
         modal.classList.remove('hidden')
+        modal.classList.add('flex')
+        lockScroll()
       })
 
       // ── Toggle Status (single listener, avoids duplicate toasts) ──
