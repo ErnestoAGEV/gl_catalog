@@ -1,5 +1,7 @@
-// Metadatos SEO por ruta. Modulo puro (sin DOM ni imports): lo usan tanto
-// el runtime (views.js) como el prerender de build (scripts/prerender.mjs).
+// Metadatos SEO por ruta. Modulo puro (sin DOM): lo usan tanto el runtime
+// (views.js) como el prerender de build (scripts/prerender.mjs).
+
+import { productDescription, productTitle } from '../utils/productCopy.js'
 
 export function getSeoForRoute(path, basePath, state) {
   if (basePath === '/') {
@@ -35,10 +37,9 @@ export function getSeoForRoute(path, basePath, state) {
     const product = state?.products?.find((item) => String(item.id) === String(productId || ''))
 
     if (product) {
-      const productType = product.type || 'Moda masculina'
       return {
-        title: `${product.name} | ${productType} | G&L`,
-        description: `${product.name} disponible en G&L. Compra ${productType.toLowerCase()} para hombre con estilo premium en Colima.`,
+        title: productTitle(product),
+        description: productDescription(product),
         canonicalPath: `/producto/${product.id}`,
         robots: 'index,follow',
       }

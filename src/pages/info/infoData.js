@@ -21,7 +21,7 @@ const storePages = Object.fromEntries(
     `/sucursales/${store.slug}`,
     {
       eyebrow: `Sucursal ${store.name}`,
-      heading: `${store.fullName.replace('G&L ', '')}<br/>en <span class="text-brand">Colima</span>.`,
+      heading: `Nuestra tienda<br/>en ${store.headingPlace}.`,
       lead: `${store.address} Aquí tienes el mismo catálogo que ves en línea, y alguien que te ayuda a escoger la talla.`,
       sections: [
         {
