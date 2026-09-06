@@ -14,7 +14,7 @@ import { dirname, join } from 'node:path'
 import { getSeoForRoute } from '../src/core/routeSeo.js'
 import { infoPages } from '../src/pages/info/infoData.js'
 import { STORE_PHONE, stores } from '../src/pages/home/homeData.js'
-import { productDescription } from '../src/utils/productCopy.js'
+import { colorPhrase, productDescription } from '../src/utils/productCopy.js'
 
 const BASE_URL = 'https://www.glboutique.com.mx'
 const DIST = 'dist'
@@ -376,9 +376,48 @@ for (const category of categories) {
   })
 }
 
+// La base no tiene concepto de grupo: 33 productos son la misma prenda en
+// varios colores, con una fila y una URL cada uno, y el nombre repetido es lo
+// unico que los une. Sin ProductGroup, Google los ve como 33 productos que
+// compiten entre si en vez de un chino en cuatro colores.
+//
+// Solo agrupamos cuando el nombre se repite; un producto suelto no es grupo.
+const variantGroups = new Map()
+for (const product of products) {
+  const key = product.name.trim()
+  if (!variantGroups.has(key)) variantGroups.set(key, [])
+  variantGroups.get(key).push(product)
+}
+for (const [key, group] of variantGroups) {
+  if (group.length < 2) variantGroups.delete(key)
+}
+
+/**
+ * El grupo debe contener la variante de esta pagina exactamente una vez: si no
+ * esta, hasVariant se contradice con isVariantOf; si esta dos veces, el mismo
+ * @id queda definido dos veces con datos distintos.
+ */
+function assertOneSelfReference(product, group) {
+  const mine = group.filter((variant) => variant.id === product.id).length
+  if (mine !== 1) {
+    throw new Error(`Grupo "${product.name}": la variante ${product.id} aparece ${mine} veces`)
+  }
+  return group
+}
+
+/** @id estable del grupo: el nombre no vale como fragmento de URL. */
+const groupId = (name) =>
+  `${BASE_URL}/#grupo-${name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
+
+console.log(
+  `[prerender] ${variantGroups.size} grupos de variantes ` +
+    `(${[...variantGroups.values()].reduce((n, g) => n + g.length, 0)} productos)`
+)
+
 for (const product of products) {
   const path = `/producto/${product.id}`
   const image = product.image_url || product.images?.[0] || DEFAULT_IMAGE
+  const group = variantGroups.get(product.name.trim())
   const trail = [
     { name: 'Inicio', path: '/' },
     { name: 'Tienda', path: '/catalog' },
@@ -416,6 +455,16 @@ for (const product of products) {
         // Los nombres del catalogo vienen como "Marca - Modelo"; Google marca error
         // si le declaras la tienda como brand del producto.
         brand: { '@type': 'Brand', name: product.name.split(' - ')[0].trim() || 'G&L' },
+        // Atributos que faltaban: sin color ni size, Google no sabe en que se
+        // diferencia una variante de la siguiente.
+        color: product.colors?.length ? colorPhrase(product.colors) : undefined,
+        size: product.sizes?.length ? product.sizes : undefined,
+        ...(group
+          ? {
+              inProductGroupWithID: product.name.trim(),
+              isVariantOf: { '@id': groupId(product.name) },
+            }
+          : {}),
         offers: {
           '@type': 'Offer',
           url: absolute(path),
@@ -428,6 +477,57 @@ for (const product of products) {
           hasMerchantReturnPolicy: returnPolicy,
         },
       },
+      // El grupo va en la pagina de cada variante, que es donde Google lo
+      // espera: no hay una URL de grupo que sirva de canonical.
+      ...(group
+        ? [
+            {
+              '@context': 'https://schema.org',
+              '@type': 'ProductGroup',
+              '@id': groupId(product.name),
+              name: product.name,
+              productGroupID: product.name.trim(),
+              category: product.type || undefined,
+              brand: { '@type': 'Brand', name: product.name.split(' - ')[0].trim() || 'G&L' },
+              // Solo el color: la base no guarda stock ni precio por talla, asi
+              // que declarar la talla como eje seria inventar variantes.
+              variesBy: ['https://schema.org/color'],
+              // La variante de esta pagina va solo por referencia: ya esta
+              // definida arriba y repetirla dejaria dos versiones del mismo
+              // @id. Las otras llevan datos, para que la referencia resuelva
+              // y Google pueda armar el selector de color.
+              hasVariant: assertOneSelfReference(product, group).map((variant) => {
+                const variantPath = `/producto/${variant.id}`
+                const variantId = `${absolute(variantPath)}#product`
+                if (variant.id === product.id) return { '@id': variantId }
+                // Los mismos datos que el Product principal: Google recorre
+                // cada nodo anidado y avisa si a una variante le falta el
+                // envio o la politica de cambios.
+                return {
+                  '@type': 'Product',
+                  '@id': variantId,
+                  name: variant.name,
+                  description: productDescription(variant),
+                  url: absolute(variantPath),
+                  image: variant.image_url || DEFAULT_IMAGE,
+                  sku: String(variant.id),
+                  color: variant.colors?.length ? colorPhrase(variant.colors) : undefined,
+                  size: variant.sizes?.length ? variant.sizes : undefined,
+                  offers: {
+                    '@type': 'Offer',
+                    url: absolute(variantPath),
+                    price: Number(variant.price),
+                    priceCurrency: 'MXN',
+                    availability: `https://schema.org/${(variant.stock ?? 0) > 0 ? 'InStock' : 'OutOfStock'}`,
+                    itemCondition: 'https://schema.org/NewCondition',
+                    shippingDetails,
+                    hasMerchantReturnPolicy: returnPolicy,
+                  },
+                }
+              }),
+            },
+          ]
+        : []),
       breadcrumbLd(trail),
     ],
   })
