@@ -437,8 +437,9 @@ for (const product of products) {
     path,
     image,
     // Para la preview de WhatsApp: si la principal es un webp que no se puede
-    // convertir, sirve la siguiente foto del producto.
-    images: [product.image_url, ...(product.images || [])],
+    // convertir, sirve la siguiente foto del producto. Y si todas son webp,
+    // el logo — antes que una foto de otra prenda, que confunde al comprador.
+    images: [product.image_url, ...(product.images || []), '/icon-512.png?v=2'],
     shell: contentShell(`
             ${breadcrumbNav(trail)}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
