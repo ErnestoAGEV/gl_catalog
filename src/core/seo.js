@@ -1,5 +1,5 @@
 const BASE_URL = 'https://www.glboutique.com.mx'
-const DEFAULT_IMAGE = `${BASE_URL}/bannergl.webp`
+const DEFAULT_IMAGE = `${BASE_URL}/heroeGL.jpg`
 
 function setMetaByName(name, content) {
   let tag = document.querySelector(`meta[name="${name}"]`)

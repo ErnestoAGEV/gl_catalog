@@ -2,10 +2,14 @@
 import assert from 'node:assert/strict'
 import {
   colorPhrase,
+  findProductByPath,
   productBrand,
   productDescription,
+  productPath,
+  productSlug,
   productTitle,
   sizeSummary,
+  socialImage,
 } from '../src/utils/productCopy.js'
 
 // ── marca ──
@@ -93,5 +97,51 @@ const variantes = ['Gris', 'Negro', 'Beige', 'Azul'].map((c) =>
   productTitle({ ...pantalon, colors: [c] })
 )
 assert.equal(new Set(variantes).size, 4, 'variantes de color con title repetido')
+
+// ── slug de la url ──
+const conId = { ...pantalon, id: 'ff60bff1-eaca-4eeb-a3ef-edfc3598bbc2' }
+assert.equal(productSlug(conId), 'oggi-chinos-900-gris-ff60bff1')
+assert.equal(productPath(conId), '/producto/oggi-chinos-900-gris-ff60bff1')
+assert.ok(!/[^a-z0-9-]/.test(productSlug(conId)), 'el slug solo lleva minusculas, digitos y guiones')
+
+// Acentos y simbolos no pueden acabar en la url
+assert.equal(
+  productSlug({ id: 'aabbccdd-0000-0000-0000-000000000000', name: 'Soul&Blues - Camisa Añil' }),
+  'soul-blues-camisa-anil-aabbccdd'
+)
+
+// Renombrar un producto no puede romper el link ya compartido: se resuelve
+// por el id del final, no por el texto.
+const catalogoIds = [conId]
+assert.equal(findProductByPath(catalogoIds, 'oggi-chinos-900-gris-ff60bff1')?.id, conId.id)
+assert.equal(
+  findProductByPath(catalogoIds, 'otro-nombre-cualquiera-ff60bff1')?.id,
+  conId.id,
+  'el slug viejo tiene que seguir resolviendo'
+)
+// Las urls con uuid repartidas por WhatsApp siguen abriendo el producto
+assert.equal(findProductByPath(catalogoIds, conId.id)?.id, conId.id)
+assert.equal(findProductByPath(catalogoIds, 'no-existe-00000000'), undefined)
+assert.equal(findProductByPath([], 'lo-que-sea'), undefined)
+
+// Los 4 duplicados de la base comparten nombre, color y precio: el id los separa
+const gemelos = [
+  { ...pantalon, id: '7876bdbc-3adc-4e14-8045-6f60fbe06547' },
+  { ...pantalon, id: '92d18667-4f40-4ce6-9f6e-a0f934099d40' },
+]
+assert.equal(new Set(gemelos.map(productSlug)).size, 2, 'dos filas identicas comparten slug')
+
+// ── imagen social ──
+// WhatsApp no renderiza webp: la foto del CDN se pide en jpg
+assert.equal(
+  socialImage('https://assets.rediredi.com/items/images/abc.jpg?s=medium&f=webp'),
+  'https://assets.rediredi.com/items/images/abc.jpg?s=large&f=jpg'
+)
+// Sin producto (home, info, 404) cae al jpg local, no al banner webp
+assert.equal(socialImage(), 'https://www.glboutique.com.mx/heroeGL.jpg')
+assert.equal(socialImage('/bannergl.webp'), 'https://www.glboutique.com.mx/heroeGL.jpg')
+// Una url ajena en jpg se respeta tal cual
+assert.equal(socialImage('https://otro.cdn/foto.jpg'), 'https://otro.cdn/foto.jpg')
+assert.ok(!/\.webp/i.test(socialImage('https://cdn/x.webp')), 'nunca sale un webp en og:image')
 
 console.log('ok — productCopy')

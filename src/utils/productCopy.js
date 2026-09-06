@@ -7,6 +7,11 @@
 // descripcion escrita a mano —cuando el campo `description` tenga texto, ese
 // gana— pero al menos cada producto dice algo distinto y util.
 
+// Largo del id que se pega al final del slug. 8 hex de un uuid v4 dan 4 mil
+// millones de combinaciones: de sobra para 235 productos, y no hace falta que
+// sea unico por si solo — el slug completo ya lo es.
+const SHORT_ID_LENGTH = 8
+
 const TYPE_SINGULAR = {
   Camisas: 'Camisa',
   Polos: 'Polo',
@@ -118,4 +123,76 @@ export function productTitle(product) {
   const color = colorPhrase(product?.colors)
   const name = color ? `${product?.name} en ${color}` : product?.name
   return `${name} | ${singular} para ${audience} | G&L`
+}
+
+// ── URL del producto ────────────────────────────────────────────────────────
+//
+// El uuid crudo no dice nada al que ve el link en WhatsApp ni a Google. El
+// slug lleva marca, modelo y color, y termina con los primeros 8 caracteres
+// del id.
+//
+// Ese sufijo no es decoracion: la URL se resuelve por el, no por el texto. Asi
+// renombrar un producto desde el panel no rompe los links ya compartidos, y
+// dos filas con el mismo nombre y color no colisionan.
+
+/** "Oggi - Chinos 900" + ["Gris"] -> "oggi-chinos-900-gris" */
+function slugify(text) {
+  return String(text || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+export function productSlug(product) {
+  const shortId = String(product?.id || '').replace(/-/g, '').slice(0, SHORT_ID_LENGTH)
+  const words = slugify([product?.name, ...(product?.colors || [])].join(' '))
+  return words ? `${words}-${shortId}` : shortId
+}
+
+export function productPath(product) {
+  return `/producto/${productSlug(product)}`
+}
+
+/**
+ * Encuentra el producto de una ruta. Acepta el slug nuevo y el uuid completo
+ * de las urls viejas: hay links de esos repartidos por conversaciones de
+ * WhatsApp y tienen que seguir abriendo el producto.
+ */
+export function findProductByPath(products, segment) {
+  const raw = String(segment || '').trim()
+  if (!raw || !products?.length) return undefined
+
+  const direct = products.find((p) => String(p.id) === raw)
+  if (direct) return direct
+
+  const shortId = raw.split('-').pop()
+  if (!shortId) return undefined
+  return products.find(
+    (p) => String(p.id).replace(/-/g, '').slice(0, SHORT_ID_LENGTH) === shortId
+  )
+}
+
+// ── Imagen para la preview de WhatsApp / Facebook ───────────────────────────
+//
+// El CDN sirve las fotos en webp (`?f=webp`), y ni WhatsApp ni Facebook
+// renderizan webp en la preview de un link: la descartan y muestran lo que
+// tuvieran cacheado. Para og:image se les pide la misma foto en jpg.
+//
+// Google si lee webp, asi que el JSON-LD y los <img> de la pagina se quedan
+// como estan — esto es solo para el meta tag.
+
+const SOCIAL_FALLBACK = '/heroeGL.jpg'
+const SITE_URL = 'https://www.glboutique.com.mx'
+
+export function socialImage(url) {
+  if (!url) return `${SITE_URL}${SOCIAL_FALLBACK}`
+  const absolute = new URL(url, SITE_URL)
+  if (/\.webp$/i.test(absolute.pathname)) return `${SITE_URL}${SOCIAL_FALLBACK}`
+  if (absolute.searchParams.has('f')) {
+    absolute.searchParams.set('f', 'jpg')
+    absolute.searchParams.set('s', 'large')
+  }
+  return absolute.toString()
 }

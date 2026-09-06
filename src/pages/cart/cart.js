@@ -1,4 +1,5 @@
 import { formatMoney } from '../../utils/format.js'
+import { productPath } from '../../utils/productCopy.js'
 import { getProductById, removeCartItem, setCartItemQty, cartTotal, getState, getCoupon, getDiscountAmount, applyCoupon, removeCoupon, addToCart } from '../../store/index.js'
 import { on, qs } from '../../utils/dom.js'
 import { BRAND } from '../../utils/config.js'
@@ -260,7 +261,7 @@ export function pageCart(state) {
           const bgClass = perfume ? 'bg-white' : 'bg-fog'
           const imgClass = perfume ? 'object-contain p-3' : 'object-cover'
           return `
-            <a href="/producto/${p.id}" class="group block" data-upsell-link="${p.id}">
+            <a href="${productPath(p)}" class="group block" data-upsell-link="${p.id}">
               <div class="aspect-[4/5] ${bgClass} rounded-md overflow-hidden">
                 <img src="${img}" alt="${safeName}" class="w-full h-full ${imgClass} group-hover:scale-105 transition-transform duration-700" loading="lazy"/>
               </div>

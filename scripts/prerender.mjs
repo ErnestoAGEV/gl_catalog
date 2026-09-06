@@ -14,7 +14,7 @@ import { dirname, join } from 'node:path'
 import { getSeoForRoute } from '../src/core/routeSeo.js'
 import { infoPages } from '../src/pages/info/infoData.js'
 import { STORE_PHONE, stores } from '../src/pages/home/homeData.js'
-import { colorPhrase, productDescription } from '../src/utils/productCopy.js'
+import { colorPhrase, productDescription, productPath, socialImage } from '../src/utils/productCopy.js'
 
 const BASE_URL = 'https://www.glboutique.com.mx'
 const DIST = 'dist'
@@ -165,7 +165,7 @@ function buildHead({ title, description, robots, canonical, image, extraLd, ogTy
   )
   head = head.replace(
     /<meta\s+property="og:image"[^>]*\/>/,
-    `<meta property="og:image" content="${escapeHtml(image)}" />`
+    `<meta property="og:image" content="${escapeHtml(socialImage(image))}" />`
   )
 
   // El canonical ya no se calcula en runtime: cada ruta tiene su HTML propio.
@@ -180,7 +180,7 @@ function buildHead({ title, description, robots, canonical, image, extraLd, ogTy
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(description)}" />`,
-    `<meta name="twitter:image" content="${escapeHtml(image)}" />`,
+    `<meta name="twitter:image" content="${escapeHtml(socialImage(image))}" />`,
   ].join('\n    ')
 
   return head.replace('</head>', `    ${social}\n    ${extraLd || ''}\n  </head>`)
@@ -314,7 +314,7 @@ routes.push({
         itemListElement: products.slice(0, 100).map((p, i) => ({
           '@type': 'ListItem',
           position: i + 1,
-          url: absolute(`/producto/${p.id}`),
+          url: absolute(productPath(p)),
           name: p.name,
         })),
       },
@@ -345,7 +345,7 @@ for (const category of categories) {
                 .slice(0, 24)
                 .map(
                   (p) => `<li>
-                <a href="/producto/${p.id}" class="block">
+                <a href="${productPath(p)}" class="block">
                   <img src="${escapeHtml(p.image_url || '/placeholder.webp')}" alt="${escapeHtml(p.name)}" width="600" height="800" loading="lazy" decoding="async" class="w-full h-auto rounded-xl object-cover">
                   <span class="mt-3 block text-[14px] font-medium">${escapeHtml(p.name)}</span>
                   <span class="block font-mono text-[13px] text-ink/60">$${escapeHtml(p.price)} MXN</span>
@@ -366,7 +366,7 @@ for (const category of categories) {
           itemListElement: items.slice(0, 100).map((p, i) => ({
             '@type': 'ListItem',
             position: i + 1,
-            url: absolute(`/producto/${p.id}`),
+            url: absolute(productPath(p)),
             name: p.name,
           })),
         },
@@ -415,7 +415,7 @@ console.log(
 )
 
 for (const product of products) {
-  const path = `/producto/${product.id}`
+  const path = productPath(product)
   const image = product.image_url || product.images?.[0] || DEFAULT_IMAGE
   const group = variantGroups.get(product.name.trim())
   const trail = [
@@ -497,7 +497,7 @@ for (const product of products) {
               // @id. Las otras llevan datos, para que la referencia resuelva
               // y Google pueda armar el selector de color.
               hasVariant: assertOneSelfReference(product, group).map((variant) => {
-                const variantPath = `/producto/${variant.id}`
+                const variantPath = productPath(variant)
                 const variantId = `${absolute(variantPath)}#product`
                 if (variant.id === product.id) return { '@id': variantId }
                 // Los mismos datos que el Product principal: Google recorre
@@ -645,7 +645,7 @@ const urls = [
     priority: '0.6',
   })),
   ...products.map((p) => ({
-    loc: `${BASE_URL}/producto/${p.id}`,
+    loc: `${BASE_URL}${productPath(p)}`,
     lastmod: lastmodOf(p),
     changefreq: 'weekly',
     priority: '0.7',

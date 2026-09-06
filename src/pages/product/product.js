@@ -1,4 +1,5 @@
 import { getState, addToCart, trackProductView, getProductById } from '../../store/index.js'
+import { findProductByPath, productPath } from '../../utils/productCopy.js'
 import { navigate, normalizePath } from '../../core/router.js'
 import { formatMoney } from '../../utils/format.js'
 import { showToast } from '../../utils/toast.js'
@@ -65,7 +66,7 @@ function recommendedCard(p, i) {
   const hasDiscount = p.originalPrice && p.originalPrice > p.price
 
   return `
-    <a href="/producto/${p.id}" class="group block">
+    <a href="${productPath(p)}" class="group block">
       <div class="aspect-[4/5] rounded-md overflow-hidden ${bgCls} relative">
         <img src="${img}" alt="${safeName}" class="w-full h-full ${imgCls} transition-transform duration-700 group-hover:scale-105" loading="lazy" onerror="this.src='/placeholder.webp'"/>
         <div class="absolute top-3 right-3 font-mono text-[10px] tracking-[0.2em] uppercase text-ink/60 bg-paper/85 backdrop-blur px-2 py-1 rounded-full">${ord}</div>
@@ -93,8 +94,7 @@ function recommendedCard(p, i) {
 export function pageProduct(initialState) {
   const state = initialState
   const path = normalizePath(window.location.pathname)
-  const productId = path.split('/producto/')[1]
-  const product = state.products.find(p => String(p.id) === String(productId))
+  const product = findProductByPath(state.products, path.split('/producto/')[1])
 
   /* ── Cargando ──
      En un link compartido el catálogo aún no ha llegado, así que product es
@@ -624,7 +624,7 @@ export function pageProduct(initialState) {
 
       // ── Share ──
       root.querySelector('#pdp-share')?.addEventListener('click', () => {
-        const shareUrl = `${window.location.origin}/producto/${product.id}`
+        const shareUrl = `${window.location.origin}${productPath(product)}`
         if (navigator.share) {
           navigator.share({ title: product.name, text: '¡Mira este producto en G&L!', url: shareUrl }).catch(() => {})
         } else {

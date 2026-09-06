@@ -1,4 +1,5 @@
 import { searchProducts, setSearchQuery, getSearchQuery, subscribe, getState } from '../../store/index.js'
+import { findProductByPath, productPath } from '../../utils/productCopy.js'
 import { formatMoney } from '../../utils/format.js'
 import { on, qs, lockScroll, unlockScroll } from '../../utils/dom.js'
 import { navigate, normalizePath } from '../../core/router.js'
@@ -713,7 +714,13 @@ export function pageCatalog(initialState) {
       // ── Deep link backward compat ──
       const params = new URLSearchParams(window.location.search)
       const pId = params.get('p')
-      if (pId) { navigate(`/producto/${pId}`); return }
+      if (pId) {
+        // El link viejo trae el uuid; se navega al slug para no dejar al
+        // usuario en una url que no es la canonica.
+        const target = findProductByPath(getState().products, pId)
+        navigate(target ? productPath(target) : `/producto/${pId}`)
+        return
+      }
 
       // ── Type filter from sessionStorage or URL ──
       const pendingTypeFilter = sessionStorage.getItem('gl_pending_type_filter')
@@ -748,7 +755,7 @@ export function pageCatalog(initialState) {
         const product = publicProducts.find(p => p.id === btn.dataset.quickview)
         if (!product) return
         saveCatalogStateWithScroll()
-        navigate(`/producto/${product.id}`)
+        navigate(productPath(product))
       })
 
       on(root, 'click', '[data-quick-add]', (ev, btn) => {

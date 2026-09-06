@@ -1,4 +1,5 @@
 import { formatMoney } from '../../utils/format.js'
+import { productPath } from '../../utils/productCopy.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 
 export function homeSkeletonCard() {
@@ -22,7 +23,7 @@ export function bestSellerRow(p, idx) {
   const descriptor = p.type ? `${p.type}` : ''
 
   return `
-    <li class="ls-row relative py-6 px-3 border-b border-[#EAE9E4] cursor-pointer" data-href="/producto/${p.id}">
+    <li class="ls-row relative py-6 px-3 border-b border-[#EAE9E4] cursor-pointer" data-href="${productPath(p)}">
       <div class="grid grid-cols-12 items-center gap-4">
         <span class="col-span-1 font-mono text-[12px] text-ink/50">${rank}</span>
         <span class="ls-name col-span-7 md:col-span-6 font-heading font-bold text-[clamp(24px,2.5vw,40px)] tracking-[-0.03em] leading-tight">${p.name}</span>

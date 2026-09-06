@@ -1,7 +1,7 @@
 // Metadatos SEO por ruta. Modulo puro (sin DOM): lo usan tanto el runtime
 // (views.js) como el prerender de build (scripts/prerender.mjs).
 
-import { productDescription, productTitle } from '../utils/productCopy.js'
+import { findProductByPath, productDescription, productPath, productTitle } from '../utils/productCopy.js'
 
 export function getSeoForRoute(path, basePath, state) {
   if (basePath === '/') {
@@ -33,14 +33,13 @@ export function getSeoForRoute(path, basePath, state) {
   }
 
   if (basePath.startsWith('/producto/')) {
-    const productId = basePath.split('/producto/')[1]
-    const product = state?.products?.find((item) => String(item.id) === String(productId || ''))
+    const product = findProductByPath(state?.products, basePath.split('/producto/')[1])
 
     if (product) {
       return {
         title: productTitle(product),
         description: productDescription(product),
-        canonicalPath: `/producto/${product.id}`,
+        canonicalPath: productPath(product),
         robots: 'index,follow',
       }
     }

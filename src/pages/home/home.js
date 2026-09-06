@@ -1,4 +1,5 @@
 import { BRAND } from '../../utils/config.js'
+import { productPath } from '../../utils/productCopy.js'
 import { getState, subscribeNewsletter, isSubscribedNewsletter, getMostViewedProducts } from '../../store/index.js'
 import { on, qs } from '../../utils/dom.js'
 import { navigate } from '../../core/router.js'
@@ -62,7 +63,7 @@ export function pageHome() {
 
   // "Más vendido" card (inline, goes next to ticker)
   const topProductCard = topProduct ? `
-    <a href="/producto/${topProduct.id}" class="hidden lg:flex items-center gap-4 bg-paper border border-ink/10 shadow-lg rounded-lg px-4 py-3 hover:shadow-xl hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200 ease-out cursor-pointer">
+    <a href="${productPath(topProduct)}" class="hidden lg:flex items-center gap-4 bg-paper border border-ink/10 shadow-lg rounded-lg px-4 py-3 hover:shadow-xl hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200 ease-out cursor-pointer">
       <div class="flex items-center gap-2">
         <span class="w-1.5 h-1.5 rounded-full bg-brand"></span>
         <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink/60">Más vendido</span>

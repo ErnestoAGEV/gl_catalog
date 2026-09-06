@@ -1,4 +1,5 @@
 import { formatMoney } from '../../utils/format.js'
+import { productPath } from '../../utils/productCopy.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 
 export function skeletonCard() {
@@ -61,7 +62,7 @@ export function productCard(p, idx) {
   const priceClass = hasDiscount ? 'text-brand' : ''
 
   return `
-    <a href="/producto/${p.id}" class="pcard group block" data-product-id="${p.id}" style="--i:${idx}">
+    <a href="${productPath(p)}" class="pcard group block" data-product-id="${p.id}" style="--i:${idx}">
       <div class="pimg-wrap${isPerfume ? ' bg-white' : ''}">
         <img src="${img1}" alt="${p.name}" class="${imgClass}" loading="lazy" decoding="async" />
         <img src="${img2}" alt="" class="${imgAltClass}" loading="lazy" decoding="async" />

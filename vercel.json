@@ -1,9 +1,21 @@
 {
   "rewrites": [
-    { "source": "/admin", "destination": "/" },
-    { "source": "/admin/:path*", "destination": "/" },
-    { "source": "/producto/:id", "destination": "/" },
-    { "source": "/categoria/:name", "destination": "/" }
+    {
+      "source": "/admin",
+      "destination": "/"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "/"
+    },
+    {
+      "source": "/producto/:id",
+      "destination": "/"
+    },
+    {
+      "source": "/categoria/:name",
+      "destination": "/"
+    }
   ],
   "headers": [
     {
@@ -44,6 +56,1183 @@
           "value": "public, max-age=300, stale-while-revalidate=2592000"
         }
       ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/producto/ff60bff1-eaca-4eeb-a3ef-edfc3598bbc2",
+      "destination": "/producto/oggi-chinos-900-gris-ff60bff1",
+      "permanent": true
+    },
+    {
+      "source": "/producto/7876bdbc-3adc-4e14-8045-6f60fbe06547",
+      "destination": "/producto/oggi-chinos-slim-beige-7876bdbc",
+      "permanent": true
+    },
+    {
+      "source": "/producto/99429efa-0207-4430-8dbf-17e06377e038",
+      "destination": "/producto/oggi-chinos-slim-gris-99429efa",
+      "permanent": true
+    },
+    {
+      "source": "/producto/ed030aee-674c-41ea-8f00-cdf1cd95f080",
+      "destination": "/producto/oggi-chinos-slim-negro-ed030aee",
+      "permanent": true
+    },
+    {
+      "source": "/producto/9b5c0a93-7543-431b-862a-441c47ee7c56",
+      "destination": "/producto/oggi-vaxter-spring-carbon-azul-9b5c0a93",
+      "permanent": true
+    },
+    {
+      "source": "/producto/a5ab1a48-88a1-4947-804b-9f9119782a7c",
+      "destination": "/producto/oggi-vaxter-spring-ink-azul-a5ab1a48",
+      "permanent": true
+    },
+    {
+      "source": "/producto/6e5575ad-1cce-4198-9946-2cd73416a744",
+      "destination": "/producto/oggi-chinos-900-negro-6e5575ad",
+      "permanent": true
+    },
+    {
+      "source": "/producto/1554b34c-939b-4579-b61e-d6ea88fa771a",
+      "destination": "/producto/oggi-vaxter-rebel-stone-azul-1554b34c",
+      "permanent": true
+    },
+    {
+      "source": "/producto/a1498153-8c08-49e3-af8c-3212d440fbe8",
+      "destination": "/producto/oggi-vaxter-spring-stone-azul-a1498153",
+      "permanent": true
+    },
+    {
+      "source": "/producto/c511a0e8-7adc-4927-8325-5dad90e1905b",
+      "destination": "/producto/carolina-herrera-212-vip-c511a0e8",
+      "permanent": true
+    },
+    {
+      "source": "/producto/92d18667-4f40-4ce6-9f6e-a0f934099d40",
+      "destination": "/producto/oggi-chinos-slim-beige-92d18667",
+      "permanent": true
+    },
+    {
+      "source": "/producto/b44c9bee-ada9-47a0-a191-b72974b677f4",
+      "destination": "/producto/oggi-vaxter-avatar-blanco-blanco-b44c9bee",
+      "permanent": true
+    },
+    {
+      "source": "/producto/664a8997-c4cf-491c-bcc5-93953cffd5ce",
+      "destination": "/producto/oggi-vaxter-rebel-negro-negro-664a8997",
+      "permanent": true
+    },
+    {
+      "source": "/producto/b26304c1-c699-4bc2-b3f1-34bf2a132144",
+      "destination": "/producto/oggi-vaxter-gabarina-tabaco-beige-b26304c1",
+      "permanent": true
+    },
+    {
+      "source": "/producto/da1560bd-2637-4e76-9fd3-4fc40b4dc3eb",
+      "destination": "/producto/oggi-iron-rebel-carbon-azul-da1560bd",
+      "permanent": true
+    },
+    {
+      "source": "/producto/af2a50b7-bf10-4b8a-8409-3a326558b855",
+      "destination": "/producto/oggi-vaxter-spring-dark-azul-af2a50b7",
+      "permanent": true
+    },
+    {
+      "source": "/producto/a7aaa229-8238-4c4e-9570-5bc4dd219f09",
+      "destination": "/producto/oggi-power-avatar-ink-azul-a7aaa229",
+      "permanent": true
+    },
+    {
+      "source": "/producto/c87c53c7-f49d-45c3-8465-3e8b30d4cc93",
+      "destination": "/producto/oggi-vaxter-gabarina-marino-azul-c87c53c7",
+      "permanent": true
+    },
+    {
+      "source": "/producto/8ea0a9a7-4c65-440e-8e55-c38c15e9ec50",
+      "destination": "/producto/oggi-power-rebel-stone-azul-8ea0a9a7",
+      "permanent": true
+    },
+    {
+      "source": "/producto/ab8378b4-7c9b-4bef-895f-331cb51aa87f",
+      "destination": "/producto/oggi-power-avatar-stone-azul-ab8378b4",
+      "permanent": true
+    },
+    {
+      "source": "/producto/8e74f99b-c95f-4098-b6b2-e19847e693ab",
+      "destination": "/producto/oggi-vaxter-gabarina-negro-negro-8e74f99b",
+      "permanent": true
+    },
+    {
+      "source": "/producto/41b497c9-2dbd-4306-a3e2-3950b2f7e6c5",
+      "destination": "/producto/oggi-vaxter-gabarina-khaki-beige-41b497c9",
+      "permanent": true
+    },
+    {
+      "source": "/producto/4703d407-3f49-4bb5-868e-1587bbc1d2a1",
+      "destination": "/producto/lee-slim-fit-bs40-azul-4703d407",
+      "permanent": true
+    },
+    {
+      "source": "/producto/24754e65-cf1a-4366-98ee-2edd00f72595",
+      "destination": "/producto/lee-regular-fit-fb41-azul-24754e65",
+      "permanent": true
+    },
+    {
+      "source": "/producto/3a0f418c-7c9a-40f9-a187-0d13dd361453",
+      "destination": "/producto/wrangler-wrangler-regular-fit-mwzdd-azul-3a0f418c",
+      "permanent": true
+    },
+    {
+      "source": "/producto/45d20987-42b1-47b5-a562-c04d33cbd3c9",
+      "destination": "/producto/wrangler-wrangler-regular-fit-wzkl-cafe-45d20987",
+      "permanent": true
+    },
+    {
+      "source": "/producto/1b2c9b3b-dfdc-453b-8328-3511de78f583",
+      "destination": "/producto/lee-slim-fit-bs01-negro-1b2c9b3b",
+      "permanent": true
+    },
+    {
+      "source": "/producto/f7eaab36-ff43-4a8e-b4bd-d7f46fc88a56",
+      "destination": "/producto/lee-slim-fit-bs44-azul-f7eaab36",
+      "permanent": true
+    },
+    {
+      "source": "/producto/e65c0de1-03a6-4d0a-a7bc-7dcb111c3b07",
+      "destination": "/producto/lee-slim-fit-bs42-azul-e65c0de1",
+      "permanent": true
+    },
+    {
+      "source": "/producto/8b894b3e-fe4a-4764-932d-9919cbf4608d",
+      "destination": "/producto/wrangler-wrangler-regular-fit-wzgk-azul-8b894b3e",
+      "permanent": true
+    },
+    {
+      "source": "/producto/89ef53d1-6ee6-49bf-be56-6021e63f9944",
+      "destination": "/producto/oggi-iron-rebel-stone-azul-89ef53d1",
+      "permanent": true
+    },
+    {
+      "source": "/producto/66c3b3ef-5007-429a-a690-34d5b020e76f",
+      "destination": "/producto/lee-regular-fit-fb42-azul-66c3b3ef",
+      "permanent": true
+    },
+    {
+      "source": "/producto/363a6790-2eee-4b26-a000-ea796ca38f46",
+      "destination": "/producto/carolina-herrera-bad-boy-le-parfum-363a6790",
+      "permanent": true
+    },
+    {
+      "source": "/producto/31a03f57-c762-464d-9d46-986766e1a35c",
+      "destination": "/producto/lee-regular-fit-negro-negro-31a03f57",
+      "permanent": true
+    },
+    {
+      "source": "/producto/ef392551-6dc4-4f35-bc4c-b777ad9881ef",
+      "destination": "/producto/wrangler-wrangler-regular-fit-wzwk-negro-ef392551",
+      "permanent": true
+    },
+    {
+      "source": "/producto/354ab894-4472-4153-907a-c081bc2b2b17",
+      "destination": "/producto/wrangler-wrangler-slim-fit-silver-edition-sewk-negro-354ab894",
+      "permanent": true
+    },
+    {
+      "source": "/producto/2ce6f44a-56fc-44fd-abd6-0ac5ddecc46d",
+      "destination": "/producto/wrangler-wrangler-slim-fit-ntf-azul-2ce6f44a",
+      "permanent": true
+    },
+    {
+      "source": "/producto/22ba3c5d-de95-44f5-817b-170b0bbbc6f7",
+      "destination": "/producto/wrangler-wrangler-slim-fit-kcl-cafe-22ba3c5d",
+      "permanent": true
+    },
+    {
+      "source": "/producto/b7175642-048b-46e3-ac7f-e45833afda7b",
+      "destination": "/producto/wrangler-wrangler-slim-fit-wbk-negro-b7175642",
+      "permanent": true
+    },
+    {
+      "source": "/producto/6e0f42fb-70b7-4950-bb07-4e1569d9abde",
+      "destination": "/producto/carolina-herrera-bad-boy-cobalt-6e0f42fb",
+      "permanent": true
+    },
+    {
+      "source": "/producto/89cda277-0a92-495d-b533-83ab227d3383",
+      "destination": "/producto/carolina-herrera-bad-boy-89cda277",
+      "permanent": true
+    },
+    {
+      "source": "/producto/66d0485c-ae56-47c4-a41d-9874704e7649",
+      "destination": "/producto/carolina-herrera-212-heroes-66d0485c",
+      "permanent": true
+    },
+    {
+      "source": "/producto/1f315db2-0396-4344-9755-04cdff9ea9cd",
+      "destination": "/producto/wrangler-wrangler-slim-fit-dsd-azul-1f315db2",
+      "permanent": true
+    },
+    {
+      "source": "/producto/2e375080-d18d-46b2-accb-66def96a782c",
+      "destination": "/producto/wrangler-wrangler-slim-fit-nav-azul-2e375080",
+      "permanent": true
+    },
+    {
+      "source": "/producto/82064351-9914-45b5-96c2-4c58ac73457f",
+      "destination": "/producto/wrangler-wrangler-slim-fit-silver-edition-sedd-azul-82064351",
+      "permanent": true
+    },
+    {
+      "source": "/producto/33e31524-38ea-452b-889e-4b3cd8347b49",
+      "destination": "/producto/wrangler-wrangler-slim-fit-silver-edition-senv-azul-33e31524",
+      "permanent": true
+    },
+    {
+      "source": "/producto/dce130d2-5541-41ed-be9e-fc3e3e67c287",
+      "destination": "/producto/wrangler-wrangler-slim-fit-chg-gris-dce130d2",
+      "permanent": true
+    },
+    {
+      "source": "/producto/3d69bd99-a1e7-4edb-9dc4-fd400f10f4cf",
+      "destination": "/producto/carolina-herrera-212-men-3d69bd99",
+      "permanent": true
+    },
+    {
+      "source": "/producto/6d58995f-a434-4024-8379-b2abbda78ca5",
+      "destination": "/producto/carolina-herrera-212-vip-black-6d58995f",
+      "permanent": true
+    },
+    {
+      "source": "/producto/6da1e135-ef35-43bd-8f55-474ece4f4c96",
+      "destination": "/producto/carolina-herrera-ch-men-6da1e135",
+      "permanent": true
+    },
+    {
+      "source": "/producto/003911df-ec3b-4a67-b26f-82b8c411c760",
+      "destination": "/producto/dolce-gabbana-k-003911df",
+      "permanent": true
+    },
+    {
+      "source": "/producto/7b21c17a-133f-4692-8029-0a262637f0f8",
+      "destination": "/producto/lacoste-blanc-7b21c17a",
+      "permanent": true
+    },
+    {
+      "source": "/producto/4911e59b-beb7-4380-9aa5-1d5f8ea65875",
+      "destination": "/producto/mont-blanc-emblem-4911e59b",
+      "permanent": true
+    },
+    {
+      "source": "/producto/53344155-49db-471d-aa4f-22897cef4cf4",
+      "destination": "/producto/mont-blanc-legend-53344155",
+      "permanent": true
+    },
+    {
+      "source": "/producto/e00b4320-3281-4f49-b871-ff4089ce03e3",
+      "destination": "/producto/mont-blanc-explorer-e00b4320",
+      "permanent": true
+    },
+    {
+      "source": "/producto/2cf9e251-50e0-4247-a546-85bb50883168",
+      "destination": "/producto/halooween-man-2cf9e251",
+      "permanent": true
+    },
+    {
+      "source": "/producto/a2800ac0-abae-49f4-a417-6f14a9e3310f",
+      "destination": "/producto/halooween-man-x-a2800ac0",
+      "permanent": true
+    },
+    {
+      "source": "/producto/98e5206d-4a14-457d-89b1-5d581857fb0f",
+      "destination": "/producto/halooween-man-heroes-98e5206d",
+      "permanent": true
+    },
+    {
+      "source": "/producto/1f0c6d51-8973-4272-b46c-f52c1f39e793",
+      "destination": "/producto/moschino-toy-boy-1f0c6d51",
+      "permanent": true
+    },
+    {
+      "source": "/producto/a0cab0b2-6e7a-4141-9927-e1ba15623851",
+      "destination": "/producto/hugo-xy-a0cab0b2",
+      "permanent": true
+    },
+    {
+      "source": "/producto/555b40a9-fb47-44fa-8431-c8a8ffdb0be8",
+      "destination": "/producto/boss-the-scent-555b40a9",
+      "permanent": true
+    },
+    {
+      "source": "/producto/35d85e3f-a7ec-49cb-9ffd-400aae2f5ed6",
+      "destination": "/producto/boss-bottled-infinite-35d85e3f",
+      "permanent": true
+    },
+    {
+      "source": "/producto/d8e275a9-2056-4c35-8d3f-d2189c624f6f",
+      "destination": "/producto/hugo-man-d8e275a9",
+      "permanent": true
+    },
+    {
+      "source": "/producto/e06e92eb-2db9-4c8c-8810-ed544befdeca",
+      "destination": "/producto/hugo-reversed-e06e92eb",
+      "permanent": true
+    },
+    {
+      "source": "/producto/1ef8e2ce-2879-4b4a-acf3-93d8d9605b8d",
+      "destination": "/producto/versace-eau-fraiche-1ef8e2ce",
+      "permanent": true
+    },
+    {
+      "source": "/producto/ed5f6b52-be71-4bc8-ade0-a3068beafe43",
+      "destination": "/producto/versace-pour-homme-ed5f6b52",
+      "permanent": true
+    },
+    {
+      "source": "/producto/57896cfc-f415-4e5d-85e7-6fedebd280e5",
+      "destination": "/producto/versace-dylan-blue-57896cfc",
+      "permanent": true
+    },
+    {
+      "source": "/producto/536d1273-8539-417a-b5ce-5f9371adb601",
+      "destination": "/producto/versace-blue-jeans-536d1273",
+      "permanent": true
+    },
+    {
+      "source": "/producto/ef02f818-6402-4819-a32d-a47db5e92501",
+      "destination": "/producto/versace-eros-edt-ef02f818",
+      "permanent": true
+    },
+    {
+      "source": "/producto/5cfa9a0f-a5de-48dc-93af-42fd06aa668b",
+      "destination": "/producto/paco-rabbane-invictus-5cfa9a0f",
+      "permanent": true
+    },
+    {
+      "source": "/producto/31ae8228-5f05-44e4-bb6d-2432be60c79b",
+      "destination": "/producto/versace-eros-edp-31ae8228",
+      "permanent": true
+    },
+    {
+      "source": "/producto/907ccce9-9423-4660-b821-f48480da4b19",
+      "destination": "/producto/paco-rabbane-one-million-907ccce9",
+      "permanent": true
+    },
+    {
+      "source": "/producto/c2becacf-2722-4e62-9b4b-4cb5f8086dab",
+      "destination": "/producto/paco-rabbane-one-million-parfum-c2becacf",
+      "permanent": true
+    },
+    {
+      "source": "/producto/85f95217-60d6-47c0-b172-3ff2d1ee0a3c",
+      "destination": "/producto/paco-rabbane-phantom-intense-85f95217",
+      "permanent": true
+    },
+    {
+      "source": "/producto/9c63ff3c-a184-4314-9761-376eb2ebba2a",
+      "destination": "/producto/paco-rabbane-phantom-9c63ff3c",
+      "permanent": true
+    },
+    {
+      "source": "/producto/c30cf583-51d6-4b79-ab07-d450706c788f",
+      "destination": "/producto/jean-paul-gaultier-le-beau-c30cf583",
+      "permanent": true
+    },
+    {
+      "source": "/producto/9715046e-f4b2-4ce8-9133-308c0bd1b96e",
+      "destination": "/producto/jean-paul-gaultier-scandal-absolu-9715046e",
+      "permanent": true
+    },
+    {
+      "source": "/producto/c27c6f9a-418b-4ea1-bab2-5ad0d30286dd",
+      "destination": "/producto/coach-man-c27c6f9a",
+      "permanent": true
+    },
+    {
+      "source": "/producto/08ef85cb-49f8-4892-9b3b-0b660814b5b8",
+      "destination": "/producto/coach-blue-08ef85cb",
+      "permanent": true
+    },
+    {
+      "source": "/producto/901c3d0c-3da9-445d-8c1e-955236bd3fec",
+      "destination": "/producto/nautica-voyage-901c3d0c",
+      "permanent": true
+    },
+    {
+      "source": "/producto/d8b8403c-2be2-414c-9a3f-6865f393d273",
+      "destination": "/producto/nautica-voyage-n-83-d8b8403c",
+      "permanent": true
+    },
+    {
+      "source": "/producto/10735c07-5d0c-4370-86dd-59cd900ce3fa",
+      "destination": "/producto/nautica-voyage-heritage-10735c07",
+      "permanent": true
+    },
+    {
+      "source": "/producto/54ee7210-76af-42c3-a910-7213bba25fbe",
+      "destination": "/producto/nautica-blue-54ee7210",
+      "permanent": true
+    },
+    {
+      "source": "/producto/5aeac405-5a8e-498e-b0eb-b9b9d7628f3d",
+      "destination": "/producto/nautica-pure-blue-5aeac405",
+      "permanent": true
+    },
+    {
+      "source": "/producto/c7fef9ed-938c-4d1f-8481-793540769bf8",
+      "destination": "/producto/calvin-klein-eternity-c7fef9ed",
+      "permanent": true
+    },
+    {
+      "source": "/producto/8bfcc55c-9a80-408b-a121-35ec32a71d58",
+      "destination": "/producto/paco-rabbane-invictus-victory-8bfcc55c",
+      "permanent": true
+    },
+    {
+      "source": "/producto/239c0ebc-2ad9-4f63-9d45-6bfe0fd0eabf",
+      "destination": "/producto/victorinox-swizz-army-239c0ebc",
+      "permanent": true
+    },
+    {
+      "source": "/producto/75509df8-6ad0-4189-a4e7-b7cf00a73b93",
+      "destination": "/producto/ferrari-red-75509df8",
+      "permanent": true
+    },
+    {
+      "source": "/producto/47f5e117-f9e9-4ef5-8121-d13db74d4a92",
+      "destination": "/producto/ferrari-black-47f5e117",
+      "permanent": true
+    },
+    {
+      "source": "/producto/c162054d-27f7-43f8-aa26-fb0f09bee57c",
+      "destination": "/producto/calvin-klein-one-shock-c162054d",
+      "permanent": true
+    },
+    {
+      "source": "/producto/210d7635-83ac-4c7c-8f49-d2ffd5aa8271",
+      "destination": "/producto/calvin-klein-one-210d7635",
+      "permanent": true
+    },
+    {
+      "source": "/producto/be66cbbc-f714-479a-9e68-5353c9e8c252",
+      "destination": "/producto/calvin-klein-in2u-be66cbbc",
+      "permanent": true
+    },
+    {
+      "source": "/producto/8a11f787-4014-49aa-9af6-cc83177ad156",
+      "destination": "/producto/tommy-hilfiger-impact-8a11f787",
+      "permanent": true
+    },
+    {
+      "source": "/producto/59be8875-6945-4a55-86f1-725c0d4bf64b",
+      "destination": "/producto/soul-blues-outdoors-arena-beige-59be8875",
+      "permanent": true
+    },
+    {
+      "source": "/producto/d9587237-881d-4371-98de-377257f3445e",
+      "destination": "/producto/soul-blues-camisa-gris-grafito-gris-d9587237",
+      "permanent": true
+    },
+    {
+      "source": "/producto/1c1f8b52-8045-49fa-a672-7d9a76506c96",
+      "destination": "/producto/soul-blues-outdoors-vino-vino-1c1f8b52",
+      "permanent": true
+    },
+    {
+      "source": "/producto/558d4fdd-97d0-4c25-b3c2-d0fe4c110169",
+      "destination": "/producto/afnan-9pm-558d4fdd",
+      "permanent": true
+    },
+    {
+      "source": "/producto/08ac460c-fdaa-4afc-984b-64e0def5f457",
+      "destination": "/producto/soul-blues-outdoors-blanco-blanco-08ac460c",
+      "permanent": true
+    },
+    {
+      "source": "/producto/218d4764-7801-46b9-afc7-81dd234bac74",
+      "destination": "/producto/soul-blues-camisa-negra-negro-218d4764",
+      "permanent": true
+    },
+    {
+      "source": "/producto/fbbd11d8-2faf-4afa-b1e1-5aff455388b0",
+      "destination": "/producto/white-peak-plomo-gris-fbbd11d8",
+      "permanent": true
+    },
+    {
+      "source": "/producto/de273b5b-1d40-4855-ad1a-cb91e7a60edb",
+      "destination": "/producto/afnan-9am-dive-de273b5b",
+      "permanent": true
+    },
+    {
+      "source": "/producto/f66ba9b3-b8f5-424b-ac25-30477dea08b2",
+      "destination": "/producto/versace-bright-crystal-f66ba9b3",
+      "permanent": true
+    },
+    {
+      "source": "/producto/10249d71-ad62-4ed3-a59c-80377e1de27b",
+      "destination": "/producto/moschino-fresh-couture-10249d71",
+      "permanent": true
+    },
+    {
+      "source": "/producto/5e9a4c3e-8f34-49e8-b745-ea1afb135af6",
+      "destination": "/producto/moschino-fresh-couture-gold-5e9a4c3e",
+      "permanent": true
+    },
+    {
+      "source": "/producto/cb963385-2630-4983-afa7-0a868b2cbe1f",
+      "destination": "/producto/carolina-herrera-ch-her-cb963385",
+      "permanent": true
+    },
+    {
+      "source": "/producto/6b748ec0-5401-475b-b9a9-679da00d03e7",
+      "destination": "/producto/tommy-hilfiger-man-6b748ec0",
+      "permanent": true
+    },
+    {
+      "source": "/producto/f988e810-75d2-4474-a1aa-7f7748e250e3",
+      "destination": "/producto/wrangler-camisa-logo-roja-rojo-f988e810",
+      "permanent": true
+    },
+    {
+      "source": "/producto/c7328869-38d5-4630-b855-776171eef182",
+      "destination": "/producto/oggi-chinos-900-beige-c7328869",
+      "permanent": true
+    },
+    {
+      "source": "/producto/9b7d1d6e-f763-48a3-a7da-362666e2c20e",
+      "destination": "/producto/wrangler-wrangler-regular-fit-ztn-beige-9b7d1d6e",
+      "permanent": true
+    },
+    {
+      "source": "/producto/43271abc-5b2a-4639-8a18-3c208427fa22",
+      "destination": "/producto/soul-blues-outdoors-azul-marino-azul-43271abc",
+      "permanent": true
+    },
+    {
+      "source": "/producto/9c1afcff-a9bd-49c4-9d4c-60a2e1d0d2d6",
+      "destination": "/producto/soul-blues-outdoors-azul-marino-azul-9c1afcff",
+      "permanent": true
+    },
+    {
+      "source": "/producto/818788d2-76ef-4efc-a8f7-db23c7432d77",
+      "destination": "/producto/oggi-chinos-900-azul-818788d2",
+      "permanent": true
+    },
+    {
+      "source": "/producto/46807175-3036-437e-aecf-c85bd10a43bd",
+      "destination": "/producto/wrangler-wrangler-slim-fit-gbk-azul-46807175",
+      "permanent": true
+    },
+    {
+      "source": "/producto/09aca07f-401a-40c1-9b31-df017a9303ed",
+      "destination": "/producto/wrangler-camisa-logo-negra-negro-09aca07f",
+      "permanent": true
+    },
+    {
+      "source": "/producto/0acb6cb7-0a05-436d-a5b3-439beb1fb9bf",
+      "destination": "/producto/oggi-vaxter-gabarina-camel-beige-0acb6cb7",
+      "permanent": true
+    },
+    {
+      "source": "/producto/2e10e055-ffab-4b56-92ba-c84f8e91e3c2",
+      "destination": "/producto/wrangler-camisa-logo-gris-gris-2e10e055",
+      "permanent": true
+    },
+    {
+      "source": "/producto/13bc7229-64cc-4650-9ebd-4e577b7b559e",
+      "destination": "/producto/soul-blues-outdoors-negro-negro-13bc7229",
+      "permanent": true
+    },
+    {
+      "source": "/producto/d9c9f463-7898-4229-b932-8379bfb527d1",
+      "destination": "/producto/soul-blues-outdoors-plomo-gris-d9c9f463",
+      "permanent": true
+    },
+    {
+      "source": "/producto/b35d9b63-3b43-4d45-a998-b094d6012ffb",
+      "destination": "/producto/white-peak-pantalon-khaki-beige-b35d9b63",
+      "permanent": true
+    },
+    {
+      "source": "/producto/2d595886-f098-41eb-aef1-b72132184205",
+      "destination": "/producto/soul-blues-camisa-de-mezclilla-azul-2d595886",
+      "permanent": true
+    },
+    {
+      "source": "/producto/9886e68e-ff53-47e0-94f1-aac2b1a5a288",
+      "destination": "/producto/white-peak-gris-oxford-gris-9886e68e",
+      "permanent": true
+    },
+    {
+      "source": "/producto/682b6393-2e13-4de9-a3ba-105a2196a423",
+      "destination": "/producto/white-peak-pantalon-olivo-verde-682b6393",
+      "permanent": true
+    },
+    {
+      "source": "/producto/ed9bc937-2cbd-4398-8178-83dbc0d9ec80",
+      "destination": "/producto/white-peak-rojo-rojo-ed9bc937",
+      "permanent": true
+    },
+    {
+      "source": "/producto/e5fdcceb-5fe9-4df4-a413-502b4d3e80ff",
+      "destination": "/producto/white-peak-terracota-cafe-e5fdcceb",
+      "permanent": true
+    },
+    {
+      "source": "/producto/53020be3-5bb5-4888-a240-6655a27d4e94",
+      "destination": "/producto/white-peak-azul-marino-azul-53020be3",
+      "permanent": true
+    },
+    {
+      "source": "/producto/244e6e29-06fd-4ddd-b04d-4a49599cf93e",
+      "destination": "/producto/white-peak-pantalon-ocre-beige-244e6e29",
+      "permanent": true
+    },
+    {
+      "source": "/producto/835dab28-33eb-49a7-97dc-80bb00509a73",
+      "destination": "/producto/white-peak-rosa-rosa-835dab28",
+      "permanent": true
+    },
+    {
+      "source": "/producto/1ae34144-4724-407b-bfd7-44b4394facd0",
+      "destination": "/producto/armaf-odyssey-mandarin-sky-1ae34144",
+      "permanent": true
+    },
+    {
+      "source": "/producto/39e8be18-6f70-46e1-8154-e7e9771457d1",
+      "destination": "/producto/white-peak-pantalon-azul-marino-azul-39e8be18",
+      "permanent": true
+    },
+    {
+      "source": "/producto/16bc7f30-e5f8-4e0f-a0a3-9d312f5e419c",
+      "destination": "/producto/white-peak-pantalon-negro-negro-16bc7f30",
+      "permanent": true
+    },
+    {
+      "source": "/producto/4d4e86f1-b107-4bcd-9946-0b761b6169a4",
+      "destination": "/producto/white-peak-amarillo-amarillo-4d4e86f1",
+      "permanent": true
+    },
+    {
+      "source": "/producto/e2e7356c-7d23-4f60-872e-f9b2fcbd705f",
+      "destination": "/producto/white-peak-blanco-blanco-e2e7356c",
+      "permanent": true
+    },
+    {
+      "source": "/producto/0b382c31-33c7-4308-9c58-999dd7b77fc1",
+      "destination": "/producto/rusty-bermuda-clasica-zk028-negro-0b382c31",
+      "permanent": true
+    },
+    {
+      "source": "/producto/5934516e-cea8-418d-9f23-64932030ecf8",
+      "destination": "/producto/soul-blues-bermuda-outdoors-azul-5934516e",
+      "permanent": true
+    },
+    {
+      "source": "/producto/f643cca0-5d01-4806-a1a6-8a7fffeef3ce",
+      "destination": "/producto/versace-dylan-blue-dama-f643cca0",
+      "permanent": true
+    },
+    {
+      "source": "/producto/a8a43da0-bad8-4268-b00b-b4148f81ff3a",
+      "destination": "/producto/soul-blues-bermuda-outdoors-negro-a8a43da0",
+      "permanent": true
+    },
+    {
+      "source": "/producto/8a528804-8014-46db-b99a-db3d4cb7cc70",
+      "destination": "/producto/halloween-halloween-dama-8a528804",
+      "permanent": true
+    },
+    {
+      "source": "/producto/1abb3742-6e83-42ff-b53b-a0e31c6fc525",
+      "destination": "/producto/dolce-gabbana-light-blue-dama-1abb3742",
+      "permanent": true
+    },
+    {
+      "source": "/producto/7e62808d-729d-47a4-92e6-266a61c38ef2",
+      "destination": "/producto/rusty-bermuda-clasica-zk028-beige-7e62808d",
+      "permanent": true
+    },
+    {
+      "source": "/producto/f41bf11e-32a3-4d31-8bde-519f1725e058",
+      "destination": "/producto/soul-blues-camisa-blanca-blanco-f41bf11e",
+      "permanent": true
+    },
+    {
+      "source": "/producto/30c54ec0-682c-4587-824b-3683dc062dd0",
+      "destination": "/producto/rusty-bermuda-clasica-zk028-azul-30c54ec0",
+      "permanent": true
+    },
+    {
+      "source": "/producto/643003bf-d8a8-48df-a64b-df6443a424b6",
+      "destination": "/producto/soul-blues-bermuda-outdoors-beige-643003bf",
+      "permanent": true
+    },
+    {
+      "source": "/producto/9aae6363-5822-46c2-82e2-89fa1bc1828a",
+      "destination": "/producto/armaf-club-de-nuit-sillage-9aae6363",
+      "permanent": true
+    },
+    {
+      "source": "/producto/0f7414a7-faea-42ba-807c-b82f89fe9cf2",
+      "destination": "/producto/rusty-bermuda-slim-zk048-verde-0f7414a7",
+      "permanent": true
+    },
+    {
+      "source": "/producto/59adc208-8a55-47b0-96b2-209d055043c4",
+      "destination": "/producto/oaktree-polo-extra-azul-azul-59adc208",
+      "permanent": true
+    },
+    {
+      "source": "/producto/8f1dac43-d80b-418e-93fa-409f4af2696a",
+      "destination": "/producto/rusty-bermuda-slim-zk047-negro-8f1dac43",
+      "permanent": true
+    },
+    {
+      "source": "/producto/bdc4c230-8aa0-4950-9e80-ce3c5ad54c25",
+      "destination": "/producto/rusty-bermuda-slim-zk048-gris-bdc4c230",
+      "permanent": true
+    },
+    {
+      "source": "/producto/8066b8ff-2778-48f3-a066-eeee0d40e4b0",
+      "destination": "/producto/rusty-bermuda-slim-zk048-beige-8066b8ff",
+      "permanent": true
+    },
+    {
+      "source": "/producto/0eccae87-f359-4b4d-b463-9443f193a949",
+      "destination": "/producto/soul-blues-camisa-m25-azul-0eccae87",
+      "permanent": true
+    },
+    {
+      "source": "/producto/5913d431-4f86-412b-a17b-83c0a0ead24f",
+      "destination": "/producto/soul-blues-camisa-m27-rosa-5913d431",
+      "permanent": true
+    },
+    {
+      "source": "/producto/3d1bf3f7-0257-4f18-986d-416b6ea7a084",
+      "destination": "/producto/soul-blues-camisa-m23-rojo-3d1bf3f7",
+      "permanent": true
+    },
+    {
+      "source": "/producto/f35ba7f1-19b7-40b9-8ff2-c2f3fa8fc5ad",
+      "destination": "/producto/soul-blues-camisa-m46-rojo-f35ba7f1",
+      "permanent": true
+    },
+    {
+      "source": "/producto/e672b673-d200-45c4-86f9-03fd452649d1",
+      "destination": "/producto/rusty-bermuda-slim-zk047-arena-e672b673",
+      "permanent": true
+    },
+    {
+      "source": "/producto/373a1308-b579-45a6-874a-c1ebe34db4ff",
+      "destination": "/producto/white-peak-vino-vino-373a1308",
+      "permanent": true
+    },
+    {
+      "source": "/producto/57f3c526-2685-4da0-acd7-dde9ae77d1b9",
+      "destination": "/producto/paddocks-relaxed-dark-stone-azul-57f3c526",
+      "permanent": true
+    },
+    {
+      "source": "/producto/6eb0ef43-c168-4875-950b-ca1ad03ac422",
+      "destination": "/producto/soul-blues-camisa-m24-azul-6eb0ef43",
+      "permanent": true
+    },
+    {
+      "source": "/producto/0850be24-673a-4653-9ae5-eb0c25c67451",
+      "destination": "/producto/rusty-bermuda-slim-zk047-beige-0850be24",
+      "permanent": true
+    },
+    {
+      "source": "/producto/4b542a7b-49a5-48a5-a099-0f3b9cd860c3",
+      "destination": "/producto/paddocks-relaxed-bleach-stone-azul-4b542a7b",
+      "permanent": true
+    },
+    {
+      "source": "/producto/cda5d48d-df80-4305-b574-7d7d59a8c3bf",
+      "destination": "/producto/carolina-herrera-sport-cda5d48d",
+      "permanent": true
+    },
+    {
+      "source": "/producto/29f22828-6d45-4a19-a044-656a81515bf0",
+      "destination": "/producto/soul-blues-outdoors-camuflaje-azul-azul-29f22828",
+      "permanent": true
+    },
+    {
+      "source": "/producto/d728128d-6ac4-4bef-a7b9-13329d7f3a92",
+      "destination": "/producto/paddocks-relaxed-negro-negro-d728128d",
+      "permanent": true
+    },
+    {
+      "source": "/producto/dbbb66f4-307c-430f-8fc6-1483ab395a8a",
+      "destination": "/producto/armaf-odyssey-homme-white-dbbb66f4",
+      "permanent": true
+    },
+    {
+      "source": "/producto/35f20b07-a982-474e-a26f-d5a0942f5c8c",
+      "destination": "/producto/paddocks-relaxed-suavizado-azul-35f20b07",
+      "permanent": true
+    },
+    {
+      "source": "/producto/ee69004b-56b7-438b-b636-de955fe59df5",
+      "destination": "/producto/white-peak-negro-negro-ee69004b",
+      "permanent": true
+    },
+    {
+      "source": "/producto/a30b9c11-4073-47d7-a9c0-eb1c9312ec6d",
+      "destination": "/producto/emper-stallion-53-a30b9c11",
+      "permanent": true
+    },
+    {
+      "source": "/producto/a5855d14-4a57-408c-a1bf-b48bd87fc24b",
+      "destination": "/producto/paddocks-relaxed-azul-cafe-azul-a5855d14",
+      "permanent": true
+    },
+    {
+      "source": "/producto/75291036-096a-4153-9b82-11416cc8f602",
+      "destination": "/producto/oaktree-polo-extra-beige-beige-75291036",
+      "permanent": true
+    },
+    {
+      "source": "/producto/4ae59f2b-b4d8-459c-963b-36f7f6f24ba1",
+      "destination": "/producto/armaf-odyssey-mega-4ae59f2b",
+      "permanent": true
+    },
+    {
+      "source": "/producto/a5a2273d-faa1-484d-b08f-e122b7792d6a",
+      "destination": "/producto/paddocks-buffalo-azul-cafe-azul-a5a2273d",
+      "permanent": true
+    },
+    {
+      "source": "/producto/ae5a1ec6-1893-474b-bbc9-1e11214a526d",
+      "destination": "/producto/oaktree-camisa-textura-beige-beige-ae5a1ec6",
+      "permanent": true
+    },
+    {
+      "source": "/producto/8c7e4f34-792d-4347-b5bd-cfc5d11c3dcb",
+      "destination": "/producto/oaktree-camisa-textura-azul-azul-8c7e4f34",
+      "permanent": true
+    },
+    {
+      "source": "/producto/4ea9488d-963b-4e8f-8991-240d2ba6f764",
+      "destination": "/producto/paddocks-buffalo-negro-negro-4ea9488d",
+      "permanent": true
+    },
+    {
+      "source": "/producto/3d37e89e-7285-4527-833b-302dd389dbd7",
+      "destination": "/producto/oaktree-camisa-textura-blanco-blanco-3d37e89e",
+      "permanent": true
+    },
+    {
+      "source": "/producto/016f2950-0361-4a3a-9ea2-a30d8b0d2364",
+      "destination": "/producto/carolina-herrera-good-girl-016f2950",
+      "permanent": true
+    },
+    {
+      "source": "/producto/59f7b741-5b6f-4ca2-bcfb-40f1957157d6",
+      "destination": "/producto/paddocks-buffalo-dark-stone-azul-59f7b741",
+      "permanent": true
+    },
+    {
+      "source": "/producto/8adc89de-c4ab-4c2d-9f19-d61568fea6fc",
+      "destination": "/producto/paddocks-buffalo-bleach-stone-azul-8adc89de",
+      "permanent": true
+    },
+    {
+      "source": "/producto/1d19c3db-d7a8-459c-b719-43c3ba82d7a8",
+      "destination": "/producto/paddocks-rocker-azul-cafe-skinny-azul-1d19c3db",
+      "permanent": true
+    },
+    {
+      "source": "/producto/67d91068-0255-46c9-81b6-760aaf565dfd",
+      "destination": "/producto/paddocks-rocker-bleach-stone-skinny-azul-67d91068",
+      "permanent": true
+    },
+    {
+      "source": "/producto/b49d8b35-fca7-4521-854c-916ca4544bda",
+      "destination": "/producto/paddocks-bermuda-azul-cafe-azul-b49d8b35",
+      "permanent": true
+    },
+    {
+      "source": "/producto/8424eb45-dff9-4307-be8b-8e4713604514",
+      "destination": "/producto/paddocks-bermuda-dark-stone-azul-8424eb45",
+      "permanent": true
+    },
+    {
+      "source": "/producto/d35e3833-3c1c-4f0d-a9a2-9a69c74d147d",
+      "destination": "/producto/oaktree-polo-extra-negra-negro-d35e3833",
+      "permanent": true
+    },
+    {
+      "source": "/producto/b8b812ac-4d57-4bc2-b460-c34ee015cb7c",
+      "destination": "/producto/paddocks-rocker-negro-skinny-negro-b8b812ac",
+      "permanent": true
+    },
+    {
+      "source": "/producto/95ac8adb-1cbe-4ee9-8562-eb08d7c4a6bd",
+      "destination": "/producto/paddocks-rocker-dark-stone-skinny-azul-95ac8adb",
+      "permanent": true
+    },
+    {
+      "source": "/producto/814b3480-bce8-48f5-a1c8-022009d74c93",
+      "destination": "/producto/paddocks-buffalo-bull-denim-verde-verde-814b3480",
+      "permanent": true
+    },
+    {
+      "source": "/producto/2b45cfa4-250f-4726-8ad1-22492e1763b6",
+      "destination": "/producto/paddocks-buffalo-bull-denim-khaki-beige-2b45cfa4",
+      "permanent": true
+    },
+    {
+      "source": "/producto/95c049a9-9f49-486c-a137-50ac4831813b",
+      "destination": "/producto/paddocks-buffalo-bull-denim-azul-azul-95c049a9",
+      "permanent": true
+    },
+    {
+      "source": "/producto/5906b51e-076d-47d6-97aa-89122afe63e8",
+      "destination": "/producto/paddocks-buffalo-bull-denim-cemento-gris-5906b51e",
+      "permanent": true
+    },
+    {
+      "source": "/producto/7cfa3d56-0ceb-4b9c-be1c-2eb95bdcaaad",
+      "destination": "/producto/paddocks-san-francisco-bleach-stone-azul-7cfa3d56",
+      "permanent": true
+    },
+    {
+      "source": "/producto/efb2a92c-c08b-4846-a9ba-5439e23877aa",
+      "destination": "/producto/paddocks-san-francisco-dark-stone-azul-efb2a92c",
+      "permanent": true
+    },
+    {
+      "source": "/producto/b2ee4f2b-a75d-4761-acba-6689cdc9d028",
+      "destination": "/producto/paddocks-san-francisco-azul-cafe-azul-b2ee4f2b",
+      "permanent": true
+    },
+    {
+      "source": "/producto/ec0efe9e-0efe-4ffd-8e43-292a10a4860d",
+      "destination": "/producto/paddocks-san-francisco-negro-negro-ec0efe9e",
+      "permanent": true
+    },
+    {
+      "source": "/producto/5416c10c-26a2-460f-8045-59f8a58dd426",
+      "destination": "/producto/oggi-jersey-francia-rojo-5416c10c",
+      "permanent": true
+    },
+    {
+      "source": "/producto/8256d52b-647f-44a1-832f-abdf8dff78a8",
+      "destination": "/producto/oggi-jersey-inglaterra-blanco-8256d52b",
+      "permanent": true
+    },
+    {
+      "source": "/producto/39a6c6ec-a6f2-45c1-9b86-16d3062bc513",
+      "destination": "/producto/oggi-jersey-portugal-negro-39a6c6ec",
+      "permanent": true
+    },
+    {
+      "source": "/producto/8d63b65d-85ea-4930-bf23-0700736694e5",
+      "destination": "/producto/collor-s-aiden-3372-azul-8d63b65d",
+      "permanent": true
+    },
+    {
+      "source": "/producto/0da4cb70-8180-499d-8c49-662ee6659da0",
+      "destination": "/producto/collor-s-aiden-3377-negro-0da4cb70",
+      "permanent": true
+    },
+    {
+      "source": "/producto/e25e21f8-b163-489c-bd07-987efd5dbaf0",
+      "destination": "/producto/collor-s-aiden-3362-azul-e25e21f8",
+      "permanent": true
+    },
+    {
+      "source": "/producto/2d593a6e-65f0-401d-871d-18b1caeefc40",
+      "destination": "/producto/collor-s-bermuda-gabardina-azul-cielo-azul-2d593a6e",
+      "permanent": true
+    },
+    {
+      "source": "/producto/4b686be5-f496-44bd-9e19-5ad16ead6558",
+      "destination": "/producto/collor-s-slim-3-azul-4b686be5",
+      "permanent": true
+    },
+    {
+      "source": "/producto/ed3a09ce-0948-4e93-aa75-b4f1496a0713",
+      "destination": "/producto/collor-s-slim-11-azul-ed3a09ce",
+      "permanent": true
+    },
+    {
+      "source": "/producto/f9e33cf3-1f63-4ef9-b1af-19d9d82cc8e2",
+      "destination": "/producto/collor-s-biker-77-azul-f9e33cf3",
+      "permanent": true
+    },
+    {
+      "source": "/producto/1e852579-3c10-423e-9156-0b4ce5649faf",
+      "destination": "/producto/collor-s-boot-300-azul-1e852579",
+      "permanent": true
+    },
+    {
+      "source": "/producto/e12fdc92-84ea-4c69-a9cf-50340d2b686f",
+      "destination": "/producto/oggi-leader-stone-azul-e12fdc92",
+      "permanent": true
+    },
+    {
+      "source": "/producto/9442b17e-471c-4689-82ba-3225618b86e4",
+      "destination": "/producto/oggi-leader-bleach-azul-9442b17e",
+      "permanent": true
+    },
+    {
+      "source": "/producto/e9a222e2-35d7-43d4-957c-71a1f0b32b63",
+      "destination": "/producto/oggi-vaxter-vintage-2611108-azul-e9a222e2",
+      "permanent": true
+    },
+    {
+      "source": "/producto/2c2a91ba-cf28-4602-9555-24bd356e9c95",
+      "destination": "/producto/limon-silvestre-platinum-2c2a91ba",
+      "permanent": true
+    },
+    {
+      "source": "/producto/2271165d-db2e-4fb5-8ce4-d850d049f2ce",
+      "destination": "/producto/limon-silvestre-gentleman-2271165d",
+      "permanent": true
+    },
+    {
+      "source": "/producto/9e18e486-908d-4d34-8a41-998b249390d8",
+      "destination": "/producto/limon-silvestre-unisex-9e18e486",
+      "permanent": true
+    },
+    {
+      "source": "/producto/4ab97cc0-38b1-4c93-93c8-277212f9a822",
+      "destination": "/producto/limon-silvestre-classic-sport-4ab97cc0",
+      "permanent": true
+    },
+    {
+      "source": "/producto/a274c1e6-46a4-4b14-8686-7972c536ea3d",
+      "destination": "/producto/soul-blues-outdoors-a2695-verde-verde-a274c1e6",
+      "permanent": true
+    },
+    {
+      "source": "/producto/eaddf301-2e9c-44aa-b9f5-790f484b546c",
+      "destination": "/producto/soul-blues-outdoors-a2695-verde-arena-eaddf301",
+      "permanent": true
+    },
+    {
+      "source": "/producto/090c711b-3bb6-42a2-84b8-23456f315a5b",
+      "destination": "/producto/collor-s-bermuda-gabardina-azul-mariano-azul-090c711b",
+      "permanent": true
+    },
+    {
+      "source": "/producto/ad858f56-4449-4609-8998-5f1e6251ad6e",
+      "destination": "/producto/limon-silvestre-girl-ad858f56",
+      "permanent": true
+    },
+    {
+      "source": "/producto/bc9d8197-f980-46ee-8d0b-e35693dab6e9",
+      "destination": "/producto/soul-blues-outdoors-a2695-negro-negro-bc9d8197",
+      "permanent": true
+    },
+    {
+      "source": "/producto/05a89275-9f7b-4a2b-902d-46280a016d35",
+      "destination": "/producto/collor-s-bermuda-gabardina-rosa-rosa-05a89275",
+      "permanent": true
+    },
+    {
+      "source": "/producto/76c50553-48d5-4d00-a15b-f154a5e72695",
+      "destination": "/producto/collor-s-bermuda-gabardina-gris-gris-76c50553",
+      "permanent": true
+    },
+    {
+      "source": "/producto/5c7407a2-e25e-4dfc-a39c-ef056d8a2b40",
+      "destination": "/producto/collor-s-bermuda-gabardina-verde-militar-verde-5c7407a2",
+      "permanent": true
+    },
+    {
+      "source": "/producto/1f84b3ff-cd1b-4036-8e67-b5267c45c5c0",
+      "destination": "/producto/collor-s-bermuda-gabardina-plumbago-azul-1f84b3ff",
+      "permanent": true
+    },
+    {
+      "source": "/producto/5a7f7d99-7b3a-4559-87ef-c6cf91bdfac4",
+      "destination": "/producto/collor-s-bermuda-gabardina-verde-esmeralda-verde-5a7f7d99",
+      "permanent": true
+    },
+    {
+      "source": "/producto/11bac63f-5763-4805-b275-b4b1372d4daf",
+      "destination": "/producto/american-fly-short-gris-gris-11bac63f",
+      "permanent": true
+    },
+    {
+      "source": "/producto/98bb504f-996c-4c30-a693-1371a254c8a6",
+      "destination": "/producto/oggi-vaxter-gabarina-khaki-beige-98bb504f",
+      "permanent": true
+    },
+    {
+      "source": "/producto/80e12a55-b432-47df-a795-06f562e2a4b5",
+      "destination": "/producto/american-fly-short-khaki-beige-80e12a55",
+      "permanent": true
+    },
+    {
+      "source": "/producto/135b50d8-779a-43b1-826b-121b04a2d853",
+      "destination": "/producto/soul-blues-polo-negra-a1660-negro-135b50d8",
+      "permanent": true
+    },
+    {
+      "source": "/producto/b6cdf9c1-0daf-4e13-9e16-b9ba31e857d5",
+      "destination": "/producto/soul-blues-polo-blanca-a1660-blanco-b6cdf9c1",
+      "permanent": true
+    },
+    {
+      "source": "/producto/5e32536f-0f83-4dd8-af54-0653d1bcace2",
+      "destination": "/producto/american-fly-short-mentha-verde-5e32536f",
+      "permanent": true
+    },
+    {
+      "source": "/producto/d75d676f-cfe0-4f10-b076-0783c8cb7c90",
+      "destination": "/producto/sherman-morgan-playeras-oversize-gris-d75d676f",
+      "permanent": true
+    },
+    {
+      "source": "/producto/7bcb84eb-42a0-4dc0-9386-495a24dc00bb",
+      "destination": "/producto/american-fly-short-verde-pradera-verde-7bcb84eb",
+      "permanent": true
+    },
+    {
+      "source": "/producto/df3eaa5e-19c9-4bed-81be-8e580a1a016c",
+      "destination": "/producto/american-fly-short-verde-militar-verde-df3eaa5e",
+      "permanent": true
+    },
+    {
+      "source": "/producto/8fa733a4-bb64-4bcd-9f90-6fb4cf821ce0",
+      "destination": "/producto/sherman-morgan-playeras-regular-fit-verde-8fa733a4",
+      "permanent": true
+    },
+    {
+      "source": "/producto/2d1938b8-ae21-4dd2-90ef-5fb7e03ae401",
+      "destination": "/producto/sherman-morgan-playeras-oversize-verde-2d1938b8",
+      "permanent": true
+    },
+    {
+      "source": "/producto/4d00dd7f-3481-4787-b310-dae9b0c46f0d",
+      "destination": "/producto/sherman-morgan-playeras-regular-fit-gris-4d00dd7f",
+      "permanent": true
+    },
+    {
+      "source": "/producto/c7e2db4d-03ab-4b4c-b5cc-3c1977a332ca",
+      "destination": "/producto/sherman-morgan-playeras-oversize-verde-c7e2db4d",
+      "permanent": true
+    },
+    {
+      "source": "/producto/a6b1bcb8-ebcc-455a-b30e-6fc1ac34cbcb",
+      "destination": "/producto/sherman-morgan-playeras-oversize-negro-a6b1bcb8",
+      "permanent": true
+    },
+    {
+      "source": "/producto/7541e805-562c-479a-8f01-8ee7568349d6",
+      "destination": "/producto/mont-blanc-legend-spirit-7541e805",
+      "permanent": true
+    },
+    {
+      "source": "/producto/f915b068-e07e-45c5-b685-09353362581b",
+      "destination": "/producto/sherman-morgan-playeras-oversize-blanco-f915b068",
+      "permanent": true
     }
   ]
 }
