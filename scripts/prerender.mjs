@@ -132,44 +132,51 @@ const homeShell = template.slice(appOpenAt + APP_OPEN.length, shellEndAt)
 const tail = template.slice(shellEndAt)
 
 /** Reescribe el <head> de la plantilla con los metadatos de una ruta. */
-function buildHead({ title, description, robots, canonical, image, extraLd, ogType }) {
+function buildHead({ title, description, robots, canonical, image, images, extraLd, ogType }) {
   let head = headTemplate
 
-  head = head.replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(title)}</title>`)
+  // Ojo: el reemplazo va SIEMPRE como funcion. Con un string, JS expande `$&`,
+  // `$'` y `$1` dentro del texto — y las urls de Lee y Wrangler llevan `$&`
+  // literal (formato Scene7). Eso partia la url y duplicaba el meta tag.
+  const sub = (pattern, text) => {
+    head = head.replace(pattern, () => text)
+  }
+
+  sub(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(title)}</title>`)
 
   // description y robots vienen multilinea en index.html
-  head = head.replace(
+  sub(
     /<meta\s+name="description"[\s\S]*?\/>/,
     `<meta name="description" content="${escapeHtml(description)}" />`
   )
-  head = head.replace(
+  sub(
     /<meta\s+name="robots"[^>]*\/>/,
     `<meta name="robots" content="${escapeHtml(robots)}" />`
   )
 
-  head = head.replace(
+  sub(
     /<meta\s+property="og:type"[^>]*\/>/,
     `<meta property="og:type" content="${escapeHtml(ogType || 'website')}" />`
   )
-  head = head.replace(
+  sub(
     /<meta\s+property="og:url"[^>]*\/>/,
     `<meta property="og:url" content="${escapeHtml(canonical)}" />`
   )
-  head = head.replace(
+  sub(
     /<meta\s+property="og:title"[^>]*\/>/,
     `<meta property="og:title" content="${escapeHtml(title)}" />`
   )
-  head = head.replace(
+  sub(
     /<meta\s+property="og:description"[\s\S]*?\/>/,
     `<meta property="og:description" content="${escapeHtml(description)}" />`
   )
-  head = head.replace(
+  sub(
     /<meta\s+property="og:image"[^>]*\/>/,
-    `<meta property="og:image" content="${escapeHtml(socialImage(image))}" />`
+    `<meta property="og:image" content="${escapeHtml(socialImage(images || image))}" />`
   )
 
   // El canonical ya no se calcula en runtime: cada ruta tiene su HTML propio.
-  head = head.replace(
+  sub(
     /<!-- Inline script: set canonical dynamically[\s\S]*?<\/script>/,
     `<link rel="canonical" href="${escapeHtml(canonical)}" />`
   )
@@ -180,10 +187,10 @@ function buildHead({ title, description, robots, canonical, image, extraLd, ogTy
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(description)}" />`,
-    `<meta name="twitter:image" content="${escapeHtml(socialImage(image))}" />`,
+    `<meta name="twitter:image" content="${escapeHtml(socialImage(images || image))}" />`,
   ].join('\n    ')
 
-  return head.replace('</head>', `    ${social}\n    ${extraLd || ''}\n  </head>`)
+  return head.replace('</head>', () => `    ${social}\n    ${extraLd || ''}\n  </head>`)
 }
 
 function writeRoute(path, html) {
@@ -429,6 +436,9 @@ for (const product of products) {
   routes.push({
     path,
     image,
+    // Para la preview de WhatsApp: si la principal es un webp que no se puede
+    // convertir, sirve la siguiente foto del producto.
+    images: [product.image_url, ...(product.images || [])],
     shell: contentShell(`
             ${breadcrumbNav(trail)}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -599,6 +609,7 @@ for (const route of routes) {
     robots: seo.robots,
     canonical,
     image: route.image || DEFAULT_IMAGE,
+    images: route.images,
     ogType: route.path.startsWith('/producto/') ? 'product' : 'website',
     extraLd,
   })

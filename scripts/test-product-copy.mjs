@@ -143,5 +143,13 @@ assert.equal(socialImage('/bannergl.webp'), 'https://www.glboutique.com.mx/heroe
 // Una url ajena en jpg se respeta tal cual
 assert.equal(socialImage('https://otro.cdn/foto.jpg'), 'https://otro.cdn/foto.jpg')
 assert.ok(!/\.webp/i.test(socialImage('https://cdn/x.webp')), 'nunca sale un webp en og:image')
+// Un webp sin conversion se salta y toma la siguiente foto del producto, no el respaldo
+assert.equal(
+  socialImage(['https://cdn/x.webp', 'https://cdn/x.jpg']),
+  'https://cdn/x.jpg'
+)
+// Las urls de Lee y Wrangler llevan `$&` literal: tiene que sobrevivir intacto
+const scene7 = 'https://images.lee.com/is/image/Lee/112369188-HERO?$PDP24-XXLARGE$&fit=crop'
+assert.equal(socialImage(scene7), scene7, 'la url con $& no se puede alterar')
 
 console.log('ok — productCopy')

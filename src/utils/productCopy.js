@@ -186,13 +186,20 @@ export function findProductByPath(products, segment) {
 const SOCIAL_FALLBACK = '/heroeGL.jpg'
 const SITE_URL = 'https://www.glboutique.com.mx'
 
-export function socialImage(url) {
-  if (!url) return `${SITE_URL}${SOCIAL_FALLBACK}`
-  const absolute = new URL(url, SITE_URL)
-  if (/\.webp$/i.test(absolute.pathname)) return `${SITE_URL}${SOCIAL_FALLBACK}`
-  if (absolute.searchParams.has('f')) {
-    absolute.searchParams.set('f', 'jpg')
-    absolute.searchParams.set('s', 'large')
+export function socialImage(...urls) {
+  for (const url of urls.flat()) {
+    if (!url) continue
+    const absolute = new URL(url, SITE_URL)
+    // El CDN de la tienda sirve webp por defecto; la misma foto en jpg existe.
+    if (absolute.searchParams.get('f') === 'webp') {
+      absolute.searchParams.set('f', 'jpg')
+      absolute.searchParams.set('s', 'large')
+      return absolute.toString()
+    }
+    // Un webp que no se puede convertir se salta: mejor la siguiente foto del
+    // producto que una imagen que no es del producto.
+    if (/\.webp$/i.test(absolute.pathname)) continue
+    return absolute.toString()
   }
-  return absolute.toString()
+  return `${SITE_URL}${SOCIAL_FALLBACK}`
 }
