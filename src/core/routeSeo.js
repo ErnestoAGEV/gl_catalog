@@ -53,6 +53,18 @@ export function getSeoForRoute(path, basePath, state) {
   }
 
   const infoSeo = {
+    '/sucursales': {
+      title: 'Sucursales en Colima y Villa de Alvarez | G&L',
+      description: 'Las dos tiendas fisicas de G&L: Colima Centro y Villa de Alvarez. Direcciones, horarios y como llegar.',
+    },
+    '/sucursales/colima-centro': {
+      title: 'Tienda de ropa para hombre en Colima Centro | G&L',
+      description: 'G&L Colima Centro, Zaragoza 140 a media cuadra del Jardin Libertad. Camisas, polos, jeans y perfumes. Horarios y como llegar.',
+    },
+    '/sucursales/villa-de-alvarez': {
+      title: 'Tienda de ropa para hombre en Villa de Alvarez | G&L',
+      description: 'G&L Villa de Alvarez, Maria Ahumada de Gomez 30 Local 6. Moda masculina, catalogo completo y atencion por WhatsApp.',
+    },
     '/nosotros': {
       title: 'Nosotros | Boutique de moda masculina en Colima | G&L',
       description: 'G&L viste a los hombres colimenses desde 1995. Dos tiendas fisicas, marcas escogidas a mano y atencion por WhatsApp.',

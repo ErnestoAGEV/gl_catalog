@@ -97,6 +97,7 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
             <ul class="space-y-2.5 text-[14px]">
               <li><a href="/envios" class="ul-link opacity-80 hover:opacity-100">Envíos y pagos</a></li>
               <li><a href="/cambios" class="ul-link opacity-80 hover:opacity-100">Cambios</a></li>
+              <li><a href="/sucursales" class="ul-link opacity-80 hover:opacity-100">Sucursales</a></li>
               <li><a href="/contacto" class="ul-link opacity-80 hover:opacity-100">Contacto</a></li>
               <li><a href="/nosotros" class="ul-link opacity-80 hover:opacity-100">Nosotros</a></li>
             </ul>

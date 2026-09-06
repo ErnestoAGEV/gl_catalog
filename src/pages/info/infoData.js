@@ -1,3 +1,5 @@
+import { stores } from '../home/homeData.js'
+
 // Contenido de las paginas de confianza (/nosotros, /envios, /cambios,
 // /contacto). Van aparte del renderer para que editar el copy no obligue a
 // tocar markup, y para que scripts/prerender.mjs pueda leerlas sin arrastrar
@@ -11,7 +13,57 @@ export const SHIPPING = {
   exchangeDays: 8,
 }
 
+// Una pagina por sucursal: "ropa hombre Colima centro" y "tienda ropa Villa de
+// Alvarez" son busquedas distintas y una pagina compartida no rankea bien para
+// las dos. El copy se arma desde stores para no repetir direcciones a mano.
+const storePages = Object.fromEntries(
+  stores.map((store) => [
+    `/sucursales/${store.slug}`,
+    {
+      eyebrow: `Sucursal ${store.name}`,
+      heading: `${store.fullName.replace('G&L ', '')}<br/>en <span class="text-brand">Colima</span>.`,
+      lead: `${store.address} Aquí tienes el mismo catálogo que ves en línea, y alguien que te ayuda a escoger la talla.`,
+      sections: [
+        {
+          h: 'Cómo llegar',
+          body: `${store.postal.streetAddress}, ${store.postal.addressLocality}, ${store.postal.addressRegion}. Si vienes en coche, escríbenos y te decimos dónde conviene estacionarte.`,
+        },
+        {
+          h: 'Horarios',
+          list: store.hours,
+        },
+        {
+          h: 'Qué encuentras aquí',
+          body: 'Camisas, polos, playeras, jeans, shorts y perfumes. Si buscas algo puntual, mándanos mensaje antes de venir y te confirmamos si lo tenemos en tu talla.',
+        },
+      ],
+      store: store.slug,
+      cta: { label: 'Preguntar por WhatsApp', whatsapp: `Hola, quiero preguntar por la sucursal ${store.name}` },
+    },
+  ])
+)
+
 export const infoPages = {
+  '/sucursales': {
+    eyebrow: 'Sucursales',
+    heading: 'Dos tiendas<br/>en <span class="text-brand">Colima</span>.',
+    lead: 'Una en el Centro y otra en Villa de Álvarez. En las dos está el catálogo completo y alguien que conoce el inventario de memoria.',
+    sections: [
+      {
+        h: 'Antes de venir',
+        body: 'Si buscas una prenda o una talla en concreto, escríbenos por WhatsApp y te confirmamos si está disponible en la sucursal que te queda más cerca. Te ahorra el viaje.',
+      },
+      {
+        h: 'También puedes recoger aquí',
+        body: 'Si compras en línea, puedes elegir recoger en tienda sin costo de envío. Apartamos la prenda y pasas por ella cuando te acomode.',
+      },
+    ],
+    showStores: true,
+    cta: { label: 'Ver el catálogo', href: '/catalog' },
+  },
+
+  ...storePages,
+
   '/nosotros': {
     eyebrow: 'Desde 1995 · Colima',
     heading: 'Vistiendo a los<br/>hombres <span class="text-brand">colimenses</span>.',

@@ -32,12 +32,19 @@ export function pageInfo(state, path) {
     )
     .join('')
 
-  const storesBlock = page.showStores
+  // showStores pinta las dos; store: '<slug>' pinta solo esa
+  const shownStores = page.store
+    ? stores.filter((s) => s.slug === page.store)
+    : page.showStores
+      ? stores
+      : []
+
+  const storesBlock = shownStores.length
     ? `
       <section class="border-t border-ink/10 py-10">
-        <h2 class="font-heading font-[800] text-[clamp(24px,3vw,34px)] tracking-[-0.02em] mb-6">Sucursales</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-          ${stores
+        <h2 class="font-heading font-[800] text-[clamp(24px,3vw,34px)] tracking-[-0.02em] mb-6">${page.store ? 'Dónde estamos' : 'Sucursales'}</h2>
+        <div class="grid grid-cols-1 ${page.store ? '' : 'md:grid-cols-2'} gap-8">
+          ${shownStores
             .map(
               (store) => `
             <div>
@@ -46,6 +53,7 @@ export function pageInfo(state, path) {
               <p class="text-[15px] text-ink/75 leading-relaxed mb-3">${store.address}</p>
               <p class="font-mono text-[12px] text-ink/60 leading-relaxed mb-4">${store.hours.join('<br/>')}</p>
               <a href="${store.mapUrl}" target="_blank" rel="noopener noreferrer" class="ul-link text-[14px] font-medium">Ver en Google Maps</a>
+              ${page.store ? '' : `<span class="mx-3 text-ink/25">·</span><a href="/sucursales/${store.slug}" class="ul-link text-[14px] font-medium">Más de esta tienda</a>`}
             </div>`
             )
             .join('')}
@@ -73,6 +81,17 @@ export function pageInfo(state, path) {
 
         ${sections}
         ${storesBlock}
+
+        ${
+          page.store
+            ? `<section class="border-t border-ink/10 py-10">
+          <p class="text-[15px] text-ink/70">¿Te queda más cerca la otra? ${stores
+            .filter((s) => s.slug !== page.store)
+            .map((s) => `<a class="ul-link font-medium text-ink" href="/sucursales/${s.slug}">${s.fullName}</a>`)
+            .join('')}</p>
+        </section>`
+            : ''
+        }
 
         <div class="border-t border-ink/10 pt-10">
           <a href="${ctaHref}"${ctaAttrs} class="inline-flex items-center gap-2.5 h-14 px-7 rounded-full bg-ink text-paper text-[15px] font-semibold hover:bg-brand transition-colors">

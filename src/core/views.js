@@ -10,11 +10,13 @@ import { pageCheckout, pageCheckoutSuccess } from '../pages/checkout/checkout.js
 import { pageAdminLogin } from '../pages/admin/adminLogin.js'
 import { pageNotFound } from '../pages/notFound/notFound.js'
 import { pageInfo } from '../pages/info/info.js'
+import { infoPages } from '../pages/info/infoData.js'
 import { getSeoForRoute } from './routeSeo.js'
 
 
-// Paginas de confianza: comparten renderer, se distinguen por la ruta
-const infoRoutes = new Set(['/nosotros', '/envios', '/cambios', '/contacto'])
+// Paginas de confianza: comparten renderer, se distinguen por la ruta.
+// Las rutas salen de infoPages para no mantener la lista en dos sitios.
+const infoRoutes = new Set(Object.keys(infoPages))
 
 const publicRoutes = {
   '/': pageHome,

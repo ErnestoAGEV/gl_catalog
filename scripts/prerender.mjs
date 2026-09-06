@@ -13,6 +13,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { getSeoForRoute } from '../src/core/routeSeo.js'
 import { infoPages } from '../src/pages/info/infoData.js'
+import { STORE_PHONE, stores } from '../src/pages/home/homeData.js'
 
 const BASE_URL = 'https://www.glboutique.com.mx'
 const DIST = 'dist'
@@ -237,6 +238,41 @@ const breadcrumbLd = (trail) => ({
   })),
 })
 
+
+// Las dos sucursales, generadas desde stores en vez de escritas a mano en el
+// <head> de index.html. Van en todas las paginas.
+//
+// `url` apunta siempre a la pagina de la sucursal, no a la home: es su
+// direccion canonica. Antes se emitia el mismo @id con url distinta segun la
+// pagina, y eso deja al consumidor con dos versiones del mismo negocio.
+function storeLd(store) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ClothingStore',
+    '@id': `${BASE_URL}/#${store.schemaId}`,
+    name: store.fullName,
+    description: 'Moda masculina premium en Colima. Camisas, polos, jeans y perfumes.',
+    url: absolute(`/sucursales/${store.slug}`),
+    logo: `${BASE_URL}/icon-512.png?v=2`,
+    image: `${BASE_URL}/icon-512.png?v=2`,
+    telephone: STORE_PHONE,
+    priceRange: '$$',
+    currenciesAccepted: 'MXN',
+    address: { '@type': 'PostalAddress', ...store.postal },
+    geo: { '@type': 'GeoCoordinates', ...store.geo },
+    hasMap: store.mapUrl,
+    openingHoursSpecification: store.openingHours.map((h) => ({
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: h.days.length === 1 ? h.days[0] : h.days,
+      opens: h.opens,
+      closes: h.closes,
+    })),
+    branchOf: { '@type': 'Organization', '@id': `${BASE_URL}/#marca`, name: 'G&L' },
+  }
+}
+
+const allStoresLd = stores.map((store) => jsonLd(storeLd(store))).join('\n    ')
+
 // ── Rutas ───────────────────────────────────────────────────────────────────
 
 const products = SUPABASE_URL
@@ -402,6 +438,7 @@ for (const product of products) {
 for (const [path, page] of Object.entries(infoPages)) {
   const trail = [
     { name: 'Inicio', path: '/' },
+    ...(page.store ? [{ name: 'Sucursales', path: '/sucursales' }] : []),
     { name: page.eyebrow, path },
   ]
   const body = page.sections
@@ -454,7 +491,7 @@ for (const route of routes) {
   const seoPath = route.seoPath || route.path
   const seo = getSeoForRoute(seoPath, seoPath, { products })
   const canonical = absolute(route.canonicalPath || seo.canonicalPath || route.path)
-  const extraLd = [websiteLd, ...(route.ld || []).map(jsonLd)].join('\n    ')
+  const extraLd = [websiteLd, allStoresLd, ...(route.ld || []).map(jsonLd)].join('\n    ')
 
   const head = buildHead({
     title: seo.title,

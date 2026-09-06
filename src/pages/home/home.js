@@ -167,7 +167,8 @@ export function pageHome() {
         <div class="font-mono text-[11px] tracking-[0.16em] uppercase opacity-60 leading-relaxed">
           ${s.hours.map(h => `<span class="block">${h}</span>`).join('')}
         </div>
-        <a href="${s.mapUrl}" target="_blank" rel="noopener noreferrer" class="ul-link text-[14px] font-medium shrink-0">Cómo llegar →</a>
+        <a href="/sucursales/${s.slug}" class="ul-link text-[14px] font-medium shrink-0">Ver tienda →</a>
+        <a href="${s.mapUrl}" target="_blank" rel="noopener noreferrer" class="ul-link text-[14px] font-medium shrink-0 ml-4">Cómo llegar →</a>
       </div>
     </div>
   `).join('')
