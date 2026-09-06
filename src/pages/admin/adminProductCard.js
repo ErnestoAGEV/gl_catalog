@@ -1,8 +1,9 @@
 import { formatMoney } from '../../utils/format.js'
+import { isInfiniteStock } from '../../utils/stock.js'
 import { ICON } from './adminIcons.js'
 
 function stockBadge(p) {
-  const isInfinite = p.stock === undefined || p.stock === null || p.stock === '' || p.stock === '∞'
+  const isInfinite = isInfiniteStock(p.stock)
   if (isInfinite) return `<span class="inline-flex items-center gap-1.5 px-2 h-[22px] rounded-md text-[11.5px] font-semibold bg-brand-tint text-brand tnum">∞ Ilimitado</span>`
   const n = Number(p.stock)
   if (n <= 0) return `<span class="inline-flex items-center gap-1.5 px-2 h-[22px] rounded-md text-[11.5px] font-semibold bg-bad-tint text-bad">Agotado</span>`

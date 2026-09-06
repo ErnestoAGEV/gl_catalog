@@ -3,6 +3,7 @@ import { BRAND } from '../../utils/config.js'
 import { buildOrderMessage, openWhatsAppWithMessage } from '../../utils/whatsapp.js'
 import { on, qs } from '../../utils/dom.js'
 import { formatMoney } from '../../utils/format.js'
+import { isInfiniteStock } from '../../utils/stock.js'
 import { checkoutHTML, checkoutSummaryHTML, couponAppliedHTML, couponInputHTML, checkoutSuccessHTML } from './checkoutView.js'
 import { sizeSelectionModal } from '../catalog/catalogModals.js'
 import { sanitizeText, sanitizeCouponCode } from '../../utils/sanitize.js'
@@ -45,9 +46,6 @@ function clearCheckoutSuccess() {
 const WHATSAPP_RE = /^[+]?[0-9\s\-().]{7,20}$/
 const ZIPCODE_RE  = /^[0-9]{4,6}$/
 
-function isInfiniteStock(stock) {
-  return stock === null || stock === undefined || stock === '' || stock === '∞'
-}
 
 function setFieldError(field, hasError) {
   if (!field) return

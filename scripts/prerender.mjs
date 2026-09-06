@@ -15,6 +15,7 @@ import { getSeoForRoute } from '../src/core/routeSeo.js'
 import { infoPages } from '../src/pages/info/infoData.js'
 import { STORE_PHONE, stores } from '../src/pages/home/homeData.js'
 import { colorPhrase, productDescription, productPath, socialImage } from '../src/utils/productCopy.js'
+import { isInStock } from '../src/utils/stock.js'
 
 const BASE_URL = 'https://www.glboutique.com.mx'
 const DIST = 'dist'
@@ -119,7 +120,7 @@ async function supabaseSelect(table, query) {
 const template = readFileSync(join(DIST, 'index.html'), 'utf8')
 
 const APP_OPEN = '<div id="app" class="overflow-x-clip">'
-const SHELL_END = '<!-- Fallback content for search engines'
+const SHELL_END = '<!-- prerender:shell-end'
 
 const appOpenAt = template.indexOf(APP_OPEN)
 const shellEndAt = template.indexOf(SHELL_END)
@@ -206,6 +207,27 @@ function writeRoute(path, html) {
 }
 
 /**
+ * Pie de contacto. El telefono vivia solo en el JSON-LD y en el footer que
+ * pinta el JS: un crawler sin JS no encontraba ni un telefono en todo el sitio,
+ * que en un negocio con dos tiendas fisicas es la senal local mas barata.
+ */
+function contactFooter() {
+  const tel = STORE_PHONE.replace(/[^+\d]/g, '')
+  const sucursales = stores
+    .map((store) => `<p>${escapeHtml(store.name)} — ${escapeHtml(store.address)}</p>`)
+    .join('\n              ')
+  return `
+            <footer class="mt-16 pt-8 border-t border-ink/10 font-mono text-[12px] tracking-[0.06em] text-ink/60">
+              <p class="mb-2">
+                <a class="ul-link hover:text-ink" href="tel:${tel}">${escapeHtml(STORE_PHONE)}</a>
+                <span class="mx-2 text-ink/30">/</span>
+                <a class="ul-link hover:text-ink" href="https://wa.me/${tel.replace('+', '')}">WhatsApp</a>
+              </p>
+              ${sucursales}
+            </footer>`
+}
+
+/**
  * Bloque visible que la SPA reemplaza al hidratar. Estilado con las clases del sitio.
  * Cierra el <div id="app"> que abre headTemplate — igual que hace homeShell.
  */
@@ -217,6 +239,7 @@ function contentShell(inner) {
         <div class="min-h-dvh bg-paper text-ink">
           <div class="mx-auto w-full max-w-[1440px] px-6 lg:px-10 py-10">
             ${inner}
+            ${contactFooter()}
           </div>
         </div>
       </div>
@@ -297,7 +320,19 @@ const categories = [...new Set(products.map((p) => p.type).filter(Boolean))].sor
 const routes = []
 
 // Home: conserva su shell prerenderizado actual
-routes.push({ path: '/', shell: homeShell })
+// El pie de contacto tambien en la home: su shell es un snapshot y tampoco
+// traia el telefono como texto. Va DENTRO de #prerender-shell —por eso se
+// inyecta en el marcador y no se concatena al final—: la hidratacion elimina
+// ese nodo entero, y colgado por fuera se quedaria duplicado bajo el footer
+// real de la SPA.
+const HOME_SHELL_MARK = '<!-- prerender-shell:end -->'
+if (!homeShell.includes(HOME_SHELL_MARK)) {
+  throw new Error(`No encuentro ${HOME_SHELL_MARK} en el shell de la home — revisa index.html`)
+}
+routes.push({
+  path: '/',
+  shell: homeShell.replace(HOME_SHELL_MARK, () => `${contactFooter()}\n      ${HOME_SHELL_MARK}`),
+})
 
 routes.push({
   path: '/catalog',
@@ -349,7 +384,8 @@ for (const category of categories) {
             <p class="text-[17px] text-ink/70 max-w-[560px] leading-relaxed mb-10">${items.length} ${items.length === 1 ? 'pieza disponible' : 'piezas disponibles'} en G&amp;L Colima.</p>
             <ul class="grid grid-cols-2 md:grid-cols-4 gap-6">
               ${items
-                .slice(0, 24)
+                // Sin recorte: la categoria mas grande son 84 productos, y
+                // cortar en 24 dejaba 105 fichas sin un solo enlace interno.
                 .map(
                   (p) => `<li>
                 <a href="${productPath(p)}" class="block">
@@ -431,7 +467,7 @@ for (const product of products) {
     ...(product.type ? [{ name: product.type, path: `/categoria/${encodeURIComponent(product.type)}` }] : []),
     { name: product.name, path },
   ]
-  const inStock = (product.stock ?? 0) > 0
+  const inStock = isInStock(product)
 
   routes.push({
     path,
@@ -529,7 +565,7 @@ for (const product of products) {
                     url: absolute(variantPath),
                     price: Number(variant.price),
                     priceCurrency: 'MXN',
-                    availability: `https://schema.org/${(variant.stock ?? 0) > 0 ? 'InStock' : 'OutOfStock'}`,
+                    availability: `https://schema.org/${isInStock(variant) ? 'InStock' : 'OutOfStock'}`,
                     itemCondition: 'https://schema.org/NewCondition',
                     shippingDetails,
                     hasMerchantReturnPolicy: returnPolicy,

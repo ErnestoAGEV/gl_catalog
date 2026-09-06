@@ -1,15 +1,12 @@
 import { formatMoney } from '../../utils/format.js'
 import { productPath } from '../../utils/productCopy.js'
+import { isInfiniteStock } from '../../utils/stock.js'
 import { getProductById, removeCartItem, setCartItemQty, cartTotal, getState, getCoupon, getDiscountAmount, applyCoupon, removeCoupon, addToCart } from '../../store/index.js'
 import { on, qs } from '../../utils/dom.js'
 import { BRAND } from '../../utils/config.js'
 import { navigate } from '../../core/router.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 import { escapeHtml } from '../../utils/sanitize.js'
-
-function isInfiniteStock(stock) {
-  return stock === undefined || stock === null || stock === '' || stock === '\u221E'
-}
 
 function colorNameToHex(name) {
   const map = {

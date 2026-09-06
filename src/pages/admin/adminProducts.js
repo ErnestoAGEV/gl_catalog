@@ -1,5 +1,6 @@
 import { adminLogout, addProduct, updateProduct, deleteProduct, uploadProductImage, getCategoryNames, subscribe } from '../../store/index.js'
 import { navigate } from '../../core/router.js'
+import { isInfiniteStock } from '../../utils/stock.js'
 import { on, qs, lockScroll, unlockScroll } from '../../utils/dom.js'
 import { showToast } from '../../utils/toast.js'
 import { parseList, isPerfumeCategory, isShoeCategory } from './adminProductsData.js'
@@ -203,7 +204,6 @@ export function pageAdminProducts(state) {
         })
       }
 
-      const isInfiniteStock = (stock) => stock === undefined || stock === null || stock === '' || stock === '∞'
       const stockAsNumber = (stock) => {
         const n = Number(stock)
         return Number.isFinite(n) ? n : 0

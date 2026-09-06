@@ -1,5 +1,6 @@
 import { getState, addToCart, trackProductView, getProductById } from '../../store/index.js'
 import { findProductByPath, productPath } from '../../utils/productCopy.js'
+import { isInfiniteStock } from '../../utils/stock.js'
 import { navigate, normalizePath } from '../../core/router.js'
 import { formatMoney } from '../../utils/format.js'
 import { showToast } from '../../utils/toast.js'
@@ -41,7 +42,7 @@ function splitName(name) {
 /* ── Stock status ── */
 function stockStatus(product) {
   const s = product.stock
-  if (s === undefined || s === null || s > 3) return { label: 'En stock', cls: 'text-brand', dot: 'bg-brand' }
+  if (isInfiniteStock(s) || s > 3) return { label: 'En stock', cls: 'text-brand', dot: 'bg-brand' }
   if (s <= 0) return { label: 'Agotado', cls: 'text-ink/60', dot: 'bg-ink/60' }
   return { label: 'Últimas piezas', cls: 'text-amber-500', dot: 'bg-amber-500' }
 }
