@@ -145,12 +145,16 @@ export function pageHome() {
       `).join('')
 
   // Stats HTML
-  const statsHtml = stats.map(s => `
+  const statsHtml = stats.map(s => {
+    const caption = s.reviewsLink
+      ? `<a href="${stores[0].mapUrl}" target="_blank" rel="noopener" class="ul-link hover:opacity-100">${s.caption}</a>`
+      : s.caption
+    return `
     <div class="text-center md:text-left">
       <p class="font-heading font-bold text-[64px] leading-none tracking-[-0.04em] tabular-nums">${s.number}</p>
-      <p class="font-mono text-[11px] tracking-[0.24em] uppercase opacity-60 mt-2">${s.caption}</p>
+      <p class="font-mono text-[11px] tracking-[0.24em] uppercase opacity-60 mt-2">${caption}</p>
     </div>
-  `).join('')
+  `}).join('')
 
   // Stores HTML
   const storesHtml = stores.map(s => `
