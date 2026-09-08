@@ -81,6 +81,12 @@
       <!-- prerender-shell:start — static snapshot of the home page so the first paint
            does not wait for JS. Regenerate with: npm run build && npx vite preview --port 4173
            + node scripts/prerender-snapshot.mjs whenever the home layout changes. -->
+      <!-- OJO: este snapshot es una copia de lo que pinta home.js, y no se
+           regenera en el build. Cualquier cambio en src/pages/home/ que deba
+           verse SIN JS —textos, enlaces, encabezados— hay que reflejarlo aqui
+           tambien, o el bundle y el HTML que leen Google y WhatsApp diran cosas
+           distintas. Paso por aqui: el enlace de "+500 reseñas" a la ficha de
+           Google entro en home.js y no aparecia en produccion. -->
       <div id="prerender-shell">
       <!-- prerender-shell:start — static snapshot of the home page so the first paint
            does not wait for JS. Regenerate with: npm run build && npx vite preview --port 4173
@@ -265,7 +271,7 @@
   
     <div class="text-center md:text-left">
       <p class="font-heading font-bold text-[64px] leading-none tracking-[-0.04em] tabular-nums">4.9<span class="text-[36px] opacity-40">/5</span></p>
-      <p class="font-mono text-[11px] tracking-[0.24em] uppercase opacity-60 mt-2">+500 reseñas</p>
+      <p class="font-mono text-[11px] tracking-[0.24em] uppercase opacity-60 mt-2"><a href="https://www.google.com/maps/place/G%26L+Colima/@19.2424015,-103.7280069,17z/data=!3m2!4b1!5s0x84255aab867046b3:0x293c46c0e72ef43a!4m6!3m5!1s0x84255aab8670a0bf:0x969da2ab885623e0!8m2!3d19.2424015!4d-103.725432!16s%2Fg%2F11c45qrg02?entry=ttu" target="_blank" rel="noopener" class="ul-link hover:opacity-100">+500 reseñas</a></p>
     </div>
   
     <div class="text-center md:text-left">
