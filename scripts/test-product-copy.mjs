@@ -98,6 +98,22 @@ const variantes = ['Gris', 'Negro', 'Beige', 'Azul'].map((c) =>
 )
 assert.equal(new Set(variantes).size, 4, 'variantes de color con title repetido')
 
+// El title cede el medio antes que el nombre. Con un nombre de largo normal,
+// eso basta para bajar de 60.
+const largo = { ...pantalon, name: 'Soul&Blues - Outdoors Azul Marino', colors: ['Azul'] }
+const titleLargo = productTitle(largo)
+assert.ok(titleLargo.length <= 60, `title de ${titleLargo.length}: ${titleLargo}`)
+assert.ok(titleLargo.startsWith(largo.name), 'el nombre nunca se recorta')
+assert.ok(titleLargo.endsWith('| G&L'), 'la marca se queda')
+
+// Cuando ni el nombre solo cabe, se queda el nombre: es lo que el comprador
+// reconoce, y preferimos que Google corte la cola a cortar la marca.
+const kilometrico = { ...pantalon, name: 'A'.repeat(70), colors: [] }
+assert.equal(productTitle(kilometrico), `${'A'.repeat(70)} | G&L`)
+
+// Si cabe entero, no se recorta nada
+assert.equal(productTitle(perfume), 'Dolce & Gabbana - K | Perfume para hombre | G&L')
+
 // ── slug de la url ──
 const conId = { ...pantalon, id: 'ff60bff1-eaca-4eeb-a3ef-edfc3598bbc2' }
 assert.equal(productSlug(conId), 'oggi-chinos-900-gris-ff60bff1')

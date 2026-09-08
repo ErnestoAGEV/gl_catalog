@@ -117,12 +117,30 @@ export function productDescription(product) {
  * varios colores, cada uno con su fila: sin el, 11 grupos comparten title y
  * compiten entre si. Ademas es como se busca ("chino Oggi negro").
  */
+// Google corta el title alrededor de los 60 caracteres. Con el formato largo
+// se pasaban 118 de 235 productos, hasta 86 caracteres: el comprador veia la
+// marca cortada a media palabra.
+const MAX_TITLE = 60
+
+/**
+ * Title de producto. El tipo y el publico ayudan a posicionar, pero lo que el
+ * comprador reconoce es el nombre y el color: si no cabe todo, cede el medio y
+ * nunca el nombre.
+ */
 export function productTitle(product) {
   const singular = typeSingular(product?.type)
-  const audience = product?.type === 'Perfumes Dama' ? 'dama' : 'hombre'
+  const dama = product?.type === 'Perfumes Dama'
   const color = colorPhrase(product?.colors)
   const name = color ? `${product?.name} en ${color}` : product?.name
-  return `${name} | ${singular} para ${audience} | G&L`
+
+  // "para dama" se conserva un escalon mas que "para hombre": la tienda es de
+  // moda masculina, asi que ahi el publico si distingue.
+  const candidatos = [
+    `${name} | ${singular} para ${dama ? 'dama' : 'hombre'} | G&L`,
+    `${name} | ${dama ? `${singular} dama` : singular} | G&L`,
+    `${name} | G&L`,
+  ]
+  return candidatos.find((t) => t.length <= MAX_TITLE) || candidatos.at(-1)
 }
 
 // ── URL del producto ────────────────────────────────────────────────────────

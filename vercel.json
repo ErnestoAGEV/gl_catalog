@@ -2,19 +2,19 @@
   "rewrites": [
     {
       "source": "/admin",
-      "destination": "/"
+      "destination": "/spa.html"
     },
     {
       "source": "/admin/:path*",
-      "destination": "/"
+      "destination": "/spa.html"
     },
     {
       "source": "/producto/:id",
-      "destination": "/"
+      "destination": "/spa.html"
     },
     {
       "source": "/categoria/:name",
-      "destination": "/"
+      "destination": "/spa.html"
     }
   ],
   "headers": [

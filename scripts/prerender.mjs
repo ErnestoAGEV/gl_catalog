@@ -177,9 +177,11 @@ function buildHead({ title, description, robots, canonical, image, images, extra
   )
 
   // El canonical ya no se calcula en runtime: cada ruta tiene su HTML propio.
+  // El shell de la SPA (spa.html) es la excepcion: no representa una URL, asi
+  // que se queda sin canonical en vez de declarar uno falso.
   sub(
     /<!-- Inline script: set canonical dynamically[\s\S]*?<\/script>/,
-    `<link rel="canonical" href="${escapeHtml(canonical)}" />`
+    canonical ? `<link rel="canonical" href="${escapeHtml(canonical)}" />` : ''
   )
 
   const social = [
@@ -225,6 +227,52 @@ function contactFooter() {
               </p>
               ${sucursales}
             </footer>`
+}
+
+// Cuantas fotos de la parrilla se piden de inmediato. Las de mas abajo van
+// lazy: solo importan las que caen sobre el pliegue.
+const EAGER_GRID_IMAGES = 4
+
+/**
+ * Parrilla de producto, compartida por /catalog y /categoria/*.
+ *
+ * Las primeras van `eager` y con `fetchpriority="high"` a proposito: en movil
+ * el elemento LCP del catalogo era una foto de esta parrilla con
+ * `loading="lazy"` que ademas no estaba en el HTML —la pintaba el JS despues
+ * de pedirsela a Supabase—, y eso costaba ~2,9 s de LCP. Con `width`/`height`
+ * declarados, ademas, la tarjeta reserva su hueco y no empuja el layout.
+ */
+function productGrid(items) {
+  const cards = items
+    .map((p, i) => {
+      const prioridad =
+        i < EAGER_GRID_IMAGES ? 'fetchpriority="high"' : 'loading="lazy"'
+      return `<li>
+                <a href="${productPath(p)}" class="block">
+                  <img src="${escapeHtml(p.image_url || '/placeholder.webp')}" alt="${escapeHtml(p.name)}" width="600" height="800" ${prioridad} decoding="async" class="w-full h-auto rounded-xl object-cover">
+                  <span class="mt-3 block text-[14px] font-medium">${escapeHtml(p.name)}</span>
+                  <span class="block font-mono text-[13px] text-ink/60">$${escapeHtml(p.price)} MXN</span>
+                </a>
+              </li>`
+    })
+    .join('\n              ')
+  return `<ul class="grid grid-cols-2 md:grid-cols-4 gap-6">
+              ${cards}
+            </ul>`
+}
+
+/** ItemList que enumera exactamente lo que la pagina contiene. */
+function itemListLd(items) {
+  return {
+    '@type': 'ItemList',
+    numberOfItems: items.length,
+    itemListElement: items.map((p, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: absolute(productPath(p)),
+      name: p.name,
+    })),
+  }
 }
 
 /**
@@ -340,9 +388,10 @@ routes.push({
             ${breadcrumbNav([{ name: 'Inicio', path: '/' }, { name: 'Tienda', path: '/catalog' }])}
             <h1 class="font-heading font-[800] text-[clamp(40px,7vw,88px)] leading-[0.9] tracking-[-0.03em] mb-6">Tienda</h1>
             <p class="text-[17px] text-ink/70 max-w-[560px] leading-relaxed mb-10">${products.length} piezas de moda masculina en Colima: camisas, polos, jeans, playeras y perfumes.</p>
-            <ul class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <ul class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
               ${categories.map((c) => `<li><a class="ul-link text-[15px] font-medium" href="/categoria/${encodeURIComponent(c)}">${escapeHtml(c)}</a></li>`).join('\n              ')}
-            </ul>`),
+            </ul>
+            ${productGrid(products)}`),
   ld: [
     {
       '@context': 'https://schema.org',
@@ -350,16 +399,9 @@ routes.push({
       name: 'Catálogo de ropa para hombre',
       url: absolute('/catalog'),
       isPartOf: { '@type': 'WebSite', '@id': `${BASE_URL}/#website` },
-      mainEntity: {
-        '@type': 'ItemList',
-        numberOfItems: products.length,
-        itemListElement: products.slice(0, 100).map((p, i) => ({
-          '@type': 'ListItem',
-          position: i + 1,
-          url: absolute(productPath(p)),
-          name: p.name,
-        })),
-      },
+      // Enumera los 235: antes declaraba numberOfItems 235 con 100 ListItem
+      // dentro, y ese desajuste lo reporta Search Console.
+      mainEntity: itemListLd(products),
     },
     breadcrumbLd([{ name: 'Inicio', path: '/' }, { name: 'Tienda', path: '/catalog' }]),
   ],
@@ -382,37 +424,14 @@ for (const category of categories) {
             ${breadcrumbNav(trail)}
             <h1 class="font-heading font-[800] text-[clamp(40px,7vw,88px)] leading-[0.9] tracking-[-0.03em] mb-6">${escapeHtml(category)}</h1>
             <p class="text-[17px] text-ink/70 max-w-[560px] leading-relaxed mb-10">${items.length} ${items.length === 1 ? 'pieza disponible' : 'piezas disponibles'} en G&amp;L Colima.</p>
-            <ul class="grid grid-cols-2 md:grid-cols-4 gap-6">
-              ${items
-                // Sin recorte: la categoria mas grande son 84 productos, y
-                // cortar en 24 dejaba 105 fichas sin un solo enlace interno.
-                .map(
-                  (p) => `<li>
-                <a href="${productPath(p)}" class="block">
-                  <img src="${escapeHtml(p.image_url || '/placeholder.webp')}" alt="${escapeHtml(p.name)}" width="600" height="800" loading="lazy" decoding="async" class="w-full h-auto rounded-xl object-cover">
-                  <span class="mt-3 block text-[14px] font-medium">${escapeHtml(p.name)}</span>
-                  <span class="block font-mono text-[13px] text-ink/60">$${escapeHtml(p.price)} MXN</span>
-                </a>
-              </li>`
-                )
-                .join('\n              ')}
-            </ul>`),
+            ${productGrid(items)}`),
     ld: [
       {
         '@context': 'https://schema.org',
         '@type': 'CollectionPage',
         name: `${category} para hombre en Colima`,
         url: absolute(path),
-        mainEntity: {
-          '@type': 'ItemList',
-          numberOfItems: items.length,
-          itemListElement: items.slice(0, 100).map((p, i) => ({
-            '@type': 'ListItem',
-            position: i + 1,
-            url: absolute(productPath(p)),
-            name: p.name,
-          })),
-        },
+        mainEntity: itemListLd(items),
       },
       breadcrumbLd(trail),
     ],
@@ -669,6 +688,33 @@ writeFileSync(
             <h1 class="font-heading font-[800] text-[clamp(40px,7vw,88px)] leading-[0.9] tracking-[-0.03em] mb-6">404</h1>
             <p class="text-[17px] text-ink/70 mb-8">La página que buscas no existe.</p>
             <a href="/catalog" class="inline-flex items-center h-14 px-7 rounded-full bg-ink text-paper text-[15px] font-semibold">Ir a la tienda</a>`) +
+    tail
+)
+
+// Shell de la SPA para /producto/:id y /categoria/:name que no existen todavia
+// en dist/.
+//
+// El caso real que sostiene: un producto dado de alta en el panel abre de
+// inmediato porque la SPA lo resuelve contra Supabase, sin esperar al deploy,
+// que es manual. Antes esos rewrites apuntaban a "/", asi que cualquier url
+// inventada devolvia la home entera con 200, index,follow y canonical "/" —
+// un espacio infinito de duplicados de la home.
+//
+// Este shell hace lo mismo para el usuario y nada para el indice: noindex y
+// sin canonical. Si la SPA encuentra el producto, applySeo() pone en runtime
+// el title, el canonical y el index,follow que le corresponden.
+writeFileSync(
+  join(DIST, 'spa.html'),
+  buildHead({
+    title: 'G&L | Tu fit perfecto',
+    description: 'Moda masculina premium en Colima. Camisas, polos, jeans y perfumes en G&L.',
+    robots: 'noindex,follow',
+    canonical: null,
+    image: DEFAULT_IMAGE,
+    extraLd: websiteLd,
+  }) +
+    contentShell(`
+            <p class="text-[17px] text-ink/70">Cargando…</p>`) +
     tail
 )
 
