@@ -359,10 +359,12 @@ export function pageCatalog(initialState) {
       // esto no hace nada. Y no corre durante la restauracion de estado, que
       // devuelve al comprador justo donde dejo el catalogo al abrir un producto.
       const scrollToResults = () => {
-        const anchor = toolbar?.nextElementSibling
+        // La seccion que envuelve al grid, no el grid: cuando no hay resultados
+        // el grid se oculta, y un elemento sin display mide cero.
+        const anchor = grid?.closest('section')
         if (!toolbar || !anchor || restoringState) return
         // El toolbar es sticky: su rect miente en cuanto se pega. La referencia
-        // fiable es el bloque de abajo, que no lo es.
+        // fiable es la seccion de resultados, que no lo es.
         const stickyOffset = window.matchMedia('(min-width: 768px)').matches ? 68 : 0
         const top = anchor.getBoundingClientRect().top + window.scrollY - toolbar.offsetHeight - stickyOffset
         if (window.scrollY <= top) return
