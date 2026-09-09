@@ -160,6 +160,7 @@ export const stores = [
       streetAddress: 'María Ahumada de Gómez 30, Local 6',
       addressLocality: 'Villa de Álvarez',
       addressRegion: 'Colima',
+      postalCode: '28970',
       addressCountry: 'MX',
     },
     geo: { latitude: 19.2713167, longitude: -103.7332035 },
