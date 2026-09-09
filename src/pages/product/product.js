@@ -252,8 +252,8 @@ export function pageProduct(initialState) {
               <div class="relative pdp-gallery">
                 <!-- Stage -->
                 <div class="gallery-stage${isPerfume ? ' !bg-white' : ''}" id="pdp-stage">
-                  <img id="pdp-stage-fill" class="stage-fill" src="${escapeHtml(images[0])}" alt="" aria-hidden="true"/>
-                  <img id="pdp-stage-img" data-vt-hero style="view-transition-name:gl-product-hero" src="${escapeHtml(images[0])}" alt="${safeName}" class="stage-main ${stageImgClass}"/>
+                  <img id="pdp-stage-fill" class="stage-fill" src="${escapeHtml(images[0])}" alt="" aria-hidden="true" fetchpriority="low" decoding="async"/>
+                  <img id="pdp-stage-img" data-vt-hero style="view-transition-name:gl-product-hero" src="${escapeHtml(images[0])}" alt="${safeName}" fetchpriority="high" decoding="async" class="stage-main ${stageImgClass}"/>
                   ${badgesHtml ? `<div class="absolute top-4 left-4 flex gap-2 z-10">${badgesHtml}</div>` : ''}
                   <div class="absolute top-4 right-4 flex items-center gap-1.5 z-10">
                     <span class="stage-chip font-mono text-[10px] tracking-[0.2em] uppercase px-2.5 py-1 rounded-full"><span id="pdp-cur">01</span> / <span id="pdp-tot">${String(images.length).padStart(2, '0')}</span></span>
@@ -520,7 +520,7 @@ export function pageProduct(initialState) {
         thumbsEl.innerHTML = images.map((img, i) => `
           <button type="button" class="thumb${i === idx ? ' active' : ''}${isPerfume ? ' !bg-white' : ''}" data-i="${i}" aria-label="Ver imagen ${i + 1} de ${images.length}"${i === idx ? ' aria-current="true"' : ''}>
             <span class="idx">${String(i + 1).padStart(2, '0')}</span>
-            <img src="${img}" alt="thumb ${i + 1}" class="${isPerfume ? 'object-contain p-1' : ''}"/>
+            <img src="${img}" alt="thumb ${i + 1}" loading="lazy" decoding="async" class="${isPerfume ? 'object-contain p-1' : ''}"/>
           </button>
         `).join('')
         thumbsEl.querySelectorAll('.thumb').forEach(b => b.addEventListener('click', () => go(Number(b.dataset.i))))
