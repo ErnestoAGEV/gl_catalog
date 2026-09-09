@@ -81,7 +81,7 @@ export function pageHome() {
     if (tile.type === 'image-brand') {
       return `
         <a href="${tile.href}" class="ct ${tile.span} relative bg-ink text-paper rounded-md p-5 flex flex-col justify-between overflow-hidden group">
-          <img src="${tile.image}" alt="${tile.name}" width="${tile.w}" height="${tile.h}" class="ct-img absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
+          <img src="${tile.image}"${tile.srcset ? ` srcset="${tile.srcset}" sizes="(max-width: 768px) 100vw, 50vw"` : ''} alt="${tile.name}" width="${tile.w}" height="${tile.h}" class="ct-img absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
           <div class="absolute inset-0 bg-ink/35"></div>
           <span class="font-mono text-[10px] tracking-[0.22em] uppercase opacity-80 relative z-10">${tile.eyebrow}</span>
           <div class="ct-label relative z-10">
