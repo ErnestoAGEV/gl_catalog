@@ -4,6 +4,7 @@ import { readJson, writeJson } from '../utils/storage.js'
 import { supabase } from '../core/supabase.js'
 import { ensureAdminAccess } from './auth.js'
 import { withTimeout } from '../utils/async.js'
+import { resizeForUpload } from '../utils/resizeImage.js'
 
 const CACHE_KEY = 'gl_products_cache'
 const CACHE_TIMESTAMP_KEY = 'gl_products_cache_timestamp'
@@ -318,13 +319,17 @@ export async function deleteProduct(id) {
   return { success: true }
 }
 
-export async function uploadProductImage(file) {
+export async function uploadProductImage(original) {
   if (!supabase) {
     return { error: createStoreError('No hay conexión con la base de datos.', 'SUPABASE_UNAVAILABLE') }
   }
 
   const access = await checkAdmin()
   if (!access.ok) return { error: access.error }
+
+  // Antes del checkAdmin no: si la sesión no vale, no gastamos el tiempo del
+  // navegador en recomprimir una foto que no se va a subir.
+  const file = await resizeForUpload(original)
 
   const safeName = file.name
     .normalize('NFD')
@@ -337,7 +342,7 @@ export async function uploadProductImage(file) {
   const upload = () => withTimeout(
     supabase.storage.from('products').upload(fileName, file, { cacheControl: '3600', upsert: false }),
     60000,
-    `La subida de ${file.name}`
+    `La subida de ${original.name}`
   )
 
   let data, error
