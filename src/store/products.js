@@ -62,6 +62,7 @@ function mapProductToRow(p) {
 
   const row = {
     name: p.name,
+    description: p.description ?? null,
     price: p.price,
     type: p.type,
     category: p.category || 'General',

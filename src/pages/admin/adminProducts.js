@@ -649,6 +649,10 @@ export function pageAdminProducts(state) {
         const originalPrice = Number(qs(root, 'input[name="originalPrice"]').value || 0) || null
         const stock = Number(qs(root, 'input[name="stock"]').value || 0) || null
         const badge = qs(root, 'select[name="badge"]').value || null
+        // Vacio se guarda como null, no como cadena vacia: fitNote() distingue
+        // "sin descripcion propia" de "descripcion en blanco" para caer en la
+        // plantilla de la familia.
+        const description = qs(root, 'textarea[name="description"]').value.trim() || null
         const sizes = Array.from(root.querySelectorAll('input[name="sizes"]:checked')).map(cb => cb.value)
         const customColorsParts = parseList(qs(root, 'input[name="customColors"]').value)
         const colors = isPerfume ? [] : Array.from(new Set([...selectedColorBadges, ...customColorsParts]))
@@ -685,7 +689,7 @@ export function pageAdminProducts(state) {
 
           const images = imageUrls.slice(0, 5)
           if (idInput.value) {
-            const { error } = await updateProduct(idInput.value, { name, type, price, originalPrice, stock, badge, sizes, colors, images })
+            const { error } = await updateProduct(idInput.value, { name, description, type, price, originalPrice, stock, badge, sizes, colors, images })
             if (error) throw new Error('Error al actualizar: ' + error.message)
             hideForm(false) // Do not reset pagination for updates
           } else {
@@ -698,7 +702,7 @@ export function pageAdminProducts(state) {
             currentFilters = { type: 'all', status: 'all', stock: 'all' }
             currentPage = 1
 
-            const { error } = await addProduct({ name, type, price, originalPrice, stock, badge, sizes, colors, images })
+            const { error } = await addProduct({ name, description, type, price, originalPrice, stock, badge, sizes, colors, images })
             if (error) throw new Error('Error al crear: ' + error.message)
             hideForm(true) // Reset pagination to view the newly added product
           }
@@ -729,6 +733,7 @@ export function pageAdminProducts(state) {
         showForm(true)
         qs(root, 'input[name="id"]').value = product.id
         qs(root, 'input[name="name"]').value = product.name
+        qs(root, 'textarea[name="description"]').value = product.description || ''
         qs(root, 'select[name="type"]').value = product.type
         handleTypeChange()
         qs(root, 'input[name="price"]').value = product.price

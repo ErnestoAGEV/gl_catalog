@@ -54,7 +54,7 @@ assert.ok(d1.length <= 158, 'la meta se pasa de largo: ' + d1.length)
 assert.ok(fitNote(pantalon).includes('línea de vestir de Oggi'), fitNote(pantalon))
 
 // Familia sin describir: cae en la plantilla generica y no se inventa nada.
-const generico = { ...pantalon, name: 'Lee - Slim Fit 9012' }
+const generico = { ...pantalon, name: 'Marca Nueva - Modelo X' }
 assert.ok(productDescription(generico).includes('pantalón para hombre'))
 assert.strictEqual(fitNote(generico), '', 'sin familia no se inventa nota')
 

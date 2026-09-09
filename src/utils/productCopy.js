@@ -171,6 +171,70 @@ const FAMILIES = [
       'Es un perfume dulce y de los más versátiles que tenemos: funciona igual de día que de noche. ' +
       'Lo recomendamos sobre todo para la temporada de invierno.',
   },
+  {
+    test: /rusty\s*-\s*bermuda\s+slim/i,
+    corta: 'bermuda slim, tiro medio, arriba de la rodilla',
+    larga:
+      'Bermuda de corte slim y tiro medio. Queda arriba de la rodilla, que es lo que la ' +
+      'diferencia de un short largo.',
+  },
+  {
+    test: /sherman\s*morgan\s*-\s*playeras?\s+oversize/i,
+    corta: 'playera oversize de 250 g',
+    larga:
+      'Playera de 250 gramos: es tela de peso, no de las que transparentan ni se deforman al ' +
+      'primer lavado. Corte oversize, holgada de hombro y cuerpo.',
+  },
+  {
+    test: /lee\s*-\s*slim\s*fit/i,
+    corta: 'pierna slim y cintura alta',
+    larga: 'Corte Lee de pierna slim y cintura alta.',
+  },
+  {
+    test: /lee\s*-\s*regular\s*fit/i,
+    corta: 'pierna amplia, cintura alta, mezclilla rígida',
+    larga: 'Corte Lee de pierna amplia y cintura alta, en mezclilla rígida.',
+  },
+  {
+    test: /paddocks\s*-\s*san\s*francisco/i,
+    corta: 'el corte Buffalo en tallas extra',
+    larga:
+      'Es el mismo corte Buffalo —clásico, pierna amplia, tiro alto y cintura alta— pero en ' +
+      'tallas extra. Es al que mandamos a quien no encuentra su talla en el resto de la tienda.',
+  },
+  {
+    test: /paddocks\s*-\s*buffalo/i,
+    corta: 'corte clásico, pierna amplia, tiro alto y cintura alta',
+    larga:
+      'El Buffalo es el corte clásico de Paddocks: pierna amplia, tiro alto y cintura alta. ' +
+      'Si buscas la misma horma en talla extra, pregunta por el San Francisco.',
+  },
+  {
+    test: /paddocks\s*-\s*relaxed/i,
+    corta: 'recto slim de pierna relajada y cintura media',
+    larga:
+      'El Relaxed es un recto slim con la pierna relajada y cintura media: ni tan amplio como el ' +
+      'Buffalo ni tan pegado como el Rocker.',
+  },
+  {
+    test: /paddocks\s*-\s*rocker/i,
+    corta: 'slim de cintura baja',
+    larga:
+      'El Rocker es el más pegado de Paddocks: corte slim y cintura baja. Si lo quieres más ' +
+      'suelto, el Relaxed; si lo quieres de cintura alta, el Buffalo.',
+  },
+  {
+    test: /oaktree\s*-\s*polo/i,
+    corta: 'polo de algodón pima, hecho en México',
+    larga:
+      'Polo de algodón pima, hecho en México. Lo manejamos en talla extra, que es justo lo que ' +
+      'cuesta encontrar en polos.',
+  },
+  {
+    test: /oaktree\s*-/i,
+    corta: 'hecho en México',
+    larga: 'Oaktree es marca mexicana: sus camisas y playeras están hechas en México.',
+  },
 ]
 
 /**

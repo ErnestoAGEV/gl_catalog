@@ -70,6 +70,13 @@ export function productFormHTML(allColors, dynamicCategories) {
               <input name="name" class="adm-fld" placeholder="Ej: Camisa Oxford Slim" />
             </div>
 
+            <!-- ── Description ── -->
+            <div>
+              <label class="adm-lbl">Descripción</label>
+              <textarea name="description" rows="3" class="adm-fld resize-y" placeholder="Cómo cae, de qué tela es, para quién es. Ej: corte recto slim, tiro largo, cintura media. Mezclilla con stretch."></textarea>
+              <p class="text-[11px] text-white/40 mt-1.5">Opcional. Si lo dejas vacío la tienda usa el texto de la familia (Vaxter, Wrangler Slim, etc.). Lo que escribas aquí manda sobre ese texto.</p>
+            </div>
+
             <!-- ── Category + Badge ── -->
             <div class="grid grid-cols-2 gap-3">
               <div>
