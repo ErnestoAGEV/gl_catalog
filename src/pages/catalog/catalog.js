@@ -350,6 +350,29 @@ export function pageCatalog(initialState) {
         })
       }
 
+      // Al cambiar de filtro la lista se rehace desde la pagina 1, pero el
+      // scroll se quedaba donde estaba: el comprador aterrizaba a media lista
+      // del filtro anterior, viendo la fila 40 de unos resultados que empiezan
+      // de nuevo. Volvemos al inicio de los resultados.
+      //
+      // Nunca hacia abajo: si ya estas arriba —o escribiendo en el buscador—
+      // esto no hace nada. Y no corre durante la restauracion de estado, que
+      // devuelve al comprador justo donde dejo el catalogo al abrir un producto.
+      const scrollToResults = () => {
+        const anchor = toolbar?.nextElementSibling
+        if (!toolbar || !anchor || restoringState) return
+        // El toolbar es sticky: su rect miente en cuanto se pega. La referencia
+        // fiable es el bloque de abajo, que no lo es.
+        const stickyOffset = window.matchMedia('(min-width: 768px)').matches ? 68 : 0
+        const top = anchor.getBoundingClientRect().top + window.scrollY - toolbar.offsetHeight - stickyOffset
+        if (window.scrollY <= top) return
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        window.scrollTo({ top: Math.max(0, top), behavior: reduced ? 'instant' : 'smooth' })
+      }
+
+      // Declarado aqui, arriba de renderGrid, porque scrollToResults lo lee.
+      let restoringState = Boolean(savedCatalogState)
+
       const renderGrid = (options = {}) => {
         const filters = getFilterState(root)
         const searchQuery = getSearchQuery()
@@ -381,7 +404,10 @@ export function pageCatalog(initialState) {
           if (curr && currentColors.includes(curr)) sel.value = curr
         })
 
-        if (options.resetPage) currentPage = 1
+        if (options.resetPage) {
+          currentPage = 1
+          scrollToResults()
+        }
 
         // Filter products
         let baseProducts = searchQuery ? searchProducts(searchQuery) : publicProducts
@@ -661,7 +687,6 @@ export function pageCatalog(initialState) {
       })
 
       // ── Store subscribe ──
-      let restoringState = Boolean(savedCatalogState)
       const unsubscribe = subscribe((newState) => {
         state = newState
         publicProducts = state.products.filter(p => p.badge !== 'Borrador')
