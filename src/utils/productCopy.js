@@ -29,10 +29,28 @@ const LETTER_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
 
 const MAX_LENGTH = 158
 
-/** "Oggi - Chinos 900" -> "Oggi". 228 de 235 productos siguen ese formato. */
+// La marca vive dentro del nombre con el formato "Marca - Modelo". Siete
+// productos se cargaron sin el espacio ("Collor's -Bermuda"), asi que el
+// separador acepta espacios opcionales de los dos lados.
+const BRAND_SEPARATOR = /\s*-\s*/
+
+// La misma marca se tecleo con acento agudo y con tilde invertida (Collor`s y
+// Collor's): sin normalizar, el schema y el listado de marcas de cada
+// categoria la cuentan dos veces.
+const normalizeApostrophes = (text) => text.replace(/[`´‘’]/g, "'")
+
+/** "Oggi - Chinos 900" -> "Oggi". */
 export function productBrand(name) {
-  const brand = String(name || '').split(' - ')[0].trim()
-  return brand || 'G&L'
+  const brand = String(name || '').split(BRAND_SEPARATOR)[0].trim()
+  return normalizeApostrophes(brand) || 'G&L'
+}
+
+/** "Oggi - Chinos 900" -> "Chinos 900". Lo que queda al quitar la marca. */
+export function productModel(name) {
+  const text = String(name || '')
+  const at = text.search(BRAND_SEPARATOR)
+  if (at === -1) return text.trim()
+  return text.slice(at).replace(BRAND_SEPARATOR, '').trim()
 }
 
 export function typeSingular(type) {
@@ -152,6 +170,7 @@ const FAMILIES = [
   },
   {
     test: /white\s*peak/i,
+    tipo: 'Polos',
     corta: 'polo de algodón, fresca',
     larga:
       'Las White Peak son de algodón. Es una tela fresca, que aquí en Colima es lo que importa. Si ' +
@@ -159,6 +178,7 @@ const FAMILIES = [
   },
   {
     test: /soul\s*&\s*blues/i,
+    tipo: 'Polos',
     corta: 'polo en tela tipo dry fit, transpirable',
     larga:
       'Las Soul&Blues vienen en tela tipo dry fit: transpiran, así que son las que piden para el calor ' +
@@ -235,7 +255,26 @@ const FAMILIES = [
     corta: 'hecho en México',
     larga: 'Oaktree es marca mexicana: sus camisas y playeras están hechas en México.',
   },
+  {
+    // El apostrofo de la marca esta tecleado de tres formas distintas, y en
+    // estas siete el separador va sin espacio: el patron no depende de ninguno.
+    test: /collor.{0,2}s\s*-?\s*bermuda\s+gabardina/i,
+    corta: 'bermuda de gabardina; queda justa, pide una talla más',
+    larga:
+      'Bermuda de gabardina. Es la única prenda de la tienda que queda algo justa: si estás ' +
+      'entre dos tallas, o si te gusta holgado, pide una talla más de la que usas normalmente.',
+  },
 ]
+
+// Varias marcas cruzan categorias —White Peak hace polos y pantalones,
+// Soul&Blues hace polos, camisas y shorts—, asi que una familia que describe
+// una prenda concreta declara su `tipo`. Sin este candado, cinco pantalones
+// White Peak decian ser polos de algodon.
+function familyFor(product) {
+  const name = String(product?.name || '')
+  const type = String(product?.type || '')
+  return FAMILIES.find((f) => f.test.test(name) && (!f.tipo || f.tipo === type))
+}
 
 /**
  * El parrafo de la tienda para este producto, o cadena vacia si su familia
@@ -244,14 +283,12 @@ const FAMILIES = [
 export function fitNote(product) {
   const own = String(product?.description || '').trim()
   if (own) return own
-  const name = String(product?.name || '')
-  return FAMILIES.find((f) => f.test.test(name))?.larga || ''
+  return familyFor(product)?.larga || ''
 }
 
 /** La version corta, para que quepa en la meta description. */
 function fitShort(product) {
-  const name = String(product?.name || '')
-  return FAMILIES.find((f) => f.test.test(name))?.corta || ''
+  return familyFor(product)?.corta || ''
 }
 
 /**

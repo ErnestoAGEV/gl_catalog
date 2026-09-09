@@ -11,9 +11,11 @@ import { ICON } from './adminIcons.js'
 /**
  * Returns the full HTML for the product form section (right-side drawer).
  * @param {string[]} allColors - All existing colors across products (for quick-select badges)
+ * @param {string[]} [allBrands] - Existing brands, for the datalist
  * @param {string[]} [dynamicCategories] - Categories loaded from DB (falls back to CATEGORY_OPTIONS)
  */
-export function productFormHTML(allColors, dynamicCategories) {
+export function productFormHTML(allColors, dynamicCategories, allBrands = []) {
+  const brandOptions = allBrands.map(b => `<option value="${b}"></option>`).join('')
   const badgeOptions = BADGE_OPTIONS.map(b =>
     `<option value="${b.value}">${b.label}</option>`
   ).join('')
@@ -64,11 +66,19 @@ export function productFormHTML(allColors, dynamicCategories) {
               </div>
             </div>
 
-            <!-- ── Name ── -->
-            <div>
-              <label class="adm-lbl">Nombre del producto *</label>
-              <input name="name" class="adm-fld" placeholder="Ej: Camisa Oxford Slim" />
+            <!-- ── Brand + Name ── -->
+            <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] gap-3">
+              <div>
+                <label class="adm-lbl">Marca</label>
+                <input name="brand" class="adm-fld" list="brand-list" autocomplete="off" placeholder="Ej: Oggi" />
+                <datalist id="brand-list">${brandOptions}</datalist>
+              </div>
+              <div>
+                <label class="adm-lbl">Nombre del producto *</label>
+                <input name="name" class="adm-fld" placeholder="Ej: Camisa Oxford Slim" />
+              </div>
             </div>
+            <p class="text-[11px] text-white/40 -mt-1">Se guardan juntos como <span class="font-mono">Marca - Nombre</span>. Escoge la marca de la lista para no crear dos versiones de la misma.</p>
 
             <!-- ── Description ── -->
             <div>

@@ -6,6 +6,7 @@ import { showToast } from '../../utils/toast.js'
 import { parseList, isPerfumeCategory, isShoeCategory } from './adminProductsData.js'
 import { productCard, productCardMobile } from './adminProductCard.js'
 import { productFormHTML } from './adminProductForm.js'
+import { productBrand, productModel } from '../../utils/productCopy.js'
 import { confirmDelete } from './adminConfirm.js'
 import { ICON } from './adminIcons.js'
 
@@ -54,6 +55,7 @@ export function pageAdminProducts(state) {
   
   // Extract unique colors from all products (passed to form for quick-select badges)
   const allColors = [...new Set(state.products.flatMap(p => p.colors || []).map(c => c.trim()))].sort()
+  const allBrands = [...new Set(state.products.map(p => productBrand(p.name)))].filter(b => b !== 'G&L').sort()
 
   // Get dynamic categories from DB (falls back to hardcoded in the form)
   const dynamicCategories = getCategoryNames()
@@ -147,7 +149,7 @@ export function pageAdminProducts(state) {
         </section>
       </div>
 
-      ${productFormHTML(allColors, dynamicCategories)}
+      ${productFormHTML(allColors, dynamicCategories, allBrands)}
     `,
     onMount(root) {
       const list = qs(root, '#products-list')
@@ -642,7 +644,12 @@ export function pageAdminProducts(state) {
         setError('')
 
         const idInput = qs(root, 'input[name="id"]')
-        const name = qs(root, 'input[name="name"]').value.trim()
+        // La marca no tiene columna propia: vive al principio del nombre. El
+        // formulario la separa para que se escoja de una lista y deje de haber
+        // dos grafias de la misma marca, pero se guarda unida como siempre.
+        const brand = qs(root, 'input[name="brand"]').value.trim()
+        const model = qs(root, 'input[name="name"]').value.trim()
+        const name = brand && model ? `${brand} - ${model}` : model || brand
         const type = qs(root, 'select[name="type"]').value
         const isPerfume = isPerfumeCategory(type)
         const price = Number(qs(root, 'input[name="price"]').value || 0)
@@ -732,7 +739,8 @@ export function pageAdminProducts(state) {
 
         showForm(true)
         qs(root, 'input[name="id"]').value = product.id
-        qs(root, 'input[name="name"]').value = product.name
+        qs(root, 'input[name="brand"]').value = productBrand(product.name)
+        qs(root, 'input[name="name"]').value = productModel(product.name)
         qs(root, 'textarea[name="description"]').value = product.description || ''
         qs(root, 'select[name="type"]').value = product.type
         handleTypeChange()

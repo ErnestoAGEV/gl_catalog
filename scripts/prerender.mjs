@@ -621,7 +621,7 @@ for (const product of products) {
         category: product.type || undefined,
         // Los nombres del catalogo vienen como "Marca - Modelo"; Google marca error
         // si le declaras la tienda como brand del producto.
-        brand: { '@type': 'Brand', name: product.name.split(' - ')[0].trim() || 'G&L' },
+        brand: { '@type': 'Brand', name: productBrand(product.name) },
         // Atributos que faltaban: sin color ni size, Google no sabe en que se
         // diferencia una variante de la siguiente.
         color: product.colors?.length ? colorPhrase(product.colors) : undefined,
@@ -655,7 +655,7 @@ for (const product of products) {
               name: product.name,
               productGroupID: product.name.trim(),
               category: product.type || undefined,
-              brand: { '@type': 'Brand', name: product.name.split(' - ')[0].trim() || 'G&L' },
+              brand: { '@type': 'Brand', name: productBrand(product.name) },
               // Solo el color: la base no guarda stock ni precio por talla, asi
               // que declarar la talla como eje seria inventar variantes.
               variesBy: ['https://schema.org/color'],

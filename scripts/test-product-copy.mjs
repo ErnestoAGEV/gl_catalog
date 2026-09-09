@@ -4,6 +4,7 @@ import {
   colorPhrase,
   findProductByPath,
   productBrand,
+  productModel,
   productDescription,
   fitNote,
   productPath,
@@ -17,6 +18,22 @@ import {
 assert.equal(productBrand('Oggi - Chinos 900'), 'Oggi')
 assert.equal(productBrand('Dolce & Gabbana - K'), 'Dolce & Gabbana')
 assert.equal(productBrand('Camisa lisa'), 'Camisa lisa', 'sin guion, el nombre completo')
+
+// Siete productos se cargaron sin espacio antes del guion y con tres
+// apostrofos distintos: la marca tiene que salir igual en los tres casos.
+assert.equal(productBrand('Collor’s -Bermuda Gabardina Rosa'), "Collor's")
+assert.equal(productBrand('Collor`s - Aiden 3372'), "Collor's")
+assert.equal(productModel('Collor’s -Bermuda Gabardina Rosa'), 'Bermuda Gabardina Rosa')
+assert.equal(productModel('Oggi - Chinos 900'), 'Chinos 900')
+assert.equal(productModel('Camisa lisa'), 'Camisa lisa', 'sin guion, no hay marca que quitar')
+assert.ok(fitNote({ name: 'Collor’s -Bermuda Gabardina Gris' }).includes('una talla más'))
+
+// White Peak hace polos y pantalones; Soul&Blues hace polos, camisas y shorts.
+// Sin el candado de tipo, esos pantalones y camisas se describen como polos.
+assert.ok(fitNote({ name: 'White Peak - Vino', type: 'Polos' }).includes('algodón'))
+assert.strictEqual(fitNote({ name: 'White Peak - Pantalon Khaki', type: 'Pantalones' }), '')
+assert.strictEqual(fitNote({ name: 'Soul&Blues - Camisa A1', type: 'Camisas' }), '')
+assert.ok(fitNote({ name: 'Soul&Blues - Polo Negra A1660', type: 'Polos' }).includes('dry fit'))
 assert.equal(productBrand(''), 'G&L', 'nombre vacio no rompe el schema')
 
 // ── tallas ──
