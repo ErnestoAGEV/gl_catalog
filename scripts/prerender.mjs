@@ -18,6 +18,7 @@ import {
   colorPhrase,
   productBrand,
   productDescription,
+  fitNote,
   productPath,
   sizeSummary,
   socialImage,
@@ -602,7 +603,7 @@ for (const product of products) {
               <div>
                 <h1 class="font-heading font-[800] text-[clamp(32px,5vw,64px)] leading-[0.95] tracking-[-0.03em] mb-4">${escapeHtml(product.name)}</h1>
                 <p class="font-mono text-[20px] mb-6">$${escapeHtml(product.price)} MXN${product.original_price ? ` <s class="text-ink/40 text-[15px]">$${escapeHtml(product.original_price)}</s>` : ''}</p>
-                <p class="text-[16px] text-ink/70 leading-relaxed mb-6">${escapeHtml(productDescription(product))}</p>
+                <p class="text-[16px] text-ink/70 leading-relaxed mb-6">${escapeHtml(fitNote(product) || productDescription(product))}</p>
                 ${product.sizes?.length ? `<p class="text-[14px] text-ink/60 mb-2">Tallas: ${escapeHtml(product.sizes.join(', '))}</p>` : ''}
                 ${product.colors?.length ? `<p class="text-[14px] text-ink/60 mb-6">Colores: ${escapeHtml(product.colors.join(', '))}</p>` : ''}
                 <p class="text-[14px] text-ink/60">${inStock ? 'Disponible' : 'Agotado'} · Envío $${SHIPPING_COST} MXN a todo México, gratis en compras +$${FREE_SHIPPING_MIN.toLocaleString('es-MX')} · Entrega en 3-4 días hábiles · Cambios dentro de 8 días · 2 tiendas físicas en Colima</p>

@@ -74,6 +74,122 @@ export function colorPhrase(colors) {
   return `${list.slice(0, -1).join(', ')} y ${list[list.length - 1]}`
 }
 
+// ── Lo que sabe la tienda ───────────────────────────────────────────────────
+//
+// Estos datos no estan en la base y no se pueden derivar del nombre: como cae
+// un corte, de que es la tela, para quien es. Salen del mostrador (Ernesto,
+// sept 2026) y son lo unico que el comprador no puede ver en la foto.
+//
+// Van por familia, no por SKU: un Vaxter Stone y un Vaxter Ink son el mismo
+// pantalon en otro color. Asi cubren tambien los modelos que entren despues.
+//
+// `corta` entra en la meta description; `larga` es el parrafo de la pagina.
+// El orden importa: la primera que casa gana, y las reglas mas especificas
+// (Gabarina, Chinos Slim) van antes que las generales.
+const FAMILIES = [
+  {
+    test: /oggi\s*-\s*vaxter\s+gabarina/i,
+    corta: 'corte Vaxter recto slim, en gabardina',
+    larga:
+      'Es el mismo corte Vaxter —recto slim, tiro largo, cintura media y pierna amplia— ' +
+      'pero en gabardina en lugar de mezclilla. Se ve más de vestir y va con camisa sin problema.',
+  },
+  {
+    test: /oggi\s*-\s*vaxter/i,
+    corta: 'corte recto slim, tiro largo, cintura media y pierna amplia',
+    larga:
+      'El Vaxter es el pantalón que más sale de la tienda. Corte recto slim: entalla sin apretar, ' +
+      'con tiro largo, cintura media y pierna amplia. No es un skinny. Lo manejamos en mezclilla ' +
+      'con stretch y en mezclilla rígida: pregunta por WhatsApp cuál buscas antes de que te lo mandemos.',
+  },
+  {
+    test: /oggi\s*-\s*power/i,
+    corta: 'corte clásico todo recto, tiro alto y cintura alta',
+    larga:
+      'El Power es el corte clásico de Oggi: todo recto, de tiro alto y cintura alta. Es el que busca ' +
+      'quien no se acomoda con los tiros bajos. Va en mezclilla rígida y en mezclilla con stretch: ' +
+      'pregúntanos por WhatsApp cuál te conviene.',
+  },
+  {
+    test: /oggi\s*-\s*iron/i,
+    corta: 'slim, cintura media y tiro corto',
+    larga:
+      'El Iron es el más entallado de la línea: corte slim, cintura media y tiro corto. Si te gusta el ' +
+      'pantalón pegado y bajo de cintura, es este. Si lo prefieres de tiro largo, mejor el Vaxter.',
+  },
+  {
+    test: /oggi\s*-\s*chinos?\s+slim/i,
+    corta: 'chino de vestir, pierna un poco ajustada',
+    larga:
+      'Los chinos son la línea de vestir de Oggi. Este es el Slim: la pierna va un poco más ajustada ' +
+      'que el chino normal, pero no llega a skinny. Sirve igual con camisa y zapato para algo formal ' +
+      'que con tenis para el diario.',
+  },
+  {
+    test: /oggi\s*-\s*chinos?/i,
+    corta: 'chino de vestir, pierna amplia',
+    larga:
+      'Los chinos son la línea de vestir de Oggi. Este es el corte normal, de pierna amplia. Es el ' +
+      'pantalón versátil de verdad: aguanta camisa y zapato para algo formal, y al día siguiente sale ' +
+      'con tenis.',
+  },
+  {
+    test: /wrangler\s*-\s*wrangler\s+slim/i,
+    corta: 'vaquero slim en mezclilla rígida de tejido cruzado',
+    larga:
+      'Es el Wrangler que más se vende. Sigue siendo corte vaquero, en Slim. Toda la mezclilla Wrangler ' +
+      'que manejamos es rígida: en esta marca no hay stretch. Cuesta más que un Oggi por la tela, que es ' +
+      'mezclilla de tejido cruzado, bastante más resistente y pensada para montar. Es la que se lleva ' +
+      'la gente que anda en el campo y a caballo.',
+  },
+  {
+    test: /wrangler\s*-\s*wrangler\s+regular/i,
+    corta: 'vaquero regular en mezclilla rígida de tejido cruzado',
+    larga:
+      'Corte vaquero regular: más suelto de pierna que el Slim, que es el que más se vende. La mezclilla ' +
+      'es la misma, rígida y de tejido cruzado, porque en Wrangler no manejamos stretch. Esa tela es la ' +
+      'razón de que cueste más que un Oggi: aguanta mucho más y está pensada para montar y para el campo.',
+  },
+  {
+    test: /white\s*peak/i,
+    corta: 'polo de algodón, fresca',
+    larga:
+      'Las White Peak son de algodón. Es una tela fresca, que aquí en Colima es lo que importa. Si ' +
+      'prefieres una tela deportiva que transpire más, checa las Soul&Blues.',
+  },
+  {
+    test: /soul\s*&\s*blues/i,
+    corta: 'polo en tela tipo dry fit, transpirable',
+    larga:
+      'Las Soul&Blues vienen en tela tipo dry fit: transpiran, así que son las que piden para el calor ' +
+      'o para andar todo el día fuera. Si prefieres algodón, las White Peak son igual de frescas.',
+  },
+  {
+    test: /odyssey\s+mandarin\s+sky/i,
+    corta: 'fragancia dulce, versátil de día y de noche',
+    larga:
+      'Es un perfume dulce y de los más versátiles que tenemos: funciona igual de día que de noche. ' +
+      'Lo recomendamos sobre todo para la temporada de invierno.',
+  },
+]
+
+/**
+ * El parrafo de la tienda para este producto, o cadena vacia si su familia
+ * todavia no esta descrita. La descripcion propia de la base siempre gana.
+ */
+export function fitNote(product) {
+  const own = String(product?.description || '').trim()
+  if (own) return own
+  const name = String(product?.name || '')
+  return FAMILIES.find((f) => f.test.test(name))?.larga || ''
+}
+
+/** La version corta, para que quepa en la meta description. */
+function fitShort(product) {
+  const name = String(product?.name || '')
+  return FAMILIES.find((f) => f.test.test(name))?.corta || ''
+}
+
 /**
  * Meta description y descripcion del schema. Va agregando datos mientras
  * quepan en MAX_LENGTH, para no cortar una frase a la mitad en el SERP.
@@ -87,7 +203,10 @@ export function productDescription(product) {
   const fragrance = isFragrance(product?.type)
   const audience = product?.type === 'Perfumes Dama' ? 'para dama' : 'para hombre'
 
-  parts.push(`${product?.name}: ${singular.toLowerCase()} ${audience}`)
+  // Cuando la tienda ya describio la familia, ese dato vale mas en el SERP que
+  // repetir el tipo: "corte recto slim, tiro largo" contra "pantalon para hombre".
+  const fit = fitShort(product)
+  parts.push(`${product?.name}: ${fit || `${singular.toLowerCase()} ${audience}`}`)
 
   const colors = colorPhrase(product?.colors)
   if (colors && !fragrance) parts.push(`en ${colors.toLowerCase()}`)

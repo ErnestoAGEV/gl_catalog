@@ -5,6 +5,7 @@ import {
   findProductByPath,
   productBrand,
   productDescription,
+  fitNote,
   productPath,
   productSlug,
   productTitle,
@@ -42,10 +43,28 @@ const pantalon = {
   price: 570,
 }
 const d1 = productDescription(pantalon)
-assert.ok(d1.includes('pantalón para hombre'), d1)
+assert.ok(d1.includes('chino de vestir'), d1)
 assert.ok(d1.includes('en gris'), d1)
 assert.ok(d1.includes('Tallas 30 a 40'), d1)
 assert.ok(d1.includes('$570 MXN'), d1)
+
+// Familia descrita por la tienda: su dato desplaza a la plantilla, y la nota
+// larga sale entera para la pagina de producto.
+assert.ok(d1.length <= 158, 'la meta se pasa de largo: ' + d1.length)
+assert.ok(fitNote(pantalon).includes('línea de vestir de Oggi'), fitNote(pantalon))
+
+// Familia sin describir: cae en la plantilla generica y no se inventa nada.
+const generico = { ...pantalon, name: 'Lee - Slim Fit 9012' }
+assert.ok(productDescription(generico).includes('pantalón para hombre'))
+assert.strictEqual(fitNote(generico), '', 'sin familia no se inventa nota')
+
+// El Gabarina va antes que el Vaxter general: si se invierte, gana el corte
+// equivocado y la pagina dice mezclilla donde es gabardina.
+assert.ok(fitNote({ name: 'Oggi - Vaxter Gabarina Khaki' }).includes('gabardina'))
+assert.ok(fitNote({ name: 'Oggi - Vaxter Spring Ink' }).includes('mezclilla'))
+
+// La descripcion propia de la base siempre gana.
+assert.strictEqual(fitNote({ name: 'Oggi - Chinos 900', description: 'Texto propio.' }), 'Texto propio.')
 
 const perfume = { name: 'Dolce & Gabbana - K', type: 'Perfumes', colors: [], sizes: ['100 ml'], price: 1550 }
 const d2 = productDescription(perfume)

@@ -1,5 +1,5 @@
 import { getState, addToCart, trackProductView, getProductById } from '../../store/index.js'
-import { findProductByPath, productPath } from '../../utils/productCopy.js'
+import { findProductByPath, fitNote, productPath } from '../../utils/productCopy.js'
 import { isInfiniteStock } from '../../utils/stock.js'
 import { navigate, normalizePath } from '../../core/router.js'
 import { formatMoney } from '../../utils/format.js'
@@ -180,7 +180,8 @@ export function pageProduct(initialState) {
   const categoryHref = product.type ? `/categoria/${encodeURIComponent(product.type)}` : '/catalog'
   const safeName = escapeHtml(product.name)
   const safeType = escapeHtml(product.type || '')
-  const safeDescription = escapeHtml(product.description || '')
+  const storeNote = fitNote(product)
+  const safeDescription = escapeHtml(storeNote)
   const safeCuratorNote = escapeHtml(product.curatorNote || '')
 
   const publicProducts = state.products.filter(p => p.badge !== 'Borrador')
@@ -214,7 +215,7 @@ export function pageProduct(initialState) {
   ].filter(Boolean)
 
   /* ── Description for accordion ── */
-  const hasDescription = product.description && product.description.trim()
+  const hasDescription = Boolean(storeNote)
   const showDetailsAccordion = specRows.length > 0 || hasDescription
 
   /* ══ HTML ══ */

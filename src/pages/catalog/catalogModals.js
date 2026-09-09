@@ -100,7 +100,7 @@ export function quickViewModal(p) {
 
             <!-- Price row -->
             <div class="flex items-center gap-2 mb-3">
-              <span class="text-xl md:text-2xl font-black text-gray-900 dark:text-white">${formatMoney(p.price)}</span>
+              <span class="text-xl md:text-2xl font-extrabold text-gray-900 dark:text-white">${formatMoney(p.price)}</span>
               ${hasDiscount ? `<span class="text-[13px] font-medium text-gray-400 line-through">${formatMoney(p.originalPrice)}</span>` : ''}
               ${discount > 0 ? `<span class="text-[10px] font-bold bg-red-50 text-red-600 px-1.5 py-0.5 rounded">-${discount}%</span>` : ''}
             </div>
