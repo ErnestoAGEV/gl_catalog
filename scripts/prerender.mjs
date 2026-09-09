@@ -116,6 +116,14 @@ const returnPolicy = {
   },
 }
 
+// Google pide priceValidUntil en la oferta y avisa cuando falta. Un ano desde
+// el build: cada despliegue lo renueva, asi que nunca se queda en el pasado
+// mientras el sitio siga vivo. No promete el precio —eso lo dice la pagina—,
+// dice hasta cuando este dato se considera fresco.
+const PRICE_VALID_UNTIL = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+  .toISOString()
+  .slice(0, 10)
+
 async function supabaseSelect(table, query) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
     headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
@@ -637,6 +645,7 @@ for (const product of products) {
           url: absolute(path),
           price: Number(product.price),
           priceCurrency: 'MXN',
+          priceValidUntil: PRICE_VALID_UNTIL,
           availability: `https://schema.org/${inStock ? 'InStock' : 'OutOfStock'}`,
           itemCondition: 'https://schema.org/NewCondition',
           seller: { '@id': `${BASE_URL}/#marca` },
@@ -685,6 +694,7 @@ for (const product of products) {
                     url: absolute(variantPath),
                     price: Number(variant.price),
                     priceCurrency: 'MXN',
+                    priceValidUntil: PRICE_VALID_UNTIL,
                     availability: `https://schema.org/${isInStock(variant) ? 'InStock' : 'OutOfStock'}`,
                     itemCondition: 'https://schema.org/NewCondition',
                     shippingDetails,

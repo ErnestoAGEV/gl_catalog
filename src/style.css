@@ -1,5 +1,39 @@
 @import "tailwindcss";
 
+/* ── Tipografias ────────────────────────────────────────────────────────────
+   Servidas desde el sitio, no desde Google. Antes el navegador tenia que
+   resolver fonts.googleapis.com, bajar una hoja de estilo y solo entonces
+   descubrir de donde bajar las fuentes: tres saltos antes de la primera letra
+   con su tipografia. Ahora salen del mismo origen que el HTML.
+
+   Son las tres variables: un archivo por familia cubre todos los grosores, asi
+   que esto son tres peticiones en lugar de once. Subconjunto latino, que ya
+   trae los acentos y las aperturas de interrogacion del espanol.
+
+   Para actualizarlas: bajar el woff2 del subconjunto latin de Google Fonts y
+   reemplazar el archivo; el nombre y estos bloques no cambian. */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/inter.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('/fonts/manrope.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono.woff2') format('woff2');
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Brand Colors */
