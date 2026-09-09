@@ -113,6 +113,13 @@ export const stores = [
     fullName: 'G&L Colima Centro',
     headingPlace: 'el <span class="text-brand">Centro</span> de Colima',
     schemaId: 'tienda',
+    pageCopy: {
+      lead: 'A media cuadra del Jardín Libertad, en pleno Centro. Si andas haciendo vueltas por el portal, te queda de paso.',
+      llegar:
+        'Zaragoza 140, entre el Jardín Libertad y el mercado. Es zona de Centro, así que a media mañana cuesta estacionarse: si vienes en coche, escríbenos antes y te decimos por dónde conviene entrar ese día.',
+      horario:
+        'Ojo con el mediodía: esta tienda cierra de 14:00 a 16:30 y vuelve a abrir por la tarde. Los domingos abrimos solo la mañana. Si te queda justo, la de Villa de Álvarez tiene horario corrido.',
+    },
     coords: '19.2424 N · 103.7254 W',
     address: 'Zaragoza #140, Col. Centro, Colima. A media cuadra del Jardín Libertad.',
     hours: ['Lun—Sáb · 10:30—14:00 · 16:30—20:00', 'Dom · 10:30—14:00'],
@@ -138,6 +145,13 @@ export const stores = [
     fullName: 'G&L Villa de Álvarez',
     headingPlace: '<span class="text-brand">Villa de Álvarez</span>',
     schemaId: 'tienda-villa',
+    pageCopy: {
+      lead: 'Sobre la avenida principal de Villa de Álvarez, con horario corrido. Es la que conviene si andas con prisa o solo puedes pasar a mediodía.',
+      llegar:
+        'María Ahumada de Gómez 30, local 6, sobre la avenida principal. Se llega directo sin meterse a calles cerradas, y hay dónde dejar el coche cerca.',
+      horario:
+        'Horario corrido de lunes a sábado, de 9:00 a 20:00 sin cerrar a mediodía — es la diferencia con la del Centro, que sí cierra. Los domingos abrimos solo la mañana.',
+    },
     coords: '19.2713 N · 103.7332 W',
     address: 'María Ahumada de Gómez #30, Local #6. Sobre la avenida principal.',
     hours: ['Lun—Sáb · 09:00—20:00', 'Dom · 10:30—14:00'],

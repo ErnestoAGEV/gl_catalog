@@ -18,15 +18,16 @@ export function pageInfo(state, path) {
       (s) => `
       <section class="border-t border-ink/10 py-10">
         <h2 class="font-heading font-[800] text-[clamp(24px,3vw,34px)] tracking-[-0.02em] mb-4">${s.h}</h2>
+        ${s.body ? `<p class="text-[16px] text-ink/75 max-w-[640px] leading-relaxed">${s.body}</p>` : ''}
         ${
           s.list
-            ? `<ul class="space-y-3 max-w-[640px]">${s.list
+            ? `<ul class="space-y-3 max-w-[640px] ${s.body ? 'mt-4' : ''}">${s.list
                 .map(
                   (item) =>
                     `<li class="flex gap-3 text-[16px] text-ink/75 leading-relaxed"><span class="text-brand shrink-0">—</span><span>${item}</span></li>`
                 )
                 .join('')}</ul>`
-            : `<p class="text-[16px] text-ink/75 max-w-[640px] leading-relaxed">${s.body}</p>`
+            : ''
         }
       </section>`
     )

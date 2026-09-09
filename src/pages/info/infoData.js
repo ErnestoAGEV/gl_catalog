@@ -22,19 +22,20 @@ const storePages = Object.fromEntries(
     {
       eyebrow: `Sucursal ${store.name}`,
       heading: `Nuestra tienda<br/>en ${store.headingPlace}.`,
-      lead: `${store.address} Aquí tienes el mismo catálogo que ves en línea, y alguien que te ayuda a escoger la talla.`,
+      lead: store.pageCopy.lead,
       sections: [
         {
-          h: 'Cómo llegar',
-          body: `${store.postal.streetAddress}, ${store.postal.addressLocality}, ${store.postal.addressRegion}. Si vienes en coche, escríbenos y te decimos dónde conviene estacionarte.`,
+          h: '¿Cómo llego?',
+          body: store.pageCopy.llegar,
         },
         {
-          h: 'Horarios',
+          h: '¿A qué hora abren?',
+          body: store.pageCopy.horario,
           list: store.hours,
         },
         {
           h: 'Qué encuentras aquí',
-          body: 'Camisas, polos, playeras, jeans, shorts y perfumes. Si buscas algo puntual, mándanos mensaje antes de venir y te confirmamos si lo tenemos en tu talla.',
+          body: 'El mismo catálogo que ves en línea: camisas, polos, playeras, pantalones, shorts, zapatos y perfumes. Y alguien que conoce el inventario de memoria y te dice cómo viene cada marca de talla. Si buscas algo puntual, mándanos mensaje antes de venir y te confirmamos si lo tenemos en la tuya.',
         },
       ],
       store: store.slug,

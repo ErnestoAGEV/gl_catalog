@@ -14,8 +14,16 @@ import { dirname, join } from 'node:path'
 import { getSeoForRoute } from '../src/core/routeSeo.js'
 import { infoPages } from '../src/pages/info/infoData.js'
 import { INSTAGRAM_URL, STORE_PHONE, stores } from '../src/pages/home/homeData.js'
-import { colorPhrase, productDescription, productPath, socialImage } from '../src/utils/productCopy.js'
+import {
+  colorPhrase,
+  productBrand,
+  productDescription,
+  productPath,
+  sizeSummary,
+  socialImage,
+} from '../src/utils/productCopy.js'
 import { isInStock } from '../src/utils/stock.js'
+import { isPerfumeCategory } from '../src/pages/admin/adminProductsData.js'
 
 const BASE_URL = 'https://www.glboutique.com.mx'
 const DIST = 'dist'
@@ -288,6 +296,71 @@ function faqLd(page) {
   }
 }
 
+/**
+ * Parrafo de entrada de una categoria, armado con lo que hay de verdad en la
+ * base: marcas, rango de tallas y rango de precio.
+ *
+ * Antes cada categoria era una frase de trece palabras sobre una parrilla, sin
+ * nada que un buscador —ni un motor de IA— pudiera citar como respuesta a
+ * "camisas para hombre en Colima". Esto no sustituye una guia de compra escrita
+ * por alguien que conoce la prenda; es el piso factual, y tiene la ventaja de
+ * que se actualiza solo cuando entra marca o talla nueva.
+ */
+function categoryIntro(category, items) {
+  const marcas = [...new Set(items.map((p) => productBrand(p.name)))].filter((m) => m !== 'G&L')
+  // Ordenadas por el numero que llevan delante: sin esto salia
+  // "Presentaciones de 100 ml, 85 ml", que se lee como descuido.
+  const tallas = sizeSummary(
+    [...new Set(items.flatMap((p) => p.sizes || []))].sort(
+      (a, b) => (parseFloat(a) || 0) - (parseFloat(b) || 0)
+    )
+  )
+  const precios = items.map((p) => Number(p.price)).filter(Number.isFinite)
+  const min = Math.min(...precios)
+  const max = Math.max(...precios)
+
+  // Un perfume no tiene tallas ni es una "pieza de perfumes": la misma
+  // distincion que ya hace la ficha de producto.
+  const esPerfume = isPerfumeCategory(category)
+  const frases = [
+    esPerfume
+      ? `${items.length} ${items.length === 1 ? 'fragancia' : 'fragancias'} en G&amp;L Colima, ` +
+        `disponibles en las dos tiendas.`
+      : `${items.length} ${items.length === 1 ? 'pieza' : 'piezas'} de ${category.toLowerCase()} ` +
+        `en G&amp;L Colima, con ${items.length === 1 ? 'existencia' : 'existencias'} en las dos tiendas.`,
+  ]
+  if (marcas.length === 1) frases.push(`Todo de ${escapeHtml(marcas[0])}.`)
+  else if (marcas.length > 1) {
+    const lista = marcas.slice(0, 5).map(escapeHtml)
+    frases.push(
+      `Marcas: ${lista.join(', ')}${marcas.length > 5 ? ` y ${marcas.length - 5} más` : ''}.`
+    )
+  }
+  if (tallas) {
+    frases.push(
+      esPerfume
+        ? `Presentaciones de ${escapeHtml(tallas)}.`
+        : `Tallas de la ${escapeHtml(tallas)}.`
+    )
+  }
+  if (precios.length) {
+    frases.push(
+      min === max
+        ? `Precio: $${min} MXN.`
+        : `Precios de $${min} a $${max} MXN.`
+    )
+  }
+  frases.push(
+    `Envío a todo México por $${SHIPPING_COST} y gratis desde ` +
+      `$${FREE_SHIPPING_MIN.toLocaleString('es-MX')}. ` +
+      (esPerfume
+        ? `¿No sabes cuál escoger? Pregúntanos por WhatsApp: te decimos a qué huele cada uno.`
+        : `Si no te queda, lo cambiamos dentro de 8 días. ¿Dudas de talla? Pregúntanos por ` +
+          `WhatsApp antes de comprar: tenemos la prenda enfrente.`)
+  )
+  return frases.join(' ')
+}
+
 /** ItemList que enumera exactamente lo que la pagina contiene. */
 function itemListLd(items) {
   return {
@@ -450,7 +523,7 @@ for (const category of categories) {
     shell: contentShell(`
             ${breadcrumbNav(trail)}
             <h1 class="font-heading font-[800] text-[clamp(40px,7vw,88px)] leading-[0.9] tracking-[-0.03em] mb-6">${escapeHtml(category)}</h1>
-            <p class="text-[17px] text-ink/70 max-w-[560px] leading-relaxed mb-10">${items.length} ${items.length === 1 ? 'pieza disponible' : 'piezas disponibles'} en G&amp;L Colima.</p>
+            <p class="text-[17px] text-ink/70 max-w-[640px] leading-relaxed mb-10">${categoryIntro(category, items)}</p>
             ${productGrid(items)}`),
     ld: [
       {
@@ -638,11 +711,14 @@ for (const [path, page] of Object.entries(infoPages)) {
     .map(
       (sec) =>
         `<h2 class="font-heading font-[800] text-[clamp(24px,3vw,34px)] tracking-[-0.02em] mt-10 mb-4">${sec.h}</h2>` +
+        (sec.body
+          ? `<p class="text-[16px] text-ink/75 max-w-[640px] leading-relaxed">${sec.body}</p>`
+          : '') +
         (sec.list
-          ? `<ul class="space-y-3 max-w-[640px]">${sec.list
+          ? `<ul class="space-y-3 max-w-[640px] mt-4">${sec.list
               .map((i) => `<li class="text-[16px] text-ink/75 leading-relaxed">— ${i}</li>`)
               .join('')}</ul>`
-          : `<p class="text-[16px] text-ink/75 max-w-[640px] leading-relaxed">${sec.body}</p>`)
+          : '')
     )
     .join('\n              ')
 
