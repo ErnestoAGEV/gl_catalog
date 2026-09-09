@@ -157,3 +157,7 @@ export const stores = [
 ]
 
 export const STORE_PHONE = '+52 312 101 8263'
+
+// Unico perfil social real de la tienda. Lo usan el footer y el `sameAs` de
+// la entidad de marca en el JSON-LD: un sameAs inventado es peor que ninguno.
+export const INSTAGRAM_URL = 'https://www.instagram.com/glboutiquecol/'

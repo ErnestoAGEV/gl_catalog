@@ -86,12 +86,16 @@ export const infoPages = {
   },
 
   '/envios': {
+    // faq: los encabezados son preguntas y el schema las repite tal cual. Si
+    // alguien reescribe un h2 y deja de ser pregunta, hay que quitar la marca:
+    // el FAQPage tiene que coincidir con lo visible.
+    faq: true,
     eyebrow: 'Envíos y pagos',
     heading: 'Te llega en<br/>3 o 4 <span class="text-brand">días</span>.',
     lead: 'Mandamos guías a todo México. El pedido sale en cuanto se confirma el pago y llega en 3 a 4 días hábiles.',
     sections: [
       {
-        h: 'Costo del envío',
+        h: '¿Cuánto cuesta el envío?',
         list: [
           '$150 MXN de guía a cualquier parte de la República.',
           'Gratis en compras de $1,499 MXN o más.',
@@ -99,11 +103,11 @@ export const infoPages = {
         ],
       },
       {
-        h: 'Tiempo de entrega',
+        h: '¿En cuánto tiempo llega mi pedido?',
         body: 'De 3 a 4 días hábiles contados desde que completas el pedido, no desde que lo pones en el carrito. Los fines de semana y días festivos no cuentan. En cuanto sale, te pasamos el número de guía por WhatsApp para que lo rastrees.',
       },
       {
-        h: 'Formas de pago',
+        h: '¿Cómo puedo pagar?',
         list: [
           'Efectivo en cualquiera de las dos sucursales.',
           'Transferencia bancaria (SPEI).',
@@ -116,12 +120,13 @@ export const infoPages = {
   },
 
   '/cambios': {
+    faq: true,
     eyebrow: 'Cambios',
     heading: 'Si no te queda,<br/>lo <span class="text-brand">cambiamos</span>.',
     lead: 'No manejamos devoluciones con reembolso de dinero. Lo que sí hacemos, y sin problema, es cambiarte la prenda.',
     sections: [
       {
-        h: 'Cómo funciona',
+        h: '¿Cómo hago un cambio?',
         list: [
           'Tienes 8 días desde que recibes el paquete para pedir el cambio.',
           'La prenda tiene que venir sin usar, con sus etiquetas.',
@@ -129,11 +134,11 @@ export const infoPages = {
         ],
       },
       {
-        h: 'Quién paga el envío del cambio',
+        h: '¿Quién paga el envío de un cambio?',
         body: 'Si el cambio es porque escogiste otra talla o cambiaste de opinión, el envío corre por tu cuenta. Si el error fue nuestro — te mandamos una talla distinta a la que pediste, o la prenda venía con un defecto — lo pagamos nosotros y no tienes que discutirlo con nadie.',
       },
       {
-        h: 'Para no llegar hasta aquí',
+        h: '¿Cómo evito tener que cambiar la prenda?',
         body: 'Antes de comprar, pregúntanos la talla por WhatsApp. Tenemos la prenda enfrente y te decimos cómo viene: si encoge, si es holgada, si conviene subir una talla. Es más rápido que un cambio.',
       },
     ],

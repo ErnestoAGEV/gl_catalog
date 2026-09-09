@@ -13,7 +13,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { getSeoForRoute } from '../src/core/routeSeo.js'
 import { infoPages } from '../src/pages/info/infoData.js'
-import { STORE_PHONE, stores } from '../src/pages/home/homeData.js'
+import { INSTAGRAM_URL, STORE_PHONE, stores } from '../src/pages/home/homeData.js'
 import { colorPhrase, productDescription, productPath, socialImage } from '../src/utils/productCopy.js'
 import { isInStock } from '../src/utils/stock.js'
 
@@ -261,6 +261,33 @@ function productGrid(items) {
             </ul>`
 }
 
+/**
+ * FAQPage a partir de las secciones que ya se ven en la pagina.
+ *
+ * Aviso para quien lea esto esperando estrellitas: desde agosto de 2023 Google
+ * limita los rich results de FAQ a sitios de gobierno y salud, asi que una
+ * tienda NO va a ver el desplegable en el buscador. Se pone igual porque el
+ * valor real esta en otro lado: deja el contenido en forma de pregunta y
+ * respuesta, que es como lo extraen las AI Overviews, ChatGPT y Perplexity.
+ *
+ * La pregunta del schema es literalmente el <h2> visible y la respuesta el
+ * mismo parrafo o lista. Si dejan de coincidir, sobra el marcado.
+ */
+function faqLd(page) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: page.sections.map((sec) => ({
+      '@type': 'Question',
+      name: sec.h,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: sec.list ? sec.list.join(' ') : sec.body,
+      },
+    })),
+  }
+}
+
 /** ItemList que enumera exactamente lo que la pagina contiene. */
 function itemListLd(items) {
   return {
@@ -346,7 +373,7 @@ function storeLd(store) {
       opens: h.opens,
       closes: h.closes,
     })),
-    branchOf: { '@type': 'Organization', '@id': `${BASE_URL}/#marca`, name: 'G&L' },
+    branchOf: { '@id': `${BASE_URL}/#marca` },
   }
 }
 
@@ -538,7 +565,7 @@ for (const product of products) {
           priceCurrency: 'MXN',
           availability: `https://schema.org/${inStock ? 'InStock' : 'OutOfStock'}`,
           itemCondition: 'https://schema.org/NewCondition',
-          seller: { '@type': 'Organization', '@id': `${BASE_URL}/#marca`, name: 'G&L' },
+          seller: { '@id': `${BASE_URL}/#marca` },
           shippingDetails,
           hasMerchantReturnPolicy: returnPolicy,
         },
@@ -626,7 +653,7 @@ for (const [path, page] of Object.entries(infoPages)) {
             <h1 class="font-heading font-[800] text-[clamp(44px,7vw,92px)] leading-[0.92] tracking-[-0.035em] mb-6">${page.heading}</h1>
             <p class="text-[18px] text-ink/70 max-w-[640px] leading-relaxed">${page.lead}</p>
             ${body}`),
-    ld: [breadcrumbLd(trail)],
+    ld: [breadcrumbLd(trail), ...(page.faq ? [faqLd(page)] : [])],
   })
 }
 
@@ -637,6 +664,43 @@ for (const path of ['/cart', '/checkout', '/checkout/success']) {
 }
 
 // ── Escritura ───────────────────────────────────────────────────────────────
+
+// La entidad de marca. Se referencia desde WebSite.publisher, de las dos
+// ClothingStore por branchOf y de cada Offer por seller, pero hasta ahora solo
+// se declaraba como stub de un campo (`name`) repetido en cada sitio. Sin url,
+// logo ni sameAs no hay grafo de entidad: ni Knowledge Panel ni Merchant Center
+// pueden confirmar que esas referencias hablan del mismo negocio.
+const brandLd = jsonLd({
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  '@id': `${BASE_URL}/#marca`,
+  name: 'G&L',
+  alternateName: 'G&L Boutique',
+  url: `${BASE_URL}/`,
+  logo: {
+    '@type': 'ImageObject',
+    url: `${BASE_URL}/icon-512.png?v=2`,
+    width: 512,
+    height: 512,
+  },
+  image: `${BASE_URL}/icon-512.png?v=2`,
+  description:
+    'Boutique de moda masculina en Colima desde 1995. Camisas, polos, jeans, ' +
+    'playeras, shorts y perfumes, con dos tiendas fisicas y venta por WhatsApp.',
+  foundingDate: '1995',
+  telephone: STORE_PHONE,
+  areaServed: { '@type': 'Country', name: 'MX' },
+  // Perfiles que confirman la entidad desde fuera. Solo los reales: un sameAs
+  // inventado es peor que ninguno.
+  sameAs: [INSTAGRAM_URL, ...stores.map((store) => store.mapUrl)],
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer service',
+    telephone: STORE_PHONE,
+    areaServed: 'MX',
+    availableLanguage: ['es'],
+  },
+})
 
 const websiteLd = jsonLd({
   '@context': 'https://schema.org',
@@ -657,7 +721,7 @@ for (const route of routes) {
   const seoPath = route.seoPath || route.path
   const seo = getSeoForRoute(seoPath, seoPath, { products })
   const canonical = absolute(route.canonicalPath || seo.canonicalPath || route.path)
-  const extraLd = [websiteLd, allStoresLd, ...(route.ld || []).map(jsonLd)].join('\n    ')
+  const extraLd = [brandLd, websiteLd, allStoresLd, ...(route.ld || []).map(jsonLd)].join('\n    ')
 
   const head = buildHead({
     title: seo.title,
@@ -682,7 +746,7 @@ writeFileSync(
     robots: 'noindex,follow',
     canonical: absolute('/404'),
     image: DEFAULT_IMAGE,
-    extraLd: websiteLd,
+    extraLd: [brandLd, websiteLd].join('\n    '),
   }) +
     contentShell(`
             <h1 class="font-heading font-[800] text-[clamp(40px,7vw,88px)] leading-[0.9] tracking-[-0.03em] mb-6">404</h1>
@@ -711,7 +775,7 @@ writeFileSync(
     robots: 'noindex,follow',
     canonical: null,
     image: DEFAULT_IMAGE,
-    extraLd: websiteLd,
+    extraLd: [brandLd, websiteLd].join('\n    '),
   }) +
     contentShell(`
             <p class="text-[17px] text-ink/70">Cargando…</p>`) +
@@ -758,6 +822,71 @@ ${urls
   .join('\n')}
 </urlset>\n`
 )
+
+// ── llms.txt ────────────────────────────────────────────────────────────────
+//
+// Convencion sin estandar formal: ningun motor la exige y publicarla no
+// garantiza nada. Se genera igual porque cuesta cero y dice explicitamente que
+// rutas son informativas y cuales transaccionales — hoy eso solo vive en el
+// meta robots de cada ruta, que un LLM no siempre respeta.
+//
+// Se genera, no se escribe a mano: las categorias salen de la base y ya
+// pasaron de 7 a 8 solas. Un archivo fijo se queda viejo sin que nadie lo note.
+
+const llms = `# G&L — Boutique de moda masculina en Colima, México
+
+> Tienda de ropa para hombre con dos sucursales físicas en Colima (Centro y
+> Villa de Álvarez) y venta en línea que se cierra por WhatsApp. Desde 1995.
+> ${products.length} prendas publicadas: ${categories.join(', ')}.
+
+## Páginas principales
+
+- [Catálogo completo](${absolute('/catalog')}): las ${products.length} prendas disponibles
+- [Nosotros](${absolute('/nosotros')}): qué es la tienda y cómo escoge lo que vende, desde 1995
+- [Sucursales](${absolute('/sucursales')}): las dos tiendas físicas, con direcciones y horarios
+- [Envíos y formas de pago](${absolute('/envios')}): costos, tiempos y métodos de pago
+- [Cambios](${absolute('/cambios')}): política de cambios — sin reembolso en efectivo, 8 días
+- [Contacto](${absolute('/contacto')}): WhatsApp e Instagram
+
+## Categorías
+
+${categories.map((c) => `- [${c}](${absolute(`/categoria/${encodeURIComponent(c)}`)})`).join('\n')}
+
+## Sucursales
+
+${stores
+  .map(
+    (store) =>
+      `- ${store.fullName} — ${store.postal.streetAddress}, ${store.postal.addressLocality}, ` +
+      `${store.postal.addressRegion}. ${absolute(`/sucursales/${store.slug}`)}`
+  )
+  .join('\n')}
+
+Teléfono y WhatsApp: ${STORE_PHONE}
+Instagram: ${INSTAGRAM_URL}
+
+## Datos que conviene citar bien
+
+- Envío: $${SHIPPING_COST} MXN a todo México, gratis desde $${FREE_SHIPPING_MIN.toLocaleString('es-MX')} MXN.
+- Entrega en ${3} a ${4} días hábiles contados desde que se confirma el pedido.
+- Recoger en tienda no cuesta nada.
+- No hay reembolso en efectivo: solo cambio de prenda, dentro de 8 días desde
+  la entrega y con etiquetas. Si el error fue de la tienda, el envío lo paga
+  la tienda.
+- La venta se cierra por WhatsApp con una persona. No hay atención por email.
+- Los precios y la disponibilidad cambian: tomar siempre el precio del schema
+  Product de la página del producto, nunca un valor cacheado.
+
+## No citar
+
+Estas rutas son transaccionales o privadas, no informativas:
+/admin, /api, /cart, /checkout, /checkout/success
+
+Última generación: ${today}
+`
+
+writeFileSync(join(DIST, 'llms.txt'), llms)
+console.log(`[llms.txt] ${categories.length} categorias, ${stores.length} sucursales`)
 
 console.log(
   `[prerender] ${routes.length} rutas (${products.length} productos, ${categories.length} categorias) + 404.html + sitemap con ${urls.length} urls`
