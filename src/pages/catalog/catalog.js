@@ -25,6 +25,8 @@ const TYPE_DESCRIPTIONS = {
   'Abrigos': 'Abrigos de corte cl\u00E1sico para el invierno.',
 }
 
+const PRODUCTS_PER_PAGE = 20
+
 export function pageCatalog(initialState) {
   let state = initialState
   let publicProducts = state.products.filter(p => p.badge !== 'Borrador')
@@ -170,7 +172,7 @@ export function pageCatalog(initialState) {
       <!-- PRODUCT GRID -->
       <section class="py-8 md:py-12 lg:py-16">
         <div class="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-10">
-          <div id="catalog-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 md:gap-x-4 gap-y-8 md:gap-y-12 lg:gap-y-16"></div>
+          <div id="catalog-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 md:gap-x-4 gap-y-8 md:gap-y-12 lg:gap-y-16">${skeletonGrid(PRODUCTS_PER_PAGE)}</div>
 
           <!-- Empty state -->
           <div id="empty-state" class="hidden py-24 text-center">
@@ -327,7 +329,6 @@ export function pageCatalog(initialState) {
       }
 
       // ── Pagination ──
-      const PRODUCTS_PER_PAGE = 20
       let currentPage = 1
       let allFilteredProducts = []
 
@@ -381,7 +382,7 @@ export function pageCatalog(initialState) {
         const searchQuery = getSearchQuery()
 
         if (state.isLoading) {
-          grid.innerHTML = skeletonGrid(8)
+          grid.innerHTML = skeletonGrid(PRODUCTS_PER_PAGE)
           loadMoreContainer.classList.add('hidden')
           emptyState.classList.add('hidden')
           return

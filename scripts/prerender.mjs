@@ -24,6 +24,7 @@ import {
   socialImage,
 } from '../src/utils/productCopy.js'
 import { isInStock } from '../src/utils/stock.js'
+import { relatedProducts } from '../src/utils/related.js'
 import { isPerfumeCategory } from '../src/pages/admin/adminProductsData.js'
 
 const BASE_URL = 'https://www.glboutique.com.mx'
@@ -150,7 +151,7 @@ const homeShell = template.slice(appOpenAt + APP_OPEN.length, shellEndAt)
 const tail = template.slice(shellEndAt)
 
 /** Reescribe el <head> de la plantilla con los metadatos de una ruta. */
-function buildHead({ title, description, robots, canonical, image, images, extraLd, ogType }) {
+function buildHead({ title, description, robots, canonical, image, images, extraLd, ogType, preloadImage }) {
   let head = headTemplate
 
   // Ojo: el reemplazo va SIEMPRE como funcion. Con un string, JS expande `$&`,
@@ -201,7 +202,16 @@ function buildHead({ title, description, robots, canonical, image, images, extra
     canonical ? `<link rel="canonical" href="${escapeHtml(canonical)}" />` : ''
   )
 
+  // La foto del producto la descubre el navegador solo despues de parsear el JS
+  // que pinta la ficha. Precargarla desde el <head> la pone en la cola desde el
+  // primer byte: es la imagen que el comprador espera ver y la que deberia ganar
+  // el LCP, que hoy se lo lleva el texto del marquee por pintarse antes.
+  const preload = preloadImage
+    ? `<link rel="preload" as="image" fetchpriority="high" href="${escapeHtml(preloadImage)}" />`
+    : ''
+
   const social = [
+    preload,
     `<meta property="og:site_name" content="G&amp;L" />`,
     `<meta property="og:locale" content="es_MX" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
@@ -585,6 +595,36 @@ console.log(
     `(${[...variantGroups.values()].reduce((n, g) => n + g.length, 0)} productos)`
 )
 
+/**
+ * Bloque de relacionados. La ficha del navegador ya pinta 4 recomendados, pero
+ * solo despues de hidratar: en el HTML servido cada ficha enlazaba unicamente a
+ * la home, al catalogo y a su categoria — 239 hojas sin salida lateral. Usa el
+ * mismo selector que la ficha (src/utils/related.js) para que un crawler que no
+ * ejecuta JS y uno que si lo ejecuta vean los mismos enlaces.
+ */
+function relatedSection(product) {
+  const items = relatedProducts(product, products, 6)
+  if (items.length === 0) return ''
+  const titulo = product.type ? `Mas ${product.type.toLowerCase()} de G&L` : 'Mas de la tienda'
+  return `
+            <section class="mt-12">
+              <h2 class="font-heading font-[700] text-[22px] mb-4">${escapeHtml(titulo)}</h2>
+              <ul class="grid grid-cols-2 md:grid-cols-3 gap-4 list-none p-0">
+                ${items
+                  .map(
+                    (r) => `<li>
+                  <a href="${escapeHtml(productPath(r))}" class="block">
+                    <img src="${escapeHtml(r.image_url || '/placeholder.webp')}" alt="${escapeHtml(r.name)}" width="300" height="400" loading="lazy" decoding="async" class="w-full h-auto rounded-lg object-cover">
+                    <span class="block mt-1 text-[14px]">${escapeHtml(r.name)}</span>
+                    <span class="block font-mono text-[13px] text-ink/60">$${escapeHtml(r.price)} MXN</span>
+                  </a>
+                </li>`
+                  )
+                  .join('')}
+              </ul>
+            </section>`
+}
+
 for (const product of products) {
   const path = productPath(product)
   const image = product.image_url || product.images?.[0] || DEFAULT_IMAGE
@@ -616,7 +656,8 @@ for (const product of products) {
                 ${product.colors?.length ? `<p class="text-[14px] text-ink/60 mb-6">Colores: ${escapeHtml(product.colors.join(', '))}</p>` : ''}
                 <p class="text-[14px] text-ink/60">${inStock ? 'Disponible' : 'Agotado'} · Envío $${SHIPPING_COST} MXN a todo México, gratis en compras +$${FREE_SHIPPING_MIN.toLocaleString('es-MX')} · Entrega en 3-4 días hábiles · Cambios dentro de 8 días · 2 tiendas físicas en Colima</p>
               </div>
-            </div>`),
+            </div>
+            ${relatedSection(product)}`),
     ld: [
       {
         '@context': 'https://schema.org',
@@ -818,6 +859,9 @@ for (const route of routes) {
     image: route.image || DEFAULT_IMAGE,
     images: route.images,
     ogType: route.path.startsWith('/producto/') ? 'product' : 'website',
+    // Solo en la ficha: es la unica plantilla con una imagen que manda sobre el
+    // resto. En el catalogo, precargar una de 239 no ayuda a nadie.
+    preloadImage: route.path.startsWith('/producto/') ? route.image : undefined,
     extraLd,
   })
 

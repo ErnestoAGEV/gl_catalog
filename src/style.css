@@ -993,8 +993,21 @@ select.bare { -webkit-appearance: none; appearance: none; }
 }
 .gallery-stage.zoomed .stage-main { transform: scale(1.6); }
 
+/* En movil el escenario 4:5 mide unos 430px de alto y, con el marquee, la
+   cabecera, el breadcrumb y la tira de miniaturas encima, empujaba el nombre,
+   el precio, las tallas y el boton de WhatsApp fuera de la primera pantalla:
+   sin scroll solo se veia la foto, justo en el dispositivo donde se cierra la
+   venta. Cuadrado y con tope en vh entra todo mucho antes, y como la foto va
+   en contain no se recorta nada — solo se ve algo mas chica. */
+@media (max-width: 767px) {
+  .gallery-stage { aspect-ratio: 1 / 1; max-height: 40svh; }
+  .gallery-stage .stage-main { padding: 12px; }
+}
+
 .thumb-rail { display: flex; gap: 10px; }
 .thumb-rail .thumb { position: relative; width: 92px; aspect-ratio: 4/5; border-radius: 6px; overflow: hidden; flex-shrink: 0; border: 1px solid rgba(10,10,15,.1); transition: border-color .25s, transform .25s; }
+/* Misma razon: la tira se comia otros 115px antes del precio. */
+@media (max-width: 767px) { .thumb-rail .thumb { width: 60px; } }
 .thumb-rail .thumb img { width: 100%; height: 100%; object-fit: contain; padding: 4px; background: #fff; }
 .thumb-rail .thumb.active { border-color: var(--color-ink); }
 @media (hover: hover) { .thumb-rail .thumb:hover { transform: translateY(-2px); border-color: var(--color-ink); } }

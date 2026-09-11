@@ -9,6 +9,7 @@ import { handleQuickAdd } from '../catalog/catalogQuickAdd.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 import { escapeHtml } from '../../utils/sanitize.js'
 import { splitGalleryImages } from '../../utils/productImages.js'
+import { relatedProducts } from '../../utils/related.js'
 import { flyToCart, lockScroll, unlockScroll } from '../../utils/dom.js'
 import { pageNotFound } from '../notFound/notFound.js'
 
@@ -45,14 +46,6 @@ function stockStatus(product) {
   if (isInfiniteStock(s) || s > 3) return { label: 'En stock', cls: 'text-brand', dot: 'bg-brand' }
   if (s <= 0) return { label: 'Agotado', cls: 'text-ink/60', dot: 'bg-ink/60' }
   return { label: 'Últimas piezas', cls: 'text-amber-500', dot: 'bg-amber-500' }
-}
-
-/* ── Recommended products (unchanged logic) ── */
-function getRecommendedProducts(currentProduct, allProducts, limit = 4) {
-  const candidates = allProducts.filter(p => p.id !== currentProduct.id && p.badge !== 'Borrador')
-  const sameType = candidates.filter(p => p.type === currentProduct.type)
-  const others = candidates.filter(p => p.type !== currentProduct.type)
-  return [...sameType, ...others].slice(0, limit)
 }
 
 /* ── Editorial recommended card ── */
@@ -111,7 +104,7 @@ export function pageProduct(initialState) {
         <div aria-busy="true">
           <span class="sr-only">Cargando producto…</span>
 
-          <section class="pt-4 pb-2 border-b border-ink/5">
+          <section class="pt-2 pb-1.5 sm:pt-4 sm:pb-2 border-b border-ink/5">
             <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
               <div class="flex items-center gap-3">
                 <span class="h-3 w-14 rounded skeleton-shimmer"></span>
@@ -121,7 +114,7 @@ export function pageProduct(initialState) {
             </div>
           </section>
 
-          <section class="py-5 lg:py-8">
+          <section class="py-3 sm:py-5 lg:py-8">
             <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
               <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14">
                 <div class="lg:col-span-6">
@@ -185,7 +178,7 @@ export function pageProduct(initialState) {
   const safeCuratorNote = escapeHtml(product.curatorNote || '')
 
   const publicProducts = state.products.filter(p => p.badge !== 'Borrador')
-  const recommended = getRecommendedProducts(product, publicProducts, 4)
+  const recommended = relatedProducts(product, publicProducts, 4)
 
   /* ── Badges ── */
   const badges = []
@@ -226,16 +219,19 @@ export function pageProduct(initialState) {
     forceLight: true,
     html: `
       <!-- ── BREADCRUMB ── -->
-      <section class="pt-4 pb-2 border-b border-ink/5">
+      <section class="pt-2 pb-1.5 sm:pt-4 sm:pb-2 border-b border-ink/5">
         <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
-          <div class="flex items-center gap-2 sm:gap-3 font-mono text-[10px] sm:text-[11px] tracking-[0.28em] uppercase flex-wrap">
-            <a href="/" class="text-ink/55 hover:text-ink ul-link">Inicio</a>
-            <span class="text-ink/30">/</span>
-            <a href="/catalog" class="text-ink/55 hover:text-ink ul-link">Tienda</a>
-            <span class="text-ink/30">/</span>
-            <a href="${categoryHref}" class="text-ink/55 hover:text-ink ul-link">${safeType || 'General'}</a>
-            <span class="text-ink/30">/</span>
-            <span class="text-ink">${safeName}</span>
+          <!-- Sin flex-wrap: en móvil el nombre saltaba a una segunda línea y
+               empujaba 28px más la foto y todo lo que va debajo. Ahora la miga
+               cabe en una línea y el nombre se corta con puntos suspensivos. -->
+          <div class="flex items-center gap-2 sm:gap-3 font-mono text-[10px] sm:text-[11px] tracking-[0.28em] uppercase sm:flex-wrap">
+            <a href="/" class="text-ink/55 hover:text-ink ul-link flex-shrink-0">Inicio</a>
+            <span class="text-ink/30 flex-shrink-0">/</span>
+            <a href="/catalog" class="text-ink/55 hover:text-ink ul-link flex-shrink-0">Tienda</a>
+            <span class="text-ink/30 flex-shrink-0">/</span>
+            <a href="${categoryHref}" class="text-ink/55 hover:text-ink ul-link flex-shrink-0">${safeType || 'General'}</a>
+            <span class="text-ink/30 flex-shrink-0">/</span>
+            <span class="text-ink truncate">${safeName}</span>
             <span class="h-px flex-1 bg-ink/15 mx-3 hidden sm:block"></span>
             <span class="text-ink/55 hidden sm:inline">SKU · ${sku}</span>
           </div>
@@ -243,12 +239,18 @@ export function pageProduct(initialState) {
       </section>
 
       <!-- ── PRODUCT GRID ── -->
-      <section class="py-5 lg:py-8">
+      <section class="py-3 sm:py-5 lg:py-8">
         <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14">
 
             <!-- LEFT: Gallery -->
-            <div class="lg:col-span-6 reveal">
+            <!-- Sin "reveal": las dos columnas de arriba del pliegue arrancaban
+                 en opacity 0 hasta que el observador las descubria. Eso dejaba
+                 el precio, las tallas y el boton de WhatsApp invisibles en la
+                 primera pantalla de movil, y sacaba a la foto de la carrera por
+                 el LCP — que acababa ganando el texto del marquee. El resto de
+                 la pagina, mas abajo, conserva la animacion. -->
+            <div class="lg:col-span-6">
               <div class="relative pdp-gallery">
                 <!-- Stage -->
                 <div class="gallery-stage${isPerfume ? ' !bg-white' : ''}" id="pdp-stage">
@@ -279,7 +281,7 @@ export function pageProduct(initialState) {
             </div>
 
             <!-- RIGHT: Info -->
-            <div class="lg:col-span-6 reveal">
+            <div class="lg:col-span-6">
               <div class="lg:sticky lg:top-[88px]">
 
                 <!-- Eyebrow -->

@@ -7,3 +7,4 @@
 import './test-product-copy.mjs'
 import './test-stock.mjs'
 import './test-resize-image.mjs'
+import './test-related.mjs'
