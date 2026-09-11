@@ -78,7 +78,7 @@ export function productCard(p, idx) {
       <div class="mt-4 flex items-start justify-between gap-2">
         <div class="min-w-0">
           <div class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink/55 mb-1.5">${eyebrow}</div>
-          <div class="font-display font-bold text-[15px] md:text-[18px] leading-tight tracking-[-0.02em] truncate">${p.name}</div>
+          <h2 class="font-display font-bold text-[15px] md:text-[18px] leading-tight tracking-[-0.02em] truncate">${p.name}</h2>
         </div>
         <div class="text-right whitespace-nowrap flex-shrink-0">
           ${hasDiscount ? `<div class="font-mono text-[11px] text-ink/40 line-through">${formatMoney(p.originalPrice)}</div>` : ''}

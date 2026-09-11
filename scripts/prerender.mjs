@@ -278,7 +278,7 @@ function productGrid(items) {
       return `<li>
                 <a href="${productPath(p)}" class="block">
                   <img src="${escapeHtml(p.image_url || '/placeholder.webp')}" alt="${escapeHtml(p.name)}" width="600" height="800" ${prioridad} decoding="async" class="w-full h-auto rounded-xl object-cover">
-                  <span class="mt-3 block text-[14px] font-medium">${escapeHtml(p.name)}</span>
+                  <h2 class="mt-3 block text-[14px] font-medium">${escapeHtml(p.name)}</h2>
                   <span class="block font-mono text-[13px] text-ink/60">$${escapeHtml(p.price)} MXN</span>
                 </a>
               </li>`
@@ -479,9 +479,24 @@ const allStoresLd = stores.map((store) => jsonLd(storeLd(store))).join('\n    ')
 
 // ── Rutas ───────────────────────────────────────────────────────────────────
 
+const CAMPOS = 'id,name,price,original_price,type,image_url,images,description,stock,sizes,colors,badge,created_at'
+
+// updated_at se pide aparte y con red de seguridad: la columna se anade con
+// supabase/add_updated_at.sql, y hasta que esa migracion no se corra pedirla
+// devolveria un 42703 que tumbaria el build entero. Sin ella el sitemap sigue
+// funcionando con created_at, como hasta ahora.
+async function fetchProducts() {
+  try {
+    return await supabaseSelect('products', `select=${CAMPOS},updated_at`)
+  } catch (err) {
+    if (!String(err.message).includes('updated_at')) throw err
+    console.warn('[prerender] Sin columna updated_at: el sitemap usa created_at. Corre supabase/add_updated_at.sql')
+    return supabaseSelect('products', `select=${CAMPOS}`)
+  }
+}
+
 const products = SUPABASE_URL
-  ? (await supabaseSelect('products', 'select=id,name,price,original_price,type,image_url,images,description,stock,sizes,colors,badge,created_at'))
-      .filter((p) => p.badge !== 'Borrador')
+  ? (await fetchProducts()).filter((p) => p.badge !== 'Borrador')
   : []
 
 if (!SUPABASE_URL) {
@@ -857,7 +872,24 @@ for (const [path, page] of Object.entries(infoPages)) {
             <p class="text-[18px] text-ink/70 max-w-[640px] leading-relaxed">${page.lead}</p>
             ${gallery}
             ${body}`),
-    ld: [breadcrumbLd(trail), ...(page.faq ? [faqLd(page)] : [])],
+    ld: [
+      breadcrumbLd(trail),
+      // La pagina de una sucursal trata de esa sucursal. Sin esto, las dos
+      // paginas sirven los dos ClothingStore sin decir cual es el tema de
+      // cual, y en la de Villa el primer bloque del grafo es el del Centro.
+      // Va por @id, no repitiendo el nodo: repetirlo dejaria dos versiones
+      // del mismo negocio.
+      ...(page.store
+        ? [
+            {
+              '@context': 'https://schema.org',
+              '@id': `${BASE_URL}/#${stores.find((st) => st.slug === page.store).schemaId}`,
+              mainEntityOfPage: absolute(path),
+            },
+          ]
+        : []),
+      ...(page.faq ? [faqLd(page)] : []),
+    ],
   })
 }
 
@@ -992,7 +1024,8 @@ writeFileSync(
 // ── Sitemap ─────────────────────────────────────────────────────────────────
 
 const today = new Date().toISOString().slice(0, 10)
-const lastmodOf = (p) => (p.created_at ? p.created_at.slice(0, 10) : today)
+// La fecha que le importa a un crawler es la del ultimo cambio, no la del alta.
+const lastmodOf = (p) => (p.updated_at || p.created_at || '').slice(0, 10) || today
 
 const urls = [
   { loc: `${BASE_URL}/`, lastmod: today, changefreq: 'daily', priority: '1.0' },
