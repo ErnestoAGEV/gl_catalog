@@ -40,6 +40,23 @@ export function pageInfo(state, path) {
       ? stores
       : []
 
+  // Fotos del local. Solo en la pagina de una sucursal: en /sucursales, que las
+  // pinta las dos, la galeria duplicada empuja el contenido util hacia abajo.
+  const photos = page.store ? (shownStores[0]?.photos || []) : []
+  const photosBlock = photos.length
+    ? `
+      <section class="border-t border-ink/10 py-10">
+        <h2 class="font-heading font-[800] text-[clamp(24px,3vw,34px)] tracking-[-0.02em] mb-6">Así se ve la tienda</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          ${photos
+            .map(
+              (f, i) => `<img src="${f.src}" alt="${f.alt}" width="${f.w}" height="${f.h}" loading="${i === 0 ? 'eager' : 'lazy'}" decoding="async" class="w-full h-auto rounded-lg object-cover aspect-[4/3]">`
+            )
+            .join('')}
+        </div>
+      </section>`
+    : ''
+
   const storesBlock = shownStores.length
     ? `
       <section class="border-t border-ink/10 py-10">
@@ -80,6 +97,7 @@ export function pageInfo(state, path) {
         <h1 class="font-heading font-[800] text-[clamp(44px,7vw,92px)] leading-[0.92] tracking-[-0.035em] text-ink mt-4 mb-6">${page.heading}</h1>
         <p class="text-[18px] text-ink/70 max-w-[640px] leading-relaxed mb-4">${page.lead}</p>
 
+        ${photosBlock}
         ${sections}
         ${storesBlock}
 

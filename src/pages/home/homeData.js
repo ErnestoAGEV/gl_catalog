@@ -135,6 +135,17 @@ export const stores = [
       postalCode: '28000',
       addressCountry: 'MX',
     },
+    // Fotos propias de la tienda, tomadas por el dueno. Son la senal local que
+    // mas barato se consigue: Google y quien llega de una busqueda "cerca de mi"
+    // quieren ver el local antes de moverse. El alt lleva el NAP a proposito.
+    photos: [
+      { src: '/img/sucursales/gl-colima-centro-fachada.webp', social: '/img/sucursales/gl-colima-centro-fachada.jpg', w: 1360, h: 1020, alt: 'Fachada de G&L Colima Centro, Zaragoza 140, Col. Centro, Colima' },
+      { src: '/img/sucursales/gl-colima-centro-wrangler-lee.webp', w: 1360, h: 1020, alt: 'Interior de G&L Colima Centro con las secciones de Wrangler y Lee' },
+      { src: '/img/sucursales/gl-colima-centro-camisas.webp', w: 1360, h: 1020, alt: 'Camisas y playeras para hombre en G&L Colima Centro' },
+      { src: '/img/sucursales/gl-colima-centro-jeans-oggi.webp', w: 765, h: 1020, alt: 'Mesa de jeans Oggi en G&L Colima Centro' },
+      { src: '/img/sucursales/gl-colima-centro-wrangler-nfr.webp', w: 765, h: 1020, alt: 'Sección Wrangler en G&L Colima Centro' },
+      { src: '/img/sucursales/gl-colima-centro-pasillo.webp', w: 765, h: 1020, alt: 'Pasillo de camisas de vestir en G&L Colima Centro' },
+    ],
     geo: { latitude: 19.2424015, longitude: -103.725432 },
     openingHours: [
       { days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], opens: '10:30', closes: '14:00' },
@@ -167,6 +178,11 @@ export const stores = [
       postalCode: '28970',
       addressCountry: 'MX',
     },
+    photos: [
+      { src: '/img/sucursales/gl-villa-de-alvarez-interior.webp', social: '/img/sucursales/gl-villa-de-alvarez-mochilas-gorras.jpg', w: 1360, h: 763, alt: 'Interior de G&L Villa de Álvarez, María Ahumada de Gómez 30, local 6' },
+      { src: '/img/sucursales/gl-villa-de-alvarez-mochilas-gorras.jpg', w: 1020, h: 572, alt: 'Mochilas, gorras y camisas en G&L Villa de Álvarez' },
+      { src: '/img/sucursales/gl-villa-de-alvarez-exhibidor-lee.webp', w: 572, h: 1020, alt: 'Exhibidor de Lee en G&L Villa de Álvarez' },
+    ],
     geo: { latitude: 19.2713167, longitude: -103.7332035 },
     openingHours: [
       { days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], opens: '09:00', closes: '20:00' },

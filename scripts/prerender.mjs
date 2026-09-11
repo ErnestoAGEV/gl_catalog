@@ -453,7 +453,12 @@ function storeLd(store) {
     description: 'Moda masculina premium en Colima. Camisas, polos, jeans y perfumes.',
     url: absolute(`/sucursales/${store.slug}`),
     logo: `${BASE_URL}/icon-512.png?v=2`,
-    image: `${BASE_URL}/icon-512.png?v=2`,
+    // Fotos del local antes que el icono: es lo que Google muestra y lo que
+    // decide si alguien se mueve hasta la tienda. El icono queda de respaldo
+    // por si una sucursal todavia no tiene fotos propias.
+    image: store.photos?.length
+      ? store.photos.map((f) => absolute(f.src))
+      : `${BASE_URL}/icon-512.png?v=2`,
     telephone: STORE_PHONE,
     priceRange: '$$',
     currenciesAccepted: 'MXN',
@@ -826,12 +831,31 @@ for (const [path, page] of Object.entries(infoPages)) {
     )
     .join('\n              ')
 
+  // Fotos del local en el HTML servido, no solo despues de hidratar: es
+  // justo la senal que un crawler local necesita ver.
+  const storePhotos = page.store ? stores.find((st) => st.slug === page.store)?.photos || [] : []
+  const gallery = storePhotos.length
+    ? `<h2 class="font-heading font-[800] text-[clamp(24px,3vw,34px)] tracking-[-0.02em] mt-10 mb-4">Así se ve la tienda</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+              ${storePhotos
+                .map(
+                  (f, i) =>
+                    `<img src="${escapeHtml(f.src)}" alt="${escapeHtml(f.alt)}" width="${f.w}" height="${f.h}" ${i === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async" class="w-full h-auto rounded-lg object-cover">`
+                )
+                .join('')}
+            </div>`
+    : ''
+
   routes.push({
     path,
+    // La preview de WhatsApp de la sucursal: su foto principal, en la copia
+    // jpg — socialImage() descarta los webp porque WhatsApp no los pinta.
+    image: storePhotos[0]?.social ? absolute(storePhotos[0].social) : undefined,
     shell: contentShell(`
             ${breadcrumbNav(trail)}
             <h1 class="font-heading font-[800] text-[clamp(44px,7vw,92px)] leading-[0.92] tracking-[-0.035em] mb-6">${page.heading}</h1>
             <p class="text-[18px] text-ink/70 max-w-[640px] leading-relaxed">${page.lead}</p>
+            ${gallery}
             ${body}`),
     ld: [breadcrumbLd(trail), ...(page.faq ? [faqLd(page)] : [])],
   })
