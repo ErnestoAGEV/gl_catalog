@@ -6,7 +6,7 @@ import { supabase } from './supabase.js'
 import { formatMoney } from '../utils/format.js'
 import { applySeo } from './seo.js'
 import { addNotification, getNotifications, getUnreadCount, markAllRead, subscribeNotifications } from '../utils/notifications.js'
-import { withTimeout } from '../utils/async.js'
+import { withTimeout, toCleanup } from '../utils/async.js'
 import { unlockScroll } from '../utils/dom.js'
 
 function playOrderAlertSound() {
@@ -453,7 +453,9 @@ export async function startApp(mountEl) {
     document.getElementById('prerender-shell')?.remove()
     mountEl.appendChild(pageContainer)
 
-    const cleanup = onMount?.(pageContainer)
+    // onMount puede ser async: entonces devuelve una promesa, no la funcion de
+    // limpieza. Se normaliza aqui, que es el unico sitio donde se captura.
+    const cleanup = toCleanup(onMount?.(pageContainer))
 
     // ── Restore admin sidebar nav scroll ──
     if (isAdminNav && sidebarNavScroll > 0) {

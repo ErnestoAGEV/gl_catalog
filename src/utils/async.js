@@ -16,6 +16,33 @@ export function withTimeout(promise, ms, label = 'La operación') {
   ]).finally(() => clearTimeout(timer))
 }
 
+/**
+ * Normaliza lo que devuelve un `onMount`.
+ *
+ * Un `onMount` sincrono devuelve su funcion de limpieza. Uno declarado `async`
+ * devuelve una promesa — y llamar a una promesa lanza "is not a function". Ese
+ * TypeError tumbaba el render entero: siete de las diez paginas del panel de
+ * admin declaran `async onMount`, asi que al volver a cualquiera de ellas la
+ * pantalla acababa en "No pudimos cargar esta pagina" y solo se recuperaba
+ * recargando. De paso, la limpieza de esas siete no llegaba a ejecutarse nunca,
+ * dejando sueltos sus temporizadores y sus canales de realtime.
+ *
+ * Devuelve siempre una funcion, o undefined si no habia nada que limpiar.
+ */
+export function toCleanup(mounted) {
+  if (typeof mounted === 'function') return mounted
+  if (!mounted || typeof mounted.then !== 'function') return undefined
+  // La limpieza real llega cuando el montaje async termine. Si para entonces ya
+  // se pidio desmontar, se ejecuta igualmente: es lo que libera los recursos.
+  return () => {
+    mounted
+      .then((fn) => {
+        if (typeof fn === 'function') fn()
+      })
+      .catch(() => {})
+  }
+}
+
 // node src/utils/async.js
 if (typeof process !== 'undefined' && process.argv?.[1]?.endsWith('async.js')) {
   ;(async () => {
