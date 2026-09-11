@@ -26,8 +26,25 @@
 CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
 CREATE EXTENSION IF NOT EXISTS supabase_vault WITH SCHEMA vault;
 
--- 2. La URL, guardada en Vault.
-SELECT vault.create_secret('PEGA_AQUI_LA_URL', 'vercel_deploy_hook', 'Deploy Hook de Vercel para reconstruir el catalogo');
+-- 2. La URL, guardada en Vault. Idempotente: si ya existe, la actualiza en vez
+--    de fallar por nombre duplicado, para que puedas correr esto las veces que
+--    haga falta (por ejemplo si regeneras el hook en Vercel).
+DO $vault$
+DECLARE
+  id_existente uuid;
+BEGIN
+  SELECT id INTO id_existente FROM vault.secrets WHERE name = 'vercel_deploy_hook';
+  IF id_existente IS NULL THEN
+    PERFORM vault.create_secret(
+      'PEGA_AQUI_LA_URL',
+      'vercel_deploy_hook',
+      'Deploy Hook de Vercel para reconstruir el catalogo'
+    );
+  ELSE
+    PERFORM vault.update_secret(id_existente, 'PEGA_AQUI_LA_URL');
+  END IF;
+END;
+$vault$;
 
 -- 3. La función que dispara el despliegue.
 CREATE OR REPLACE FUNCTION public.trigger_rebuild()
