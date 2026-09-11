@@ -15,7 +15,9 @@
 --   2. Crear uno: nombre "supabase-catalogo", rama "main"
 --   3. Copiar la URL que te da (queda como
 --      https://api.vercel.com/v1/integrations/deploy/prj_XXXX/YYYY)
---   4. Pegarla abajo, donde dice PEGA_AQUI_LA_URL
+--   4. Pegarla abajo, en las DOS lineas del paso 2 que dicen PEGA_AQUI_LA_URL
+--      (solo en el paso 2: la funcion del paso 3 no la lleva escrita, la lee
+--      de Vault)
 --
 -- Esa URL es una llave: quien la tenga puede lanzar despliegues. Por eso se
 -- guarda en Vault y no suelta dentro de la función.
@@ -60,8 +62,8 @@ BEGIN
   FROM vault.decrypted_secrets
   WHERE name = 'vercel_deploy_hook';
 
-  IF hook_url IS NULL OR hook_url = 'PEGA_AQUI_LA_URL' THEN
-    RAISE WARNING 'trigger_rebuild: falta la URL del Deploy Hook en Vault';
+  IF hook_url IS NULL OR hook_url NOT LIKE 'https://api.vercel.com/%' THEN
+    RAISE WARNING 'trigger_rebuild: la URL del Deploy Hook falta o no es de Vercel (%)', hook_url;
     RETURN NULL;
   END IF;
 
