@@ -132,13 +132,28 @@ export function pageAdminLogin() {
         if (!email || !pass) { setError('Completá email y contraseña.'); return }
 
         setLoading(true)
-        const result = await adminLogin(email, pass)
-        setLoading(false)
+        // El finally no es adorno: si adminLogin lanzara, el boton se quedaba
+        // en "Ingresando…" y no habia forma de reintentar sin recargar.
+        let result
+        try {
+          result = await adminLogin(email, pass)
+        } catch (err) {
+          result = { error: String(err?.message || err) }
+        } finally {
+          setLoading(false)
+        }
 
         if (result.error) {
           failCount++
-          setError('Credenciales inválidas.')
-          startLockdown()
+          // El mensaje real, no "credenciales invalidas" para todo: con dos
+          // pestañas abiertas el fallo es del lock de sesion, y decir que la
+          // contraseña esta mal manda a buscar por donde no es.
+          const esCredencial = /invalid|credential|password|email/i.test(result.error)
+          setError(esCredencial ? 'Credenciales inválidas.' : result.error)
+          // El bloqueo progresivo es contra la fuerza bruta. Un fallo que no es
+          // de credenciales no deberia castigar al que si sabe su contraseña.
+          if (esCredencial) startLockdown()
+          else failCount--
           return
         }
 
