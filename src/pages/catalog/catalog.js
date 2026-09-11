@@ -52,15 +52,16 @@ export function pageCatalog(initialState) {
 
   // Build category chips from actual data, ordered by the DB category order
   const categoryOrder = getCategoryOrder()
-  const sortedTypes = [...types].sort((a, b) => {
+  const orderTypes = (list) => [...list].sort((a, b) => {
     const ai = categoryOrder.indexOf(a)
     const bi = categoryOrder.indexOf(b)
     return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
   })
 
-  const chipHtml = sortedTypes.map(t =>
-    `<button class="chip flex-shrink-0${initialType === t ? ' active' : ''}" data-cat="${escapeHtml(t)}">${escapeHtml(t)}</button>`
-  ).join('')
+  const chipButton = (t, active) =>
+    `<button class="chip flex-shrink-0${active ? ' active' : ''}" data-cat="${escapeHtml(t)}">${escapeHtml(t)}</button>`
+
+  const chipHtml = orderTypes(types).map(t => chipButton(t, initialType === t)).join('')
 
   return {
     title: 'Cat\u00E1logo | G&L',
@@ -405,6 +406,32 @@ export function pageCatalog(initialState) {
           sel.innerHTML = `<option value="">Color</option>${currentColors.map(x => `<option value="${x}">${x}</option>`).join('')}`
           if (curr && currentColors.includes(curr)) sel.value = curr
         })
+
+        // Los chips de categoria se pintaron con la plantilla, cuando los productos
+        // todavia no habian llegado de la base: sin esto se quedan en "Todo" para
+        // siempre. Se rehacen solo cuando la lista cambia, para no perder el scroll
+        // horizontal de la banda en movil.
+        const chipsRow = root.querySelector('#cat-chips')
+        if (chipsRow) {
+          const wanted = orderTypes(currentTypes)
+          if (chipsRow.dataset.types !== wanted.join('|')) {
+            chipsRow.dataset.types = wanted.join('|')
+            const todo = chipsRow.querySelector('.chip[data-cat=""]')
+            chipsRow.innerHTML = (todo ? todo.outerHTML : '') + wanted.map(t => chipButton(t, false)).join('')
+          }
+          const activeChip = grid.dataset.multiTypeFilter || filters.type || ''
+          chipsRow.querySelectorAll('.chip').forEach(b => {
+            b.classList.toggle('active', (b.dataset.cat || '') === activeChip)
+          })
+        }
+
+        // El filtro que viene de la URL vive en grid.dataset.multiTypeFilter, no en
+        // el <select>. En cuanto las <option> existen se refleja tambien ahi, para
+        // que el panel de filtros muestre la categoria activa.
+        const urlTypes = (grid.dataset.multiTypeFilter || '').split(',').filter(Boolean)
+        if (urlTypes.length === 1 && currentTypes.includes(urlTypes[0])) {
+          root.querySelectorAll('select[name="type"]').forEach(sel => { sel.value = urlTypes[0] })
+        }
 
         if (options.resetPage) {
           currentPage = 1
@@ -758,19 +785,14 @@ export function pageCatalog(initialState) {
       const filterToApply = pendingTypeFilter || urlTypeFilter
       if (filterToApply) {
         if (pendingTypeFilter) sessionStorage.removeItem('gl_pending_type_filter')
-        const filterTypes = filterToApply.split(',').map(t => t.trim())
-        if (filterTypes.length === 1) {
-          root.querySelectorAll('select[name="type"]').forEach(sel => { sel.value = filterTypes[0] })
-          // Sync chip
-          root.querySelectorAll('#cat-chips .chip').forEach(b => b.classList.remove('active'))
-          const matchChip = root.querySelector(`#cat-chips .chip[data-cat="${filterTypes[0]}"]`)
-          if (matchChip) matchChip.classList.add('active')
-          else root.querySelector('#cat-chips .chip[data-cat=""]')?.classList.add('active')
-          renderGrid({ resetPage: true })
-        } else {
-          grid.dataset.multiTypeFilter = filterTypes.join(',')
-          renderGrid({ resetPage: true })
-        }
+        // No se puede aplicar escribiendo en el <select>: sus <option> se construyen
+        // con los productos, que en el primer paint aun no han llegado de Supabase, y
+        // asignar un valor que no existe como opcion lo deja en cadena vacia sin dar
+        // error — el filtro se perdia y la categoria acababa mostrando todo el
+        // catalogo. grid.dataset.multiTypeFilter filtra por p.type directamente, sin
+        // depender del DOM; renderGrid sincroniza el <select> y el chip cuando puede.
+        grid.dataset.multiTypeFilter = filterToApply.split(',').map(t => t.trim()).filter(Boolean).join(',')
+        renderGrid({ resetPage: true })
       }
 
       // ── Card/quickview clicks ──
