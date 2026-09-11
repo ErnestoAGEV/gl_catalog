@@ -1,5 +1,6 @@
 import { searchProducts, setSearchQuery, getSearchQuery, subscribe, getState } from '../../store/index.js'
-import { findProductByPath, productPath } from '../../utils/productCopy.js'
+import { findProductByPath, productBrand, productPath } from '../../utils/productCopy.js'
+import { brandSlug, brandIntro } from '../../utils/brands.js'
 import { formatMoney } from '../../utils/format.js'
 import { on, qs, lockScroll, unlockScroll } from '../../utils/dom.js'
 import { navigate, normalizePath } from '../../core/router.js'
@@ -43,14 +44,39 @@ export function pageCatalog(initialState) {
     initialType = decodeURIComponent(basePath.split('/categoria/')[1]) || ''
   }
 
+  // Marca desde la URL. Se guarda el slug y se filtra comparando slugs, no el
+  // nombre ya resuelto: resolverlo aqui contra los productos daria vacio en el
+  // primer paint, cuando la base todavia no ha respondido — el mismo agujero
+  // que dejaba las categorias mostrando el catalogo entero.
+  const urlBrand = basePath.startsWith('/marca/')
+    ? brandSlug(decodeURIComponent(basePath.split('/marca/')[1] || ''))
+    : ''
+  let activeBrand = urlBrand
+  const isBrandOf = (p, slug) => brandSlug(productBrand(p.name)) === slug
+  const brandItems = urlBrand ? publicProducts.filter((p) => isBrandOf(p, urlBrand)) : []
+  // Con productos, el nombre real (respeta "Soul&Blues" y "Collor's"); sin
+  // ellos, el slug presentable, que se corrige en cuanto llegan.
+  const brandName = brandItems.length
+    ? productBrand(brandItems[0].name)
+    : urlBrand.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+
   // Hero content
   const safeInitialType = escapeHtml(initialType)
-  const heroH1 = initialType
+  let heroH1 = initialType
     ? `Solo<br/><span class="text-brand">${safeInitialType}</span>.`
     : `Todo el<br/><span class="text-brand">cat\u00E1logo</span>.`
-  const heroDesc = initialType
+  let heroDesc = initialType
     ? (TYPE_DESCRIPTIONS[initialType] || `Explora nuestra selecci\u00F3n de ${initialType.toLowerCase()}.`)
     : 'Camisas, denim, polos, knits y fragancias. Curadas en Colima \u2014 al mejor precio.'
+
+  // La marca manda sobre la categoria: /marca/wrangler no es una categoria.
+  const safeBrandName = escapeHtml(brandName)
+  if (urlBrand) {
+    heroH1 = `Solo<br/><span class="text-brand">${safeBrandName}</span>.`
+    heroDesc = brandItems.length
+      ? brandIntro(brandName, brandItems)
+      : `Piezas de ${brandName} en G&L Colima.`
+  }
 
   // Build category chips from actual data, ordered by the DB category order
   const categoryOrder = getCategoryOrder()
@@ -426,6 +452,21 @@ export function pageCatalog(initialState) {
           })
         }
 
+        // El nombre real de la marca solo se sabe con productos en mano: en el
+        // primer paint el H1 sale del slug, y "collor-s" se lee "Collor S". En
+        // cuanto llega la base se corrige, una sola vez.
+        if (activeBrand && grid.dataset.brandHero !== activeBrand) {
+          const suyos = publicProducts.filter((p) => isBrandOf(p, activeBrand))
+          if (suyos.length) {
+            grid.dataset.brandHero = activeBrand
+            const nombre = productBrand(suyos[0].name)
+            const h1 = root.querySelector('#hero-h1')
+            const desc = root.querySelector('#hero-desc')
+            if (h1) h1.innerHTML = `Solo<br/><span class="text-brand">${escapeHtml(nombre)}</span>.`
+            if (desc) desc.textContent = brandIntro(nombre, suyos)
+          }
+        }
+
         // El filtro que viene de la URL vive en grid.dataset.multiTypeFilter, no en
         // el <select>. En cuanto las <option> existen se refleja tambien ahi, para
         // que el panel de filtros muestre la categoria activa.
@@ -441,6 +482,9 @@ export function pageCatalog(initialState) {
 
         // Filter products
         let baseProducts = searchQuery ? searchProducts(searchQuery) : publicProducts
+        // La marca acota antes que nada: /marca/wrangler es el universo de la
+        // pagina, y dentro de el siguen valiendo categoria, talla y color.
+        if (activeBrand) baseProducts = baseProducts.filter((p) => isBrandOf(p, activeBrand))
         const multiTypeFilter = grid.dataset.multiTypeFilter
         if (multiTypeFilter) {
           const allowedTypes = multiTypeFilter.split(',')
@@ -572,6 +616,7 @@ export function pageCatalog(initialState) {
         root.querySelectorAll('select[name="type"]').forEach(s => { s.value = val })
         // Clear multi-type
         delete grid.dataset.multiTypeFilter
+        activeBrand = ''
 
         // URL sync
         const path = val ? `/categoria/${encodeURIComponent(val)}` : '/catalog'
@@ -627,6 +672,7 @@ export function pageCatalog(initialState) {
         const si = root.querySelector('#catalog-search')
         if (si) si.value = ''
         delete grid.dataset.multiTypeFilter
+        activeBrand = ''
         root.querySelectorAll('#cat-chips .chip').forEach(b => b.classList.remove('active'))
         root.querySelector('#cat-chips .chip[data-cat=""]')?.classList.add('active')
         const h1 = root.querySelector('#hero-h1')
@@ -655,6 +701,7 @@ export function pageCatalog(initialState) {
         // Sync across all panels
         root.querySelectorAll(`[name="${name}"]`).forEach(s => { if (s !== el) s.value = val })
         delete grid.dataset.multiTypeFilter
+        activeBrand = ''
 
         if (name === 'type') {
           const path = val ? `/categoria/${encodeURIComponent(val)}` : '/catalog'

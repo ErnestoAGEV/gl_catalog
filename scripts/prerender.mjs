@@ -25,6 +25,7 @@ import {
 } from '../src/utils/productCopy.js'
 import { isInStock } from '../src/utils/stock.js'
 import { relatedProducts } from '../src/utils/related.js'
+import { brandIndex, brandIntro } from '../src/utils/brands.js'
 import { isPerfumeCategory } from '../src/pages/admin/adminProductsData.js'
 
 const BASE_URL = 'https://www.glboutique.com.mx'
@@ -496,6 +497,9 @@ const HOME_SHELL_MARK = '<!-- prerender-shell:end -->'
 if (!homeShell.includes(HOME_SHELL_MARK)) {
   throw new Error(`No encuentro ${HOME_SHELL_MARK} en el shell de la home — revisa index.html`)
 }
+// Marcas con pagina propia. Se calcula aqui porque /catalog ya las enlaza.
+const brands = brandIndex(products)
+
 routes.push({
   path: '/',
   shell: homeShell.replace(HOME_SHELL_MARK, () => `${contactFooter()}\n      ${HOME_SHELL_MARK}`),
@@ -509,6 +513,10 @@ routes.push({
             <p class="text-[17px] text-ink/70 max-w-[560px] leading-relaxed mb-10">${products.length} piezas de moda masculina en Colima: camisas, polos, jeans, playeras y perfumes.</p>
             <ul class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
               ${categories.map((c) => `<li><a class="ul-link text-[15px] font-medium" href="/categoria/${encodeURIComponent(c)}">${escapeHtml(c)}</a></li>`).join('\n              ')}
+            </ul>
+            <p class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55 mb-3">Por marca</p>
+            <ul class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+              ${brands.map((b) => `<li><a class="ul-link text-[15px] font-medium" href="/marca/${b.slug}">${escapeHtml(b.name)}</a></li>`).join('\n              ')}
             </ul>
             ${productGrid(products)}`),
   ld: [
@@ -557,6 +565,42 @@ for (const category of categories) {
   })
 }
 
+// ── Paginas de marca ────────────────────────────────────────────────────────
+// "Wrangler Colima" y similares no tenian ni una pagina donde aterrizar. Son
+// consultas de marca mas ciudad: intencion alta y competencia baja en local.
+// Solo ropa y solo con surtido suficiente; el porque esta en src/utils/brands.js.
+for (const brand of brands) {
+  const path = `/marca/${brand.slug}`
+  const trail = [
+    { name: 'Inicio', path: '/' },
+    { name: 'Tienda', path: '/catalog' },
+    { name: brand.name, path },
+  ]
+  routes.push({
+    path,
+    canonicalPath: path,
+    seoPath: path,
+    image: brand.items[0]?.image_url || DEFAULT_IMAGE,
+    shell: contentShell(`
+            ${breadcrumbNav(trail)}
+            <h1 class="font-heading font-[800] text-[clamp(40px,7vw,88px)] leading-[0.9] tracking-[-0.03em] mb-6">${escapeHtml(brand.name)} en Colima</h1>
+            <p class="text-[17px] text-ink/70 max-w-[640px] leading-relaxed mb-10">${escapeHtml(brandIntro(brand.name, brand.items))}</p>
+            ${productGrid(brand.items)}`),
+    ld: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: `${brand.name} para hombre en Colima`,
+        url: absolute(path),
+        mainEntity: itemListLd(brand.items),
+      },
+      breadcrumbLd(trail),
+    ],
+  })
+}
+
+console.log(`[prerender] ${brands.length} paginas de marca: ${brands.map((b) => b.slug).join(', ')}`)
+
 // La base no tiene concepto de grupo: 33 productos son la misma prenda en
 // varios colores, con una fila y una URL cada uno, y el nombre repetido es lo
 // unico que los une. Sin ProductGroup, Google los ve como 33 productos que
@@ -602,6 +646,13 @@ console.log(
  * mismo selector que la ficha (src/utils/related.js) para que un crawler que no
  * ejecuta JS y uno que si lo ejecuta vean los mismos enlaces.
  */
+function brandLink(product) {
+  const marca = brands.find((b) => b.items.some((p) => p.id === product.id))
+  if (!marca) return ''
+  return `
+            <p class="mt-6 text-[15px]"><a class="ul-link font-medium" href="/marca/${marca.slug}">Ver las ${marca.items.length} piezas de ${escapeHtml(marca.name)}</a></p>`
+}
+
 function relatedSection(product) {
   const items = relatedProducts(product, products, 6)
   if (items.length === 0) return ''
@@ -657,6 +708,7 @@ for (const product of products) {
                 <p class="text-[14px] text-ink/60">${inStock ? 'Disponible' : 'Agotado'} · Envío $${SHIPPING_COST} MXN a todo México, gratis en compras +$${FREE_SHIPPING_MIN.toLocaleString('es-MX')} · Entrega en 3-4 días hábiles · Cambios dentro de 8 días · 2 tiendas físicas en Colima</p>
               </div>
             </div>
+            ${brandLink(product)}
             ${relatedSection(product)}`),
     ld: [
       {
@@ -926,6 +978,12 @@ const urls = [
     lastmod: today,
     changefreq: 'weekly',
     priority: '0.8',
+  })),
+  ...brands.map((b) => ({
+    loc: `${BASE_URL}/marca/${b.slug}`,
+    lastmod: today,
+    changefreq: 'weekly',
+    priority: '0.7',
   })),
   ...Object.keys(infoPages).map((path) => ({
     loc: `${BASE_URL}${path}`,

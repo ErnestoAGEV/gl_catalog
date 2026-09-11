@@ -2,6 +2,7 @@
 // (views.js) como el prerender de build (scripts/prerender.mjs).
 
 import { findProductByPath, productDescription, productPath, productTitle } from '../utils/productCopy.js'
+import { findBrandBySlug } from '../utils/brands.js'
 
 export function getSeoForRoute(path, basePath, state) {
   if (basePath === '/') {
@@ -29,6 +30,28 @@ export function getSeoForRoute(path, basePath, state) {
       description: `Compra ${category.replace(/,/g, ' y ').toLowerCase()} para hombre con estilo premium en Colima. G&L Tu fit perfecto.`,
       canonicalPath: basePath,
       robots: 'index,follow',
+    }
+  }
+
+  if (basePath.startsWith('/marca/')) {
+    const marca = findBrandBySlug(state?.products || [], basePath.split('/marca/')[1])
+    if (marca) {
+      return {
+        title: `${marca.name} en Colima | G&L`,
+        description:
+          `${marca.name} para hombre en Colima: ${marca.items.length} piezas con existencias en ` +
+          `nuestras dos tiendas. Precios, tallas y compra por WhatsApp.`,
+        canonicalPath: basePath,
+        robots: 'index,follow',
+      }
+    }
+    // Un slug que no corresponde a ninguna marca con pagina no debe indexarse
+    // ni declarar un canonical inventado: mismo criterio que el shell de la SPA.
+    return {
+      title: 'Marca no encontrada | G&L',
+      description: 'Esa marca no esta en el catalogo. Mira lo que hay ahora en la tienda.',
+      canonicalPath: '/catalog',
+      robots: 'noindex,follow',
     }
   }
 

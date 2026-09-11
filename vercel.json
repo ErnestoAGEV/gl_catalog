@@ -15,6 +15,10 @@
     {
       "source": "/categoria/:name",
       "destination": "/spa.html"
+    },
+    {
+      "source": "/marca/:slug",
+      "destination": "/spa.html"
     }
   ],
   "headers": [

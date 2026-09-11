@@ -61,7 +61,7 @@ export async function renderRoute(path, state) {
     }
   } else if (basePath.startsWith('/producto/')) {
     page = pageProduct
-  } else if (basePath.startsWith('/categoria/')) {
+  } else if (basePath.startsWith('/categoria/') || basePath.startsWith('/marca/')) {
     page = pageCatalog
   } else if (infoRoutes.has(basePath)) {
     page = (st) => pageInfo(st, basePath)
