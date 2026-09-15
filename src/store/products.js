@@ -340,7 +340,11 @@ export async function uploadProductImage(original) {
   const fileName = `${Date.now()}-${safeName || 'image.jpg'}`
 
   const upload = () => withTimeout(
-    supabase.storage.from('products').upload(fileName, file, { cacheControl: '3600', upsert: false }),
+    // Un año de cache. El nombre lleva Date.now(), asi que un archivo nunca
+    // cambia de contenido: no hay nada que revalidar. Con la hora que habia,
+    // cada visitante que volvia re-descargaba TODAS las fotos del CDN y eso es
+    // lo que reventó la cuota de cached egress del plan gratuito.
+    supabase.storage.from('products').upload(fileName, file, { cacheControl: '31536000', upsert: false }),
     60000,
     `La subida de ${original.name}`
   )

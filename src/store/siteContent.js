@@ -132,7 +132,7 @@ export async function uploadSiteImage(file) {
   const { data, error } = await supabase.storage
     .from('site-content')
     .upload(fileName, file, {
-      cacheControl: '3600',
+      cacheControl: '31536000', // inmutable: el nombre lleva Date.now()
       upsert: false
     })
 
