@@ -875,7 +875,13 @@ body.dark {
 @keyframes progress-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
 /* Custom cursor */
-body.home, body.catalog, body.checkout, body.product { cursor: none; }
+/* El cursor nativo solo se esconde si el nuestro existe (:has) y ya sabe donde
+   esta el raton (.cursor-live). El punto arranca en 0,0 y si el render se lleva
+   por delante los elementos, antes quedaba cursor:none sin nada dibujado: el
+   raton desaparecia de la pagina. En navegadores sin :has cae la regla entera y
+   se ve el cursor de siempre, que es el fallo correcto. */
+html.cursor-live body:is(.home, .catalog, .checkout, .product):has(.cursor-dot) { cursor: none; }
+html:not(.cursor-live) :is(.cursor-dot, .cursor-ring) { opacity: 0; }
 .cursor-dot { position: fixed; width: 8px; height: 8px; background: var(--color-ink); border-radius: 50%; mix-blend-mode: difference; pointer-events: none; z-index: 9999; transform: translate(-50%,-50%); }
 .cursor-ring { position: fixed; width: 36px; height: 36px; border: 1px solid var(--color-ink); border-radius: 50%; mix-blend-mode: difference; pointer-events: none; z-index: 9998; transform: translate(-50%,-50%); transition: width .35s, height .35s, background .35s, border-color .35s, border-radius .35s; }
 :is(body.home, body.catalog, body.checkout, body.product).cursor-hover .cursor-dot { width: 0; height: 0; }

@@ -29,6 +29,10 @@ function bootFailed(reason) {
   `
 }
 
+// Hasta el primer movimiento el punto del cursor esta en la esquina 0,0, asi que
+// esconder el nativo antes de eso deja la pagina sin ningun cursor visible.
+addEventListener('mousemove', () => document.documentElement.classList.add('cursor-live'), { once: true })
+
 startApp(mount).catch(bootFailed)
 
 // Red de seguridad: si nada se montó, la pantalla está en blanco de verdad.
