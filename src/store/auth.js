@@ -168,7 +168,20 @@ export async function adminLogin(email, pass) {
 }
 
 export async function adminLogout() {
-  if (supabase) await supabase.auth.signOut()
+  // signOut tambien pasa por el lock de auth: si algo lo tiene tomado, el await
+  // no vuelve nunca y el boton de salir parece muerto. Se corta a los 5s y se
+  // borra el token a mano, para que salir signifique salir de verdad.
+  if (supabase) {
+    try {
+      await withTimeout(supabase.auth.signOut(), 5000, 'El cierre de sesión')
+    } catch {
+      try {
+        for (const k of Object.keys(localStorage)) {
+          if (/^sb-.*-auth-token$/.test(k)) localStorage.removeItem(k)
+        }
+      } catch { /* modo privado sin localStorage */ }
+    }
+  }
   state.isAdminAuthed = false
   emit()
 }
