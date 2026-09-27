@@ -364,6 +364,7 @@ export function pageCatalog(initialState) {
        * vivo se dispararía en cada tecla y en "cargar más" volvería a animar
        * las tarjetas que ya estaban en pantalla.
        */
+      let cascadeTimer = null
       const animateCategoryChange = () => {
         const targets = [
           [grid, 'cat-enter-grid'],
@@ -376,6 +377,11 @@ export function pageCatalog(initialState) {
           void el.offsetWidth   // reinicia la animación si se cambia rápido de categoría
           el.classList.add(cls)
         })
+        // Terminada la cascada se quita la clase para que las tarjetas vuelvan
+        // a la entrada con el scroll (.pcard en style.css), que la cascada
+        // tapa mientras está puesta.
+        clearTimeout(cascadeTimer)
+        cascadeTimer = setTimeout(() => grid?.classList.remove('cat-enter-grid'), 900)
       }
 
       // Al cambiar de filtro la lista se rehace desde la pagina 1, pero el

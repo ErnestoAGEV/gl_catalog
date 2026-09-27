@@ -257,6 +257,10 @@ export async function startApp(mountEl) {
     img.dataset.vtHero = '1'
   }, true)
 
+  // Sin un listener de touchstart, Safari de iOS ignora :active y la tarjeta no
+  // se "presiona" al tocarla (style.css, .pcard:active).
+  document.addEventListener('touchstart', () => {}, { passive: true })
+
   let firstRender = true
 
   const withTransition = async (path, options, run) => {

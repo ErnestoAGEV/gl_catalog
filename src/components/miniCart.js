@@ -94,8 +94,11 @@ export function showMiniCart(productId) {
   document.body.appendChild(el)
   activeEl = el
 
-  // Animate in on next frame
-  requestAnimationFrame(() => el.classList.add('mini-cart-visible'))
+  // Forzar el estilo inicial antes de añadir la clase: con solo un
+  // requestAnimationFrame el navegador no llegaba a pintar el estado oculto y
+  // el preview aparecía de golpe, sin transición.
+  void el.offsetWidth
+  el.classList.add('mini-cart-visible')
 
   // Close button
   el.querySelector('.mini-cart-close').addEventListener('click', (e) => {

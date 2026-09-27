@@ -1186,6 +1186,32 @@ details.acc .body { padding-bottom: 18px; font-size: 14px; color: rgba(10,10,15,
   .cat-enter, .cat-enter-grid > .pcard { animation: none; }
 }
 
+/* ── Tarjetas que entran con el scroll ──
+   Atada al scroll, no al tiempo: las que ya están en pantalla al cargar
+   quedan en su estado final y no animan. Donde no hay animation-timeline se
+   ven como siempre. La cascada de categoría (.cat-enter-grid) la sustituye
+   mientras dura, por especificidad. */
+@keyframes gl-card-in { from { opacity:0; transform:translateY(24px); } }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .pcard {
+      animation: gl-card-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+  }
+}
+
+/* Presión al tocar la tarjeta en táctil: confirma el toque antes de navegar.
+   En la foto y no en .pcard, cuyo transform es de la animación de entrada. */
+@media (hover: none) {
+  .pcard .pimg-wrap { transition: transform .18s cubic-bezier(.22,.61,.36,1); }
+  .pcard:active .pimg-wrap { transform: scale(.97); }
+}
+@media (hover: none) and (prefers-reduced-motion: reduce) {
+  .pcard:active .pimg-wrap { transform: none; }
+}
+
 /* ── Controles sobre la foto ──
    Superficie propia con borde y sombra: el translúcido sin borde desaparecía
    sobre fotos claras y se ensuciaba sobre las oscuras. */
