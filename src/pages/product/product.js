@@ -164,7 +164,6 @@ export function pageProduct(initialState) {
     : ['https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&h=750&fit=crop']
   const { gallery: images, sizeGuide: sizeGuideImage } = splitGalleryImages(allImages)
   const isPerfume = isPerfumeCategory(product.type)
-  const stageImgClass = 'object-contain'   // todo el escenario va en contain: cover recortaba la prenda
   const discount = product.originalPrice ? Math.round((1 - product.price / product.originalPrice) * 100) : 0
   const hasSizes = product.sizes && product.sizes.length > 0
   const hasColors = product.colors && product.colors.length > 0
@@ -254,8 +253,7 @@ export function pageProduct(initialState) {
               <div class="relative pdp-gallery">
                 <!-- Stage -->
                 <div class="gallery-stage${isPerfume ? ' !bg-white' : ''}" id="pdp-stage">
-                  <img id="pdp-stage-fill" class="stage-fill" src="${escapeHtml(images[0])}" alt="" aria-hidden="true" fetchpriority="low" decoding="async"/>
-                  <img id="pdp-stage-img" data-vt-hero style="view-transition-name:gl-product-hero" src="${escapeHtml(images[0])}" alt="${safeName}" fetchpriority="high" decoding="async" class="stage-main ${stageImgClass}"/>
+                  <img id="pdp-stage-img" data-vt-hero style="view-transition-name:gl-product-hero" src="${escapeHtml(images[0])}" alt="${safeName}" fetchpriority="high" decoding="async" class="stage-main"/>
                   ${badgesHtml ? `<div class="absolute top-4 left-4 flex gap-2 z-10">${badgesHtml}</div>` : ''}
                   <div class="absolute top-4 right-4 flex items-center gap-1.5 z-10">
                     <span class="stage-chip font-mono text-[10px] tracking-[0.2em] uppercase px-2.5 py-1 rounded-full"><span id="pdp-cur">01</span> / <span id="pdp-tot">${String(images.length).padStart(2, '0')}</span></span>
@@ -512,10 +510,22 @@ export function pageProduct(initialState) {
       let idx = 0
       const stage = root.querySelector('#pdp-stage')
       const stageImg = root.querySelector('#pdp-stage-img')
-      const stageFill = root.querySelector('#pdp-stage-fill')
       const curEl = root.querySelector('#pdp-cur')
       const captionEl = root.querySelector('#pdp-caption')
       const thumbsEl = root.querySelector('#pdp-thumbs')
+
+      // El escenario toma la proporción de la foto principal: así la llena
+      // entera sin recortarla (zapatos 1:1, ropa 3:4, algún short 4:3). Solo la
+      // primera, para que el precio no salte al pasar de foto; si otra tiene
+      // otra proporción se ve entera con margen blanco. Topes para que una
+      // foto muy alargada no deforme la ficha.
+      const fitStage = () => {
+        const { naturalWidth: w, naturalHeight: h } = stageImg
+        if (!w || !h || idx !== 0) return
+        stage.closest('.pdp-gallery')?.style.setProperty('--stage-ar', String(Math.min(Math.max(w / h, 0.6), 1.5)))
+      }
+      stageImg.addEventListener('load', fitStage)
+      fitStage()
 
       function paintThumbs() {
         if (!thumbsEl) return
@@ -531,7 +541,6 @@ export function pageProduct(initialState) {
       function go(i) {
         idx = (i + images.length) % images.length
         stageImg.src = images[idx]
-        if (stageFill) stageFill.src = images[idx]
         if (curEl) curEl.textContent = String(idx + 1).padStart(2, '0')
         if (captionEl) captionEl.textContent = `Imagen ${String(idx + 1).padStart(2, '0')} de ${String(images.length).padStart(2, '0')}`
         paintThumbs()
