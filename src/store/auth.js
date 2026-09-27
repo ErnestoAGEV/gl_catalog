@@ -97,7 +97,13 @@ export async function initAdminSession() {
     state.isAdminAuthed = false
   }
 
-  supabase.auth.onAuthStateChange(async (_event, session) => {
+  // supabase-js llama a este callback DENTRO de su lock de auth y lo espera
+  // (p. ej. TOKEN_REFRESHED, cada hora). Una consulta aqui pide el token, el
+  // token pide el lock, y el lock espera al callback: interbloqueo. Esa pestaña
+  // se queda con el lock para siempre y, como navigator.locks es compartido,
+  // todas las pestañas fallan con "No se pudo verificar la sesión". Por eso el
+  // trabajo se aplaza con setTimeout, como pide la documentacion de supabase.
+  supabase.auth.onAuthStateChange((_event, session) => setTimeout(async () => {
     if (session) {
       const userId = session.user?.id
       if (userId) {
@@ -120,7 +126,7 @@ export async function initAdminSession() {
       state.isAdminAuthed = false
     }
     emit()
-  })
+  }, 0))
   emit()
 }
 
