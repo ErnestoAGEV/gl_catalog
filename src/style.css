@@ -998,16 +998,12 @@ select.bare { -webkit-appearance: none; appearance: none; }
 }
 .gallery-stage.zoomed .stage-main { transform: scale(1.6); }
 
-/* En movil el escenario 4:5 mide unos 430px de alto y, con el marquee, la
-   cabecera, el breadcrumb y la tira de miniaturas encima, empujaba el nombre,
-   el precio, las tallas y el boton de WhatsApp fuera de la primera pantalla:
-   sin scroll solo se veia la foto, justo en el dispositivo donde se cierra la
-   venta. Con tope de altura entra todo mucho antes. El tope se aplica al
-   ancho (alto x proporción) y no con max-height: max-height aplastaba la caja
-   y la foto dejaba otra vez margen. Una foto vertical queda más estrecha y
-   centrada, entera y sin recorte. */
+/* En movil la foto va a todo el ancho: con un tope de 40svh una prenda
+   vertical quedaba en ~240px y no se apreciaba. El tope de 70svh solo frena
+   fotos muy alargadas en pantallas bajas. Se aplica al ancho (alto x
+   proporción) y no con max-height, que aplastaba la caja y dejaba margen. */
 @media (max-width: 767px) {
-  .gallery-stage { max-width: calc(40svh * var(--stage-ar, 1)); margin-inline: auto; }
+  .gallery-stage { max-width: calc(70svh * var(--stage-ar, 1)); margin-inline: auto; }
 }
 
 .thumb-rail { display: flex; gap: 10px; }
