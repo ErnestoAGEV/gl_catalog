@@ -496,7 +496,7 @@ async function fetchProducts() {
 }
 
 const products = SUPABASE_URL
-  ? (await fetchProducts()).filter((p) => p.badge !== 'Borrador')
+  ? (await fetchProducts()).filter((p) => p.badge !== 'Borrador').map((p) => ({ ...p, sizes: [...new Set(p.sizes || [])] }))
   : []
 
 if (!SUPABASE_URL) {

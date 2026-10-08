@@ -660,7 +660,8 @@ export function pageAdminProducts(state) {
         // "sin descripcion propia" de "descripcion en blanco" para caer en la
         // plantilla de la familia.
         const description = qs(root, 'textarea[name="description"]').value.trim() || null
-        const sizes = Array.from(root.querySelectorAll('input[name="sizes"]:checked')).map(cb => cb.value)
+        // Solo el grupo visible: ropa y calzado comparten "28" y "30", y al editar se marcaban tambien los ocultos.
+        const sizes = Array.from(root.querySelectorAll('input[name="sizes"]:checked')).filter(cb => !cb.closest('.hidden')).map(cb => cb.value)
         const customColorsParts = parseList(qs(root, 'input[name="customColors"]').value)
         const colors = isPerfume ? [] : Array.from(new Set([...selectedColorBadges, ...customColorsParts]))
         const imageUrlsRaw = qs(root, 'textarea[name="imageUrls"]').value.trim()

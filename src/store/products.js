@@ -47,7 +47,7 @@ function mapRowToProduct(row) {
     stock: row.stock,
     type: row.type,
     category: row.category,
-    sizes: row.sizes || [],
+    sizes: [...new Set(row.sizes || [])],
     colors: row.colors || [],
     images: row.images && row.images.length > 0
       ? row.images
