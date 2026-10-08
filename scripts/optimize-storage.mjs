@@ -24,8 +24,6 @@ import sharp from 'sharp'
 
 const ANCHO_MAX = 1200
 const CALIDAD = 82
-// Por debajo de esto no vale la pena ni el viaje de ida y vuelta.
-const MINIMO_PARA_TOCAR = 200 * 1024
 const BUCKET = 'products'
 
 const aplicar = process.argv.includes('--aplicar')
@@ -82,13 +80,6 @@ let saltadas = 0
 
 for (const obj of objetos) {
   const pesoOriginal = obj.metadata?.size || 0
-  if (pesoOriginal < MINIMO_PARA_TOCAR) {
-    saltadas++
-    antes += pesoOriginal
-    despues += pesoOriginal
-    continue
-  }
-
   const url = `${URL_BASE}/storage/v1/object/public/${BUCKET}/${encodeURIComponent(obj.name)}`
   const original = Buffer.from(await (await fetch(url)).arrayBuffer())
 
@@ -122,18 +113,17 @@ for (const obj of objetos) {
     `${gana ? '·' : ' '} ${String(Math.round(pesoOriginal / 1024)).padStart(5)} KB -> ` +
     `${String(Math.round(salida.length / 1024)).padStart(5)} KB  ${meta.width}x${meta.height}  ${obj.name.slice(0, 52)}`
 
-  if (!gana) {
-    console.log(`${linea}   (sin ganancia, se queda)`)
-    continue
-  }
-  console.log(linea)
-  tocadas++
+  // Las que no ganan se resuben igual, tal cual: sin eso se quedarian con el
+  // max-age=3600 con el que se subieron, y el cache es lo que mas egress ahorra.
+  console.log(gana ? linea : `${linea}   (sin ganancia, solo cache)`)
+  if (gana) tocadas++
+  else saltadas++
 
   if (aplicar) {
     const res = await fetch(`${URL_BASE}/storage/v1/object/${BUCKET}/${encodeURIComponent(obj.name)}`, {
       method: 'PUT',
-      headers: { ...cabeceras, 'Content-Type': MIME[formatoDe(obj.name)], 'x-upsert': 'true' },
-      body: salida,
+      headers: { ...cabeceras, 'Content-Type': MIME[formatoDe(obj.name)], 'x-upsert': 'true', 'cache-control': 'max-age=31536000' },
+      body: gana ? salida : original,
     })
     if (!res.ok) {
       console.error(`  fallo al subir ${obj.name}: ${res.status} ${await res.text()}`)
@@ -144,7 +134,7 @@ for (const obj of objetos) {
 
 const mb = (n) => (n / 1024 / 1024).toFixed(1)
 console.log(
-  `\n${tocadas} fotos ${aplicar ? 'recomprimidas' : 'por recomprimir'}, ${saltadas} ya ligeras.\n` +
+  `\n${tocadas} fotos ${aplicar ? 'recomprimidas' : 'por recomprimir'}, ${saltadas} ya ligeras${aplicar ? ' (solo cache de un año)' : ''}.\n` +
     `Storage: ${mb(antes)} MB -> ${mb(despues)} MB (${mb(antes - despues)} MB menos)`
 )
 

@@ -2,6 +2,14 @@ import { formatMoney } from '../../utils/format.js'
 import { productPath } from '../../utils/productCopy.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 
+// La foto del hover se pedia con la tarjeta aunque en movil nunca se ve, y
+// cada foto cuenta contra el cached egress de Supabase. Se pide al pasar el raton.
+document.addEventListener('pointerover', (e) => {
+  if (e.pointerType !== 'mouse') return
+  const alt = e.target.closest?.('.pcard')?.querySelector('img.alt[data-src]')
+  if (alt) { alt.src = alt.dataset.src; alt.removeAttribute('data-src') }
+})
+
 export function skeletonCard() {
   return `
     <div class="block">
@@ -65,7 +73,7 @@ export function productCard(p, idx) {
     <a href="${productPath(p)}" class="pcard group block" data-product-id="${p.id}" style="--i:${idx}">
       <div class="pimg-wrap${isPerfume ? ' bg-white' : ''}">
         <img src="${img1}" alt="${p.name}" class="${imgClass}" loading="lazy" decoding="async" />
-        <img src="${img2}" alt="" class="${imgAltClass}" loading="lazy" decoding="async" />
+        <img data-src="${img2}" alt="" class="${imgAltClass}" loading="lazy" decoding="async" />
         <div class="badge-wrap">${badges.join('')}</div>
         <div class="absolute top-3 right-3 font-mono text-[10px] tracking-[0.2em] uppercase text-ink/60 bg-paper/80 backdrop-blur px-2 py-1 rounded-full">${ord}</div>
         <div class="quick-add">
