@@ -150,9 +150,9 @@ export function pageHome() {
       ? `<a href="${stores[0].mapUrl}" target="_blank" rel="noopener" class="ul-link hover:opacity-100">${s.caption}</a>`
       : s.caption
     return `
-    <div class="text-center md:text-left">
-      <p class="font-heading font-bold text-[64px] leading-none tracking-[-0.04em] tabular-nums">${s.number}</p>
-      <p class="font-mono text-[11px] tracking-[0.24em] uppercase opacity-60 mt-2">${caption}</p>
+    <div class="text-center md:text-left px-1 md:px-0">
+      <p class="font-heading font-bold text-[clamp(26px,8vw,40px)] md:text-[64px] leading-none tracking-[-0.04em] tabular-nums">${s.number}</p>
+      <p class="font-mono text-[9px] md:text-[11px] tracking-[0.08em] md:tracking-[0.24em] leading-snug uppercase opacity-60 mt-2">${caption}</p>
     </div>
   `}).join('')
 
@@ -229,9 +229,9 @@ export function pageHome() {
       </section>
 
       <!-- §4 — Stats Band -->
-      <section class="bg-ink text-paper py-12 reveal">
+      <section class="bg-ink text-paper py-8 md:py-12 reveal">
         <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+          <div class="grid grid-cols-4 md:gap-8 divide-x divide-paper/15 md:divide-x-0">
             ${statsHtml}
           </div>
         </div>

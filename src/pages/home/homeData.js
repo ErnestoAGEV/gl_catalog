@@ -95,13 +95,13 @@ export const categoryTiles = [
 ]
 
 export const stats = [
-  { number: '31<span class="text-brand">.</span>', caption: 'Años vistiendo a Colima · desde 1995' },
+  { number: '31<span class="text-brand">.</span>', caption: 'Años vistiendo a Colima<span class="hidden md:inline"> · desde 1995</span>' },
   { number: '2.4<span class="text-brand">k</span>', caption: 'Clientes activos' },
   // La valoracion es real y sale de Google, asi que se enlaza a su ficha: un
   // numero sin fuente es solo marketing. En schema NO va — una valoracion
   // declarada por el propio negocio no da rich results y puede costar una
   // accion manual. reviewsLink lo resuelve home.js con el mapUrl de la tienda.
-  { number: '4.9<span class="text-[36px] opacity-40">/5</span>', caption: '+500 reseñas', reviewsLink: true },
+  { number: '4.9<span class="text-[0.56em] opacity-40">/5</span>', caption: '+500 reseñas', reviewsLink: true },
   { number: '02', caption: 'Tiendas en Colima' },
 ]
 
