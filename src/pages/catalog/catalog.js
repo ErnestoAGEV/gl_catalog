@@ -143,7 +143,7 @@ export function pageCatalog(initialState) {
               </button>
             </div>
             <div class="relative order-3 w-full mt-2 md:mt-0 md:order-2 md:w-[240px] md:shrink-0" id="search-container">
-              <div class="flex items-center w-full h-10 rounded-full border border-ink/10 bg-fog/50 px-3 md:px-4 gap-2">
+              <div class="flex items-center w-full h-10 rounded-full border border-ink/10 focus-within:border-ink/50 bg-fog/50 px-3 md:px-4 gap-2">
                 <svg class="w-3.5 h-3.5 md:w-4 md:h-4 text-ink/40 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 <input type="search" id="catalog-search" class="flex-1 bg-transparent focus:outline-none text-[16px] md:text-[13px] font-mono min-w-0" autocomplete="off" placeholder="Buscar..." value="${escapeHtml(getSearchQuery() || '')}" aria-label="Buscar productos" />
                 <span id="resultCount" class="hidden md:block shrink-0 font-mono text-[10px] tabular-nums text-ink/40">${publicProducts.length}</span>
@@ -252,53 +252,6 @@ export function pageCatalog(initialState) {
       const emptyState = qs(root, '#empty-state')
       const emptyMsg = qs(root, '#empty-msg')
       const clearSearchBtn = qs(root, '#clear-search-btn')
-
-      // ── Cursor init ──
-      if (!window.matchMedia('(pointer: coarse)').matches) {
-        if (!document.querySelector('.cursor-dot')) {
-          const dot = document.createElement('div')
-          dot.className = 'cursor-dot'
-          const ring = document.createElement('div')
-          ring.className = 'cursor-ring'
-          document.body.appendChild(dot)
-          document.body.appendChild(ring)
-        }
-        document.body.classList.add('catalog')
-
-        const dot = document.querySelector('.cursor-dot')
-        const ring = document.querySelector('.cursor-ring')
-        let rx = 0, ry = 0, tx = 0, ty = 0
-        const onMouse = (e) => { dot.style.left = e.clientX + 'px'; dot.style.top = e.clientY + 'px'; tx = e.clientX; ty = e.clientY }
-        window.addEventListener('mousemove', onMouse)
-        function tick() { rx += (tx - rx) * 0.18; ry += (ty - ry) * 0.18; ring.style.left = rx + 'px'; ring.style.top = ry + 'px'; root.__cursorRaf = requestAnimationFrame(tick) }
-        tick()
-
-        root.__cursorCleanup = () => {
-          window.removeEventListener('mousemove', onMouse)
-          if (root.__cursorRaf) cancelAnimationFrame(root.__cursorRaf)
-          document.body.classList.remove('catalog', 'cursor-hover', 'cursor-text')
-        }
-      }
-
-      function bindCursor() {
-        if (window.matchMedia('(pointer: coarse)').matches) return
-        const addHover = () => document.body.classList.add('cursor-hover')
-        const removeHover = () => document.body.classList.remove('cursor-hover')
-        const addText = () => document.body.classList.add('cursor-text')
-        const removeText = () => document.body.classList.remove('cursor-text')
-        root.querySelectorAll('a, button, .chip, .qa-btn, [data-cursor-hover]').forEach(el => {
-          el.removeEventListener('mouseenter', addHover)
-          el.removeEventListener('mouseleave', removeHover)
-          el.addEventListener('mouseenter', addHover)
-          el.addEventListener('mouseleave', removeHover)
-        })
-        root.querySelectorAll('input, textarea, select').forEach(el => {
-          el.removeEventListener('mouseenter', addText)
-          el.removeEventListener('mouseleave', removeText)
-          el.addEventListener('mouseenter', addText)
-          el.addEventListener('mouseleave', removeText)
-        })
-      }
 
       // -- Toolbar: se retira al bajar, vuelve al subir (solo movil) --
       const toolbar = root.querySelector('#catalog-toolbar')
@@ -544,7 +497,6 @@ export function pageCatalog(initialState) {
           loadMoreContainer.classList.add('hidden')
         }
 
-        bindCursor()
       }
 
       // Update toolbar meta info
@@ -766,7 +718,6 @@ export function pageCatalog(initialState) {
         } else {
           loadMoreContainer.classList.add('hidden')
         }
-        bindCursor()
       })
 
       // ── Store subscribe ──
@@ -870,7 +821,6 @@ export function pageCatalog(initialState) {
       return () => {
         window.removeEventListener('scroll', onToolbarScroll)
         unsubscribe()
-        if (root.__cursorCleanup) root.__cursorCleanup()
       }
     },
   }

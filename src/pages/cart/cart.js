@@ -198,51 +198,6 @@ export function pageCart(state) {
       const upsellGrid = qs(root, '#upsell-grid')
       const recommendedSection = qs(root, '#cart-recommended')
 
-      // ── Cursor init ──
-      if (!window.matchMedia('(pointer: coarse)').matches) {
-        if (!document.querySelector('.cursor-dot')) {
-          const dot = document.createElement('div')
-          dot.className = 'cursor-dot'
-          const ring = document.createElement('div')
-          ring.className = 'cursor-ring'
-          document.body.appendChild(dot)
-          document.body.appendChild(ring)
-        }
-        document.body.classList.add('catalog')
-        const dot = document.querySelector('.cursor-dot')
-        const ring = document.querySelector('.cursor-ring')
-        let rx = 0, ry = 0, tx = 0, ty = 0
-        const onMouse = (e) => { dot.style.left = e.clientX + 'px'; dot.style.top = e.clientY + 'px'; tx = e.clientX; ty = e.clientY }
-        window.addEventListener('mousemove', onMouse)
-        function tick() { rx += (tx - rx) * 0.18; ry += (ty - ry) * 0.18; ring.style.left = rx + 'px'; ring.style.top = ry + 'px'; root.__cursorRaf = requestAnimationFrame(tick) }
-        tick()
-        root.__cursorCleanup = () => {
-          window.removeEventListener('mousemove', onMouse)
-          if (root.__cursorRaf) cancelAnimationFrame(root.__cursorRaf)
-          document.body.classList.remove('catalog', 'cursor-hover', 'cursor-text')
-        }
-      }
-
-      function bindCursor() {
-        if (window.matchMedia('(pointer: coarse)').matches) return
-        const addHover = () => document.body.classList.add('cursor-hover')
-        const removeHover = () => document.body.classList.remove('cursor-hover')
-        const addText = () => document.body.classList.add('cursor-text')
-        const removeText = () => document.body.classList.remove('cursor-text')
-        root.querySelectorAll('a, button, summary, [data-cursor-hover]').forEach(el => {
-          el.removeEventListener('mouseenter', addHover)
-          el.removeEventListener('mouseleave', removeHover)
-          el.addEventListener('mouseenter', addHover)
-          el.addEventListener('mouseleave', removeHover)
-        })
-        root.querySelectorAll('input, textarea, select').forEach(el => {
-          el.removeEventListener('mouseenter', addText)
-          el.removeEventListener('mouseleave', removeText)
-          el.addEventListener('mouseenter', addText)
-          el.addEventListener('mouseleave', removeText)
-        })
-      }
-
       // ── Render upsell ──
       function renderUpsell() {
         if (upsellProducts.length === 0) {
@@ -412,7 +367,6 @@ export function pageCart(state) {
           renderRail()
           renderShippingProgress()
         }
-        bindCursor()
       }
 
       render()
@@ -493,10 +447,6 @@ export function pageCart(state) {
         if (href) navigate(href)
       })
 
-      // ── Cleanup ──
-      return () => {
-        if (root.__cursorCleanup) root.__cursorCleanup()
-      }
     },
   }
 }

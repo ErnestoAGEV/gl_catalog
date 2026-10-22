@@ -1,4 +1,5 @@
 import { getRoute, onRouteChange, startRouter, navigate, scrollPositions } from './router.js'
+import { bindHeaderSearch } from '../components/headerSearch.js'
 import { getState, isAdminAuthed, loadProducts, loadCategories, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession, getAdminOrders } from '../store/index.js'
 import { renderRoute } from './views.js'
 import { showToast } from '../utils/toast.js'
@@ -516,16 +517,12 @@ export async function startApp(mountEl) {
     setupGlobalHandlers()
   }
 
-  // "Buscar" del header: aterrizar en el catalogo con el cursor ya en el campo
-  document.addEventListener('click', (event) => {
-    if (!event.target.closest?.('[data-focus-search]')) return
-    setTimeout(() => {
-      const input = document.getElementById('catalog-search')
-      if (input) { input.focus(); input.select() }
-    }, 120)
-  })
+  bindHeaderSearch()
 
   const setupGlobalHandlers = () => {
+    // La vista que se va queda oculta en cache: su buscador no debe seguir abierto
+    document.querySelectorAll('header.hs-open').forEach(h => { if (!h.offsetParent) h.classList.remove('hs-open') })
+
     // Theme toggle — avoid duplicates via data attribute
     const themeToggle = document.getElementById('theme-toggle')
     if (themeToggle && !themeToggle.dataset.glBound) {

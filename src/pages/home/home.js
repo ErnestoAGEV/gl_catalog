@@ -561,71 +561,10 @@ export function pageHome() {
         reveals.forEach(el => observer.observe(el))
       }
 
-      // ── Custom Cursor ──
-      if (!window.matchMedia('(pointer: coarse)').matches) {
-        // Check if cursor elements already exist (idempotent)
-        if (!root.querySelector('.cursor-dot')) {
-          const dot = document.createElement('div')
-          dot.className = 'cursor-dot'
-          const ring = document.createElement('div')
-          ring.className = 'cursor-ring'
-          root.appendChild(dot)
-          root.appendChild(ring)
-
-          document.body.classList.add('home')
-
-          let mouseX = 0, mouseY = 0
-          let ringX = 0, ringY = 0
-
-          const onMouseMove = (e) => {
-            mouseX = e.clientX
-            mouseY = e.clientY
-            dot.style.left = mouseX + 'px'
-            dot.style.top = mouseY + 'px'
-          }
-          document.addEventListener('mousemove', onMouseMove)
-
-          let rafId
-          function lerpRing() {
-            ringX += (mouseX - ringX) * 0.18
-            ringY += (mouseY - ringY) * 0.18
-            ring.style.left = ringX + 'px'
-            ring.style.top = ringY + 'px'
-            rafId = requestAnimationFrame(lerpRing)
-          }
-          rafId = requestAnimationFrame(lerpRing)
-
-          // Hover states
-          const addHover = () => document.body.classList.add('cursor-hover')
-          const removeHover = () => document.body.classList.remove('cursor-hover')
-          const addText = () => document.body.classList.add('cursor-text')
-          const removeText = () => document.body.classList.remove('cursor-text')
-
-          root.querySelectorAll('a, button, [data-cursor-hover]').forEach(el => {
-            el.addEventListener('mouseenter', addHover)
-            el.addEventListener('mouseleave', removeHover)
-          })
-          root.querySelectorAll('input, textarea').forEach(el => {
-            el.addEventListener('mouseenter', addText)
-            el.addEventListener('mouseleave', removeText)
-          })
-
-          // Cleanup on route change (store reference for teardown)
-          root.__cursorCleanup = () => {
-            document.removeEventListener('mousemove', onMouseMove)
-            cancelAnimationFrame(rafId)
-            document.body.classList.remove('home', 'cursor-hover', 'cursor-text')
-            dot.remove()
-            ring.remove()
-          }
-        }
-      }
-
       // Return cleanup function for startApp to call on route change
       return () => {
         clearInterval(autoTimer)
         if (progressAnim) progressAnim.cancel()
-        if (root.__cursorCleanup) root.__cursorCleanup()
       }
     },
   }

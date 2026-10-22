@@ -469,40 +469,6 @@ export function pageProduct(initialState) {
 
     /* ══ MOUNT ══ */
     onMount(root) {
-      // ── Cursor init ──
-      if (!window.matchMedia('(pointer: coarse)').matches) {
-        if (!document.querySelector('.cursor-dot')) {
-          const d = document.createElement('div'); d.className = 'cursor-dot'
-          const r = document.createElement('div'); r.className = 'cursor-ring'
-          document.body.appendChild(d); document.body.appendChild(r)
-        }
-        document.body.classList.add('product')
-        const dot = document.querySelector('.cursor-dot')
-        const ring = document.querySelector('.cursor-ring')
-        let rx = 0, ry = 0, tx = 0, ty = 0
-        const onMouse = (e) => { dot.style.left = e.clientX + 'px'; dot.style.top = e.clientY + 'px'; tx = e.clientX; ty = e.clientY }
-        window.addEventListener('mousemove', onMouse)
-        function tick() { rx += (tx - rx) * 0.18; ry += (ty - ry) * 0.18; ring.style.left = rx + 'px'; ring.style.top = ry + 'px'; root.__cursorRaf = requestAnimationFrame(tick) }
-        tick()
-        root.__cursorCleanup = () => {
-          window.removeEventListener('mousemove', onMouse)
-          if (root.__cursorRaf) cancelAnimationFrame(root.__cursorRaf)
-          document.body.classList.remove('product', 'cursor-hover', 'cursor-text', 'cursor-zoom')
-        }
-      }
-
-      function bindCursor() {
-        if (window.matchMedia('(pointer: coarse)').matches) return
-        const addHover = () => document.body.classList.add('cursor-hover')
-        const removeHover = () => document.body.classList.remove('cursor-hover')
-        root.querySelectorAll('a, button, summary, .swatch-btn, .size-pill, .thumb, [data-cursor-hover]').forEach(el => {
-          el.removeEventListener('mouseenter', addHover)
-          el.removeEventListener('mouseleave', removeHover)
-          el.addEventListener('mouseenter', addHover)
-          el.addEventListener('mouseleave', removeHover)
-        })
-      }
-
       // ── Track view ──
       trackProductView(product.id)
 
@@ -544,7 +510,6 @@ export function pageProduct(initialState) {
         if (curEl) curEl.textContent = String(idx + 1).padStart(2, '0')
         if (captionEl) captionEl.textContent = `Imagen ${String(idx + 1).padStart(2, '0')} de ${String(images.length).padStart(2, '0')}`
         paintThumbs()
-        bindCursor()
       }
 
       root.querySelector('#pdp-prev')?.addEventListener('click', () => go(idx - 1))
@@ -562,7 +527,6 @@ export function pageProduct(initialState) {
       const zoomBtn = root.querySelector('#pdp-zoom')
       const toggleZoom = () => {
         const on = stage.classList.toggle('zoomed')
-        document.body.classList.toggle('cursor-zoom', on)
         zoomBtn?.setAttribute('aria-pressed', String(on))
         if (zoomBtn) zoomBtn.textContent = on ? 'Click para reducir' : 'Click para zoom'
       }
@@ -662,7 +626,6 @@ export function pageProduct(initialState) {
           btn.setAttribute('aria-pressed', 'true')
           selectedColor = btn.dataset.color
           if (colorNameEl) colorNameEl.textContent = selectedColor
-          bindCursor()
         })
       }
 
@@ -692,7 +655,6 @@ export function pageProduct(initialState) {
               Agregar · talla ${selectedSize}
             `
           }
-          bindCursor()
         })
       }
 
@@ -741,9 +703,6 @@ export function pageProduct(initialState) {
         })
       }
 
-      // ── Cursor bind ──
-      bindCursor()
-
       // ── Reveal on scroll ──
       const io = new IntersectionObserver((entries) => {
         entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in') })
@@ -753,7 +712,6 @@ export function pageProduct(initialState) {
       // ── Cleanup ──
       return () => {
         window.removeEventListener('keydown', onKey)
-        root.__cursorCleanup?.()
         io.disconnect()
       }
     }

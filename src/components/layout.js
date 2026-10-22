@@ -2,6 +2,7 @@ import { BRAND } from '../utils/config.js'
 import { INSTAGRAM_URL } from '../pages/home/homeData.js'
 import { normalizePath } from '../core/router.js'
 import { getSearchQuery } from '../store/index.js'
+import { headerSearchButtons, headerSearchForm, headerSearchPanel } from './headerSearch.js'
 
 function container(children, theme = 'dark') {
   const isDark = theme === 'dark'
@@ -15,6 +16,8 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
   const theme = forceLight ? 'light' : (state.theme || 'dark')
   const isDark = theme === 'dark'
   const currentPath = normalizePath(window.location.pathname || '/')
+  // El catalogo trae su propio buscador; dos cajas confunden
+  const isCatalogPath = /^\/(catalog|categoria|marca)(\/|$)/.test(currentPath)
 
   const marqueeItems = `★ Envío gratis +$${BRAND.freeShippingMin} MXN — Nueva temporada 2026 — Cierre por WhatsApp en minutos — 2 tiendas físicas en Colima — Use WELCOME10 · 10% off 1ª compra — `
 
@@ -37,30 +40,30 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
     <header class="relative md:sticky md:top-0 z-40 bg-paper/95 backdrop-blur-lg border-b border-ink/10 ${hideHeader ? 'hidden' : (hideHeaderOnMobile ? 'hidden md:block' : '')}">
       <div class="mx-auto flex w-full max-w-[1440px] items-center justify-between px-6 lg:px-10 py-3">
         <!-- Logo -->
-        <a href="/" class="flex items-center hover:opacity-80 transition-opacity">
+        <a href="/" class="hs-hide-m flex items-center hover:opacity-80 transition-opacity">
           <img src="/logo-176.webp" alt="${BRAND.name}" width="176" height="176" class="h-11 w-auto object-contain" />
         </a>
 
         <!-- Nav (desktop) -->
-        <nav class="hidden md:flex items-center gap-8">
+        <nav class="hs-hide hidden md:flex items-center gap-8">
           <a class="text-[14px] font-medium text-ink/70 hover:text-ink transition-colors ul-link" href="/catalog">Tienda</a>
           <a class="text-[14px] font-medium text-ink/70 hover:text-ink transition-colors ul-link" href="/nosotros">Nosotros</a>
           <a class="text-[14px] font-medium text-ink/70 hover:text-ink transition-colors ul-link" href="/contacto">Contacto</a>
         </nav>
 
+        ${isCatalogPath ? '' : headerSearchForm()}
+
         <!-- Right: Search + Bolsa -->
-        <div class="hidden md:flex items-center gap-3">
-          <a href="/catalog" data-focus-search class="group flex items-center gap-2 h-10 px-4 rounded-full bg-fog text-ink text-[13px] font-medium hover:bg-ink hover:text-paper transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            Buscar
-          </a>
-          <a href="/cart" class="relative group flex items-center gap-2 h-10 px-4 rounded-full ${currentPath.startsWith('/cart') ? 'bg-brand' : 'bg-ink'} text-paper text-[13px] font-medium hover:bg-brand transition-colors">
+        <div class="flex items-center gap-3">
+          ${isCatalogPath ? '' : headerSearchButtons()}
+          <a href="/cart" class="relative group hidden md:flex items-center gap-2 h-10 px-4 rounded-full ${currentPath.startsWith('/cart') ? 'bg-brand' : 'bg-ink'} text-paper text-[13px] font-medium hover:bg-brand transition-colors">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
             Bolsa
             ${count > 0 ? `<span class="cart-count-badge absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full ${currentPath.startsWith('/cart') ? 'bg-paper text-brand' : 'bg-brand text-paper'} text-[10px] font-bold">${count}</span>` : ''}
           </a>
         </div>
       </div>
+      ${isCatalogPath ? '' : headerSearchPanel()}
     </header>
 
     <main class="${mainClasses}" id="main-content">

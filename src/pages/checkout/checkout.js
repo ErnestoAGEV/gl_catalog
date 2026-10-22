@@ -89,27 +89,11 @@ export function pageCheckout(state) {
     forceLight: true,
     html: checkoutHTML({ subtotal, discount, total, freeShipping, itemCount, coupon, upsellProducts }),
     onMount(root) {
-      // Body class for custom cursor
-      document.body.classList.add('checkout')
-
       // Reveal on scroll
       const io = new IntersectionObserver((entries) => {
         entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in') })
       }, { threshold: 0.1 })
       root.querySelectorAll('.reveal').forEach(el => io.observe(el))
-
-      // Cursor bindings
-      const bindCursor = () => {
-        root.querySelectorAll('a, button, [data-cursor-hover], summary, .choice').forEach(el => {
-          el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'))
-          el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'))
-        })
-        root.querySelectorAll('input, textarea, select').forEach(el => {
-          el.addEventListener('mouseenter', () => document.body.classList.add('cursor-text'))
-          el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-text'))
-        })
-      }
-      bindCursor()
 
       // Choice card groups — sync to hidden selects
       const valMap = { transferencia: 'Transferencia', recoger: 'Pago al recoger', envio: 'Envío a domicilio', tienda: 'Recoger en tienda' }
@@ -216,7 +200,6 @@ export function pageCheckout(state) {
           
           attachCouponHandlers()
           attachUpsellHandlers()
-          bindCursor()
         }
       }
 
@@ -484,9 +467,7 @@ export function pageCheckout(state) {
         })
       })
 
-      // Cleanup: remove body class on unmount
       return () => {
-        document.body.classList.remove('checkout', 'cursor-hover', 'cursor-text')
         io.disconnect()
       }
     },
