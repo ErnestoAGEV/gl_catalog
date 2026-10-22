@@ -95,7 +95,7 @@ export const categoryTiles = [
 ]
 
 export const stats = [
-  { number: '31<span class="text-brand">.</span>', caption: 'Años curando · desde 1995' },
+  { number: '31<span class="text-brand">.</span>', caption: 'Años vistiendo a Colima · desde 1995' },
   { number: '2.4<span class="text-brand">k</span>', caption: 'Clientes activos' },
   // La valoracion es real y sale de Google, asi que se enlaza a su ficha: un
   // numero sin fuente es solo marketing. En schema NO va — una valoracion

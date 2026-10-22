@@ -400,7 +400,7 @@ export function pageProduct(initialState) {
                 <!-- Curator note -->
                 ${product.curatorNote ? `
                 <div class="mt-8 border border-ink/10 rounded-lg p-5">
-                  <div class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55 mb-3">Nota del curador</div>
+                  <div class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55 mb-3">Nota de la tienda</div>
                   <p class="font-display font-medium text-[16px] leading-snug tracking-[-0.01em]">"${safeCuratorNote}"</p>
                   <div class="mt-3 font-mono text-[10px] tracking-[0.24em] uppercase text-ink/55">— Equipo G&L</div>
                 </div>` : ''}

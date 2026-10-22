@@ -67,7 +67,7 @@ export function pageCatalog(initialState) {
     : `Todo el<br/><span class="text-brand">cat\u00E1logo</span>.`
   let heroDesc = initialType
     ? (TYPE_DESCRIPTIONS[initialType] || `Explora nuestra selecci\u00F3n de ${initialType.toLowerCase()}.`)
-    : 'Camisas, denim, polos, knits y fragancias. Curadas en Colima \u2014 al mejor precio.'
+    : 'Camisas, denim, polos, knits y fragancias. Elegidas a mano en Colima \u2014 al mejor precio.'
 
   // La marca manda sobre la categoria: /marca/wrangler no es una categoria.
   const safeBrandName = escapeHtml(brandName)
@@ -633,7 +633,7 @@ export function pageCatalog(initialState) {
         const desc = root.querySelector('#hero-desc')
         const safeVal = escapeHtml(val)
         if (h1) h1.innerHTML = val ? `Solo<br/><span class="text-brand">${safeVal}</span>.` : `Todo el<br/><span class="text-brand">cat\u00E1logo</span>.`
-        if (desc) desc.textContent = val ? (TYPE_DESCRIPTIONS[val] || `Explora nuestra selecci\u00F3n de ${val.toLowerCase()}.`) : 'Camisas, denim, polos, knits y fragancias. Curadas en Colima \u2014 al mejor precio.'
+        if (desc) desc.textContent = val ? (TYPE_DESCRIPTIONS[val] || `Explora nuestra selecci\u00F3n de ${val.toLowerCase()}.`) : 'Camisas, denim, polos, knits y fragancias. Elegidas a mano en Colima \u2014 al mejor precio.'
 
         renderGrid({ resetPage: true })
         animateCategoryChange()
@@ -684,7 +684,7 @@ export function pageCatalog(initialState) {
         const h1 = root.querySelector('#hero-h1')
         const desc = root.querySelector('#hero-desc')
         if (h1) h1.innerHTML = `Todo el<br/><span class="text-brand">catálogo</span>.`
-        if (desc) desc.textContent = 'Camisas, denim, polos, knits y fragancias. Curadas en Colima — al mejor precio.'
+        if (desc) desc.textContent = 'Camisas, denim, polos, knits y fragancias. Elegidas a mano en Colima — al mejor precio.'
         window.history.replaceState(null, '', '/catalog')
         closeSheet()
         renderGrid({ resetPage: true })
