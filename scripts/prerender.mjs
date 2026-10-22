@@ -11,7 +11,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { getSeoForRoute } from '../src/core/routeSeo.js'
+import { categoryLabel, getSeoForRoute } from '../src/core/routeSeo.js'
 import { infoPages } from '../src/pages/info/infoData.js'
 import { INSTAGRAM_URL, STORE_PHONE, stores } from '../src/pages/home/homeData.js'
 import {
@@ -576,7 +576,7 @@ for (const category of categories) {
       {
         '@context': 'https://schema.org',
         '@type': 'CollectionPage',
-        name: `${category} para hombre en Colima`,
+        name: categoryLabel(category),
         url: absolute(path),
         mainEntity: itemListLd(items),
       },
@@ -603,14 +603,14 @@ for (const brand of brands) {
     image: brand.items[0]?.image_url || DEFAULT_IMAGE,
     shell: contentShell(`
             ${breadcrumbNav(trail)}
-            <h1 class="font-heading font-[800] text-[clamp(40px,7vw,88px)] leading-[0.9] tracking-[-0.03em] mb-6">${escapeHtml(brand.name)} en Colima</h1>
+            <h1 class="font-heading font-[800] text-[clamp(40px,7vw,88px)] leading-[0.9] tracking-[-0.03em] mb-6">${escapeHtml(brand.name)}</h1>
             <p class="text-[17px] text-ink/70 max-w-[640px] leading-relaxed mb-10">${escapeHtml(brandIntro(brand.name, brand.items))}</p>
             ${productGrid(brand.items)}`),
     ld: [
       {
         '@context': 'https://schema.org',
         '@type': 'CollectionPage',
-        name: `${brand.name} para hombre en Colima`,
+        name: `${brand.name} para hombre`,
         url: absolute(path),
         mainEntity: itemListLd(brand.items),
       },

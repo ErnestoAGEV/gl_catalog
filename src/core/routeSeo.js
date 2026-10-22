@@ -4,11 +4,18 @@
 import { findProductByPath, productDescription, productPath, productTitle } from '../utils/productCopy.js'
 import { findBrandBySlug } from '../utils/brands.js'
 
+// "Camisas para hombre", no "Camisas en Colima": la ciudad en cada title se leia
+// forzada. Colima vive en la descripcion y en las paginas de sucursal.
+export function categoryLabel(category) {
+  const label = category.replace(/,/g, ' y ')
+  return /dama/i.test(label) ? label : `${label} para hombre`
+}
+
 export function getSeoForRoute(path, basePath, state) {
   if (basePath === '/') {
     return {
-      title: 'G&L | Tu fit perfecto',
-      description: 'Descubre ropa y accesorios para hombre en G&L: camisas, polos, jeans y perfumes con estilo moderno.',
+      title: 'G&L Boutique | Ropa y perfumes para hombre',
+      description: 'Camisas, polos, jeans y perfumes de las mejores marcas. Dos tiendas en Colima desde 1995 y envío a todo México.',
       canonicalPath: '/',
       robots: 'index,follow',
     }
@@ -16,8 +23,8 @@ export function getSeoForRoute(path, basePath, state) {
 
   if (basePath === '/catalog') {
     return {
-      title: 'Catalogo de Ropa para Hombre | G&L',
-      description: 'Explora el catalogo de G&L con camisas, polos, jeans y perfumes para hombre. Compra facil y segura.',
+      title: 'Catálogo de ropa para hombre | G&L',
+      description: 'Explora el catálogo de G&L: camisas, polos, jeans y perfumes para hombre. Compra en línea o por WhatsApp.',
       canonicalPath: '/catalog',
       robots: 'index,follow',
     }
@@ -26,8 +33,8 @@ export function getSeoForRoute(path, basePath, state) {
   if (basePath.startsWith('/categoria/')) {
     const category = decodeURIComponent(basePath.split('/categoria/')[1] || '')
     return {
-      title: `${category.replace(/,/g, ' y ')} en Colima | G&L`,
-      description: `Compra ${category.replace(/,/g, ' y ').toLowerCase()} para hombre con estilo premium en Colima. G&L Tu fit perfecto.`,
+      title: `${categoryLabel(category)} | G&L`,
+      description: `${categoryLabel(category)} de las mejores marcas, con existencias en nuestras dos tiendas de Colima. Envío a todo México.`,
       canonicalPath: basePath,
       robots: 'index,follow',
     }
@@ -37,10 +44,10 @@ export function getSeoForRoute(path, basePath, state) {
     const marca = findBrandBySlug(state?.products || [], basePath.split('/marca/')[1])
     if (marca) {
       return {
-        title: `${marca.name} en Colima | G&L`,
+        title: `${marca.name} para hombre | G&L`,
         description:
-          `${marca.name} para hombre en Colima: ${marca.items.length} piezas con existencias en ` +
-          `nuestras dos tiendas. Precios, tallas y compra por WhatsApp.`,
+          `${marca.items.length} piezas de ${marca.name} con existencias en nuestras dos tiendas de Colima. ` +
+          `Precios, tallas y compra por WhatsApp.`,
         canonicalPath: basePath,
         robots: 'index,follow',
       }
@@ -49,7 +56,7 @@ export function getSeoForRoute(path, basePath, state) {
     // ni declarar un canonical inventado: mismo criterio que el shell de la SPA.
     return {
       title: 'Marca no encontrada | G&L',
-      description: 'Esa marca no esta en el catalogo. Mira lo que hay ahora en la tienda.',
+      description: 'Esa marca no está en el catálogo. Mira lo que hay ahora en la tienda.',
       canonicalPath: '/catalog',
       robots: 'noindex,follow',
     }
@@ -77,32 +84,32 @@ export function getSeoForRoute(path, basePath, state) {
 
   const infoSeo = {
     '/sucursales': {
-      title: 'Sucursales en Colima y Villa de Alvarez | G&L',
-      description: 'Las dos tiendas fisicas de G&L: Colima Centro y Villa de Alvarez. Direcciones, horarios y como llegar.',
+      title: 'Sucursales en Colima y Villa de Álvarez | G&L',
+      description: 'Las dos tiendas físicas de G&L: Colima Centro y Villa de Álvarez. Direcciones, horarios y cómo llegar.',
     },
     '/sucursales/colima-centro': {
       title: 'Tienda de ropa para hombre en Colima Centro | G&L',
-      description: 'G&L Colima Centro, Zaragoza 140 a media cuadra del Jardin Libertad. Camisas, polos, jeans y perfumes. Horarios y como llegar.',
+      description: 'G&L Colima Centro, Zaragoza 140 a media cuadra del Jardín Libertad. Camisas, polos, jeans y perfumes. Horarios y cómo llegar.',
     },
     '/sucursales/villa-de-alvarez': {
-      title: 'Tienda de ropa para hombre en Villa de Alvarez | G&L',
-      description: 'G&L Villa de Alvarez, Maria Ahumada de Gomez 30 Local 6. Moda masculina, catalogo completo y atencion por WhatsApp.',
+      title: 'Tienda de ropa para hombre en Villa de Álvarez | G&L',
+      description: 'G&L Villa de Álvarez, María Ahumada de Gómez 30 Local 6. Moda masculina, catálogo completo y atención por WhatsApp.',
     },
     '/nosotros': {
-      title: 'Nosotros | Boutique de moda masculina en Colima | G&L',
-      description: 'G&L viste a los hombres colimenses desde 1995. Dos tiendas fisicas, marcas escogidas a mano y atencion por WhatsApp.',
+      title: 'Nosotros | Boutique de moda masculina desde 1995 | G&L',
+      description: 'G&L viste a los hombres colimenses desde 1995. Dos tiendas físicas, marcas escogidas a mano y atención por WhatsApp.',
     },
     '/envios': {
-      title: 'Envios y formas de pago | G&L',
-      description: 'Envio $150 MXN a todo Mexico, gratis desde $1,499. Entrega en 3 a 4 dias habiles. Efectivo, transferencia, tarjeta y link de pago.',
+      title: 'Envíos y formas de pago | G&L',
+      description: 'Envío $150 MXN a todo México, gratis desde $1,499. Entrega en 3 a 4 días hábiles. Efectivo, transferencia, tarjeta y link de pago.',
     },
     '/cambios': {
-      title: 'Cambios y garantia | G&L',
-      description: 'Cambia tu prenda dentro de los 8 dias siguientes a la entrega. Si el error fue nuestro, el envio corre por nuestra cuenta.',
+      title: 'Cambios y garantía | G&L',
+      description: 'Cambia tu prenda dentro de los 8 días siguientes a la entrega. Si el error fue nuestro, el envío corre por nuestra cuenta.',
     },
     '/contacto': {
       title: 'Contacto y sucursales en Colima | G&L',
-      description: 'Escribenos por WhatsApp o visitanos en Colima Centro y Villa de Alvarez. Horarios, direcciones y como llegar.',
+      description: 'Escríbenos por WhatsApp o visítanos en Colima Centro y Villa de Álvarez. Horarios, direcciones y cómo llegar.',
     },
   }
 
