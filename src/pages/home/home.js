@@ -500,13 +500,6 @@ export function pageHome() {
         })
       }
 
-      // ── Category links ──
-      root.querySelectorAll('a[href^="/categoria/"]').forEach(link => {
-        link.addEventListener('click', () => {
-          window.__glForceCatalogRebuild = true
-        })
-      })
-
       // ── Best sellers row click ──
       root.querySelectorAll('.ls-row[data-href]').forEach(row => {
         row.addEventListener('click', (e) => {

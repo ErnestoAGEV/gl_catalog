@@ -78,6 +78,8 @@ if (typeof document !== 'undefined' && !window.__glMobileMenuBound) {
   // Se registra al importar, antes que el router, para cerrar antes de navegar
   window.__glMobileMenuBound = true
   document.addEventListener('click', (e) => {
+    // El catalogo en cache conserva la categoria anterior: entrar a otra lo reconstruye
+    if (e.target.closest?.('a[href^="/categoria/"]')) window.__glForceCatalogRebuild = true
     const opener = e.target.closest?.('[data-mmenu-open]')
     if (opener) return openMenu(opener)
     if (e.target.closest?.('[data-mmenu-close]')) return closeMenu({ restoreFocus: true })

@@ -141,7 +141,7 @@ export function bindHeaderSearch() {
     if (opener) return openSearch(header)
     if (e.target.closest?.('[data-hsearch-close]')) return closeSearch(header, { restoreFocus: true })
     if (e.target.closest?.('[data-hsearch-all]')) { e.preventDefault(); return goToCatalog(header) }
-    if (e.target.closest?.('[data-hsearch-cat]')) { window.__glForceCatalogRebuild = true; return closeSearch(header) }
+    if (e.target.closest?.('[data-hsearch-cat]')) return closeSearch(header)
     if (e.target.closest?.('[data-hsearch-result]')) return closeSearch(header)
     // Clic fuera del header abierto lo cierra
     document.querySelectorAll('header.hs-open').forEach(h => { if (h !== header) closeSearch(h) })

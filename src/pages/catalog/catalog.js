@@ -126,27 +126,30 @@ export function pageCatalog(initialState) {
       <section id="catalog-toolbar" class="sticky top-0 md:top-[68px] z-30 bg-paper/95 backdrop-blur-md border-b border-ink/10 toolbar-shadow">
         <div class="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-10 py-2.5 md:py-4">
           <!-- Banda unica: categorias + busqueda + talla + orden + filtros -->
-          <div class="flex flex-wrap md:flex-nowrap items-center gap-2 md:gap-3">
+          <!-- En movil tres filas: buscar + filtros, categorias, conteo + orden -->
+          <div class="flex flex-wrap md:flex-nowrap items-center gap-x-2 gap-y-2 md:gap-3">
             <!-- Chips de categoria: en movil fila propia a todo lo ancho, con el
                  borde derecho desvanecido para que se note que hay mas al deslizar -->
-            <div class="flex items-center gap-1.5 md:gap-2 overflow-x-auto hide-scrollbar basis-full md:basis-auto md:flex-1 min-w-0 order-1 -mx-1 pl-1 pr-8 md:px-1 [mask-image:linear-gradient(to_right,#000_calc(100%_-_40px),transparent)] md:[mask-image:none]" id="cat-chips" role="group" aria-label="Categor\u00EDas">
+            <div class="flex items-center gap-1.5 md:gap-2 relative overflow-x-auto hide-scrollbar basis-full md:basis-auto md:flex-1 min-w-0 order-3 md:order-1 -mx-1 pl-1 pr-8 md:px-1 [mask-image:linear-gradient(to_right,#000_calc(100%_-_40px),transparent)] md:[mask-image:none]" id="cat-chips" role="group" aria-label="Categor\u00EDas">
               <button type="button" class="chip flex-shrink-0 !text-[11px]${!initialType ? ' active' : ''}" aria-pressed="${!initialType}" data-cat="">Todo \u00B7 <span class="opacity-60 ml-1" id="totalCount">${publicProducts.length}</span></button>
               ${chipHtml}
             </div>
             <!-- Sort + filters button -->
-            <div class="relative flex items-center gap-1.5 flex-shrink-0 order-3">
-              <select id="sizeSelect" name="size" class="bare chip pr-8 !text-[11px] max-md:!hidden" aria-label="Filtrar por talla" style="background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 stroke=%22%230A0A0F%22 stroke-width=%221.6%22 viewBox=%220 0 24 24%22><path stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 9l6 6 6-6%22/></svg>'); background-repeat:no-repeat; background-position:right 10px center; background-size:10px;">${options(sizes, 'Talla')}</select>
-              <select id="sortSelect" aria-label="Ordenar" class="bare chip pr-8 !text-[11px] max-md:!h-[44px]" style="background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 stroke=%22%230A0A0F%22 stroke-width=%221.6%22 viewBox=%220 0 24 24%22><path stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 9l6 6 6-6%22/></svg>'); background-repeat:no-repeat; background-position:right 10px center; background-size:10px;">
+            <span id="resultCountMobile" class="md:hidden order-4 basis-1/2 grow min-w-0 truncate font-mono text-[11px] tracking-[0.18em] uppercase text-ink/60" aria-live="polite">${publicProducts.length} resultados</span>
+            <div class="relative flex items-center gap-1.5 flex-shrink-0 order-5 md:order-3">
+              <select id="sizeSelect" name="size" class="bare chip !pr-8 !text-[11px] max-md:!hidden" aria-label="Filtrar por talla" style="background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 stroke=%22%230A0A0F%22 stroke-width=%221.6%22 viewBox=%220 0 24 24%22><path stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 9l6 6 6-6%22/></svg>'); background-repeat:no-repeat; background-position:right 10px center; background-size:10px;">${options(sizes, 'Talla')}</select>
+              <select id="sortSelect" aria-label="Ordenar" class="bare chip !pr-8 min-w-[132px] !text-[11px] max-md:!h-[44px] max-md:!border-transparent max-md:!bg-transparent max-md:-mr-2" style="background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 stroke=%22%230A0A0F%22 stroke-width=%221.6%22 viewBox=%220 0 24 24%22><path stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 9l6 6 6-6%22/></svg>'); background-repeat:no-repeat; background-position:right 10px center; background-size:10px;">
                 <option value="">Destacados</option>
                 <option value="price-asc">Precio \u2191</option>
                 <option value="price-desc">Precio \u2193</option>
               </select>
-              <button id="open-filters-btn" type="button" class="chip flex-shrink-0 relative justify-center max-md:!h-[44px] max-md:!w-[44px]" title="Filtros" aria-label="Abrir filtros" aria-haspopup="dialog" aria-controls="filter-controls-mobile">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18M7 12h10m-6 8h2"/></svg>
-                <span id="filters-badge" class="hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] rounded-full bg-brand text-paper text-[11px] font-bold flex items-center justify-center px-1"></span>
-              </button>
             </div>
-            <div class="relative order-first basis-full md:order-2 md:basis-auto flex-1 min-w-[120px] md:flex-none md:w-[240px] md:shrink-0" id="search-container">
+            <button id="open-filters-btn" type="button" class="chip flex-shrink-0 relative justify-center order-2 md:order-4 max-md:!h-[44px] max-md:!px-4" title="Filtros" aria-label="Abrir filtros" aria-haspopup="dialog" aria-controls="filter-controls-mobile">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18M7 12h10m-6 8h2"/></svg>
+              <span class="md:hidden">Filtros</span>
+              <span id="filters-badge" class="hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] rounded-full bg-brand text-paper text-[11px] font-bold flex items-center justify-center px-1"></span>
+            </button>
+            <div class="relative order-1 md:order-2 flex-1 min-w-[120px] md:flex-none md:w-[240px] md:shrink-0" id="search-container">
               <div class="flex items-center w-full h-[44px] md:h-10 rounded-full border border-ink/10 focus-within:border-ink/50 bg-fog/50 px-3 md:px-4 gap-2">
                 <svg class="w-3.5 h-3.5 md:w-4 md:h-4 text-ink/60 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 <input type="search" id="catalog-search" class="flex-1 bg-transparent focus:outline-none text-[16px] md:text-[13px] font-mono min-w-0" autocomplete="off" placeholder="Buscar..." value="${escapeHtml(getSearchQuery() || '')}" aria-label="Buscar productos" />
@@ -156,11 +159,6 @@ export function pageCatalog(initialState) {
           </div>
           <!-- Estado: solo aparece cuando hay un filtro o una busqueda puestos -->
           <div id="active-filters" class="hidden mt-1.5 md:mt-3 items-center gap-1.5 overflow-x-auto hide-scrollbar -mx-1 px-1"></div>
-          <!-- Mobile result count (compact) -->
-          <div class="flex md:hidden mt-1.5 items-center justify-between gap-3 font-mono text-[11px] tracking-[0.18em] uppercase text-ink/60">
-            <span id="resultCountMobile" class="min-w-0 truncate" aria-live="polite">${publicProducts.length} resultados</span>
-            <button type="button" id="open-filters-link-mobile" class="shrink-0 -my-3 py-3 uppercase tracking-[0.18em] text-ink/70 hover:text-brand flex items-center gap-1" aria-haspopup="dialog" aria-controls="filter-controls-mobile">Filtros<span id="filters-badge-mobile-text" class="hidden min-w-[16px] h-4 rounded-full bg-brand text-paper text-[11px] font-bold flex items-center justify-center px-1"></span> \u2192</button>
-          </div>
         </div>
       </section>
 
@@ -267,11 +265,18 @@ export function pageCatalog(initialState) {
       const emptyLinks = qs(root, '#empty-links')
 
       // El estado del chip activo vive en .active y en aria-pressed a la vez
+      let scrolledChip = null
       const setActiveChip = (val) => {
+        const changed = val !== scrolledChip
+        scrolledChip = val
         root.querySelectorAll('#cat-chips .chip').forEach(b => {
           const on = (b.dataset.cat || '') === val
           b.classList.toggle('active', on)
           b.setAttribute('aria-pressed', String(on))
+          // Al llegar a /categoria/Polos el chip activo quedaba fuera, a la derecha.
+          // Solo al cambiar de categoria: renderGrid llama esto en cada tecla del buscador
+          const row = b.parentElement
+          if (on && changed && (b.offsetLeft < row.scrollLeft || b.offsetLeft + b.offsetWidth > row.scrollLeft + row.clientWidth)) row.scrollLeft = b.offsetLeft - 16
         })
       }
 
@@ -639,15 +644,10 @@ export function pageCatalog(initialState) {
         }
 
         const badgeMobile = root.querySelector('#filters-badge')
-        const badgeMobileText = root.querySelector('#filters-badge-mobile-text')
 
         if (badgeMobile) {
           if (advancedCount > 0) { badgeMobile.textContent = advancedCount; badgeMobile.classList.remove('hidden') }
           else { badgeMobile.classList.add('hidden') }
-        }
-        if (badgeMobileText) {
-          if (advancedCount > 0) { badgeMobileText.textContent = advancedCount; badgeMobileText.classList.remove('hidden') }
-          else { badgeMobileText.classList.add('hidden') }
         }
 
         // Filtros activos visibles y removibles sin abrir el panel (movil)
@@ -752,7 +752,6 @@ export function pageCatalog(initialState) {
         else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
       })
 
-      root.querySelector('#open-filters-link-mobile')?.addEventListener('click', () => openSheet())
       root.querySelector('#open-filters-btn')?.addEventListener('click', () => openSheet())
       root.querySelector('#close-filters')?.addEventListener('click', closeSheet)
       sheetBackdrop?.addEventListener('click', closeSheet)

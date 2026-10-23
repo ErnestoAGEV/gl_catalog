@@ -355,6 +355,8 @@ export async function startApp(mountEl) {
     closeMiniCart()                                          // el aviso de la bolsa no debe seguir sobre la pagina nueva
 
     const cacheKey = path === '/' ? '/' : (path.startsWith('/catalog') || path.startsWith('/categoria/') ? '/catalog' : null)
+    // Un clic a la categoria en la que ya estas no navega: el flag no debe sobrevivir a otra ruta
+    if (cacheKey !== '/catalog') delete window.__glForceCatalogRebuild
 
     // Capture the saved scroll position for this route BEFORE rendering
     let savedScroll = scrollPositions.get(path) ?? null
@@ -391,6 +393,8 @@ export async function startApp(mountEl) {
     // Check if the catalog needs to be rebuilt (e.g. navigating from home category cards)
     if (window.__glForceCatalogRebuild && cacheKey === '/catalog') {
       delete window.__glForceCatalogRebuild
+      // Filtros y scroll guardados de una visita anterior no aplican a la categoria nueva
+      sessionStorage.removeItem('gl_catalog_state')
       // Clear any saved scroll so the page starts at the top
       scrollPositions.delete(path)
       savedScroll = null
