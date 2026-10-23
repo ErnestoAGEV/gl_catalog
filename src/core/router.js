@@ -5,6 +5,15 @@ const listeners = new Set()
 // Scroll position memory: key = normalized path, value = scrollY
 export const scrollPositions = new Map()
 
+// En popstate location ya apunta a la ruta nueva: hace falta recordar de cual se sale
+let lastRoute = null
+
+function currentScrollY() {
+  // lockScroll() fija el body y guarda la posicion en top: sin esto se guardaba 0
+  if (document.body.style.position === 'fixed') return Math.abs(parseInt(document.body.style.top, 10)) || 0
+  return window.scrollY || (document.scrollingElement ? document.scrollingElement.scrollTop : 0) || document.documentElement.scrollTop || document.body.scrollTop || 0
+}
+
 export function normalizePath(path) {
   if (!path) return '/'
   const withSlash = path.startsWith('/') ? path : `/${path}`
@@ -41,7 +50,8 @@ function notify(isPop = false) {
   // Reset any pinch-to-zoom so the new page renders at 1×
   resetZoom()
 
-  for (const fn of listeners) fn(getRoute(), { isPop })
+  lastRoute = getRoute()
+  for (const fn of listeners) fn(lastRoute, { isPop })
 }
 
 export function getRoute() {
@@ -57,8 +67,7 @@ export function navigate(path) {
   if (next === current) return
 
   // Save current scroll position before leaving
-  const scrollY = window.scrollY || (document.scrollingElement ? document.scrollingElement.scrollTop : 0) || document.documentElement.scrollTop || document.body.scrollTop || 0
-  scrollPositions.set(current, scrollY)
+  scrollPositions.set(current, currentScrollY())
 
   window.history.pushState(null, '', next)
   notify()
@@ -80,7 +89,19 @@ export function startRouter() {
     window.history.replaceState(null, '', legacyRoute)
   }
 
-  const onPopState = () => notify(true)
+  // El catalogo reescribe su URL con replaceState (categoria, ?q=) sin pasar por
+  // notify(): sin esto lastRoute queda viejo y Adelante vuelve a caer arriba
+  const nativeReplace = history.replaceState.bind(history)
+  history.replaceState = (...args) => {
+    nativeReplace(...args)
+    if (lastRoute !== null) lastRoute = getRoute()
+  }
+
+  const onPopState = () => {
+    // Sin esto Adelante caia arriba: solo navigate() guardaba la posicion
+    if (lastRoute && lastRoute !== getRoute()) scrollPositions.set(lastRoute, currentScrollY())
+    notify(true)
+  }
 
   const onDocumentClick = (event) => {
     if (event.defaultPrevented) return

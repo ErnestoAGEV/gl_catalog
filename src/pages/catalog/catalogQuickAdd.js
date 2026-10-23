@@ -6,9 +6,9 @@
  *   - Llama a addToCart y showMiniCart
  */
 
-import { addToCart, cartCount, getState } from '../../store/index.js'
+import { addToCart, getState } from '../../store/index.js'
 import { showMiniCart } from '../../components/miniCart.js'
-import { sizeSelectionModal } from './catalogModals.js'
+import { sizeSelectionModal, trapModal } from './catalogModals.js'
 import { flyToCart } from '../../utils/dom.js'
 
 /**
@@ -34,25 +34,16 @@ export function handleQuickAdd(ev, btn, modalContainer) {
     addToCart({ productId: id, size, color: '', qty: 1 })
     flyToCart(btn.closest('a')?.querySelector('img'))
 
-    // Actualizar badge del carrito
-    const count = cartCount()
-    const cartBadge = document.querySelector('a[href="/cart"] span')
-    if (cartBadge) {
-      cartBadge.textContent = count
-    } else {
-      const cartLink = document.querySelector('a[href="/cart"]')
-      if (cartLink) {
-        const b = document.createElement('span')
-        b.className = 'absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white'
-        b.textContent = count
-        cartLink.appendChild(b)
-      }
-    }
-
     // Animación: icono → spinner → check
     const icon = btn.querySelector('.quick-add-icon')
     const spinner = btn.querySelector('.quick-add-spinner')
     const check = btn.querySelector('.quick-add-check')
+    // El boton de "Va perfecta con esto" no trae los iconos de la animacion
+    if (!icon || !spinner || !check) {
+      showMiniCart(id)
+      delete btn.dataset.busy
+      return
+    }
     icon.classList.add('hidden')
     spinner.classList.remove('hidden')
 
@@ -74,7 +65,12 @@ export function handleQuickAdd(ev, btn, modalContainer) {
   // Abrir modal de selección de talla
   modalContainer.innerHTML = sizeSelectionModal(product)
 
-  const closeModal = () => { modalContainer.innerHTML = '' }
+  let release = null
+  const closeModal = () => {
+    modalContainer.innerHTML = ''
+    release?.()
+  }
+  release = trapModal(modalContainer, closeModal)
 
   const closeBtn = modalContainer.querySelector('#close-quick-add')
   if (closeBtn) closeBtn.addEventListener('click', closeModal)

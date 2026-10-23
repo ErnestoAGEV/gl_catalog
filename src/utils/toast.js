@@ -7,10 +7,14 @@ export function showToast(message, type = 'success', duration = null) {
     container.id = 'toast-container'
     // Keep toast above modal overlays using shared layer scale.
     container.className = 'fixed bottom-28 md:bottom-10 left-1/2 -translate-x-1/2 layer-toast flex flex-col gap-2 pointer-events-none'
+    container.setAttribute('role', 'status')
+    container.setAttribute('aria-live', 'polite')
     document.body.appendChild(container)
   }
 
   const toast = document.createElement('div')
+  // Los errores interrumpen al lector de pantalla; el resto espera su turno
+  if (type === 'error') toast.setAttribute('role', 'alert')
   const isDark = document.documentElement.classList.contains('dark')
   
   // Base classes

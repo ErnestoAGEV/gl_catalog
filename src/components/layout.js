@@ -3,6 +3,98 @@ import { INSTAGRAM_URL } from '../pages/home/homeData.js'
 import { normalizePath } from '../core/router.js'
 import { getSearchQuery } from '../store/index.js'
 import { headerSearchButtons, headerSearchForm, headerSearchPanel } from './headerSearch.js'
+import { lockScroll, unlockScroll } from '../utils/dom.js'
+
+const CATEGORY_LINKS = [
+  ['Camisas', 'Camisas'], ['Polos', 'Polos'], ['Jeans', 'Pantalones'], ['Perfumes', 'Perfumes'],
+  ['Zapatos', 'Zapatos'], ['Shorts', 'Shorts'], ['Playeras', 'Playeras'], ['Perfumes Dama', 'Perfumes Dama'],
+].map(([label, cat]) => [label, `/categoria/${encodeURIComponent(cat)}`])
+
+const HELP_LINKS = [
+  ['Sucursales', '/sucursales'], ['Envíos y pagos', '/envios'], ['Cambios', '/cambios'],
+  ['Contacto', '/contacto'], ['Nosotros', '/nosotros'],
+]
+
+// Menu movil: en movil Nosotros, Envios, Cambios, Sucursales y Contacto solo
+// vivian en el footer. Cada vista en cache trae su propia copia, asi que va por
+// data-attrs y delegacion, como el buscador del header.
+function mobileMenu(currentPath, isCatalogPath) {
+  // Las categorias no marcan activo: la vista del catalogo se cachea entre categorias
+  const item = (label, href, on, extra = '') => `<li><a href="${href}"${on ? ' aria-current="page"' : ''}${extra} class="flex items-center justify-between min-h-[48px] text-[16px] font-medium ${on ? 'text-brand' : 'text-ink'}">${label}<span aria-hidden="true" class="text-ink/30">→</span></a></li>`
+  return `
+    <div data-mmenu hidden class="md:hidden">
+      <div data-mmenu-close class="fixed inset-0 z-[60] bg-ink/40"></div>
+      <div role="dialog" aria-modal="true" aria-label="Menú" class="fixed inset-x-0 bottom-0 z-[61] max-h-[85dvh] overflow-y-auto overscroll-contain rounded-t-[20px] bg-paper text-ink pb-safe">
+        <div class="sticky top-0 flex items-center justify-between bg-paper px-6 pt-3 pb-2 border-b border-ink/10">
+          <span class="font-mono text-[11px] tracking-[0.24em] uppercase text-ink/60">Menú</span>
+          <button type="button" data-mmenu-close aria-label="Cerrar menú" class="-mr-2 flex items-center justify-center w-11 h-11 rounded-full text-ink hover:bg-fog transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-width="2" d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <nav aria-label="Menú" class="px-6 pb-6">
+          <ul class="divide-y divide-ink/10">
+            ${item('Inicio', '/', currentPath === '/')}
+            ${item('Tienda', '/catalog', isCatalogPath)}
+          </ul>
+          <p class="mt-5 mb-1 font-mono text-[11px] tracking-[0.24em] uppercase text-ink/60">Categorías</p>
+          <ul class="grid grid-cols-2 gap-x-6">
+            ${CATEGORY_LINKS.map(([label, href]) => `<li><a href="${href}" class="flex items-center min-h-[44px] text-[15px] text-ink/80">${label}</a></li>`).join('')}
+          </ul>
+          <p class="mt-5 mb-1 font-mono text-[11px] tracking-[0.24em] uppercase text-ink/60">Ayuda</p>
+          <ul class="divide-y divide-ink/10">
+            ${HELP_LINKS.map(([label, href]) => item(label, href, currentPath === href)).join('')}
+            ${item('Instagram', INSTAGRAM_URL, false, ' target="_blank" rel="noopener noreferrer"')}
+          </ul>
+        </nav>
+      </div>
+    </div>`
+}
+
+const FOCUSABLE = 'a[href], button:not([disabled])'
+let menuOpener = null
+
+function openMenu(opener) {
+  const menu = opener.closest('[data-mnav]')?.querySelector('[data-mmenu]')
+  if (!menu || !menu.hidden) return
+  menuOpener = opener
+  menu.hidden = false
+  opener.setAttribute('aria-expanded', 'true')
+  lockScroll()
+  menu.querySelector('button[data-mmenu-close]')?.focus()
+}
+
+function closeMenu({ restoreFocus = false } = {}) {
+  const menu = document.querySelector('[data-mmenu]:not([hidden])')
+  if (!menu) return
+  menu.hidden = true
+  menuOpener?.setAttribute('aria-expanded', 'false')
+  // Antes de que el router guarde el scroll: con el body fijo scrollY vale 0
+  unlockScroll()
+  if (restoreFocus) menuOpener?.focus()
+  menuOpener = null
+}
+
+if (typeof document !== 'undefined' && !window.__glMobileMenuBound) {
+  // Se registra al importar, antes que el router, para cerrar antes de navegar
+  window.__glMobileMenuBound = true
+  document.addEventListener('click', (e) => {
+    const opener = e.target.closest?.('[data-mmenu-open]')
+    if (opener) return openMenu(opener)
+    if (e.target.closest?.('[data-mmenu-close]')) return closeMenu({ restoreFocus: true })
+    if (e.target.closest?.('[data-mmenu] a[href]')) closeMenu()
+  })
+  document.addEventListener('keydown', (e) => {
+    const menu = document.querySelector('[data-mmenu]:not([hidden])')
+    if (!menu) return
+    if (e.key === 'Escape') { e.preventDefault(); return closeMenu({ restoreFocus: true }) }
+    if (e.key !== 'Tab') return
+    const items = [...menu.querySelectorAll(FOCUSABLE)]
+    const first = items[0], last = items[items.length - 1]
+    if (e.shiftKey && (document.activeElement === first || !menu.contains(document.activeElement))) { e.preventDefault(); last.focus() }
+    else if (!e.shiftKey && (document.activeElement === last || !menu.contains(document.activeElement))) { e.preventDefault(); first.focus() }
+  })
+  window.addEventListener('popstate', () => closeMenu())
+}
 
 function container(children, theme = 'dark') {
   const isDark = theme === 'dark'
@@ -18,8 +110,11 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
   const currentPath = normalizePath(window.location.pathname || '/')
   // El catalogo trae su propio buscador; dos cajas confunden
   const isCatalogPath = /^\/(catalog|categoria|marca)(\/|$)/.test(currentPath)
+  const isCartPath = currentPath.startsWith('/cart')
+  const current = (on) => on ? ' aria-current="page"' : ''
+  const navLink = (href, label, on) => `<a class="text-[14px] font-medium ${on ? 'text-ink' : 'text-ink/70'} hover:text-ink transition-colors ul-link" href="${href}"${current(on)}>${label}</a>`
 
-  const marqueeItems = `★ Envío gratis +$${BRAND.freeShippingMin} MXN — Nueva temporada 2026 — Cierre por WhatsApp en minutos — 2 tiendas físicas en Colima — Use WELCOME10 · 10% off 1ª compra — `
+  const marqueeItems = `★ Envío gratis +$${BRAND.freeShippingMin} MXN — Nueva temporada 2026 — Cierre por WhatsApp en minutos — 2 tiendas físicas en Colima — Usa WELCOME10 · 10% off 1ª compra — `
 
   const bottomMargin = hideHeader ? '' : 'mb-16 md:mb-0'
   const mainClasses = fullWidth
@@ -40,15 +135,15 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
     <header class="relative md:sticky md:top-0 z-40 bg-paper/95 backdrop-blur-lg border-b border-ink/10 ${hideHeader ? 'hidden' : (hideHeaderOnMobile ? 'hidden md:block' : '')}">
       <div class="mx-auto flex w-full max-w-[1440px] items-center justify-between px-6 lg:px-10 py-3">
         <!-- Logo -->
-        <a href="/" class="hs-hide-m flex items-center hover:opacity-80 transition-opacity">
+        <a href="/" aria-label="${BRAND.name} — inicio" class="hs-hide-m flex items-center hover:opacity-80 transition-opacity">
           <img src="/logo-176.webp" alt="${BRAND.name}" width="176" height="176" class="h-11 w-auto object-contain" />
         </a>
 
         <!-- Nav (desktop) -->
         <nav class="hs-hide hidden md:flex items-center gap-8">
-          <a class="text-[14px] font-medium text-ink/70 hover:text-ink transition-colors ul-link" href="/catalog">Tienda</a>
-          <a class="text-[14px] font-medium text-ink/70 hover:text-ink transition-colors ul-link" href="/nosotros">Nosotros</a>
-          <a class="text-[14px] font-medium text-ink/70 hover:text-ink transition-colors ul-link" href="/contacto">Contacto</a>
+          ${navLink('/catalog', 'Tienda', isCatalogPath)}
+          ${navLink('/nosotros', 'Nosotros', currentPath === '/nosotros')}
+          ${navLink('/contacto', 'Contacto', currentPath === '/contacto')}
         </nav>
 
         ${isCatalogPath ? '' : headerSearchForm()}
@@ -56,10 +151,10 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
         <!-- Right: Search + Bolsa -->
         <div class="flex items-center gap-3">
           ${isCatalogPath ? '' : headerSearchButtons()}
-          <a href="/cart" class="relative group hidden md:flex items-center gap-2 h-10 px-4 rounded-full ${currentPath.startsWith('/cart') ? 'bg-brand' : 'bg-ink'} text-paper text-[13px] font-medium hover:bg-brand transition-colors">
+          <a href="/cart" data-cart-link${current(isCartPath)} class="relative group hidden md:flex items-center gap-2 h-10 px-4 rounded-full ${isCartPath ? 'bg-brand' : 'bg-ink'} text-paper text-[13px] font-medium hover:bg-brand transition-colors">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
             Bolsa
-            ${count > 0 ? `<span class="cart-count-badge absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full ${currentPath.startsWith('/cart') ? 'bg-paper text-brand' : 'bg-brand text-paper'} text-[10px] font-bold">${count}</span>` : ''}
+            ${count > 0 ? `<span class="cart-count-badge absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full ${isCartPath ? 'bg-paper text-brand' : 'bg-brand text-paper'} text-[10px] font-bold">${count}</span>` : ''}
           </a>
         </div>
       </div>
@@ -71,17 +166,17 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
     </main>
 
     <!-- Footer -->
-    <footer class="bg-ink text-paper relative overflow-hidden">
+    <footer id="site-footer" class="bg-ink text-paper relative overflow-hidden">
       <!-- Footer Marquee -->
       <div class="py-4 md:py-6 border-b border-paper/10 overflow-hidden">
         <div class="marquee-track whitespace-nowrap" style="width:max-content;display:flex">
-          <span class="font-heading font-[800] text-[40px] md:text-[80px] leading-none tracking-[-0.04em] shrink-0">G&L&nbsp;<span class="text-brand">→</span>&nbsp;TU&nbsp;FIT,&nbsp;PERFECTO&nbsp;&nbsp;<span class="text-brand">·</span>&nbsp;&nbsp;SHOP&nbsp;<span class="text-brand">·</span>&nbsp;LOOKBOOK&nbsp;<span class="text-brand">·</span>&nbsp;WHATSAPP&nbsp;&nbsp;&nbsp;&nbsp;</span>
-          <span class="font-heading font-[800] text-[40px] md:text-[80px] leading-none tracking-[-0.04em] shrink-0">G&L&nbsp;<span class="text-brand">→</span>&nbsp;TU&nbsp;FIT,&nbsp;PERFECTO&nbsp;&nbsp;<span class="text-brand">·</span>&nbsp;&nbsp;SHOP&nbsp;<span class="text-brand">·</span>&nbsp;LOOKBOOK&nbsp;<span class="text-brand">·</span>&nbsp;WHATSAPP&nbsp;&nbsp;&nbsp;&nbsp;</span>
+          <span class="font-heading font-[800] text-[40px] md:text-[80px] leading-none tracking-[-0.04em] shrink-0">G&L&nbsp;<span class="text-brand">→</span>&nbsp;TU&nbsp;FIT,&nbsp;PERFECTO&nbsp;&nbsp;<span class="text-brand">·</span>&nbsp;&nbsp;TIENDA&nbsp;<span class="text-brand">·</span>&nbsp;SUCURSALES&nbsp;<span class="text-brand">·</span>&nbsp;WHATSAPP&nbsp;&nbsp;&nbsp;&nbsp;</span>
+          <span class="font-heading font-[800] text-[40px] md:text-[80px] leading-none tracking-[-0.04em] shrink-0">G&L&nbsp;<span class="text-brand">→</span>&nbsp;TU&nbsp;FIT,&nbsp;PERFECTO&nbsp;&nbsp;<span class="text-brand">·</span>&nbsp;&nbsp;TIENDA&nbsp;<span class="text-brand">·</span>&nbsp;SUCURSALES&nbsp;<span class="text-brand">·</span>&nbsp;WHATSAPP&nbsp;&nbsp;&nbsp;&nbsp;</span>
         </div>
       </div>
 
       <!-- Footer Content -->
-      <div class="max-w-[1440px] mx-auto px-6 lg:px-10 pt-12 md:pt-16 pb-12">
+      <div class="max-w-[1440px] mx-auto px-6 lg:px-10 pt-12 md:pt-16 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-12">
         <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
           <div class="md:col-span-6">
             <p class="font-mono text-[12px] tracking-[0.24em] uppercase opacity-60 mb-4">Tu fit, perfecto. Desde 1995.</p>
@@ -89,16 +184,13 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
           </div>
           <div class="md:col-span-2">
             <h4 class="font-mono text-[11px] tracking-[0.24em] uppercase opacity-60 mb-4">Tienda</h4>
-            <ul class="space-y-2.5 text-[14px]">
-              <li><a href="/categoria/Camisas" class="ul-link opacity-80 hover:opacity-100">Camisas</a></li>
-              <li><a href="/categoria/Polos" class="ul-link opacity-80 hover:opacity-100">Polos</a></li>
-              <li><a href="/categoria/Pantalones" class="ul-link opacity-80 hover:opacity-100">Jeans</a></li>
-              <li><a href="/categoria/Perfumes" class="ul-link opacity-80 hover:opacity-100">Perfumes</a></li>
+            <ul class="md:space-y-1 text-[14px] [&_a]:inline-block [&_a]:py-3 md:[&_a]:py-1.5">
+              ${CATEGORY_LINKS.map(([label, href]) => `<li><a href="${href}" class="ul-link opacity-80 hover:opacity-100">${label}</a></li>`).join('')}
             </ul>
           </div>
           <div class="md:col-span-2">
             <h4 class="font-mono text-[11px] tracking-[0.24em] uppercase opacity-60 mb-4">Soporte</h4>
-            <ul class="space-y-2.5 text-[14px]">
+            <ul class="md:space-y-1 text-[14px] [&_a]:inline-block [&_a]:py-3 md:[&_a]:py-1.5">
               <li><a href="/envios" class="ul-link opacity-80 hover:opacity-100">Envíos y pagos</a></li>
               <li><a href="/cambios" class="ul-link opacity-80 hover:opacity-100">Cambios</a></li>
               <li><a href="/sucursales" class="ul-link opacity-80 hover:opacity-100">Sucursales</a></li>
@@ -109,11 +201,11 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
           <div class="md:col-span-2">
             <h4 class="font-mono text-[11px] tracking-[0.24em] uppercase opacity-60 mb-4">Síguenos</h4>
             <div class="flex items-center gap-3">
-              <a href="${INSTAGRAM_URL}" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full border border-paper/20 flex items-center justify-center hover:bg-paper hover:text-ink transition-colors">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+              <a href="${INSTAGRAM_URL}" target="_blank" rel="noopener noreferrer" aria-label="Instagram de G&L" class="w-10 h-10 rounded-full border border-paper/20 flex items-center justify-center hover:bg-paper hover:text-ink transition-colors">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
               </a>
-              <a href="https://wa.me/${BRAND.whatsapp}" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full border border-paper/20 flex items-center justify-center hover:bg-brand hover:border-brand transition-colors">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
+              <a href="https://wa.me/${BRAND.whatsapp}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp de G&L" class="w-10 h-10 rounded-full border border-paper/20 flex items-center justify-center hover:bg-brand hover:border-brand transition-colors">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
               </a>
             </div>
           </div>
@@ -128,25 +220,33 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
     </footer>
 
     <!-- Mobile Bottom Navigation -->
+    <div data-mnav>
     <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-paper/90 backdrop-blur-xl border-t border-ink/10 pb-safe">
       <div class="flex items-center justify-around h-16">
-        <a href="/" class="flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-colors ${currentPath === '/' ? 'text-brand' : 'text-ink/40 hover:text-ink/60'}">
-          <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-          Inicio
+        <!-- La venta se cierra por WhatsApp: va en el lugar de Inicio (el logo ya lleva al inicio) -->
+        <a href="https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent('Hola, vengo de la página de G&L')}" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center justify-center w-full h-full text-[11px] font-medium text-ink/70 hover:text-ink transition-colors">
+          <svg class="w-6 h-6 mb-1 text-[#1FA855]" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592z"/></svg>
+          WhatsApp
         </a>
-        <a href="/catalog" class="flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-colors ${currentPath.startsWith('/catalog') || currentPath.startsWith('/categoria') ? 'text-brand' : 'text-ink/40 hover:text-ink/60'}">
-          <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        <a href="/catalog"${current(isCatalogPath)} class="flex flex-col items-center justify-center w-full h-full text-[11px] font-medium transition-colors ${isCatalogPath ? 'text-brand' : 'text-ink/70 hover:text-ink'}">
+          <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
           Tienda
         </a>
-        <a href="/cart" class="relative flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-colors ${currentPath.startsWith('/cart') ? 'text-brand' : 'text-ink/40 hover:text-ink/60'}">
+        <a href="/cart" data-cart-link${current(isCartPath)} class="relative flex flex-col items-center justify-center w-full h-full text-[11px] font-medium transition-colors ${isCartPath ? 'text-brand' : 'text-ink/70 hover:text-ink'}">
           <div class="relative">
-             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
              ${count > 0 ? `<span class="cart-count-badge absolute -top-1 -right-2 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-brand text-[9px] font-bold text-paper">${count}</span>` : ''}
           </div>
           Bolsa
         </a>
+        <button type="button" data-mmenu-open aria-haspopup="dialog" aria-expanded="false" class="flex flex-col items-center justify-center w-full h-full text-[11px] font-medium text-ink/70 hover:text-ink transition-colors">
+          <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h16"/></svg>
+          Menú
+        </button>
       </div>
     </nav>
+    ${mobileMenu(currentPath, isCatalogPath)}
+    </div>
   `, theme)
 }
 

@@ -25,11 +25,15 @@ export function bestSellerRow(p, idx) {
   return `
     <li class="ls-row relative py-6 px-3 border-b border-[#EAE9E4] cursor-pointer" data-href="${productPath(p)}">
       <div class="grid grid-cols-12 items-center gap-4">
-        <span class="col-span-1 font-mono text-[12px] text-ink/50">${rank}</span>
-        <span class="ls-name col-span-7 md:col-span-6 font-heading font-bold text-[clamp(24px,2.5vw,40px)] tracking-[-0.03em] leading-tight">${p.name}</span>
+        <span class="hidden md:block col-span-1 font-mono text-[12px] text-ink/50">${rank}</span>
+        <img class="md:hidden col-span-3 w-full aspect-[4/5] rounded-md bg-white ${isPerfume ? 'object-contain p-1' : 'object-cover'}" src="${img}" alt="" loading="lazy" decoding="async" onerror="this.src='/placeholder.webp'" />
+        <span class="col-span-5 md:col-span-6 min-w-0">
+          ${descriptor ? `<span class="md:hidden block font-mono text-[11px] tracking-[0.14em] uppercase text-ink/70 mb-1">${descriptor}</span>` : ''}
+          <span class="ls-name block font-heading font-bold text-[18px] md:text-[clamp(24px,2.5vw,40px)] tracking-[-0.03em] leading-tight">${p.name}</span>
+        </span>
         <span class="hidden md:block col-span-3 font-mono text-[12px] text-ink/55 uppercase tracking-wider">${descriptor}</span>
         <div class="col-span-4 md:col-span-2 flex flex-col md:flex-row items-end md:items-center justify-end gap-0 md:gap-1.5 font-mono text-[15px] font-semibold">
-          ${(p.originalPrice && Number(p.originalPrice) > Number(p.price)) ? `<span class="text-ink/40 line-through font-normal text-[12px]">${formatMoney(p.originalPrice)}</span>` : ''}
+          ${(p.originalPrice && Number(p.originalPrice) > Number(p.price)) ? `<span class="text-ink/55 line-through font-normal text-[12px]">${formatMoney(p.originalPrice)}</span>` : ''}
           <span>${formatMoney(p.price)}</span>
         </div>
       </div>

@@ -84,6 +84,28 @@ export function sizeSummary(sizes) {
   return list.join(', ')
 }
 
+/**
+ * Orden en que se muestran las tallas: numericas de menor a mayor, luego las
+ * de letra (XS..XXXL), luego volumenes de perfume ("80 ml" < "100 ml") y al
+ * final cualquier otra cosa alfabetica. Sin duplicados.
+ */
+export function sortSizes(sizes) {
+  const list = [...new Set((sizes || []).map((s) => String(s).trim()).filter(Boolean))]
+  const rank = (s) => {
+    if (Number.isFinite(Number(s))) return [0, Number(s)]
+    const letter = LETTER_ORDER.indexOf(s.toUpperCase())
+    if (letter !== -1) return [1, letter]
+    const ml = s.match(/^(\d+(?:\.\d+)?)\s*ml$/i)
+    if (ml) return [2, Number(ml[1])]
+    return [3, 0]
+  }
+  return list.sort((a, b) => {
+    const [ga, va] = rank(a)
+    const [gb, vb] = rank(b)
+    return ga - gb || va - vb || a.localeCompare(b, 'es')
+  })
+}
+
 /** "Azul", "Azul y Negro", "Azul, Negro y Gris" */
 export function colorPhrase(colors) {
   const list = (colors || []).map((c) => String(c).trim()).filter(Boolean)

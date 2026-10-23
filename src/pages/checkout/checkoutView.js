@@ -8,6 +8,20 @@ const waIcon = `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><pa
 
 const waIconSmall = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.2s-.8 1-.9 1.2-.3.2-.6.1-1.3-.5-2.4-1.5c-.9-.8-1.5-1.8-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5s0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4s-1 1-1 2.5 1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4s.2-1.3.2-1.4-.3-.2-.6-.4M12 21.8a9.9 9.9 0 01-5-1.4l-.4-.2-3.7 1 1-3.7-.2-.4a9.9 9.9 0 01-1.5-5.3c0-5.5 4.4-9.9 9.9-9.9 2.6 0 5.1 1 7 2.9a9.8 9.8 0 012.9 7c0 5.5-4.4 9.9-9.9 9.9m8.4-18.3A11.8 11.8 0 0012 0C5.5 0 .2 5.3.2 11.9c0 2.1.5 4.1 1.6 6L0 24l6.3-1.7a11.9 11.9 0 005.7 1.5c6.6 0 11.9-5.3 11.9-11.9a11.8 11.8 0 00-3.5-8.4z"/></svg>`
 
+// Cada campo con su label asociado y un hueco para su error (aria-describedby)
+function fieldHTML({ name, label, span = '', placeholder = '', autocomplete = '', attrs = '', textarea = false }) {
+  const id = `co-${name}`
+  const common = `id="${id}" name="${name}" placeholder="${placeholder}" ${autocomplete ? `autocomplete="${autocomplete}"` : ''} ${attrs} class="placeholder:!text-ink/60"`
+  return `
+                <div class="field ${span}">
+                  <label for="${id}" class="!text-[11px]">${label}</label>
+                  ${textarea ? `<textarea ${common} rows="2"></textarea>` : `<input ${common}/>`}
+                  <p id="${id}-error" class="mt-1.5 text-[12px] text-red-600 empty:hidden"></p>
+                </div>`
+}
+
+const checkIcon = `<svg class="w-3 h-3 hidden group-aria-checked:block" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`
+
 function cartItemsHTML() {
   const state = getState()
   if (!state.cart || !state.cart.length) return ''
@@ -21,15 +35,16 @@ function cartItemsHTML() {
     const safeImg = escapeHtml(p.images?.[0] || '')
     const safeSize = escapeHtml(item.size || '')
     const safeColor = escapeHtml(item.color || '')
+    const sizeLabel = isPerfume || /\d+\s*ml$/i.test(item.size || '') ? 'Presentaci&oacute;n' : 'Talla'
     return `
       <li class="flex gap-4">
         <div class="relative w-16 h-20 flex-shrink-0 rounded bg-fog overflow-visible">
           <img src="${safeImg}" alt="${safeName}" loading="lazy" class="${imgClass} rounded"/>
-          ${qty > 1 ? `<span class="absolute -top-1.5 -right-1.5 z-10 min-w-[20px] h-[20px] px-1 rounded-full bg-ink text-paper font-mono text-[10px] font-bold flex items-center justify-center">${qty}</span>` : ''}
+          ${qty > 1 ? `<span class="absolute -top-1.5 -right-1.5 z-10 min-w-[20px] h-[20px] px-1 rounded-full bg-ink text-paper font-mono text-[11px] font-bold flex items-center justify-center">${qty}</span>` : ''}
         </div>
         <div class="flex-1 min-w-0">
           <div class="font-display font-bold text-[15px] leading-tight tracking-[-0.02em]">${safeName}</div>
-          <div class="font-mono text-[11px] text-ink/55 mt-1">${safeSize ? `Talla ${safeSize}` : ''}${safeSize && safeColor ? ' · ' : ''}${safeColor}</div>
+          <div class="font-mono text-[11px] text-ink/55 mt-1">${safeSize ? `${sizeLabel} ${safeSize}` : ''}${safeSize && safeColor ? ' · ' : ''}${safeColor}</div>
         </div>
         <div class="text-right">
           <div class="font-mono text-[13px] font-semibold">${formatMoney(p.price * qty)}</div>
@@ -46,22 +61,22 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
     <section class="pt-12 lg:pt-16 pb-8 border-b border-ink/10">
       <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
         <div class="flex items-center gap-3 mb-8 reveal in">
-          <a href="/cart" class="inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55 hover:text-ink transition-colors">
+          <a href="/cart" class="inline-flex items-center min-h-11 gap-2 font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55 hover:text-ink transition-colors">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
             Volver a la bolsa
           </a>
           <span class="h-px flex-1 bg-ink/15 mx-3"></span>
           <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55">Tiempo estimado &middot; 90 segundos</span>
         </div>
-        <div class="grid grid-cols-12 gap-6 lg:gap-10 items-end">
-          <div class="col-span-12 lg:col-span-9">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-end">
+          <div class="lg:col-span-9">
             <h1 class="font-display font-extrabold text-[clamp(64px,11vw,184px)] leading-[0.86] tracking-[-0.04em]">
               Cierra tu<br/><span class="text-brand">pedido</span>.
             </h1>
           </div>
-          <div class="col-span-12 lg:col-span-3 lg:text-right">
+          <div class="lg:col-span-3 lg:text-right">
             <p class="text-[15px] text-ink/70 max-w-[340px] lg:ml-auto leading-relaxed">
-              Llenamos tus datos en <strong>3 pasos</strong>. Te contactamos por WhatsApp para confirmar pago &mdash; <strong>cero pago online</strong>.
+              Llenas tus datos en <strong>3 pasos</strong>. Te contactamos por WhatsApp para confirmar pago &mdash; <strong>cero pago online</strong>.
             </p>
           </div>
         </div>
@@ -71,10 +86,10 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
     <!-- Main 2-column -->
     <section class="py-12 lg:py-16">
       <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
-        <div class="grid grid-cols-12 gap-8 lg:gap-12">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
 
           <!-- LEFT: Form -->
-          <form id="checkout-form" class="col-span-12 lg:col-span-7 space-y-14" novalidate>
+          <form id="checkout-form" class="lg:col-span-7 space-y-14" novalidate>
 
             <!-- Hidden selects for validator compatibility -->
             <select name="paymentMethod" class="hidden">
@@ -94,19 +109,13 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
                 <div class="step-num">01<span class="text-brand">.</span></div>
                 <div>
                   <h2 class="font-display font-extrabold text-[28px] leading-none tracking-[-0.03em]">Contacto</h2>
-                  <p class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55 mt-1.5">&iquest;C&oacute;mo te contactamos?</p>
+                  <p class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55 mt-1.5">&iquest;C&oacute;mo te contactamos?</p>
                 </div>
-                <span class="ml-auto font-mono text-[10px] tracking-[0.24em] uppercase text-brand">En curso &rarr;</span>
+                <span class="ml-auto font-mono text-[11px] tracking-[0.24em] uppercase text-brand">En curso &rarr;</span>
               </div>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-                <div class="field">
-                  <label>Nombre completo</label>
-                  <input name="name" placeholder="Eduardo N&uacute;&ntilde;ez" required/>
-                </div>
-                <div class="field">
-                  <label>WhatsApp</label>
-                  <input name="whatsapp" inputmode="tel" placeholder="+52 312 123 4567" required/>
-                </div>
+                ${fieldHTML({ name: 'name', label: 'Nombre completo', placeholder: 'Eduardo N&uacute;&ntilde;ez', autocomplete: 'name', attrs: 'required aria-required="true"' })}
+                ${fieldHTML({ name: 'whatsapp', label: 'WhatsApp (10 d&iacute;gitos)', placeholder: '312 123 4567', autocomplete: 'tel', attrs: 'type="tel" inputmode="tel" required aria-required="true"' })}
               </div>
             </section>
 
@@ -116,47 +125,45 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
                 <div class="step-num">02<span class="text-brand">.</span></div>
                 <div>
                   <h2 class="font-display font-extrabold text-[28px] leading-none tracking-[-0.03em]">Pago &amp; entrega</h2>
-                  <p class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55 mt-1.5">Sin pago online &mdash; confirmamos por WhatsApp</p>
+                  <p class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55 mt-1.5">Sin pago en l&iacute;nea &mdash; confirmamos por WhatsApp</p>
                 </div>
               </div>
 
-              <div class="font-mono text-[11px] tracking-[0.24em] uppercase text-ink/55 mb-3">&iquest;C&oacute;mo pagas?</div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8" id="pay-group">
-                <button type="button" class="choice active" data-val="transferencia">
-                  <span class="dot"></span>
+              <div id="pay-label" class="font-mono text-[11px] tracking-[0.24em] uppercase text-ink/55 mb-3">&iquest;C&oacute;mo pagas?</div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8" id="pay-group" role="radiogroup" aria-labelledby="pay-label">
+                <button type="button" class="choice group active" data-val="transferencia" role="radio" aria-checked="true" tabindex="0">
+                  <span class="dot after:!hidden">${checkIcon}</span>
                   <div class="flex-1">
                     <div class="font-display font-bold text-[18px] leading-none tracking-[-0.02em]">Transferencia</div>
-                    <div class="meta mt-2 font-mono text-[11px] text-ink/55">SPEI &middot; BBVA &middot; Confirmaci&oacute;n inmediata</div>
+                    <div class="meta mt-2 font-mono text-[11px] text-ink/55">SPEI &middot; BBVA &middot; Te pasamos los datos por WhatsApp</div>
                   </div>
-                  <div class="font-mono text-[10px] tracking-wider uppercase"></div>
                 </button>
-                <button type="button" class="choice" data-val="recoger">
-                  <span class="dot"></span>
+                <button type="button" class="choice group" data-val="recoger" role="radio" aria-checked="false" tabindex="-1">
+                  <span class="dot after:!hidden">${checkIcon}</span>
                   <div class="flex-1">
                     <div class="font-display font-bold text-[18px] leading-none tracking-[-0.02em]">Pago al recoger</div>
                     <div class="meta mt-2 font-mono text-[11px] text-ink/55">Efectivo &middot; TPV en tienda</div>
                   </div>
-                  <div class="font-mono text-[10px] tracking-wider uppercase">&mdash;</div>
                 </button>
               </div>
 
-              <div class="font-mono text-[11px] tracking-[0.24em] uppercase text-ink/55 mb-3">&iquest;C&oacute;mo lo recibes?</div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="dlv-group">
-                <button type="button" class="choice active" data-val="envio">
-                  <span class="dot"></span>
+              <div id="dlv-label" class="font-mono text-[11px] tracking-[0.24em] uppercase text-ink/55 mb-3">&iquest;C&oacute;mo lo recibes?</div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="dlv-group" role="radiogroup" aria-labelledby="dlv-label">
+                <button type="button" class="choice group active" data-val="envio" role="radio" aria-checked="true" tabindex="0">
+                  <span class="dot after:!hidden">${checkIcon}</span>
                   <div class="flex-1">
                     <div class="font-display font-bold text-[18px] leading-none tracking-[-0.02em]">Env&iacute;o a domicilio</div>
                     <div class="meta mt-2 font-mono text-[11px] text-ink/55">2&mdash;3 d&iacute;as &middot; todo M&eacute;xico</div>
                   </div>
-                  <div class="font-mono text-[10px] tracking-wider uppercase text-brand">${freeShipping ? 'Gratis' : `+$${BRAND.freeShippingMin.toLocaleString()}`}</div>
+                  <div class="font-mono text-[11px] tracking-wider uppercase text-right">${freeShipping ? 'Gratis' : `Gratis desde ${formatMoney(BRAND.freeShippingMin)}`}</div>
                 </button>
-                <button type="button" class="choice" data-val="tienda">
-                  <span class="dot"></span>
+                <button type="button" class="choice group" data-val="tienda" role="radio" aria-checked="false" tabindex="-1">
+                  <span class="dot after:!hidden">${checkIcon}</span>
                   <div class="flex-1">
                     <div class="font-display font-bold text-[18px] leading-none tracking-[-0.02em]">Recoger en tienda</div>
                     <div class="meta mt-2 font-mono text-[11px] text-ink/55">Centro &middot; Villa de &Aacute;lvarez</div>
                   </div>
-                  <div class="font-mono text-[10px] tracking-wider uppercase">Hoy</div>
+                  <div class="font-mono text-[11px] tracking-wider uppercase">Hoy</div>
                 </button>
               </div>
             </section>
@@ -167,47 +174,23 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
                 <div class="step-num">03<span class="text-brand">.</span></div>
                 <div>
                   <h2 class="font-display font-extrabold text-[28px] leading-none tracking-[-0.03em]">Direcci&oacute;n</h2>
-                  <p class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55 mt-1.5">&iquest;D&oacute;nde lo dejamos?</p>
+                  <p class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55 mt-1.5">&iquest;D&oacute;nde lo dejamos?</p>
                 </div>
               </div>
               <div class="grid grid-cols-1 md:grid-cols-12 gap-x-6">
-                <div class="field md:col-span-8">
-                  <label>Calle</label>
-                  <input name="street" placeholder="Av. Constituci&oacute;n"/>
-                </div>
-                <div class="field md:col-span-2">
-                  <label>N&uacute;m. ext.</label>
-                  <input name="numExt" placeholder="140"/>
-                </div>
-                <div class="field md:col-span-2">
-                  <label>N&uacute;m. int.</label>
-                  <input name="numInt" placeholder="&mdash;"/>
-                </div>
-                <div class="field md:col-span-6">
-                  <label>Colonia</label>
-                  <input name="neighborhood" placeholder="Centro"/>
-                </div>
-                <div class="field md:col-span-3">
-                  <label>Ciudad</label>
-                  <input name="city" placeholder="Colima"/>
-                </div>
-                <div class="field md:col-span-3">
-                  <label>C&oacute;digo postal</label>
-                  <input name="zipCode" inputmode="numeric" placeholder="28000"/>
-                </div>
-                <div class="field md:col-span-6">
-                  <label>Estado</label>
-                  <input name="state" placeholder="Colima"/>
-                </div>
-                <div class="field md:col-span-6">
-                  <label>Referencias</label>
-                  <textarea name="references" rows="2" placeholder="Casa azul, entre Hidalgo y Aldama"></textarea>
-                </div>
+                ${fieldHTML({ name: 'street', label: 'Calle', span: 'md:col-span-8', placeholder: 'Av. Constituci&oacute;n', autocomplete: 'address-line1' })}
+                ${fieldHTML({ name: 'numExt', label: 'N&uacute;m. ext.', span: 'md:col-span-2', placeholder: '140' })}
+                ${fieldHTML({ name: 'numInt', label: 'N&uacute;m. int.', span: 'md:col-span-2', placeholder: '&mdash;', autocomplete: 'address-line2' })}
+                ${fieldHTML({ name: 'neighborhood', label: 'Colonia', span: 'md:col-span-6', placeholder: 'Centro', autocomplete: 'address-level3' })}
+                ${fieldHTML({ name: 'city', label: 'Ciudad', span: 'md:col-span-3', placeholder: 'Colima', autocomplete: 'address-level2' })}
+                ${fieldHTML({ name: 'zipCode', label: 'C&oacute;digo postal', span: 'md:col-span-3', placeholder: '28000', autocomplete: 'postal-code', attrs: 'inputmode="numeric" maxlength="6"' })}
+                ${fieldHTML({ name: 'state', label: 'Estado', span: 'md:col-span-6', placeholder: 'Colima', autocomplete: 'address-level1' })}
+                ${fieldHTML({ name: 'references', label: 'Referencias', span: 'md:col-span-6', placeholder: 'Casa azul, entre Hidalgo y Aldama', textarea: true })}
               </div>
             </section>
 
             <!-- Form error -->
-            <div id="form-error" class="hidden font-mono text-[10px] tracking-[0.24em] uppercase text-red-500 mt-4"></div>
+            <div id="form-error" role="alert" class="hidden font-mono text-[12px] tracking-[0.12em] uppercase text-red-600 mt-4"></div>
 
             <!-- Submit -->
             <section class="reveal">
@@ -226,14 +209,14 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
                 ${waIconSmall}
                 Enviar pedido por WhatsApp
               </button>
-              <p class="mt-4 font-mono text-[10px] tracking-[0.24em] uppercase text-ink/55 text-center">
-                Al continuar aceptas nuestros t&eacute;rminos &middot; cero pago online &middot; todo se confirma por WhatsApp
+              <p class="mt-4 font-mono text-[11px] tracking-[0.2em] uppercase text-ink/60 text-center leading-relaxed">
+                Sin pago en l&iacute;nea &middot; todo se confirma por WhatsApp &middot; consulta <a href="/cambios" class="underline underline-offset-2 hover:text-ink">cambios</a> y <a href="/envios" class="underline underline-offset-2 hover:text-ink">env&iacute;os</a>
               </p>
             </section>
           </form>
 
           <!-- RIGHT: Order Summary -->
-          <aside class="col-span-12 lg:col-span-5 order-first lg:order-none">
+          <aside class="lg:col-span-5 order-first lg:order-none">
             <div id="checkout-summary-column">
               ${checkoutSummaryHTML({ subtotal, discount, total, freeShipping, itemCount, coupon, upsellProducts })}
             </div>
@@ -255,8 +238,8 @@ export function checkoutSummaryHTML({ subtotal, discount, total, freeShipping, i
       <!-- Items card -->
       <div class="bg-fog rounded-lg p-6">
         <div class="flex items-center justify-between mb-5">
-          <div class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55">Tu pedido</div>
-          <a href="/cart" class="ul-link text-[11px] font-mono uppercase tracking-wider">Editar &rarr;</a>
+          <div class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55">Tu pedido</div>
+          <a href="/cart" class="ul-link inline-flex items-center min-h-11 text-[11px] font-mono uppercase tracking-wider">Editar &rarr;</a>
         </div>
         <ul class="space-y-4">
           ${items}
@@ -272,9 +255,9 @@ export function checkoutSummaryHTML({ subtotal, discount, total, freeShipping, i
             <span>Descuento &middot; <span id="discount-code">${coupon?.code || ''}</span></span>
             <span id="discount-amount">&minus;${formatMoney(discount)}</span>
           </div>
-          <div class="flex justify-between">
+          <div class="flex justify-between gap-4">
             <span class="text-ink/65">Env&iacute;o</span>
-            <span class="${freeShipping ? 'text-brand' : 'text-ink/65'}">${freeShipping ? '&iexcl;Gratis!' : 'Por calcular'}</span>
+            <span class="text-right ${freeShipping ? 'text-brand' : 'text-ink/65'}">${freeShipping ? 'Gratis' : 'Te lo confirmamos por WhatsApp'}</span>
           </div>
         </div>
 
@@ -283,22 +266,22 @@ export function checkoutSummaryHTML({ subtotal, discount, total, freeShipping, i
           <div class="font-mono text-[11px] tracking-[0.28em] uppercase">Total</div>
           <div id="total-amount" class="font-display font-extrabold text-[48px] leading-none tracking-[-0.04em] digit-tabular">${formatMoney(total)}</div>
         </div>
-        <div class="mt-1 font-mono text-[10px] tracking-[0.2em] uppercase text-ink/45 text-right">MXN &middot; IVA incluido</div>
+        <div class="mt-1 font-mono text-[11px] tracking-[0.2em] uppercase text-ink/45 text-right">MXN &middot; IVA incluido</div>
       </div>
 
       <!-- Trust strip -->
       <div class="grid grid-cols-3 gap-px bg-ink/10 rounded-lg overflow-hidden">
-        <div class="bg-paper p-5 text-center">
+        <div class="bg-paper p-3 sm:p-5 text-center">
           <svg class="w-5 h-5 mx-auto mb-2 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.6-4A11.96 11.96 0 0112 2.9 11.96 11.96 0 013.4 6 12 12 0 003 9c0 5.6 3.8 10.3 9 11.6 5.2-1.3 9-6 9-11.6 0-1-.1-2-.4-3z"/></svg>
-          <div class="font-mono text-[9px] tracking-[0.2em] uppercase">Seguro</div>
+          <div class="font-mono text-[11px] tracking-[0.12em] uppercase leading-snug">Sin pago en l&iacute;nea</div>
         </div>
-        <div class="bg-paper p-5 text-center">
-          <svg class="w-5 h-5 mx-auto mb-2 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3M3 12a9 9 0 1118 0 9 9 0 01-18 0z"/></svg>
-          <div class="font-mono text-[9px] tracking-[0.2em] uppercase">Cierre en 90s</div>
+        <div class="bg-paper p-3 sm:p-5 text-center">
+          <svg class="w-5 h-5 mx-auto mb-2 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8M8 14h5m-9 6l1.5-4A8 8 0 1112 20a8 8 0 01-3.6-.9L4 20z"/></svg>
+          <div class="font-mono text-[11px] tracking-[0.12em] uppercase leading-snug">Confirmamos por WhatsApp</div>
         </div>
-        <div class="bg-paper p-5 text-center">
+        <div class="bg-paper p-3 sm:p-5 text-center">
           <svg class="w-5 h-5 mx-auto mb-2 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-          <div class="font-mono text-[9px] tracking-[0.2em] uppercase">Sin pago online</div>
+          <div class="font-mono text-[11px] tracking-[0.12em] uppercase leading-snug">Transferencia o en tienda</div>
         </div>
       </div>
 
@@ -307,7 +290,7 @@ export function checkoutSummaryHTML({ subtotal, discount, total, freeShipping, i
         <div class="font-display font-medium text-[15px] leading-snug tracking-[-0.01em]">
           &ldquo;Confirmamos cada pedido por WhatsApp con un humano &mdash;no un bot&mdash; para asegurar que <strong>todo te llegue bien</strong>.&rdquo;
         </div>
-        <div class="mt-3 font-mono text-[10px] tracking-[0.24em] uppercase text-ink/55">&mdash; Equipo G&amp;L &middot; Colima</div>
+        <div class="mt-3 font-mono text-[11px] tracking-[0.24em] uppercase text-ink/55">&mdash; Equipo G&amp;L &middot; Colima</div>
       </div>
 
     </div>`

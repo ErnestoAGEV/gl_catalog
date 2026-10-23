@@ -1,5 +1,6 @@
 import { getRoute, onRouteChange, startRouter, navigate, scrollPositions } from './router.js'
 import { bindHeaderSearch } from '../components/headerSearch.js'
+import { closeMiniCart } from '../components/miniCart.js'
 import { getState, isAdminAuthed, loadProducts, loadCategories, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession, getAdminOrders } from '../store/index.js'
 import { renderRoute } from './views.js'
 import { showToast } from '../utils/toast.js'
@@ -351,6 +352,7 @@ export async function startApp(mountEl) {
     document.getElementById('order-details-modal')?.remove() // admin order detail modal
     document.getElementById('delete-confirm-modal')?.remove() // admin delete confirm
     document.getElementById('size-guide-modal')?.remove()    // guía de tallas de la ficha
+    closeMiniCart()                                          // el aviso de la bolsa no debe seguir sobre la pagina nueva
 
     const cacheKey = path === '/' ? '/' : (path.startsWith('/catalog') || path.startsWith('/categoria/') ? '/catalog' : null)
 
@@ -690,7 +692,8 @@ export async function startApp(mountEl) {
   const unsub = subscribe((state) => {
     // 1. Global badge update — always runs, no full re-render
     const count = state.cart.reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
-    document.querySelectorAll('a[href="/cart"]').forEach(link => {
+    // Solo los botones de bolsa del header y la nav movil, no cualquier enlace a /cart
+    document.querySelectorAll('a[data-cart-link]').forEach(link => {
       const container = link.querySelector('.relative') || link
       if (container === link && !['absolute', 'relative', 'fixed'].some(cls => link.classList.contains(cls))) {
         link.classList.add('relative')

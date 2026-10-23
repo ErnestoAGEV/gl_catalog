@@ -704,6 +704,10 @@ body.dark {
   transform: translateY(100%);
   transition: transform 0.25s ease;
   z-index: 61;
+  /* En pantallas bajas el panel de filtros no cabia: se desplaza dentro */
+  max-height: 88dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .bottom-sheet.open { transform: translateY(0%); }
 .bottom-sheet .sheet-actions { display: flex; gap: 8px; }
@@ -834,12 +838,15 @@ body.dark {
 .reveal.in { opacity: 1; transform: translateY(0); }
 
 /* Outline text */
-.outline-text { -webkit-text-stroke: 1px currentColor; color: transparent; }
+/* El trazo lleva color propio: con currentColor heredaba el transparent y el texto desaparecia */
+.outline-text { color: transparent; -webkit-text-stroke: 1.5px var(--color-ink); }
+:is(.bg-ink, .text-paper) .outline-text { -webkit-text-stroke-color: var(--color-paper); }
 
 /* Underline link animation */
 .ul-link { position: relative; text-decoration: none; }
 .ul-link::after { content: ''; position: absolute; left: 0; bottom: -2px; width: 100%; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: right; transition: transform .4s cubic-bezier(.22,.61,.36,1); }
 .ul-link:hover::after { transform: scaleX(1); transform-origin: left; }
+.ul-link[aria-current="page"]::after { transform: scaleX(1); }
 
 /* Arrow walk */
 .arrow-walk { display: inline-block; transition: transform .35s ease; }
@@ -893,6 +900,11 @@ body.dark {
 /* Solo vertical: a lo ancho el chip ya pasa de 44px y crecer a los lados
    solaparía el área de toque del chip vecino (gap de 6px). */
 .chip::after { content: ''; position: absolute; inset: -6px 0; }
+/* En movil el chip mismo llega a 40px: el area invisible sola no se ve tocable */
+@media (max-width: 767px) {
+  .chip { height: 40px; padding: 8px 12px; font-size: 11px; }
+  .chip::after { inset: -2px 0; }
+}
 .chip:active { transform: scale(.96); }
 @media (hover: hover) {
   .chip:hover { border-color: var(--color-ink); background: var(--color-ink); color: white; }
@@ -913,7 +925,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; w
   .pcard:hover .pimg.alt { opacity: 1; }
 }
 .pcard .badge-wrap { position: absolute; top: 12px; left: 12px; display: flex; gap: 6px; }
-.pcard .badge-dot { display: inline-flex; align-items:center; gap:4px; padding: 4px 9px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; border-radius: 9999px; }
+.pcard .badge-dot { display: inline-flex; align-items:center; gap:4px; padding: 4px 9px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; border-radius: 9999px; }
 .pcard .quick-add { position: absolute; left: 12px; right: 12px; bottom: 12px; opacity: 0; transform: translateY(6px); transition: opacity .3s, transform .35s; pointer-events: none; }
 @media (hover: hover) { .pcard:hover .quick-add { opacity: 1; transform: translateY(0); pointer-events: auto; } }
 @media (pointer: coarse) {
@@ -954,13 +966,15 @@ select.bare { -webkit-appearance: none; appearance: none; }
 
 /* ─── Checkout Redesign v2 (Bold Editorial) ─── */
 .field { display: block; margin-bottom: 18px; }
-.field label { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: .24em; text-transform: uppercase; color: rgba(10,10,15,.55); margin-bottom: 8px; }
+.field label { display: block; font-family: var(--font-mono); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: rgba(10,10,15,.65); margin-bottom: 8px; }
 .field input, .field select, .field textarea { width: 100%; background: transparent; border: none; border-bottom: 1px solid rgba(10,10,15,.4); border-radius: 0; padding: 14px 16px; font-size: 15px; outline: none; transition: border-color .2s; }
 .field input:focus, .field select:focus, .field textarea:focus { border-bottom-color: var(--color-brand); }
+/* Un borde de 1px no basta como indicador de foco al tabular */
+.field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible { border-bottom-color: var(--color-brand); box-shadow: 0 2px 0 0 var(--color-brand); }
 .field input::placeholder, .field textarea::placeholder { color: rgba(10,10,15,.35); }
 .field select { -webkit-appearance: none; appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="%230A0A0F" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>'); background-repeat: no-repeat; background-position: right 6px center; background-size: 14px; padding-right: 30px; }
 
-.choice { display: flex; gap: 14px; align-items: flex-start; padding: 18px; border: 1px solid rgba(10,10,15,.12); border-radius: 6px; cursor: pointer; transition: border-color .2s, background-color .2s, color .2s; }
+.choice { display: flex; gap: 14px; align-items: flex-start; text-align: left; padding: 18px; border: 1px solid rgba(10,10,15,.12); border-radius: 6px; cursor: pointer; transition: border-color .2s, background-color .2s, color .2s; }
 .choice:hover { border-color: var(--color-ink); }
 .choice.active { border-color: var(--color-ink); background: var(--color-ink); color: var(--color-paper); }
 .choice.active .meta { color: rgba(255,255,255,.65); }
@@ -1006,7 +1020,7 @@ select.bare { -webkit-appearance: none; appearance: none; }
 .thumb-rail .thumb img { width: 100%; height: 100%; object-fit: contain; padding: 4px; background: #fff; }
 .thumb-rail .thumb.active { border-color: var(--color-ink); }
 @media (hover: hover) { .thumb-rail .thumb:hover { transform: translateY(-2px); border-color: var(--color-ink); } }
-.thumb-rail .thumb .idx { position: absolute; top: 6px; left: 6px; font-family: var(--font-mono); font-size: 9px; letter-spacing: .14em; color: white; background: rgba(10,10,15,.5); backdrop-filter: blur(4px); padding: 2px 5px; border-radius: 2px; }
+.thumb-rail .thumb .idx { position: absolute; top: 6px; left: 6px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; color: white; background: rgba(10,10,15,.8); backdrop-filter: blur(4px); padding: 2px 5px; border-radius: 2px; }
 
 .size-pill { min-width: 56px; height: 44px; padding: 0 14px; border-radius: 9999px; border: 1px solid rgba(10,10,15,.15); background: white; font-family: var(--font-mono); font-size: 12px; letter-spacing: .04em; transition: background-color .2s, border-color .2s, color .2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 @media (hover: hover) { .size-pill:hover { border-color: var(--color-ink); } }

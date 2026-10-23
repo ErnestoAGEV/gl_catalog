@@ -23,8 +23,8 @@ export function flyToCart(sourceEl) {
   if (!sourceEl) return
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
-  // Puede haber varios enlaces a /cart (header y nav móvil): vale el visible
-  const target = [...document.querySelectorAll('a[href="/cart"]')].find(el => el.offsetParent !== null)
+  // Hay dos botones de bolsa (header y nav móvil): vale el visible
+  const target = [...document.querySelectorAll('a[data-cart-link]')].find(el => el.offsetParent !== null)
   if (!target) return
 
   const from = sourceEl.getBoundingClientRect()

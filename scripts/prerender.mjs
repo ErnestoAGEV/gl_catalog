@@ -520,9 +520,15 @@ if (!homeShell.includes(HOME_SHELL_MARK)) {
 // Marcas con pagina propia. Se calcula aqui porque /catalog ya las enlaza.
 const brands = brandIndex(products)
 
+// La cifra "Piezas en catalogo" del shell se escribe con los productos de este
+// build: el snapshot de index.html tiene un numero fijo que se quedaria viejo.
+const homeShellCounted = products.length
+  ? homeShell.replace(/(data-catalog-count[^>]*>)\d+</, (_, open) => `${open}${products.length}<`)
+  : homeShell
+
 routes.push({
   path: '/',
-  shell: homeShell.replace(HOME_SHELL_MARK, () => `${contactFooter()}\n      ${HOME_SHELL_MARK}`),
+  shell: homeShellCounted.replace(HOME_SHELL_MARK, () => `${contactFooter()}\n      ${HOME_SHELL_MARK}`),
 })
 
 routes.push({

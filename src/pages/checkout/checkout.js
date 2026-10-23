@@ -5,7 +5,7 @@ import { on, qs } from '../../utils/dom.js'
 import { formatMoney } from '../../utils/format.js'
 import { isInfiniteStock } from '../../utils/stock.js'
 import { checkoutHTML, checkoutSummaryHTML, couponAppliedHTML, couponInputHTML, checkoutSuccessHTML } from './checkoutView.js'
-import { sizeSelectionModal } from '../catalog/catalogModals.js'
+import { sizeSelectionModal, trapModal } from '../catalog/catalogModals.js'
 import { sanitizeText, sanitizeCouponCode } from '../../utils/sanitize.js'
 import { navigate } from '../../core/router.js'
 
@@ -43,23 +43,49 @@ function clearCheckoutSuccess() {
 }
 
 // ── Helpers de validación ──
-const WHATSAPP_RE = /^[+]?[0-9\s\-().]{7,20}$/
 const ZIPCODE_RE  = /^[0-9]{4,6}$/
 
+// 10 digitos MX; se toleran espacios, guiones, parentesis y el prefijo +52 / 521
+export function isValidWhatsapp(value) {
+  const raw = String(value || '').trim()
+  if (!/^[+\d\s\-().]+$/.test(raw)) return false
+  return /^(?:521?)?\d{10}$/.test(raw.replace(/\D/g, ''))
+}
 
-function setFieldError(field, hasError) {
+function nameError(value) {
+  const name = sanitizeText(value)
+  if (!name) return 'Ingresa tu nombre completo.'
+  if (name.length < 3) return 'El nombre debe tener al menos 3 caracteres.'
+  return ''
+}
+
+function whatsappError(value) {
+  if (!String(value || '').trim()) return 'Ingresa tu número de WhatsApp.'
+  if (!isValidWhatsapp(value)) return 'Escribe tu WhatsApp a 10 dígitos. Ej: 312 123 4567.'
+  return ''
+}
+
+// El mensaje va en el <p id="<campo>-error"> bajo el input, ligado por aria-describedby
+function setFieldError(field, message) {
   if (!field) return
-  if (hasError) {
+  const msgEl = field.id ? document.getElementById(`${field.id}-error`) : null
+  if (message) {
     field.classList.add('!border-red-500', '!ring-red-500/30', '!ring-1')
+    field.setAttribute('aria-invalid', 'true')
+    if (msgEl) {
+      msgEl.textContent = typeof message === 'string' ? message : ''
+      field.setAttribute('aria-describedby', msgEl.id)
+    }
   } else {
     field.classList.remove('!border-red-500', '!ring-red-500/30', '!ring-1')
+    field.removeAttribute('aria-invalid')
+    field.removeAttribute('aria-describedby')
+    if (msgEl) msgEl.textContent = ''
   }
 }
 
 function clearFieldErrors(root) {
-  root.querySelectorAll('.\\!border-red-500').forEach(el => {
-    el.classList.remove('!border-red-500', '!ring-red-500/30', '!ring-1')
-  })
+  root.querySelectorAll('[aria-invalid="true"], .\\!border-red-500').forEach(el => setFieldError(el, ''))
 }
 
 function needsAddress(_payment, deliveryMethod) {
@@ -101,11 +127,25 @@ export function pageCheckout(state) {
         const wrap = root.querySelector('#' + id)
         const sel = root.querySelector(`select[name="${selectName}"]`)
         if (!wrap || !sel) return
+        const choices = [...wrap.querySelectorAll('.choice')]
+        // Radiogroup: flechas mueven foco y seleccion, como un radio nativo
+        wrap.addEventListener('keydown', (e) => {
+          const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key]
+          if (!step) return
+          e.preventDefault()
+          const next = choices[(choices.indexOf(document.activeElement) + step + choices.length) % choices.length]
+          next.focus()
+          next.click()
+        })
         wrap.addEventListener('click', (e) => {
           const c = e.target.closest('.choice')
           if (!c) return
-          wrap.querySelectorAll('.choice').forEach(x => x.classList.remove('active'))
-          c.classList.add('active')
+          choices.forEach(x => {
+            const on = x === c
+            x.classList.toggle('active', on)
+            x.setAttribute('aria-checked', String(on))
+            x.tabIndex = on ? 0 : -1
+          })
           sel.value = valMap[c.dataset.val] || ''
           sel.dispatchEvent(new Event('change', { bubbles: true }))
 
@@ -221,7 +261,12 @@ export function pageCheckout(state) {
 
             modalContainer.innerHTML = sizeSelectionModal(product)
 
-            const closeModal = () => { modalContainer.innerHTML = '' }
+            let release = null
+            const closeModal = () => {
+              modalContainer.innerHTML = ''
+              release?.()
+            }
+            release = trapModal(modalContainer, closeModal)
 
             const closeBtn = modalContainer.querySelector('#close-quick-add')
             if (closeBtn) closeBtn.addEventListener('click', closeModal)
@@ -267,6 +312,8 @@ export function pageCheckout(state) {
         const show = needsAddress(payment, delivery)
         addressWrap.style.opacity = show ? '1' : '.45'
         addressWrap.style.pointerEvents = show ? 'auto' : 'none'
+        // Atenuada tambien para teclado y lector de pantalla
+        addressWrap.inert = !show
       }
 
       const setError = (msg, fieldEl = null) => {
@@ -278,7 +325,7 @@ export function pageCheckout(state) {
         errorBox.textContent = msg
         errorBox.classList.remove('hidden')
         // Resaltar campo con error
-        if (fieldEl) setFieldError(fieldEl, true)
+        if (fieldEl) setFieldError(fieldEl, msg)
         // Scroll suave al cuadro de error
         errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' })
       }
@@ -293,8 +340,15 @@ export function pageCheckout(state) {
       // Limpiar error de campo al escribir
       form.addEventListener('input', (e) => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-          setFieldError(e.target, false)
+          setFieldError(e.target, '')
         }
+      })
+
+      // Validacion al salir del campo, no solo al enviar
+      const blurChecks = { name: nameError, whatsapp: whatsappError }
+      form.addEventListener('focusout', (e) => {
+        const check = blurChecks[e.target.name]
+        if (check) setFieldError(e.target, check(e.target.value))
       })
 
       // ── Form Submit ──
@@ -322,7 +376,7 @@ export function pageCheckout(state) {
         // ── Carrito vacío ──
         const liveCart = getState().cart
         if (!liveCart.length) {
-          setError('Tu carrito está vacío. Volvé al catálogo para agregar productos.')
+          setError('Tu bolsa está vacía. Vuelve al catálogo para agregar productos.')
           return
         }
 
@@ -337,11 +391,11 @@ export function pageCheckout(state) {
         const deliveryMethod = deliveryEl.value
 
         // ── Validaciones de contacto ──
-        if (!name) return setError('Ingresa tu nombre completo.', nameEl)
-        if (name.length < 3) return setError('El nombre debe tener al menos 3 caracteres.', nameEl)
+        const nameMsg = nameError(nameEl.value)
+        if (nameMsg) return setError(nameMsg, nameEl)
 
-        if (!whatsapp) return setError('Ingresa tu número de WhatsApp.', whatsappEl)
-        if (!WHATSAPP_RE.test(whatsapp)) return setError('El número de WhatsApp no parece válido. Ej: +52 312 123 4567.', whatsappEl)
+        const whatsappMsg = whatsappError(whatsapp)
+        if (whatsappMsg) return setError(whatsappMsg, whatsappEl)
 
         if (!paymentMethod) return setError('Selecciona un método de pago.', paymentEl)
         if (!deliveryMethod) return setError('Selecciona un método de entrega.', deliveryEl)
@@ -404,7 +458,7 @@ export function pageCheckout(state) {
           .filter(Boolean)
 
         if (!cartLines.length) {
-          setError('Algunos productos de tu carrito ya no están disponibles. Volvé al catálogo.')
+          setError('Algunos productos de tu bolsa ya no están disponibles. Vuelve al catálogo.')
           return
         }
 

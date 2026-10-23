@@ -3,9 +3,8 @@
 export const heroSlides = [
   {
     headline: 'Tu fit,<br/><span class="text-brand">perfecto.</span>',
-    body: 'Para el hombre que sabe lo que se pone. Las mejores marcas en camisas, denim y fragancias — escogidas minusiosamente , al mejor precio.',
+    body: 'Para el hombre que sabe lo que se pone. Las mejores marcas en camisas, denim y fragancias — escogidas minuciosamente, al mejor precio.',
     cta: { label: 'Comprar colección', href: '/catalog' },
-    secondary: { label: 'Ver lookbook', href: '/catalog' },
     image: '/img/hero-1-1080.webp?v=2',
     w: 1080,
     h: 1350,
@@ -96,12 +95,13 @@ export const categoryTiles = [
 
 export const stats = [
   { number: '31<span class="text-brand">.</span>', caption: 'Años vistiendo a Colima<span class="hidden md:inline"> · desde 1995</span>' },
-  { number: '2.4<span class="text-brand">k</span>', caption: 'Clientes activos' },
-  // La valoracion es real y sale de Google, asi que se enlaza a su ficha: un
+  // Antes decia "2.4k clientes activos", un numero sin fuente. El de piezas sale del catalogo real.
+  { catalogCount: true, caption: 'Piezas en catálogo' },
+  // La valoracion es la de Google (ficha de Centro: 4.8, 84 opiniones al 22-oct-2026), asi que se enlaza a su ficha: un
   // numero sin fuente es solo marketing. En schema NO va — una valoracion
   // declarada por el propio negocio no da rich results y puede costar una
   // accion manual. reviewsLink lo resuelve home.js con el mapUrl de la tienda.
-  { number: '4.9<span class="text-[0.56em] opacity-40">/5</span>', caption: '+500 reseñas', reviewsLink: true },
+  { number: '4.8<span class="text-[0.56em] opacity-40">/5</span>', caption: '84 opiniones en Google', reviewsLink: true },
   { number: '02', caption: 'Tiendas en Colima' },
 ]
 
@@ -170,7 +170,7 @@ export const stores = [
     coords: '19.2713 N · 103.7332 W',
     address: 'María Ahumada de Gómez #30, Local #6. Sobre la avenida principal.',
     hours: ['Lun—Sáb · 09:00—20:00', 'Dom · 10:30—14:00'],
-    mapUrl: 'https://www.google.com/maps/place/G%26L+Villa+de+%C3%81lvarez/@19.271313,-103.770113,14z/data=!3m1!4b1!4m6!3m5!1s0x842545c072adffd5:0xdfee853b24213661!8m2!3d19.2713167!4d-103.7332035!16s%2Fg%2F11h53ml_dy?entry=ttu',
+    mapUrl: 'https://www.google.com/maps/place/G%26L+Villa+de+%C3%81lvarez/@19.271313,-103.770113,17z/data=!3m1!4b1!4m6!3m5!1s0x842545c072adffd5:0xdfee853b24213661!8m2!3d19.2713167!4d-103.7332035!16s%2Fg%2F11h53ml_dy?entry=ttu',
     postal: {
       streetAddress: 'María Ahumada de Gómez 30, Local 6',
       addressLocality: 'Villa de Álvarez',

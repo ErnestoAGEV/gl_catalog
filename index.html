@@ -23,7 +23,7 @@
       fetchpriority="high"
       href="/img/hero-1-1080.webp?v=2"
       imagesrcset="/img/hero-1-640.webp?v=2 640w, /img/hero-1-1080.webp?v=2 1080w, /img/hero-1-1600.webp?v=2 1600w"
-      imagesizes="(max-width: 768px) 200px, 50vw"
+      imagesizes="(max-width: 1023px) 92vw, 40vw"
     />
 
     <!-- Tipografias propias: el @font-face vive en src/style.css. Se precargan
@@ -78,7 +78,7 @@
            regenera en el build. Cualquier cambio en src/pages/home/ que deba
            verse SIN JS —textos, enlaces, encabezados— hay que reflejarlo aqui
            tambien, o el bundle y el HTML que leen Google y WhatsApp diran cosas
-           distintas. Paso por aqui: el enlace de "+500 reseñas" a la ficha de
+           distintas. Paso por aqui: el enlace de las opiniones de Google a la ficha de
            Google entro en home.js y no aparecia en produccion. -->
       <div id="prerender-shell">
       <!-- prerender-shell:start — static snapshot of the home page so the first paint
@@ -92,17 +92,17 @@
     <!-- Marquee Announcement Bar -->
     <div class="bg-ink text-paper border-b border-white/10 overflow-hidden ">
       <div class="marquee-track flex whitespace-nowrap py-2.5">
-        <span class="font-mono text-[11px] tracking-[0.22em] uppercase">★ Envío gratis +$1499 MXN — Nueva temporada 2026 — Cierre por WhatsApp en minutos — 2 tiendas físicas en Colima — Use WELCOME10 · 10% off 1ª compra — </span>
-        <span class="font-mono text-[11px] tracking-[0.22em] uppercase">★ Envío gratis +$1499 MXN — Nueva temporada 2026 — Cierre por WhatsApp en minutos — 2 tiendas físicas en Colima — Use WELCOME10 · 10% off 1ª compra — </span>
-        <span class="font-mono text-[11px] tracking-[0.22em] uppercase">★ Envío gratis +$1499 MXN — Nueva temporada 2026 — Cierre por WhatsApp en minutos — 2 tiendas físicas en Colima — Use WELCOME10 · 10% off 1ª compra — </span>
-        <span class="font-mono text-[11px] tracking-[0.22em] uppercase">★ Envío gratis +$1499 MXN — Nueva temporada 2026 — Cierre por WhatsApp en minutos — 2 tiendas físicas en Colima — Use WELCOME10 · 10% off 1ª compra — </span>
+        <span class="font-mono text-[11px] tracking-[0.22em] uppercase">★ Envío gratis +$1499 MXN — Nueva temporada 2026 — Cierre por WhatsApp en minutos — 2 tiendas físicas en Colima — Usa WELCOME10 · 10% off 1ª compra — </span>
+        <span class="font-mono text-[11px] tracking-[0.22em] uppercase">★ Envío gratis +$1499 MXN — Nueva temporada 2026 — Cierre por WhatsApp en minutos — 2 tiendas físicas en Colima — Usa WELCOME10 · 10% off 1ª compra — </span>
+        <span class="font-mono text-[11px] tracking-[0.22em] uppercase">★ Envío gratis +$1499 MXN — Nueva temporada 2026 — Cierre por WhatsApp en minutos — 2 tiendas físicas en Colima — Usa WELCOME10 · 10% off 1ª compra — </span>
+        <span class="font-mono text-[11px] tracking-[0.22em] uppercase">★ Envío gratis +$1499 MXN — Nueva temporada 2026 — Cierre por WhatsApp en minutos — 2 tiendas físicas en Colima — Usa WELCOME10 · 10% off 1ª compra — </span>
       </div>
     </div>
 
     <header class="relative md:sticky md:top-0 z-40 bg-paper/95 backdrop-blur-lg border-b border-ink/10 ">
       <div class="mx-auto flex w-full max-w-[1440px] items-center justify-between px-6 lg:px-10 py-3">
         <!-- Logo -->
-        <a href="/" class="flex items-center hover:opacity-80 transition-opacity">
+        <a href="/" aria-label="G&amp;L — inicio" class="flex items-center hover:opacity-80 transition-opacity">
           <img src="/logo-176.webp" alt="G&amp;L" width="176" height="176" class="h-11 w-auto object-contain">
         </a>
 
@@ -122,7 +122,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             Buscar
           </a>
-          <a href="/cart" class="relative group hidden md:flex items-center gap-2 h-10 px-4 rounded-full bg-ink text-paper text-[13px] font-medium hover:bg-brand transition-colors">
+          <a href="/cart" data-cart-link class="relative group hidden md:flex items-center gap-2 h-10 px-4 rounded-full bg-ink text-paper text-[13px] font-medium hover:bg-brand transition-colors">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
             Bolsa
             
@@ -134,21 +134,21 @@
     <main class="w-full pt-0 pb-24 md:pb-24 overflow-x-clip mb-16 md:mb-0" id="main-content">
       
       <!-- §3 — Hero -->
-      <section class="max-w-[1440px] mx-auto px-6 lg:px-10 pt-10 lg:pt-14 pb-16 lg:pb-20" id="hero-section">
+      <section class="max-w-[1440px] mx-auto px-6 lg:px-10 pt-6 md:pt-10 lg:pt-14 pb-16 lg:pb-20" id="hero-section">
         <!-- Eyebrow -->
-        <div class="flex items-center gap-4 mb-8">
+        <div class="flex items-center gap-4 mb-5 md:mb-8">
           <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60">Vol.03 — O/I '26</span>
           <span class="h-px flex-1 bg-ink/15"></span>
           <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60">Colima · Mx</span>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-8 lg:gap-6">
           <!-- Left: headline carousel -->
-          <div class="lg:col-span-7 relative min-h-[440px] md:min-h-[540px]">
+          <div class="lg:col-span-7 relative min-h-[420px] md:min-h-[540px]">
             
-    <div class="hero-slide absolute inset-0 flex flex-col justify-center transition-opacity duration-[1200ms] ease opacity-100 z-10" data-slide="0">
-      <h1 class="font-heading font-[800] text-[clamp(72px,11vw,184px)] leading-[0.86] tracking-[-0.04em] text-ink mb-6">Tu fit,<br><span class="text-brand">perfecto.</span></h1>
-      <p class="text-[17px] text-ink/70 max-w-[460px] leading-relaxed">Para el hombre que sabe lo que se pone. Las mejores marcas en camisas, denim y fragancias — escogidas minusiosamente , al mejor precio.</p>
+    <div class="hero-slide absolute inset-0 flex flex-col justify-start md:justify-center transition-opacity duration-[1200ms] ease opacity-100 z-10" data-slide="0">
+      <h1 class="font-heading font-[800] text-[clamp(52px,18.5vw,72px)] md:text-[clamp(72px,11vw,184px)] leading-[0.86] tracking-[-0.04em] text-ink mb-6">Tu fit,<br><span class="text-brand">perfecto.</span></h1>
+      <p class="text-[17px] text-ink/70 max-w-[460px] leading-relaxed">Para el hombre que sabe lo que se pone. Las mejores marcas en camisas, denim y fragancias — escogidas minuciosamente, al mejor precio.</p>
       <div class="flex items-center gap-6 mt-8">
         
           <a href="/catalog" class="hero-cta group inline-flex items-center gap-2.5 h-14 px-7 rounded-full bg-ink text-paper text-[15px] font-semibold hover:bg-brand transition-colors" data-href="/catalog">
@@ -156,12 +156,11 @@
             <span class="arrow-walk">→</span>
           </a>
         
-        <a href="/catalog" class="ul-link text-[14px] font-medium text-ink/70 hover:text-ink">Ver lookbook</a>
       </div>
     </div>
   
-    <div class="hero-slide absolute inset-0 flex flex-col justify-center transition-opacity duration-[1200ms] ease opacity-0 z-0" data-slide="1">
-      <h2 class="font-heading font-[800] text-[clamp(72px,11vw,184px)] leading-[0.86] tracking-[-0.04em] text-ink mb-6">Denim<br><span class="outline-text">honesto.</span></h2>
+    <div class="hero-slide absolute inset-0 flex flex-col justify-start md:justify-center transition-opacity duration-[1200ms] ease opacity-0 z-0" data-slide="1">
+      <h2 class="font-heading font-[800] text-[clamp(52px,18.5vw,72px)] md:text-[clamp(72px,11vw,184px)] leading-[0.86] tracking-[-0.04em] text-ink mb-6">Denim<br><span class="outline-text">honesto.</span></h2>
       <p class="text-[17px] text-ink/70 max-w-[460px] leading-relaxed">Jeans crudos y lavados que se mejoran con el uso. Denims premium para todo tipo de ocasiones — cortes slim, straight y relaxed.</p>
       <div class="flex items-center gap-6 mt-8">
         
@@ -174,8 +173,8 @@
       </div>
     </div>
   
-    <div class="hero-slide absolute inset-0 flex flex-col justify-center transition-opacity duration-[1200ms] ease opacity-0 z-0" data-slide="2">
-      <h2 class="font-heading font-[800] text-[clamp(72px,11vw,184px)] leading-[0.86] tracking-[-0.04em] text-ink mb-6">−10<span class="text-brand">%</span><br>1ª compra.</h2>
+    <div class="hero-slide absolute inset-0 flex flex-col justify-start md:justify-center transition-opacity duration-[1200ms] ease opacity-0 z-0" data-slide="2">
+      <h2 class="font-heading font-[800] text-[clamp(52px,18.5vw,72px)] md:text-[clamp(72px,11vw,184px)] leading-[0.86] tracking-[-0.04em] text-ink mb-6">−10<span class="text-brand">%</span><br>1ª compra.</h2>
       
         <p class="text-[17px] text-ink/70 max-w-[460px] leading-relaxed">
           Aplica <span class="bg-fog font-mono rounded-md px-2 py-1 text-[15px]">WELCOME10</span> en checkout. Válido para clientes nuevos en cualquier categoría.
@@ -196,11 +195,11 @@
 
           <!-- Right: image carousel -->
           <div class="lg:col-span-5">
-            <div class="aspect-[4/5] bg-fog rounded-md overflow-hidden relative">
+            <div class="aspect-square lg:aspect-[4/5] bg-fog rounded-md overflow-hidden relative">
               
     <div class="hero-img absolute inset-0 transition-opacity duration-[1200ms] ease opacity-100 z-10" data-slide="0">
       
-      <img src="/img/hero-1-1080.webp?v=2" width="1080" height="1350" srcset="/img/hero-1-640.webp?v=2 640w, /img/hero-1-1080.webp?v=2 1080w, /img/hero-1-1600.webp?v=2 1600w" sizes="(max-width: 768px) 200px, 50vw" alt="Look 01 — Polo gris + khaki" class="w-full h-full object-cover" loading="eager" fetchpriority="high">
+      <img src="/img/hero-1-1080.webp?v=2" width="1080" height="1350" srcset="/img/hero-1-640.webp?v=2 640w, /img/hero-1-1080.webp?v=2 1080w, /img/hero-1-1600.webp?v=2 1600w" sizes="(max-width: 1023px) 92vw, 40vw" alt="Look 01 — Polo gris + khaki" class="w-full h-full object-cover" loading="eager" fetchpriority="high">
       
       <div class="absolute bottom-4 left-4">
         <span class="bg-ink/40 backdrop-blur text-paper text-[12px] font-mono px-3 py-1.5 rounded-full">Look 01 — Camisa hueso</span>
@@ -209,7 +208,7 @@
   
     <div class="hero-img absolute inset-0 transition-opacity duration-[1200ms] ease opacity-0 z-0" data-slide="1">
       
-      <img sizes="(max-width: 768px) 200px, 50vw" alt="Look 02 — Jean crudo" class="w-full h-full object-cover" decoding="async" srcset="/img/hero-2-640.webp 640w, /img/hero-2-1080.webp 1080w, /img/hero-2-1600.webp 1600w" width="1080" height="1080" src="/img/hero-2-1080.webp" loading="lazy" fetchpriority="low">
+      <img sizes="(max-width: 1023px) 92vw, 40vw" alt="Look 02 — Jean crudo" class="w-full h-full object-cover" decoding="async" srcset="/img/hero-2-640.webp 640w, /img/hero-2-1080.webp 1080w, /img/hero-2-1600.webp 1600w" width="1080" height="1080" src="/img/hero-2-1080.webp" loading="lazy" fetchpriority="low">
       
       <div class="absolute bottom-4 left-4">
         <span class="bg-ink/40 backdrop-blur text-paper text-[12px] font-mono px-3 py-1.5 rounded-full">Look 02 — Jean crudo</span>
@@ -218,7 +217,7 @@
   
     <div class="hero-img absolute inset-0 transition-opacity duration-[1200ms] ease opacity-0 z-0" data-slide="2">
       
-      <img sizes="(max-width: 768px) 200px, 50vw" alt="Oferta · WELCOME10" class="w-full h-full object-cover" decoding="async" srcset="/img/hero-3-640.webp?v=2 640w, /img/hero-3-1080.webp?v=2 1080w, /img/hero-3-1600.webp?v=2 1600w" width="1080" height="1350" src="/img/hero-3-1080.webp?v=2" loading="lazy" fetchpriority="low">
+      <img sizes="(max-width: 1023px) 92vw, 40vw" alt="Oferta · WELCOME10" class="w-full h-full object-cover" decoding="async" srcset="/img/hero-3-640.webp?v=2 640w, /img/hero-3-1080.webp?v=2 1080w, /img/hero-3-1600.webp?v=2 1600w" width="1080" height="1350" src="/img/hero-3-1080.webp?v=2" loading="lazy" fetchpriority="low">
       
       <div class="absolute bottom-4 left-4">
         <span class="bg-brand text-paper text-[12px] font-mono px-3 py-1.5 rounded-full">Oferta · WELCOME10</span>
@@ -233,10 +232,10 @@
         <div class="flex items-center justify-between mt-8 gap-4">
           <div class="flex items-center gap-3 shrink-0">
             <span class="font-mono text-[13px] tabular-nums text-ink" id="slide-current">01</span>
-            <div class="w-[160px] h-[2px] bg-ink/10 rounded-full overflow-hidden">
+            <div class="w-[88px] sm:w-[160px] h-[2px] bg-ink/10 rounded-full overflow-hidden">
               <div class="h-full bg-ink origin-left" id="slide-progress" style="transform: scaleX(0)"></div>
             </div>
-            <span class="font-mono text-[13px] tabular-nums text-ink/40">03</span>
+            <span class="font-mono text-[13px] tabular-nums text-ink/60">03</span>
           </div>
           
           <div class="flex items-center gap-2 shrink-0">
@@ -253,26 +252,26 @@
       <!-- §4 — Stats Band -->
       <section class="bg-ink text-paper py-8 md:py-12 reveal">
         <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
-          <div class="grid grid-cols-4 md:gap-8 divide-x divide-paper/15 md:divide-x-0">
+          <div class="grid grid-cols-2 gap-x-6 gap-y-7 md:grid-cols-4 md:gap-8">
             
-    <div class="text-center md:text-left px-1 md:px-0">
-      <p class="font-heading font-bold text-[clamp(26px,8vw,40px)] md:text-[64px] leading-none tracking-[-0.04em] tabular-nums">31<span class="text-brand">.</span></p>
-      <p class="font-mono text-[9px] md:text-[11px] tracking-[0.08em] md:tracking-[0.24em] leading-snug uppercase opacity-60 mt-2">Años vistiendo a Colima<span class="hidden md:inline"> · desde 1995</span></p>
+    <div class="text-left">
+      <p class="font-heading font-bold text-[44px] md:text-[64px] leading-none tracking-[-0.04em] tabular-nums">31<span class="text-brand">.</span></p>
+      <p class="font-mono text-[11px] tracking-[0.14em] md:tracking-[0.24em] leading-snug uppercase opacity-70 mt-2">Años vistiendo a Colima<span class="hidden md:inline"> · desde 1995</span></p>
     </div>
   
-    <div class="text-center md:text-left px-1 md:px-0">
-      <p class="font-heading font-bold text-[clamp(26px,8vw,40px)] md:text-[64px] leading-none tracking-[-0.04em] tabular-nums">2.4<span class="text-brand">k</span></p>
-      <p class="font-mono text-[9px] md:text-[11px] tracking-[0.08em] md:tracking-[0.24em] leading-snug uppercase opacity-60 mt-2">Clientes activos</p>
+    <div class="text-left">
+      <p class="font-heading font-bold text-[44px] md:text-[64px] leading-none tracking-[-0.04em] tabular-nums" data-catalog-count>240</p>
+      <p class="font-mono text-[11px] tracking-[0.14em] md:tracking-[0.24em] leading-snug uppercase opacity-70 mt-2">Piezas en catálogo</p>
     </div>
   
-    <div class="text-center md:text-left px-1 md:px-0">
-      <p class="font-heading font-bold text-[clamp(26px,8vw,40px)] md:text-[64px] leading-none tracking-[-0.04em] tabular-nums">4.9<span class="text-[0.56em] opacity-40">/5</span></p>
-      <p class="font-mono text-[9px] md:text-[11px] tracking-[0.08em] md:tracking-[0.24em] leading-snug uppercase opacity-60 mt-2"><a href="https://www.google.com/maps/place/G%26L+Colima/@19.2424015,-103.7280069,17z/data=!3m2!4b1!5s0x84255aab867046b3:0x293c46c0e72ef43a!4m6!3m5!1s0x84255aab8670a0bf:0x969da2ab885623e0!8m2!3d19.2424015!4d-103.725432!16s%2Fg%2F11c45qrg02?entry=ttu" target="_blank" rel="noopener" class="ul-link hover:opacity-100">+500 reseñas</a></p>
+    <div class="text-left">
+      <p class="font-heading font-bold text-[44px] md:text-[64px] leading-none tracking-[-0.04em] tabular-nums">4.8<span class="text-[0.56em] opacity-40">/5</span></p>
+      <p class="font-mono text-[11px] tracking-[0.14em] md:tracking-[0.24em] leading-snug uppercase opacity-70 mt-2"><a href="https://www.google.com/maps/place/G%26L+Colima/@19.2424015,-103.7280069,17z/data=!3m2!4b1!5s0x84255aab867046b3:0x293c46c0e72ef43a!4m6!3m5!1s0x84255aab8670a0bf:0x969da2ab885623e0!8m2!3d19.2424015!4d-103.725432!16s%2Fg%2F11c45qrg02?entry=ttu" target="_blank" rel="noopener" class="ul-link hover:opacity-100">84 opiniones en Google</a></p>
     </div>
   
-    <div class="text-center md:text-left px-1 md:px-0">
-      <p class="font-heading font-bold text-[clamp(26px,8vw,40px)] md:text-[64px] leading-none tracking-[-0.04em] tabular-nums">02</p>
-      <p class="font-mono text-[9px] md:text-[11px] tracking-[0.08em] md:tracking-[0.24em] leading-snug uppercase opacity-60 mt-2">Tiendas en Colima</p>
+    <div class="text-left">
+      <p class="font-heading font-bold text-[44px] md:text-[64px] leading-none tracking-[-0.04em] tabular-nums">02</p>
+      <p class="font-mono text-[11px] tracking-[0.14em] md:tracking-[0.24em] leading-snug uppercase opacity-70 mt-2">Tiendas en Colima</p>
     </div>
   
           </div>
@@ -285,9 +284,9 @@
           <div class="flex flex-col md:flex-row md:items-end md:justify-between mb-14">
             <div>
               <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 block mb-3">§ 01 — Categorías</span>
-              <h2 class="font-heading font-[800] text-[clamp(56px,8vw,128px)] leading-[0.88] tracking-[-0.045em]">Explora<br>por <span class="text-brand">categoría</span>.</h2>
+              <h2 class="font-heading font-[800] text-[clamp(56px,8vw,128px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.88] tracking-[-0.045em]">Explora<br>por <span class="text-brand">categoría</span>.</h2>
             </div>
-            <a href="/catalog" class="hidden md:inline-flex ul-link text-[14px] font-medium text-ink/70 hover:text-ink mt-4 md:mt-0">Catálogo completo →</a>
+            <a href="/catalog" class="inline-flex self-start md:self-auto ul-link text-[14px] font-medium text-ink/70 hover:text-ink mt-5 md:mt-0">Catálogo completo →</a>
           </div>
           <div class="grid grid-cols-12 gap-4 auto-rows-[200px] md:auto-rows-[280px]">
             
@@ -327,7 +326,7 @@
         <a href="/categoria/Polos" class="ct col-span-6 md:col-span-2 row-span-1 relative bg-ink text-paper rounded-md p-5 flex flex-col justify-between overflow-hidden group">
           <img src="/img/cat-polos.webp" srcset="/img/cat-polos-480.webp 480w, /img/cat-polos.webp 800w" sizes="(max-width: 768px) 100vw, 50vw" alt="Polos" width="800" height="800" class="ct-img absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async">
           <div class="absolute inset-0 bg-ink/35"></div>
-          <span class="font-mono text-[10px] tracking-[0.22em] uppercase opacity-80 relative z-10">03 · Pima</span>
+          <span class="font-mono text-[11px] tracking-[0.22em] uppercase opacity-80 relative z-10">03 · Pima</span>
           <div class="ct-label relative z-10">
             <h3 class="font-heading font-[800] text-[34px] tracking-[-0.04em]">Polos</h3>
             <span class="font-mono text-[11px] opacity-70">0 piezas →</span>
@@ -337,7 +336,7 @@
         <a href="/categoria/Perfumes" class="ct col-span-6 md:col-span-2 row-span-1 relative bg-ink text-paper rounded-md p-5 flex flex-col justify-between overflow-hidden group">
           <img src="/img/cat-perfumes.webp" srcset="/img/cat-perfumes-480.webp 480w, /img/cat-perfumes.webp 736w" sizes="(max-width: 768px) 100vw, 50vw" alt="Perfumes" width="736" height="981" class="ct-img absolute inset-0 w-full h-full object-cover opacity-30" loading="lazy" decoding="async">
           <div class="absolute inset-0 bg-ink/40"></div>
-          <span class="font-mono text-[10px] tracking-[0.22em] uppercase opacity-70 relative z-10">04 · Fragancia</span>
+          <span class="font-mono text-[11px] tracking-[0.22em] uppercase opacity-80 relative z-10">04 · Fragancia</span>
           <div class="ct-label relative z-10">
             <h3 class="font-heading font-[800] text-[28px] tracking-[-0.04em]">Perfumes</h3>
             <span class="font-mono text-[11px] opacity-70">0 piezas →</span>
@@ -353,12 +352,12 @@
         <!-- Ambient bg text -->
         <div class="absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden="true">
           <div class="marquee-track whitespace-nowrap opacity-[0.04]">
-            <span class="font-heading font-[800] text-[180px] leading-none">BEST · SELLERS · FAVORITOS · 2026 &nbsp;&nbsp;</span>
-            <span class="font-heading font-[800] text-[180px] leading-none">BEST · SELLERS · FAVORITOS · 2026 &nbsp;&nbsp;</span>
+            <span class="font-heading font-[800] text-[180px] leading-none">FAVORITOS · LO MÁS PEDIDO · 2026 &nbsp;&nbsp;</span>
+            <span class="font-heading font-[800] text-[180px] leading-none">FAVORITOS · LO MÁS PEDIDO · 2026 &nbsp;&nbsp;</span>
           </div>
           <div class="marquee-track-rev whitespace-nowrap opacity-[0.04] mt-[-40px]">
-            <span class="font-heading font-[800] text-[180px] leading-none">BEST · SELLERS · FAVORITOS · 2026 &nbsp;&nbsp;</span>
-            <span class="font-heading font-[800] text-[180px] leading-none">BEST · SELLERS · FAVORITOS · 2026 &nbsp;&nbsp;</span>
+            <span class="font-heading font-[800] text-[180px] leading-none">FAVORITOS · LO MÁS PEDIDO · 2026 &nbsp;&nbsp;</span>
+            <span class="font-heading font-[800] text-[180px] leading-none">FAVORITOS · LO MÁS PEDIDO · 2026 &nbsp;&nbsp;</span>
           </div>
         </div>
 
@@ -367,10 +366,10 @@
           <div class="grid grid-cols-1 md:grid-cols-12 md:items-end gap-6 mb-12">
             <div class="md:col-span-7">
               <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 block mb-3">§ 02 — Favoritos</span>
-              <h2 class="font-heading font-[800] text-[clamp(56px,8vw,128px)] leading-[0.88] tracking-[-0.045em]">Lo que más se <span class="text-brand italic">llevan</span>.</h2>
+              <h2 class="font-heading font-[800] text-[clamp(56px,8vw,128px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.88] tracking-[-0.045em]">Lo que más se <span class="text-brand italic">llevan</span>.</h2>
             </div>
             <div class="md:col-span-5 md:text-right">
-              <p class="text-[15px] text-ink/60 leading-relaxed">Productos elegidos por nuestros clientes esta temporada. Pasa el cursor sobre cada uno.</p>
+              <p class="text-[15px] text-ink/60 leading-relaxed">Productos elegidos por nuestros clientes esta temporada.<span class="hidden md:inline"> Pasa el cursor sobre cada uno.</span></p>
             </div>
           </div>
 
@@ -378,43 +377,49 @@
           <ul class="relative">
             
         <li class="grid grid-cols-12 items-center gap-4 py-6 px-3 border-b border-[#EAE9E4]">
-          <span class="col-span-1 h-4 w-6 rounded skeleton-shimmer"></span>
-          <span class="col-span-7 md:col-span-6 h-8 w-3/4 rounded skeleton-shimmer"></span>
+          <span class="hidden md:block col-span-1 h-4 w-6 rounded skeleton-shimmer"></span>
+          <span class="md:hidden col-span-3 aspect-[4/5] rounded-md skeleton-shimmer"></span>
+          <span class="col-span-5 md:col-span-6 h-8 w-3/4 rounded skeleton-shimmer"></span>
           <span class="hidden md:block col-span-3 h-4 w-1/2 rounded skeleton-shimmer"></span>
           <span class="col-span-4 md:col-span-2 h-4 w-16 rounded skeleton-shimmer ml-auto"></span>
         </li>
       
         <li class="grid grid-cols-12 items-center gap-4 py-6 px-3 border-b border-[#EAE9E4]">
-          <span class="col-span-1 h-4 w-6 rounded skeleton-shimmer"></span>
-          <span class="col-span-7 md:col-span-6 h-8 w-3/4 rounded skeleton-shimmer"></span>
+          <span class="hidden md:block col-span-1 h-4 w-6 rounded skeleton-shimmer"></span>
+          <span class="md:hidden col-span-3 aspect-[4/5] rounded-md skeleton-shimmer"></span>
+          <span class="col-span-5 md:col-span-6 h-8 w-3/4 rounded skeleton-shimmer"></span>
           <span class="hidden md:block col-span-3 h-4 w-1/2 rounded skeleton-shimmer"></span>
           <span class="col-span-4 md:col-span-2 h-4 w-16 rounded skeleton-shimmer ml-auto"></span>
         </li>
       
         <li class="grid grid-cols-12 items-center gap-4 py-6 px-3 border-b border-[#EAE9E4]">
-          <span class="col-span-1 h-4 w-6 rounded skeleton-shimmer"></span>
-          <span class="col-span-7 md:col-span-6 h-8 w-3/4 rounded skeleton-shimmer"></span>
+          <span class="hidden md:block col-span-1 h-4 w-6 rounded skeleton-shimmer"></span>
+          <span class="md:hidden col-span-3 aspect-[4/5] rounded-md skeleton-shimmer"></span>
+          <span class="col-span-5 md:col-span-6 h-8 w-3/4 rounded skeleton-shimmer"></span>
           <span class="hidden md:block col-span-3 h-4 w-1/2 rounded skeleton-shimmer"></span>
           <span class="col-span-4 md:col-span-2 h-4 w-16 rounded skeleton-shimmer ml-auto"></span>
         </li>
       
         <li class="grid grid-cols-12 items-center gap-4 py-6 px-3 border-b border-[#EAE9E4]">
-          <span class="col-span-1 h-4 w-6 rounded skeleton-shimmer"></span>
-          <span class="col-span-7 md:col-span-6 h-8 w-3/4 rounded skeleton-shimmer"></span>
+          <span class="hidden md:block col-span-1 h-4 w-6 rounded skeleton-shimmer"></span>
+          <span class="md:hidden col-span-3 aspect-[4/5] rounded-md skeleton-shimmer"></span>
+          <span class="col-span-5 md:col-span-6 h-8 w-3/4 rounded skeleton-shimmer"></span>
           <span class="hidden md:block col-span-3 h-4 w-1/2 rounded skeleton-shimmer"></span>
           <span class="col-span-4 md:col-span-2 h-4 w-16 rounded skeleton-shimmer ml-auto"></span>
         </li>
       
         <li class="grid grid-cols-12 items-center gap-4 py-6 px-3 border-b border-[#EAE9E4]">
-          <span class="col-span-1 h-4 w-6 rounded skeleton-shimmer"></span>
-          <span class="col-span-7 md:col-span-6 h-8 w-3/4 rounded skeleton-shimmer"></span>
+          <span class="hidden md:block col-span-1 h-4 w-6 rounded skeleton-shimmer"></span>
+          <span class="md:hidden col-span-3 aspect-[4/5] rounded-md skeleton-shimmer"></span>
+          <span class="col-span-5 md:col-span-6 h-8 w-3/4 rounded skeleton-shimmer"></span>
           <span class="hidden md:block col-span-3 h-4 w-1/2 rounded skeleton-shimmer"></span>
           <span class="col-span-4 md:col-span-2 h-4 w-16 rounded skeleton-shimmer ml-auto"></span>
         </li>
       
         <li class="grid grid-cols-12 items-center gap-4 py-6 px-3 border-b border-[#EAE9E4]">
-          <span class="col-span-1 h-4 w-6 rounded skeleton-shimmer"></span>
-          <span class="col-span-7 md:col-span-6 h-8 w-3/4 rounded skeleton-shimmer"></span>
+          <span class="hidden md:block col-span-1 h-4 w-6 rounded skeleton-shimmer"></span>
+          <span class="md:hidden col-span-3 aspect-[4/5] rounded-md skeleton-shimmer"></span>
+          <span class="col-span-5 md:col-span-6 h-8 w-3/4 rounded skeleton-shimmer"></span>
           <span class="hidden md:block col-span-3 h-4 w-1/2 rounded skeleton-shimmer"></span>
           <span class="col-span-4 md:col-span-2 h-4 w-16 rounded skeleton-shimmer ml-auto"></span>
         </li>
@@ -424,22 +429,22 @@
           <!-- Bottom -->
           <div class="flex items-center justify-between mt-8">
             <a href="/catalog" class="ul-link text-[14px] font-medium text-ink/70 hover:text-ink">Ver los ... productos →</a>
-            <span class="font-mono text-[11px] tracking-[0.2em] uppercase text-ink/40">00 productos · vista lista</span>
+            <span class="font-mono text-[11px] tracking-[0.2em] uppercase text-ink/70">00 productos · vista lista</span>
           </div>
         </div>
       </section>
 
       <!-- §7 — Manifesto -->
-      <section class="bg-brand text-paper py-28 lg:py-40 reveal">
+      <section class="bg-brand text-paper py-20 lg:py-40 reveal">
         <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
           <div class="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
             <div class="md:col-span-3">
-              <p class="font-mono text-[11px] tracking-[0.32em] uppercase opacity-70 leading-relaxed">§ 03 — Manifiesto</p>
-              <p class="font-mono text-[11px] tracking-[0.32em] uppercase opacity-70 mt-1">G&amp;L / 2026</p>
+              <p class="font-mono text-[11px] tracking-[0.32em] uppercase opacity-80 leading-relaxed">§ 03 — Manifiesto</p>
+              <p class="font-mono text-[11px] tracking-[0.32em] uppercase opacity-80 mt-1">G&amp;L / 2026</p>
             </div>
             <div class="md:col-span-9">
-              <p class="font-heading font-semibold text-[clamp(28px,3.6vw,52px)] leading-[1.1] tracking-[-0.03em]">
-                No llenamos el clóset por llenarlo. Cada temporada elegimos a mano las mejores marcas — la camisa que se pone una y otra vez, los jeans que solo se ven mejor con el tiempo, la fragancia que la gente te pregunta. <span class="opacity-70">Marcas seleccionadas, al mejor precio. En Colima desde 1995.</span>
+              <p class="font-heading font-semibold text-[22px] leading-[1.3] md:text-[clamp(28px,3.6vw,52px)] md:leading-[1.1] tracking-[-0.03em]">
+                No llenamos el clóset por llenarlo. Cada temporada elegimos a mano las mejores marcas — la camisa que se pone una y otra vez, los jeans que solo se ven mejor con el tiempo, la fragancia que la gente te pregunta. <span class="opacity-80">Marcas seleccionadas, al mejor precio. En Colima desde 1995.</span>
               </p>
               <a href="/catalog" class="ul-link text-[14px] font-medium opacity-80 hover:opacity-100 inline-block mt-8">Descubre nuestras marcas →</a>
             </div>
@@ -453,20 +458,19 @@
           <div class="grid grid-cols-1 md:grid-cols-12 md:items-end gap-10">
             <div class="md:col-span-7">
               <span class="font-mono text-[11px] tracking-[0.28em] uppercase opacity-60 block mb-3">§ 04 — Club G&amp;L</span>
-              <h2 class="font-heading font-[800] text-[clamp(56px,8vw,124px)] leading-[0.86] tracking-[-0.045em]">
+              <h2 class="font-heading font-[800] text-[clamp(56px,8vw,124px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.86] tracking-[-0.045em]">
                 Un correo<br>al mes.<br><span class="outline-text">10% off</span><br><span class="text-brand">de bienvenida.</span>
               </h2>
             </div>
             <div class="md:col-span-5">
-              <p class="text-[15px] text-paper/70 leading-relaxed mb-6">Drops antes que nadie. Rebajas privadas. Cero spam. Pausar o cancelar con un click — siempre.</p>
+              <p class="text-[15px] text-paper/70 leading-relaxed mb-6">Novedades antes que nadie. Rebajas privadas. Cero spam. Pausar o cancelar con un click — siempre.</p>
 
               
                 <form id="newsletter-form" class="border-b border-paper/30 flex items-center focus-within:border-paper transition-colors">
-                  <input type="email" name="email" placeholder="tu@correo.com" class="flex-1 bg-transparent text-[17px] text-paper py-5 pr-4 placeholder:text-paper/30 focus:outline-none" required="">
-                  <button type="submit" class="text-[13px] font-bold text-paper shrink-0 hover:text-brand transition-colors">Suscribirme →</button>
+                  <input type="email" name="email" placeholder="tu@correo.com" class="flex-1 min-w-0 bg-transparent text-[17px] text-paper py-5 pr-4 placeholder:text-paper/50 focus:outline-none" required="">
+                  <button type="submit" class="shrink-0 inline-flex items-center h-11 px-5 rounded-full bg-paper text-ink text-[14px] font-semibold hover:bg-brand hover:text-paper transition-colors">Suscribirme →</button>
                 </form>
                 <div class="flex items-center justify-between mt-4">
-                  <span class="font-mono text-[11px] tracking-[0.2em] uppercase opacity-60">+2,400 suscriptores</span>
                   <span class="font-mono text-[11px] tracking-[0.2em] uppercase opacity-60">WELCOME10 al instante</span>
                 </div>
               
@@ -480,45 +484,51 @@
         <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
           <div class="mb-14">
             <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 block mb-3">§ 05 — Visítanos</span>
-            <h2 class="font-heading font-[800] text-[clamp(56px,7vw,112px)] leading-[0.88] tracking-[-0.045em]">Dos puntos<br>en <span class="text-brand">Colima</span>.</h2>
+            <h2 class="font-heading font-[800] text-[clamp(56px,7vw,112px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.88] tracking-[-0.045em]">Dos puntos<br>en <span class="text-brand">Colima</span>.</h2>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             
-    <div class="group bg-fog hover:bg-ink hover:text-paper p-10 rounded-md min-h-[340px] flex flex-col justify-between transition-[background-color,color] duration-[350ms]">
+    <div class="group bg-fog hover:bg-ink hover:text-paper p-6 md:p-10 rounded-md md:min-h-[340px] flex flex-col justify-between transition-[background-color,color] duration-[350ms]">
       <div>
         <div class="flex items-center justify-between mb-4">
           <span class="font-mono text-[11px] tracking-[0.22em] uppercase opacity-60">Sucursal — 01</span>
-          <span class="font-mono text-[10px] tracking-[0.24em] uppercase opacity-50">19.2424 N · 103.7254 W</span>
+          <span class="hidden md:inline font-mono text-[10px] tracking-[0.24em] uppercase opacity-50">19.2424 N · 103.7254 W</span>
         </div>
-        <h3 class="font-heading font-[800] text-[56px] tracking-[-0.04em] leading-none">Centro</h3>
+        <h3 class="font-heading font-[800] text-[44px] md:text-[56px] tracking-[-0.04em] leading-none">Centro</h3>
         <p class="font-mono text-[13px] opacity-60 mb-6">G&amp;L Colima Centro</p>
         <p class="text-[15px] max-w-sm opacity-90 leading-relaxed">Zaragoza #140, Col. Centro, Colima. A media cuadra del Jardín Libertad.</p>
       </div>
-      <div class="flex items-end justify-between mt-6">
-        <div class="font-mono text-[11px] tracking-[0.16em] uppercase opacity-60 leading-relaxed">
+      <div class="mt-6 flex flex-col gap-5">
+        <div class="font-mono text-[11px] tracking-[0.12em] uppercase opacity-70 leading-relaxed">
           <span class="block">Lun—Sáb · 10:30—14:00 · 16:30—20:00</span><span class="block">Dom · 10:30—14:00</span>
         </div>
-        <a href="/sucursales/colima-centro" class="ul-link text-[14px] font-medium shrink-0">Ver tienda →</a>
-        <a href="https://www.google.com/maps/place/G%26L+Colima/@19.2424015,-103.7280069,17z/data=!3m2!4b1!5s0x84255aab867046b3:0x293c46c0e72ef43a!4m6!3m5!1s0x84255aab8670a0bf:0x969da2ab885623e0!8m2!3d19.2424015!4d-103.725432!16s%2Fg%2F11c45qrg02?entry=ttu" target="_blank" rel="noopener noreferrer" class="ul-link text-[14px] font-medium shrink-0">Cómo llegar →</a>
+        <div class="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:items-center">
+          <a href="https://www.google.com/maps/place/G%26L+Colima/@19.2424015,-103.7280069,17z/data=!3m2!4b1!5s0x84255aab867046b3:0x293c46c0e72ef43a!4m6!3m5!1s0x84255aab8670a0bf:0x969da2ab885623e0!8m2!3d19.2424015!4d-103.725432!16s%2Fg%2F11c45qrg02?entry=ttu" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center h-11 px-4 md:px-5 rounded-full bg-ink text-paper group-hover:bg-paper group-hover:text-ink text-[14px] font-semibold transition-colors">Cómo llegar</a>
+          <a href="https://wa.me/523121018263?text=Hola%2C%20vengo%20de%20la%20p%C3%A1gina%20de%20G%26L" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 h-11 px-4 md:px-5 rounded-full border border-current text-[14px] font-semibold"><svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592z"></path></svg>WhatsApp</a>
+          <a href="/sucursales/colima-centro" class="col-span-2 justify-self-start ul-link inline-flex items-center h-11 px-2 text-[14px] font-medium">Ver tienda →</a>
+        </div>
       </div>
     </div>
   
-    <div class="group bg-fog hover:bg-ink hover:text-paper p-10 rounded-md min-h-[340px] flex flex-col justify-between transition-[background-color,color] duration-[350ms]">
+    <div class="group bg-fog hover:bg-ink hover:text-paper p-6 md:p-10 rounded-md md:min-h-[340px] flex flex-col justify-between transition-[background-color,color] duration-[350ms]">
       <div>
         <div class="flex items-center justify-between mb-4">
           <span class="font-mono text-[11px] tracking-[0.22em] uppercase opacity-60">Sucursal — 02</span>
-          <span class="font-mono text-[10px] tracking-[0.24em] uppercase opacity-50">19.2713 N · 103.7332 W</span>
+          <span class="hidden md:inline font-mono text-[10px] tracking-[0.24em] uppercase opacity-50">19.2713 N · 103.7332 W</span>
         </div>
-        <h3 class="font-heading font-[800] text-[56px] tracking-[-0.04em] leading-none">Villa</h3>
+        <h3 class="font-heading font-[800] text-[44px] md:text-[56px] tracking-[-0.04em] leading-none">Villa</h3>
         <p class="font-mono text-[13px] opacity-60 mb-6">G&amp;L Villa de Álvarez</p>
         <p class="text-[15px] max-w-sm opacity-90 leading-relaxed">María Ahumada de Gómez #30, Local #6. Sobre la avenida principal.</p>
       </div>
-      <div class="flex items-end justify-between mt-6">
-        <div class="font-mono text-[11px] tracking-[0.16em] uppercase opacity-60 leading-relaxed">
+      <div class="mt-6 flex flex-col gap-5">
+        <div class="font-mono text-[11px] tracking-[0.12em] uppercase opacity-70 leading-relaxed">
           <span class="block">Lun—Sáb · 09:00—20:00</span><span class="block">Dom · 10:30—14:00</span>
         </div>
-        <a href="/sucursales/villa-de-alvarez" class="ul-link text-[14px] font-medium shrink-0">Ver tienda →</a>
-        <a href="https://www.google.com/maps/place/G%26L+Villa+de+%C3%81lvarez/@19.271313,-103.770113,14z/data=!3m1!4b1!4m6!3m5!1s0x842545c072adffd5:0xdfee853b24213661!8m2!3d19.2713167!4d-103.7332035!16s%2Fg%2F11h53ml_dy?entry=ttu" target="_blank" rel="noopener noreferrer" class="ul-link text-[14px] font-medium shrink-0">Cómo llegar →</a>
+        <div class="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:items-center">
+          <a href="https://www.google.com/maps/place/G%26L+Villa+de+%C3%81lvarez/@19.271313,-103.770113,14z/data=!3m1!4b1!4m6!3m5!1s0x842545c072adffd5:0xdfee853b24213661!8m2!3d19.2713167!4d-103.7332035!16s%2Fg%2F11h53ml_dy?entry=ttu" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center h-11 px-4 md:px-5 rounded-full bg-ink text-paper group-hover:bg-paper group-hover:text-ink text-[14px] font-semibold transition-colors">Cómo llegar</a>
+          <a href="https://wa.me/523121018263?text=Hola%2C%20vengo%20de%20la%20p%C3%A1gina%20de%20G%26L" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 h-11 px-4 md:px-5 rounded-full border border-current text-[14px] font-semibold"><svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592z"></path></svg>WhatsApp</a>
+          <a href="/sucursales/villa-de-alvarez" class="col-span-2 justify-self-start ul-link inline-flex items-center h-11 px-2 text-[14px] font-medium">Ver tienda →</a>
+        </div>
       </div>
     </div>
   
@@ -531,17 +541,17 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-ink text-paper relative overflow-hidden">
+    <footer id="site-footer" class="bg-ink text-paper relative overflow-hidden">
       <!-- Footer Marquee -->
       <div class="py-4 md:py-6 border-b border-paper/10 overflow-hidden">
         <div class="marquee-track whitespace-nowrap" style="width:max-content;display:flex">
-          <span class="font-heading font-[800] text-[40px] md:text-[80px] leading-none tracking-[-0.04em] shrink-0">G&amp;L&nbsp;<span class="text-brand">→</span>&nbsp;TU&nbsp;FIT,&nbsp;PERFECTO&nbsp;&nbsp;<span class="text-brand">·</span>&nbsp;&nbsp;SHOP&nbsp;<span class="text-brand">·</span>&nbsp;LOOKBOOK&nbsp;<span class="text-brand">·</span>&nbsp;WHATSAPP&nbsp;&nbsp;&nbsp;&nbsp;</span>
-          <span class="font-heading font-[800] text-[40px] md:text-[80px] leading-none tracking-[-0.04em] shrink-0">G&amp;L&nbsp;<span class="text-brand">→</span>&nbsp;TU&nbsp;FIT,&nbsp;PERFECTO&nbsp;&nbsp;<span class="text-brand">·</span>&nbsp;&nbsp;SHOP&nbsp;<span class="text-brand">·</span>&nbsp;LOOKBOOK&nbsp;<span class="text-brand">·</span>&nbsp;WHATSAPP&nbsp;&nbsp;&nbsp;&nbsp;</span>
+          <span class="font-heading font-[800] text-[40px] md:text-[80px] leading-none tracking-[-0.04em] shrink-0">G&amp;L&nbsp;<span class="text-brand">→</span>&nbsp;TU&nbsp;FIT,&nbsp;PERFECTO&nbsp;&nbsp;<span class="text-brand">·</span>&nbsp;&nbsp;TIENDA&nbsp;<span class="text-brand">·</span>&nbsp;SUCURSALES&nbsp;<span class="text-brand">·</span>&nbsp;WHATSAPP&nbsp;&nbsp;&nbsp;&nbsp;</span>
+          <span class="font-heading font-[800] text-[40px] md:text-[80px] leading-none tracking-[-0.04em] shrink-0">G&amp;L&nbsp;<span class="text-brand">→</span>&nbsp;TU&nbsp;FIT,&nbsp;PERFECTO&nbsp;&nbsp;<span class="text-brand">·</span>&nbsp;&nbsp;TIENDA&nbsp;<span class="text-brand">·</span>&nbsp;SUCURSALES&nbsp;<span class="text-brand">·</span>&nbsp;WHATSAPP&nbsp;&nbsp;&nbsp;&nbsp;</span>
         </div>
       </div>
 
       <!-- Footer Content -->
-      <div class="max-w-[1440px] mx-auto px-6 lg:px-10 pt-12 md:pt-16 pb-12">
+      <div class="max-w-[1440px] mx-auto px-6 lg:px-10 pt-12 md:pt-16 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-12">
         <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
           <div class="md:col-span-6">
             <p class="font-mono text-[12px] tracking-[0.24em] uppercase opacity-60 mb-4">Tu fit, perfecto. Desde 1995.</p>
@@ -549,16 +559,13 @@
           </div>
           <div class="md:col-span-2">
             <h4 class="font-mono text-[11px] tracking-[0.24em] uppercase opacity-60 mb-4">Tienda</h4>
-            <ul class="space-y-2.5 text-[14px]">
-              <li><a href="/categoria/Camisas" class="ul-link opacity-80 hover:opacity-100">Camisas</a></li>
-              <li><a href="/categoria/Polos" class="ul-link opacity-80 hover:opacity-100">Polos</a></li>
-              <li><a href="/categoria/Pantalones" class="ul-link opacity-80 hover:opacity-100">Jeans</a></li>
-              <li><a href="/categoria/Perfumes" class="ul-link opacity-80 hover:opacity-100">Perfumes</a></li>
+            <ul class="md:space-y-1 text-[14px] [&amp;_a]:inline-block [&amp;_a]:py-3 md:[&amp;_a]:py-1.5">
+              <li><a href="/categoria/Camisas" class="ul-link opacity-80 hover:opacity-100">Camisas</a></li><li><a href="/categoria/Polos" class="ul-link opacity-80 hover:opacity-100">Polos</a></li><li><a href="/categoria/Pantalones" class="ul-link opacity-80 hover:opacity-100">Jeans</a></li><li><a href="/categoria/Perfumes" class="ul-link opacity-80 hover:opacity-100">Perfumes</a></li><li><a href="/categoria/Zapatos" class="ul-link opacity-80 hover:opacity-100">Zapatos</a></li><li><a href="/categoria/Shorts" class="ul-link opacity-80 hover:opacity-100">Shorts</a></li><li><a href="/categoria/Playeras" class="ul-link opacity-80 hover:opacity-100">Playeras</a></li><li><a href="/categoria/Perfumes%20Dama" class="ul-link opacity-80 hover:opacity-100">Perfumes Dama</a></li>
             </ul>
           </div>
           <div class="md:col-span-2">
             <h4 class="font-mono text-[11px] tracking-[0.24em] uppercase opacity-60 mb-4">Soporte</h4>
-            <ul class="space-y-2.5 text-[14px]">
+            <ul class="md:space-y-1 text-[14px] [&amp;_a]:inline-block [&amp;_a]:py-3 md:[&amp;_a]:py-1.5">
               <li><a href="/envios" class="ul-link opacity-80 hover:opacity-100">Envíos y pagos</a></li>
               <li><a href="/cambios" class="ul-link opacity-80 hover:opacity-100">Cambios</a></li>
               <li><a href="/sucursales" class="ul-link opacity-80 hover:opacity-100">Sucursales</a></li>
@@ -569,11 +576,11 @@
           <div class="md:col-span-2">
             <h4 class="font-mono text-[11px] tracking-[0.24em] uppercase opacity-60 mb-4">Síguenos</h4>
             <div class="flex items-center gap-3">
-              <a href="https://www.instagram.com/glboutiquecol/" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full border border-paper/20 flex items-center justify-center hover:bg-paper hover:text-ink transition-colors">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"></path></svg>
+              <a href="https://www.instagram.com/glboutiquecol/" target="_blank" rel="noopener noreferrer" aria-label="Instagram de G&amp;L" class="w-10 h-10 rounded-full border border-paper/20 flex items-center justify-center hover:bg-paper hover:text-ink transition-colors">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"></path></svg>
               </a>
-              <a href="https://wa.me/523121018263" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full border border-paper/20 flex items-center justify-center hover:bg-brand hover:border-brand transition-colors">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"></path></svg>
+              <a href="https://wa.me/523121018263" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp de G&amp;L" class="w-10 h-10 rounded-full border border-paper/20 flex items-center justify-center hover:bg-brand hover:border-brand transition-colors">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"></path></svg>
               </a>
             </div>
           </div>
@@ -590,20 +597,25 @@
     <!-- Mobile Bottom Navigation -->
     <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-paper/90 backdrop-blur-xl border-t border-ink/10 pb-safe">
       <div class="flex items-center justify-around h-16">
-        <a href="/" class="flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-colors text-brand">
-          <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-          Inicio
+        <a href="https://wa.me/523121018263?text=Hola%2C%20vengo%20de%20la%20p%C3%A1gina%20de%20G%26L" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center justify-center w-full h-full text-[11px] font-medium text-ink/70 hover:text-ink transition-colors">
+          <svg class="w-6 h-6 mb-1 text-[#1FA855]" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592z"></path></svg>
+          WhatsApp
         </a>
-        <a href="/catalog" class="flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-colors text-ink/40 hover:text-ink/60">
-          <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+        <a href="/catalog" class="flex flex-col items-center justify-center w-full h-full text-[11px] font-medium transition-colors text-ink/70 hover:text-ink">
+          <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
           Tienda
         </a>
-        <a href="/cart" class="relative flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-colors text-ink/40 hover:text-ink/60">
+        <a href="/cart" data-cart-link class="relative flex flex-col items-center justify-center w-full h-full text-[11px] font-medium transition-colors text-ink/70 hover:text-ink">
           <div class="relative">
-             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
              
           </div>
           Bolsa
+        </a>
+        <!-- Sin JS el menu lleva al footer, que tiene todos los enlaces -->
+        <a href="#site-footer" class="flex flex-col items-center justify-center w-full h-full text-[11px] font-medium text-ink/70 hover:text-ink transition-colors">
+          <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h16"></path></svg>
+          Menú
         </a>
       </div>
     </nav>

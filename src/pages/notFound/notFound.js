@@ -30,12 +30,12 @@ export function pageNotFound(state, options = {}) {
             <!-- Cifra -->
             <div class="lg:col-span-6">
               <span class="font-mono text-[10px] sm:text-[11px] tracking-[0.28em] uppercase text-ink/55 block mb-4">§ Error 404</span>
-              <h1 class="font-display font-extrabold leading-[0.82] tracking-[-0.045em] text-[clamp(96px,20vw,260px)] outline-text select-none" aria-hidden="true">404.</h1>
+              <p class="font-display font-extrabold leading-[0.82] tracking-[-0.045em] text-[clamp(96px,20vw,260px)] outline-text select-none" aria-hidden="true">404.</p>
             </div>
 
             <!-- Mensaje -->
             <div class="lg:col-span-6 lg:pl-6 lg:border-l border-ink/10">
-              <h2 class="font-display font-extrabold text-[clamp(30px,5vw,56px)] leading-[0.95] tracking-[-0.035em]">${heading}</h2>
+              <h1 class="font-display font-extrabold text-[clamp(30px,5vw,56px)] leading-[0.95] tracking-[-0.035em]">${heading}</h1>
               <p class="mt-5 text-[14px] sm:text-[15px] leading-relaxed text-ink/65 max-w-[46ch]">${body}</p>
 
               <div class="mt-9 flex flex-wrap items-center gap-3">

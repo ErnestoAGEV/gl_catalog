@@ -1,14 +1,16 @@
 import { searchProducts, setSearchQuery, getSearchQuery, subscribe, getState } from '../../store/index.js'
-import { findProductByPath, productBrand, productPath } from '../../utils/productCopy.js'
+import { findProductByPath, productBrand, productPath, sortSizes } from '../../utils/productCopy.js'
 import { brandSlug, brandIntro } from '../../utils/brands.js'
 import { formatMoney } from '../../utils/format.js'
 import { on, qs, lockScroll, unlockScroll } from '../../utils/dom.js'
-import { navigate, normalizePath } from '../../core/router.js'
+import { navigate, normalizePath, onRouteChange } from '../../core/router.js'
 import { uniqueSorted, getFilterState, applyFilters, getCategoryOrder } from './catalogFilters.js'
 import { skeletonGrid, productCard } from './catalogCard.js'
 import { handleQuickAdd } from './catalogQuickAdd.js'
 import { escapeHtml } from '../../utils/sanitize.js'
 import { BRAND } from '../../utils/config.js'
+import { applySeo } from '../../core/seo.js'
+import { getSeoForRoute } from '../../core/routeSeo.js'
 
 const TYPE_DESCRIPTIONS = {
   'Camisas': 'Oxford, lino y franela. Cortes slim y regular fit, en hueso, marino y negro.',
@@ -32,7 +34,7 @@ export function pageCatalog(initialState) {
   let state = initialState
   let publicProducts = state.products.filter(p => p.badge !== 'Borrador')
   const types = uniqueSorted(publicProducts.map(p => p.type))
-  const sizes = uniqueSorted(publicProducts.flatMap(p => p.sizes || []))
+  const sizes = sortSizes(publicProducts.flatMap(p => p.sizes || []))
   const colors = uniqueSorted(publicProducts.flatMap(p => p.colors || []))
 
   const options = (items, label) => [`<option value="">${label}</option>`, ...items.map(x => `<option value="${x}">${x}</option>`)].join('')
@@ -86,8 +88,9 @@ export function pageCatalog(initialState) {
     return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
   })
 
+  // !text-[11px]: .chip vive fuera de las capas de Tailwind y gana a la utilidad
   const chipButton = (t, active) =>
-    `<button class="chip flex-shrink-0${active ? ' active' : ''}" data-cat="${escapeHtml(t)}">${escapeHtml(t)}</button>`
+    `<button type="button" class="chip flex-shrink-0 !text-[11px]${active ? ' active' : ''}" aria-pressed="${active}" data-cat="${escapeHtml(t)}">${escapeHtml(t)}</button>`
 
   const chipHtml = orderTypes(types).map(t => chipButton(t, initialType === t)).join('')
 
@@ -102,9 +105,9 @@ export function pageCatalog(initialState) {
       <section class="py-8 md:py-10 lg:py-12 border-b border-ink/10">
         <div class="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-10">
           <div class="flex items-center gap-2 md:gap-3 mb-4 md:mb-8">
-            <a href="/" class="font-mono text-[10px] md:text-[11px] tracking-[0.28em] uppercase text-ink/55 hover:text-ink">Inicio</a>
+            <a href="/" class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 hover:text-ink">Inicio</a>
             <span class="text-ink/30">/</span>
-            <span class="font-mono text-[10px] md:text-[11px] tracking-[0.28em] uppercase">Cat\u00E1logo</span>
+            <span class="font-mono text-[11px] tracking-[0.28em] uppercase">Cat\u00E1logo</span>
             <span class="h-px flex-1 bg-ink/15 mx-2 md:mx-3 hidden md:block"></span>
             <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55 hidden md:inline" id="hero-meta">O/I '26 \u00B7 ${publicProducts.length} piezas</span>
           </div>
@@ -124,38 +127,39 @@ export function pageCatalog(initialState) {
         <div class="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-10 py-2.5 md:py-4">
           <!-- Banda unica: categorias + busqueda + talla + orden + filtros -->
           <div class="flex flex-wrap md:flex-nowrap items-center gap-2 md:gap-3">
-            <!-- Category chips (horizontal scroll on mobile, wrap on desktop) -->
-            <div class="flex items-center gap-1.5 md:gap-2 overflow-x-auto hide-scrollbar flex-1 min-w-0 order-1 -mx-1 px-1" id="cat-chips">
-              <button class="chip flex-shrink-0${!initialType ? ' active' : ''}" data-cat="">Todo \u00B7 <span class="opacity-60 ml-1" id="totalCount">${publicProducts.length}</span></button>
+            <!-- Chips de categoria: en movil fila propia a todo lo ancho, con el
+                 borde derecho desvanecido para que se note que hay mas al deslizar -->
+            <div class="flex items-center gap-1.5 md:gap-2 overflow-x-auto hide-scrollbar basis-full md:basis-auto md:flex-1 min-w-0 order-1 -mx-1 pl-1 pr-8 md:px-1 [mask-image:linear-gradient(to_right,#000_calc(100%_-_40px),transparent)] md:[mask-image:none]" id="cat-chips" role="group" aria-label="Categor\u00EDas">
+              <button type="button" class="chip flex-shrink-0 !text-[11px]${!initialType ? ' active' : ''}" aria-pressed="${!initialType}" data-cat="">Todo \u00B7 <span class="opacity-60 ml-1" id="totalCount">${publicProducts.length}</span></button>
               ${chipHtml}
             </div>
             <!-- Sort + filters button -->
-            <div class="relative flex items-center gap-1.5 flex-shrink-0 order-2 md:order-3">
-              <select id="sizeSelect" name="size" class="bare chip pr-8 text-[11px] hidden md:inline-flex" aria-label="Filtrar por talla" style="background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 stroke=%22%230A0A0F%22 stroke-width=%221.6%22 viewBox=%220 0 24 24%22><path stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 9l6 6 6-6%22/></svg>'); background-repeat:no-repeat; background-position:right 10px center; background-size:10px;">${options(sizes, 'Talla')}</select>
-              <select id="sortSelect" class="bare chip pr-8 text-[10px] md:text-[11px]" style="background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 stroke=%22%230A0A0F%22 stroke-width=%221.6%22 viewBox=%220 0 24 24%22><path stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 9l6 6 6-6%22/></svg>'); background-repeat:no-repeat; background-position:right 10px center; background-size:10px;">
+            <div class="relative flex items-center gap-1.5 flex-shrink-0 order-3">
+              <select id="sizeSelect" name="size" class="bare chip pr-8 !text-[11px] max-md:!hidden" aria-label="Filtrar por talla" style="background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 stroke=%22%230A0A0F%22 stroke-width=%221.6%22 viewBox=%220 0 24 24%22><path stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 9l6 6 6-6%22/></svg>'); background-repeat:no-repeat; background-position:right 10px center; background-size:10px;">${options(sizes, 'Talla')}</select>
+              <select id="sortSelect" aria-label="Ordenar" class="bare chip pr-8 !text-[11px] max-md:!h-[44px]" style="background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 stroke=%22%230A0A0F%22 stroke-width=%221.6%22 viewBox=%220 0 24 24%22><path stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 9l6 6 6-6%22/></svg>'); background-repeat:no-repeat; background-position:right 10px center; background-size:10px;">
                 <option value="">Destacados</option>
                 <option value="price-asc">Precio \u2191</option>
                 <option value="price-desc">Precio \u2193</option>
               </select>
-              <button id="open-filters-btn" class="chip flex-shrink-0 relative" title="Filtros" aria-label="Abrir filtros">
+              <button id="open-filters-btn" type="button" class="chip flex-shrink-0 relative justify-center max-md:!h-[44px] max-md:!w-[44px]" title="Filtros" aria-label="Abrir filtros" aria-haspopup="dialog" aria-controls="filter-controls-mobile">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18M7 12h10m-6 8h2"/></svg>
-                <span id="filters-badge" class="hidden absolute -top-1.5 -right-1.5 min-w-[16px] h-4 rounded-full bg-brand text-paper text-[9px] font-bold flex items-center justify-center px-1"></span>
+                <span id="filters-badge" class="hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] rounded-full bg-brand text-paper text-[11px] font-bold flex items-center justify-center px-1"></span>
               </button>
             </div>
-            <div class="relative order-3 w-full mt-2 md:mt-0 md:order-2 md:w-[240px] md:shrink-0" id="search-container">
-              <div class="flex items-center w-full h-10 rounded-full border border-ink/10 focus-within:border-ink/50 bg-fog/50 px-3 md:px-4 gap-2">
-                <svg class="w-3.5 h-3.5 md:w-4 md:h-4 text-ink/40 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <div class="relative order-first basis-full md:order-2 md:basis-auto flex-1 min-w-[120px] md:flex-none md:w-[240px] md:shrink-0" id="search-container">
+              <div class="flex items-center w-full h-[44px] md:h-10 rounded-full border border-ink/10 focus-within:border-ink/50 bg-fog/50 px-3 md:px-4 gap-2">
+                <svg class="w-3.5 h-3.5 md:w-4 md:h-4 text-ink/60 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 <input type="search" id="catalog-search" class="flex-1 bg-transparent focus:outline-none text-[16px] md:text-[13px] font-mono min-w-0" autocomplete="off" placeholder="Buscar..." value="${escapeHtml(getSearchQuery() || '')}" aria-label="Buscar productos" />
-                <span id="resultCount" class="hidden md:block shrink-0 font-mono text-[10px] tabular-nums text-ink/40">${publicProducts.length}</span>
+                <span id="resultCount" class="hidden md:block shrink-0 font-mono text-[11px] tabular-nums text-ink/60">${publicProducts.length}</span>
               </div>
             </div>
           </div>
-          <!-- Estado: solo aparece cuando hay un filtro puesto -->
+          <!-- Estado: solo aparece cuando hay un filtro o una busqueda puestos -->
           <div id="active-filters" class="hidden mt-1.5 md:mt-3 items-center gap-1.5 overflow-x-auto hide-scrollbar -mx-1 px-1"></div>
           <!-- Mobile result count (compact) -->
-          <div class="flex md:hidden mt-1.5 items-center justify-between font-mono text-[10px] tracking-[0.18em] uppercase text-ink/45">
-            <span id="resultCountMobile">${publicProducts.length} resultados</span>
-            <a href="#" id="open-filters-link-mobile" class="text-ink/60 hover:text-brand flex items-center gap-1">Filtros<span id="filters-badge-mobile-text" class="hidden min-w-[14px] h-[14px] rounded-full bg-brand text-paper text-[8px] font-bold flex items-center justify-center px-0.5"></span> \u2192</a>
+          <div class="flex md:hidden mt-1.5 items-center justify-between gap-3 font-mono text-[11px] tracking-[0.18em] uppercase text-ink/60">
+            <span id="resultCountMobile" class="min-w-0 truncate" aria-live="polite">${publicProducts.length} resultados</span>
+            <button type="button" id="open-filters-link-mobile" class="shrink-0 -my-3 py-3 uppercase tracking-[0.18em] text-ink/70 hover:text-brand flex items-center gap-1" aria-haspopup="dialog" aria-controls="filter-controls-mobile">Filtros<span id="filters-badge-mobile-text" class="hidden min-w-[16px] h-4 rounded-full bg-brand text-paper text-[11px] font-bold flex items-center justify-center px-1"></span> \u2192</button>
           </div>
         </div>
       </section>
@@ -175,20 +179,23 @@ export function pageCatalog(initialState) {
       </div>
 
       <!-- Mobile bottom sheet filter panel -->
-      <div id="filter-controls-mobile" class="bottom-sheet">
+      <!-- inert mientras esta cerrado: solo se traslada fuera de pantalla y sus
+           controles seguian en el orden de tabulacion -->
+      <div id="filter-controls-mobile" class="bottom-sheet" role="dialog" aria-modal="true" aria-labelledby="filters-title" inert>
         <div class="bg-paper rounded-t-2xl pt-6 px-6 pb-8">
-          <h3 class="font-display font-extrabold text-[28px] tracking-[-0.03em] mb-6">Filtros</h3>
+          <h2 id="filters-title" class="font-display font-extrabold text-[28px] tracking-[-0.03em] mb-6">Filtros</h2>
           <div class="grid grid-cols-2 gap-3 mb-4">
-            <select name="type" class="h-11 rounded-full border border-ink/10 px-4 font-mono text-[12px]">${options(types, 'Tipo')}</select>
-            <select name="size" class="h-11 rounded-full border border-ink/10 px-4 font-mono text-[12px]">${options(sizes, 'Talla')}</select>
-            <select name="color" class="h-11 rounded-full border border-ink/10 px-4 font-mono text-[12px]">${options(colors, 'Color')}</select>
+            <select name="type" aria-label="Categor\u00EDa" class="h-11 rounded-full border border-ink/10 px-4 font-mono text-[12px]">${options(types, 'Tipo')}</select>
+            <select name="size" aria-label="Talla" class="h-11 rounded-full border border-ink/10 px-4 font-mono text-[12px]">${options(sizes, 'Talla')}</select>
+            <select name="color" aria-label="Color" class="h-11 rounded-full border border-ink/10 px-4 font-mono text-[12px]">${options(colors, 'Color')}</select>
           </div>
-          <div class="flex gap-3 mb-6">
-            <input name="minPrice" inputmode="numeric" type="number" min="0" placeholder="Precio m\u00EDn." class="flex-1 h-11 rounded-full border border-ink/10 px-4 font-mono text-[12px]" />
-            <input name="maxPrice" inputmode="numeric" type="number" min="0" placeholder="Precio m\u00E1x." class="flex-1 h-11 rounded-full border border-ink/10 px-4 font-mono text-[12px]" />
+          <div class="mb-6"><div class="flex gap-3">
+            <input name="minPrice" aria-label="Precio m\u00EDnimo" aria-describedby="price-hint" inputmode="numeric" type="number" min="0" placeholder="Precio m\u00EDn." class="flex-1 min-w-0 h-11 rounded-full border border-ink/10 px-4 font-mono text-[12px]" />
+            <input name="maxPrice" aria-label="Precio m\u00E1ximo" aria-describedby="price-hint" inputmode="numeric" type="number" min="0" placeholder="Precio m\u00E1x." class="flex-1 min-w-0 h-11 rounded-full border border-ink/10 px-4 font-mono text-[12px]" />
           </div>
+          <p id="price-hint" class="mt-2 text-[13px] font-medium text-ink empty:hidden" aria-live="polite"></p></div>
           <div class="sheet-actions flex gap-3 items-center">
-            <button id="reset-filters-mobile" type="button" class="h-12 px-5 rounded-full border border-ink/15 text-ink/55 hover:text-ink hover:border-ink/40 text-[13px] font-semibold transition-colors cursor-pointer">Limpiar</button>
+            <button id="reset-filters-mobile" type="button" class="h-12 px-5 rounded-full border border-ink/15 text-ink/70 hover:text-ink hover:border-ink/40 text-[13px] font-semibold transition-colors cursor-pointer">Limpiar</button>
             <button id="close-filters" type="button" class="flex-1 h-12 rounded-full bg-ink text-paper hover:bg-brand text-[13px] font-semibold transition-colors cursor-pointer"><span id="sheet-result-count">Ver ${publicProducts.length} productos</span></button>
           </div>
         </div>
@@ -204,20 +211,24 @@ export function pageCatalog(initialState) {
           <div id="empty-state" class="hidden py-24 text-center">
             <div class="font-display font-extrabold text-[48px] md:text-[64px] outline-text leading-none">Sin resultados</div>
             <p id="empty-msg" class="mt-4 text-ink/60">Intenta con otra categor\u00EDa.</p>
-            <button id="clear-search-btn" class="hidden mt-6 inline-flex items-center gap-2 h-12 px-6 rounded-full bg-ink text-paper text-[14px] font-semibold hover:bg-brand transition-colors">Limpiar b\u00FAsqueda</button>
+            <div class="mt-6 flex flex-wrap justify-center gap-3">
+              <button id="clear-search-btn" type="button" class="hidden inline-flex items-center gap-2 h-12 px-6 rounded-full bg-ink text-paper text-[14px] font-semibold hover:bg-brand transition-colors">Quitar b\u00FAsqueda</button>
+              <button id="see-all-btn" type="button" class="hidden inline-flex items-center gap-2 h-12 px-6 rounded-full border border-ink/15 text-ink text-[14px] font-semibold hover:border-ink transition-colors">Ver todo el cat\u00E1logo</button>
+            </div>
+            <div id="empty-links" class="hidden mt-8 flex flex-wrap justify-center gap-2"></div>
           </div>
 
           <!-- Load more -->
           <div id="load-more-container" class="hidden mt-10 md:mt-16">
             <div class="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
-              <div class="font-mono text-[10px] md:text-[11px] tracking-[0.24em] uppercase text-ink/55 order-2 md:order-1" id="page-caption"></div>
+              <div class="font-mono text-[11px] tracking-[0.24em] uppercase text-ink/60 order-2 md:order-1" id="page-caption"></div>
               <button id="load-more-btn" class="group inline-flex items-center gap-3 bg-ink text-paper px-6 md:px-8 h-12 md:h-14 rounded-full text-[13px] md:text-[14px] font-semibold hover:bg-brand transition-colors order-1 md:order-2">
                 Cargar m\u00E1s
                 <span class="arrow-walk inline-block">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M11 19l-7-7 7-7" transform="rotate(-90 12 12)"/></svg>
                 </span>
               </button>
-              <div class="font-mono text-[10px] md:text-[11px] tracking-[0.24em] uppercase text-ink/55 order-3" id="remaining-caption"></div>
+              <div class="font-mono text-[11px] tracking-[0.24em] uppercase text-ink/60 order-3" id="remaining-caption"></div>
             </div>
           </div>
         </div>
@@ -228,7 +239,7 @@ export function pageCatalog(initialState) {
         <div class="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-10">
           <div class="grid grid-cols-12 gap-3 md:gap-6">
             <div class="col-span-12 md:col-span-3 mb-2 md:mb-0">
-              <div class="font-mono text-[10px] md:text-[11px] tracking-[0.32em] uppercase opacity-70">\u00A7 \u2014 Asesor\u00EDa</div>
+              <div class="font-mono text-[11px] tracking-[0.32em] uppercase opacity-80">\u00A7 \u2014 Asesor\u00EDa</div>
             </div>
             <div class="col-span-12 md:col-span-9">
               <p class="font-display font-medium text-[22px] md:text-[clamp(28px,3.4vw,48px)] leading-[1.2] md:leading-[1.1] tracking-[-0.02em] md:tracking-[-0.03em]">
@@ -252,6 +263,53 @@ export function pageCatalog(initialState) {
       const emptyState = qs(root, '#empty-state')
       const emptyMsg = qs(root, '#empty-msg')
       const clearSearchBtn = qs(root, '#clear-search-btn')
+      const seeAllBtn = qs(root, '#see-all-btn')
+      const emptyLinks = qs(root, '#empty-links')
+
+      // El estado del chip activo vive en .active y en aria-pressed a la vez
+      const setActiveChip = (val) => {
+        root.querySelectorAll('#cat-chips .chip').forEach(b => {
+          const on = (b.dataset.cat || '') === val
+          b.classList.toggle('active', on)
+          b.setAttribute('aria-pressed', String(on))
+        })
+      }
+
+      // La busqueda viaja en ?q= para que se pueda compartir y sobreviva al
+      // recargar. replaceState: escribir no debe llenar el historial.
+      const CATALOG_PATH = /^\/(catalog|categoria\/|marca\/)/
+      const withQuery = (path) => {
+        const q = getSearchQuery()
+        return q ? `${path}?q=${encodeURIComponent(q)}` : path
+      }
+      const syncQueryToUrl = () => {
+        // La vista sigue suscrita aunque este en cache detras de otra pagina
+        if (!CATALOG_PATH.test(window.location.pathname)) return
+        const url = new URL(window.location.href)
+        const q = getSearchQuery()
+        if (q) url.searchParams.set('q', q)
+        else url.searchParams.delete('q')
+        const next = url.pathname + url.search
+        if (next !== window.location.pathname + window.location.search) window.history.replaceState(null, '', next)
+      }
+      const urlQuery = new URLSearchParams(window.location.search).get('q')
+      if (urlQuery && urlQuery !== getSearchQuery()) {
+        setSearchQuery(urlQuery)
+        const si = root.querySelector('#catalog-search')
+        if (si) si.value = urlQuery
+      }
+
+      // Las metas SEO se calculan al pintar la ruta, casi siempre antes de que
+      // llegue el catalogo: una categoria inventada quedaba indexable. Al llegar
+      // los productos se recalculan una vez con la verdad.
+      let seoSettled = false
+      const settleSeo = () => {
+        if (seoSettled || state.isLoading || !CATALOG_PATH.test(window.location.pathname)) return
+        seoSettled = true
+        const basePath = normalizePath(window.location.pathname)
+        const seo = getSeoForRoute(basePath, basePath, state)
+        applySeo({ title: seo.title, description: seo.description, canonicalPath: seo.canonicalPath || basePath, robots: seo.robots })
+      }
 
       // -- Toolbar: se retira al bajar, vuelve al subir (solo movil) --
       const toolbar = root.querySelector('#catalog-toolbar')
@@ -375,7 +433,7 @@ export function pageCatalog(initialState) {
 
         // Update filter options dynamically
         const currentTypes = uniqueSorted(publicProducts.map(p => p.type))
-        const currentSizes = uniqueSorted(publicProducts.flatMap(p => p.sizes || []))
+        const currentSizes = sortSizes(publicProducts.flatMap(p => p.sizes || []))
         const currentColors = uniqueSorted(publicProducts.flatMap(p => p.colors || []))
         root.querySelectorAll('select[name="type"]').forEach(sel => {
           const curr = sel.value
@@ -405,11 +463,39 @@ export function pageCatalog(initialState) {
             const todo = chipsRow.querySelector('.chip[data-cat=""]')
             chipsRow.innerHTML = (todo ? todo.outerHTML : '') + wanted.map(t => chipButton(t, false)).join('')
           }
-          const activeChip = grid.dataset.multiTypeFilter || filters.type || ''
-          chipsRow.querySelectorAll('.chip').forEach(b => {
-            b.classList.toggle('active', (b.dataset.cat || '') === activeChip)
-          })
+          setActiveChip(grid.dataset.multiTypeFilter || filters.type || '')
         }
+
+        settleSeo()
+        syncQueryToUrl()
+
+        // /categoria/Nada o /marca/nada: con el catalogo ya cargado se sabe que no
+        // existe. Antes decia "Solo Nada." y una parrilla vacia.
+        const urlTypesMissing = (grid.dataset.multiTypeFilter || '').split(',').filter(Boolean)
+        // Sin productos (Supabase caido) no se sabe si existe: no se acusa a una categoria real
+        const missingLabel = !publicProducts.length ? '' : urlTypesMissing.length && !urlTypesMissing.some(t => currentTypes.includes(t))
+          ? urlTypesMissing.join(', ')
+          : activeBrand && !publicProducts.some(p => isBrandOf(p, activeBrand)) ? brandName : ''
+        if (missingLabel) {
+          const h1 = root.querySelector('#hero-h1')
+          const desc = root.querySelector('#hero-desc')
+          if (h1) h1.innerHTML = `No encontramos<br/><span class="text-brand">«${escapeHtml(missingLabel)}»</span>`
+          if (desc) desc.textContent = activeBrand ? 'Esa marca no está en el catálogo ahora.' : 'Esa categoría no está en el catálogo ahora.'
+          grid.innerHTML = ''
+          grid.classList.add('hidden')
+          loadMoreContainer.classList.add('hidden')
+          emptyState.classList.remove('hidden')
+          emptyMsg.textContent = 'Mira lo que sí tenemos:'
+          clearSearchBtn.classList.add('hidden')
+          seeAllBtn.classList.remove('hidden')
+          emptyLinks.innerHTML = orderTypes(currentTypes)
+            // Botones con data-cat y no enlaces: la vista del catalogo esta en
+            // cache y navegar a otra /categoria/ la restauraria tal cual
+            .map(t => `<button type="button" class="chip !text-[11px]" data-cat="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join('')
+          emptyLinks.classList.remove('hidden')
+          return
+        }
+        emptyLinks.classList.add('hidden')
 
         // El nombre real de la marca solo se sabe con productos en mano: en el
         // primer paint el H1 sale del slug, y "collor-s" se lee "Collor S". En
@@ -452,6 +538,12 @@ export function pageCatalog(initialState) {
         } else {
           allFilteredProducts = applyFilters(baseProducts, filters)
         }
+        // "Destacados" agrupa por categoria y deshacia el orden de relevancia de
+        // la busqueda: con una busqueda puesta manda la relevancia
+        if (searchQuery && !filters.sort) {
+          const rank = new Map(baseProducts.map((p, i) => [p.id, i]))
+          allFilteredProducts.sort((a, b) => rank.get(a.id) - rank.get(b.id))
+        }
 
         // Update UI meta
         updateMeta()
@@ -461,19 +553,22 @@ export function pageCatalog(initialState) {
           grid.classList.add('hidden')
           emptyState.classList.remove('hidden')
           loadMoreContainer.classList.add('hidden')
-          const safeQuery = escapeHtml(searchQuery)
           const f = getFilterState(root)
-          const hasActiveFilters = !!(f.type || f.size || f.color || f.minPrice || f.maxPrice)
-          if (safeQuery) {
-            emptyMsg.innerHTML = `No hay resultados para \u201C${safeQuery}\u201D. Intenta con otros filtros.`
-            clearSearchBtn.classList.remove('hidden')
+          // Donde se busco: la categoria (o marca) acota igual que la busqueda,
+          // y el mensaje tiene que nombrar las dos para que se entienda el cero
+          const scope = activeBrand ? brandName : (grid.dataset.multiTypeFilter || f.type || '').replace(/,/g, ', ')
+          const hasActiveFilters = !!(scope || f.size || f.color || f.minPrice || f.maxPrice)
+          if (searchQuery) {
+            emptyMsg.textContent = scope
+              ? `No hay \u00AB${searchQuery}\u00BB en ${scope}.`
+              : `No hay resultados para \u00AB${searchQuery}\u00BB.`
           } else if (hasActiveFilters) {
             emptyMsg.textContent = 'No hay productos con estos filtros.'
-            clearSearchBtn.classList.remove('hidden')
           } else {
             emptyMsg.textContent = 'Intenta con otra categor\u00EDa.'
-            clearSearchBtn.classList.add('hidden')
           }
+          clearSearchBtn.classList.toggle('hidden', !searchQuery)
+          seeAllBtn.classList.toggle('hidden', !hasActiveFilters)
           return
         }
 
@@ -511,10 +606,11 @@ export function pageCatalog(initialState) {
         // Dentro del campo de busqueda solo cabe el numero; el contexto ya esta a la vista
         if (resultEl) {
           resultEl.textContent = count
-          resultEl.title = `${count} ${count === 1 ? 'resultado' : 'resultados'}`
+          resultEl.title = `${count} ${count === 1 ? 'resultado' : 'resultados'}${searchQuery ? ` para «${searchQuery}»` : ''}`
         }
         if (resultElMobile) {
           let mtext = `${count} resultado${count !== 1 ? 's' : ''}`
+          if (searchQuery) mtext += ` \u00B7 \u00AB${searchQuery}\u00BB`
           if (activeType) mtext += ` \u00B7 ${activeType}`
           resultElMobile.textContent = mtext
         }
@@ -534,6 +630,14 @@ export function pageCatalog(initialState) {
         const f = getFilterState(root)
         const advancedCount = [f.size, f.color, f.minPrice, f.maxPrice].filter(Boolean).length
 
+        // Minimo mayor que maximo da cero resultados: se dice por que
+        const priceHint = root.querySelector('#price-hint')
+        if (priceHint) {
+          priceHint.textContent = f.minPrice != null && f.maxPrice != null && f.minPrice > f.maxPrice
+            ? 'El mínimo es mayor que el máximo.'
+            : ''
+        }
+
         const badgeMobile = root.querySelector('#filters-badge')
         const badgeMobileText = root.querySelector('#filters-badge-mobile-text')
 
@@ -550,12 +654,13 @@ export function pageCatalog(initialState) {
         const activeWrap = root.querySelector('#active-filters')
         if (activeWrap) {
           const pills = []
+          if (searchQuery) pills.push(['search', `Búsqueda: ${searchQuery}`])
           if (f.size) pills.push(['size', `Talla ${f.size}`])
           if (f.color) pills.push(['color', f.color])
           if (f.minPrice) pills.push(['minPrice', `Desde ${formatMoney(f.minPrice)}`])
           if (f.maxPrice) pills.push(['maxPrice', `Hasta ${formatMoney(f.maxPrice)}`])
           activeWrap.innerHTML = pills
-            .map(([name, label]) => `<button type="button" class="chip flex-shrink-0" data-clear-filter="${name}" aria-label="Quitar filtro ${escapeHtml(label)}">${escapeHtml(label)} ✕</button>`)
+            .map(([name, label]) => `<button type="button" class="chip flex-shrink-0 !text-[11px] max-w-full" data-clear-filter="${name}" aria-label="Quitar ${name === 'search' ? 'búsqueda' : 'filtro'} ${escapeHtml(label)}"><span class="truncate">${escapeHtml(label)}</span> ✕</button>`)
             .join('')
           activeWrap.classList.toggle('hidden', pills.length === 0)
           activeWrap.classList.toggle('flex', pills.length > 0)
@@ -566,9 +671,8 @@ export function pageCatalog(initialState) {
       on(root, 'click', '[data-cat]', (ev, btn) => {
         ev.preventDefault()
         ev.stopPropagation()
-        root.querySelectorAll('#cat-chips .chip').forEach(b => b.classList.remove('active'))
-        btn.classList.add('active')
         const val = btn.dataset.cat || ''
+        setActiveChip(val)
 
         // Sync to hidden select
         root.querySelectorAll('select[name="type"]').forEach(s => { s.value = val })
@@ -578,7 +682,8 @@ export function pageCatalog(initialState) {
 
         // URL sync
         const path = val ? `/categoria/${encodeURIComponent(val)}` : '/catalog'
-        window.history.replaceState(null, '', path)
+        window.history.replaceState(null, '', withQuery(path))
+        seoSettled = false   // title y canonical siguen a la url nueva
 
         // Update hero
         const h1 = root.querySelector('#hero-h1')
@@ -603,57 +708,97 @@ export function pageCatalog(initialState) {
       }
 
       // ── Filter sheet (works on all breakpoints) ──
+      // Dialogo de verdad: foco dentro al abrir, Tab no se escapa, Esc y el
+      // fondo cierran, y al cerrar el foco vuelve al boton que lo abrio.
       const mobilePanel = root.querySelector('#filter-controls-mobile')
       const sheetBackdrop = root.querySelector('#sheet-backdrop')
+      let sheetTrigger = null
+      const sheetFocusables = () => [...mobilePanel.querySelectorAll('select, input, button')].filter(el => !el.disabled)
       const openSheet = () => {
+        if (!mobilePanel || mobilePanel.classList.contains('open')) return
+        sheetTrigger = document.activeElement
         toolbar?.classList.remove('tb-hidden')
-        if (mobilePanel) { mobilePanel.classList.add('open', 'force-show') }
+        mobilePanel.inert = false
+        mobilePanel.classList.add('open', 'force-show')
         if (sheetBackdrop) { sheetBackdrop.classList.add('open', 'force-show') }
         lockScroll()
+        sheetFocusables()[0]?.focus({ preventScroll: true })
       }
       const closeSheet = () => {
-        if (mobilePanel) { mobilePanel.classList.remove('open', 'force-show') }
+        if (!mobilePanel?.classList.contains('open')) return
+        mobilePanel.classList.remove('open', 'force-show')
+        mobilePanel.inert = true
         if (sheetBackdrop) { sheetBackdrop.classList.remove('open', 'force-show') }
         unlockScroll()
+        if (sheetTrigger?.isConnected) sheetTrigger.focus({ preventScroll: true })
+        sheetTrigger = null
       }
+      // Al salir de la ruta con el panel abierto, la vista queda en cache: se
+      // cierra sin desbloquear (el router ya lo hizo) ni mover el foco a algo oculto
+      const offRoute = onRouteChange(() => {
+        if (!mobilePanel?.classList.contains('open')) return
+        mobilePanel.classList.remove('open', 'force-show')
+        mobilePanel.inert = true
+        sheetBackdrop?.classList.remove('open', 'force-show')
+        sheetTrigger = null
+      })
+      mobilePanel?.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { e.preventDefault(); closeSheet(); return }
+        if (e.key !== 'Tab') return
+        const items = sheetFocusables()
+        const first = items[0]
+        const last = items[items.length - 1]
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+      })
 
-      root.querySelector('#open-filters-link-mobile')?.addEventListener('click', (e) => { e.preventDefault(); openSheet() })
+      root.querySelector('#open-filters-link-mobile')?.addEventListener('click', () => openSheet())
       root.querySelector('#open-filters-btn')?.addEventListener('click', () => openSheet())
       root.querySelector('#close-filters')?.addEventListener('click', closeSheet)
       sheetBackdrop?.addEventListener('click', closeSheet)
 
-      // Reset unico: lo usan el panel movil, el boton de escritorio y el estado vacio
-      const resetAllFilters = () => {
-        root.querySelectorAll('select[name="type"], select[name="size"], select[name="color"], #sort-select, #sortSelect').forEach(sel => sel.selectedIndex = 0)
-        root.querySelectorAll('input[name="minPrice"], input[name="maxPrice"]').forEach(inp => { inp.value = '' })
+      const clearSearch = () => {
         setSearchQuery('')
         const si = root.querySelector('#catalog-search')
         if (si) si.value = ''
+      }
+
+      // Reset unico: lo usan el panel, el boton de escritorio y el estado vacio.
+      // No cierra el panel: "Limpiar" ahi es para volver a elegir, no para salir.
+      const resetAllFilters = ({ keepSearch = false } = {}) => {
+        root.querySelectorAll('select[name="type"], select[name="size"], select[name="color"], #sort-select, #sortSelect').forEach(sel => sel.selectedIndex = 0)
+        root.querySelectorAll('input[name="minPrice"], input[name="maxPrice"]').forEach(inp => { inp.value = '' })
+        if (!keepSearch) clearSearch()
         delete grid.dataset.multiTypeFilter
         activeBrand = ''
-        root.querySelectorAll('#cat-chips .chip').forEach(b => b.classList.remove('active'))
-        root.querySelector('#cat-chips .chip[data-cat=""]')?.classList.add('active')
+        setActiveChip('')
         const h1 = root.querySelector('#hero-h1')
         const desc = root.querySelector('#hero-desc')
         if (h1) h1.innerHTML = `Todo el<br/><span class="text-brand">catálogo</span>.`
         if (desc) desc.textContent = 'Camisas, denim, polos, knits y fragancias. Elegidas a mano en Colima — al mejor precio.'
-        window.history.replaceState(null, '', '/catalog')
-        closeSheet()
+        window.history.replaceState(null, '', withQuery('/catalog'))
+        seoSettled = false   // title y canonical siguen a la url nueva
         renderGrid({ resetPage: true })
       }
 
-      root.querySelector('#reset-filters-mobile')?.addEventListener('click', resetAllFilters)
-      clearSearchBtn.addEventListener('click', resetAllFilters)
+      // La busqueda tiene su propia pildora: limpiar filtros no la borra
+      root.querySelector('#reset-filters-mobile')?.addEventListener('click', () => resetAllFilters({ keepSearch: true }))
+      seeAllBtn.addEventListener('click', () => resetAllFilters())
+      clearSearchBtn.addEventListener('click', () => {
+        clearSearch()
+        renderGrid({ resetPage: true })
+      })
 
       // Quitar un filtro suelto desde su pildora
       on(root, 'click', '[data-clear-filter]', (ev, btn) => {
         ev.preventDefault()
-        root.querySelectorAll(`[name="${btn.dataset.clearFilter}"]`).forEach(el => { el.value = '' })
+        if (btn.dataset.clearFilter === 'search') clearSearch()
+        else root.querySelectorAll(`[name="${btn.dataset.clearFilter}"]`).forEach(el => { el.value = '' })
         renderGrid({ resetPage: true })
       })
 
       // ── Filter change (from mobile sheet selects) ──
-      on(root, 'change', '#filter-controls-mobile select, #filter-controls-mobile input, #catalog-toolbar select[name="size"]', (ev, el) => {
+      const applyControl = (el) => {
         const name = el.getAttribute('name')
         const val = el.value
         // Sync across all panels
@@ -663,16 +808,20 @@ export function pageCatalog(initialState) {
 
         if (name === 'type') {
           const path = val ? `/categoria/${encodeURIComponent(val)}` : '/catalog'
-          window.history.replaceState(null, '', path)
-          // Sync chip
-          root.querySelectorAll('#cat-chips .chip').forEach(b => b.classList.remove('active'))
-          const matchChip = root.querySelector(`#cat-chips .chip[data-cat="${val}"]`)
-          if (matchChip) matchChip.classList.add('active')
-          else root.querySelector('#cat-chips .chip[data-cat=""]')?.classList.add('active')
+          window.history.replaceState(null, '', withQuery(path))
+          seoSettled = false   // title y canonical siguen a la url nueva
+          setActiveChip(val)
         }
 
         renderGrid({ resetPage: true })
         if (name === 'type') animateCategoryChange()
+      }
+      on(root, 'change', '#filter-controls-mobile select, #filter-controls-mobile input, #catalog-toolbar select[name="size"]', (ev, el) => applyControl(el))
+      // El precio cuenta mientras se escribe, no solo al salir del campo
+      let priceTimer
+      on(root, 'input', '#filter-controls-mobile input', (ev, el) => {
+        clearTimeout(priceTimer)
+        priceTimer = setTimeout(() => applyControl(el), 250)
       })
 
       // ── Search (live filter) ──
@@ -736,11 +885,7 @@ export function pageCatalog(initialState) {
 
         // Sync chip to restored/initial type filter
         const activeType = root.querySelector('#toolbar-controls select[name="type"]')?.value || ''
-        if (activeType) {
-          root.querySelectorAll('#cat-chips .chip').forEach(b => b.classList.remove('active'))
-          const matchChip = root.querySelector(`#cat-chips .chip[data-cat="${activeType}"]`)
-          if (matchChip) matchChip.classList.add('active')
-        }
+        if (activeType) setActiveChip(activeType)
 
         if (savedCatalogState?.scroll != null && savedCatalogState.scroll > 10) {
           const targetY = savedCatalogState.scroll
@@ -821,6 +966,7 @@ export function pageCatalog(initialState) {
       return () => {
         window.removeEventListener('scroll', onToolbarScroll)
         unsubscribe()
+        offRoute()
       }
     },
   }

@@ -70,7 +70,7 @@ export function pageInfo(state, path) {
               <h3 class="font-heading font-[800] text-[22px] mt-2 mb-3">${store.fullName}</h3>
               <p class="text-[15px] text-ink/75 leading-relaxed mb-3">${store.address}</p>
               <p class="font-mono text-[12px] text-ink/60 leading-relaxed mb-4">${store.hours.join('<br/>')}</p>
-              <a href="${store.mapUrl}" target="_blank" rel="noopener noreferrer" class="ul-link text-[14px] font-medium">Ver en Google Maps</a>
+              <a href="${store.mapUrl}" target="_blank" rel="noopener noreferrer" class="ul-link inline-flex items-center min-h-11 text-[14px] font-medium">Ver en Google Maps</a>
               ${page.store ? '' : `<span class="mx-3 text-ink/25">·</span><a href="/sucursales/${store.slug}" class="ul-link text-[14px] font-medium">Más de esta tienda</a>`}
             </div>`
             )

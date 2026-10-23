@@ -5,9 +5,14 @@ import { escapeHtml } from '../utils/sanitize.js'
 
 let activeTimer = null
 let activeEl = null
+let returnFocus = null
+
+export function closeMiniCart() { cleanup() }
 
 function cleanup() {
   if (activeTimer) { clearTimeout(activeTimer); activeTimer = null }
+  if (returnFocus && activeEl?.contains(document.activeElement) && returnFocus.offsetParent !== null) returnFocus.focus()
+  returnFocus = null
   if (activeEl) {
     activeEl.classList.add('mini-cart-exit')
     const el = activeEl
@@ -29,6 +34,7 @@ function onOutside(e) {
  * Mobile: compact bottom sheet above the bottom nav.
  */
 export function showMiniCart(productId) {
+  const prevFocus = document.activeElement
   cleanup()
 
   const product = getProductById(productId)
@@ -48,15 +54,15 @@ export function showMiniCart(productId) {
 
   const el = document.createElement('div')
   el.className = 'mini-cart-preview'
-  el.setAttribute('role', 'status')
-  el.setAttribute('aria-label', 'Producto agregado al carrito')
+  el.setAttribute('role', 'dialog')
+  el.setAttribute('aria-label', 'Producto agregado a tu bolsa')
   el.innerHTML = `
     <div class="mini-cart-inner ${isDark ? 'bg-gray-900 border-gray-700/80 text-white' : 'bg-white border-gray-200 text-gray-900'}">
       <!-- Header -->
       <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
         <div class="flex items-center gap-1.5">
           <svg class="w-4 h-4 text-green-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-          <span class="text-[13px] font-semibold">Agregado al carrito</span>
+          <span class="text-[13px] font-semibold">Agregado a tu bolsa</span>
         </div>
         <button class="mini-cart-close p-1 -mr-1 rounded-full ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'} transition-colors" aria-label="Cerrar">
           <svg class="w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -84,7 +90,7 @@ export function showMiniCart(productId) {
       <!-- CTA -->
       <div class="px-4 pb-3.5 pt-1">
         <a href="/cart" class="mini-cart-cta flex items-center justify-center gap-1.5 w-full py-2.5 rounded-lg text-[13px] font-semibold transition-all active:scale-[0.97] ${isDark ? 'bg-white text-gray-900 hover:bg-gray-100' : 'bg-gray-900 text-white hover:bg-gray-800'}">
-          Ver carrito
+          Ver bolsa
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </a>
       </div>
@@ -115,6 +121,18 @@ export function showMiniCart(productId) {
   // Outside click dismiss (delay so the Quick Add click doesn't immediately dismiss)
   setTimeout(() => document.addEventListener('click', onOutside), 100)
 
-  // Auto-dismiss after 4 seconds
-  activeTimer = setTimeout(cleanup, 4000)
+  // Auto-dismiss after 4 seconds, en pausa mientras tenga el mouse o el foco
+  const startTimer = () => { clearTimeout(activeTimer); activeTimer = setTimeout(cleanup, 4000) }
+  const pause = () => { clearTimeout(activeTimer); activeTimer = null }
+  el.addEventListener('mouseenter', pause)
+  el.addEventListener('focusin', pause)
+  el.addEventListener('mouseleave', () => { if (!el.contains(document.activeElement)) startTimer() })
+  el.addEventListener('focusout', (e) => { if (!el.contains(e.relatedTarget) && !el.matches(':hover')) startTimer() })
+
+  // Si se agrego con teclado, el foco salta a "Ver bolsa" y vuelve al cerrar
+  if (prevFocus?.matches?.(':focus-visible')) {
+    returnFocus = prevFocus
+    el.querySelector('.mini-cart-cta').focus()
+  }
+  startTimer()
 }

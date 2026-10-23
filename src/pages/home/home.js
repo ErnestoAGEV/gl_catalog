@@ -9,6 +9,7 @@ import { formatMoney } from '../../utils/format.js'
 import { heroSlides, categoryTiles, stats, stores } from './homeData.js'
 
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const canAutoplay = () => !prefersReducedMotion() && window.matchMedia('(hover: hover) and (pointer: fine)').matches
 
 export function pageHome() {
   const state = getState()
@@ -24,8 +25,8 @@ export function pageHome() {
 
   // Hero slides HTML
   const heroSlidesLeft = heroSlides.map((s, i) => `
-    <div class="hero-slide absolute inset-0 flex flex-col justify-center transition-opacity duration-[1200ms] ease ${i === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'}" data-slide="${i}">
-      <${i === 0 ? 'h1' : 'h2'} class="font-heading font-[800] text-[clamp(72px,11vw,184px)] leading-[0.86] tracking-[-0.04em] text-ink mb-6">${s.headline}</${i === 0 ? 'h1' : 'h2'}>
+    <div class="hero-slide absolute inset-0 flex flex-col justify-start md:justify-center transition-opacity duration-[1200ms] ease ${i === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'}" data-slide="${i}">
+      <${i === 0 ? 'h1' : 'h2'} class="font-heading font-[800] text-[clamp(52px,18.5vw,72px)] md:text-[clamp(72px,11vw,184px)] leading-[0.86] tracking-[-0.04em] text-ink mb-6">${s.headline}</${i === 0 ? 'h1' : 'h2'}>
       ${s.couponBody ? `
         <p class="text-[17px] text-ink/70 max-w-[460px] leading-relaxed">
           Aplica <span class="bg-fog font-mono rounded-md px-2 py-1 text-[15px]">WELCOME10</span> en checkout. Válido para clientes nuevos en cualquier categoría.
@@ -51,9 +52,9 @@ export function pageHome() {
   const heroSlidesRight = heroSlides.map((s, i) => `
     <div class="hero-img absolute inset-0 transition-opacity duration-[1200ms] ease ${i === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'}" data-slide="${i}">
       ${i === 0 ? `
-      <img src="${s.image}" ${s.srcset ? `srcset="${s.srcset}" sizes="(max-width: 768px) 200px, 50vw"` : ''} width="${s.w}" height="${s.h}" alt="${s.caption}" class="w-full h-full object-cover" loading="eager" fetchpriority="high" />
+      <img src="${s.image}" ${s.srcset ? `srcset="${s.srcset}" sizes="(max-width: 1023px) 92vw, 40vw"` : ''} width="${s.w}" height="${s.h}" alt="${s.caption}" class="w-full h-full object-cover" loading="eager" fetchpriority="high" />
       ` : `
-      <img data-defer-src="${s.image}" ${s.srcset ? `data-defer-srcset="${s.srcset}" sizes="(max-width: 768px) 200px, 50vw"` : ''} width="${s.w}" height="${s.h}" alt="${s.caption}" class="w-full h-full object-cover" decoding="async" />
+      <img data-defer-src="${s.image}" ${s.srcset ? `data-defer-srcset="${s.srcset}" sizes="(max-width: 1023px) 92vw, 40vw"` : ''} width="${s.w}" height="${s.h}" alt="${s.caption}" class="w-full h-full object-cover" decoding="async" />
       `}
       <div class="absolute bottom-4 left-4">
         <span class="${s.captionClass} text-paper text-[12px] font-mono px-3 py-1.5 rounded-full">${s.caption}</span>
@@ -83,7 +84,7 @@ export function pageHome() {
         <a href="${tile.href}" class="ct ${tile.span} relative bg-ink text-paper rounded-md p-5 flex flex-col justify-between overflow-hidden group">
           <img src="${tile.image}"${tile.srcset ? ` srcset="${tile.srcset}" sizes="(max-width: 768px) 100vw, 50vw"` : ''} alt="${tile.name}" width="${tile.w}" height="${tile.h}" class="ct-img absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
           <div class="absolute inset-0 bg-ink/35"></div>
-          <span class="font-mono text-[10px] tracking-[0.22em] uppercase opacity-80 relative z-10">${tile.eyebrow}</span>
+          <span class="font-mono text-[11px] tracking-[0.22em] uppercase opacity-80 relative z-10">${tile.eyebrow}</span>
           <div class="ct-label relative z-10">
             <h3 class="font-heading font-[800] ${tile.headingSize} tracking-[-0.04em]">${tile.name}</h3>
             <span class="font-mono text-[11px] opacity-70">${piecesLabel} →</span>
@@ -96,7 +97,7 @@ export function pageHome() {
         <a href="${tile.href}" class="ct ${tile.span} relative bg-ink text-paper rounded-md p-5 flex flex-col justify-between overflow-hidden group">
           <img src="${tile.image}" alt="${tile.name}" width="${tile.w}" height="${tile.h}" class="ct-img absolute inset-0 w-full h-full object-cover opacity-30" loading="lazy" decoding="async" />
           <div class="absolute inset-0 bg-ink/40"></div>
-          <span class="font-mono text-[10px] tracking-[0.22em] uppercase opacity-70 relative z-10">${tile.eyebrow}</span>
+          <span class="font-mono text-[11px] tracking-[0.22em] uppercase opacity-80 relative z-10">${tile.eyebrow}</span>
           <div class="ct-label relative z-10">
             <h3 class="font-heading font-[800] ${tile.headingSize} tracking-[-0.04em]">${tile.name}</h3>
             <span class="font-mono text-[11px] opacity-70">${piecesLabel} →</span>
@@ -137,8 +138,9 @@ export function pageHome() {
     ? bestSellers.map((p, i) => bestSellerRow(p, i)).join('')
     : Array.from({ length: 6 }, (_, i) => `
         <li class="grid grid-cols-12 items-center gap-4 py-6 px-3 border-b border-[#EAE9E4]">
-          <span class="col-span-1 h-4 w-6 rounded skeleton-shimmer"></span>
-          <span class="col-span-7 md:col-span-6 h-8 w-3/4 rounded skeleton-shimmer"></span>
+          <span class="hidden md:block col-span-1 h-4 w-6 rounded skeleton-shimmer"></span>
+          <span class="md:hidden col-span-3 aspect-[4/5] rounded-md skeleton-shimmer"></span>
+          <span class="col-span-5 md:col-span-6 h-8 w-3/4 rounded skeleton-shimmer"></span>
           <span class="hidden md:block col-span-3 h-4 w-1/2 rounded skeleton-shimmer"></span>
           <span class="col-span-4 md:col-span-2 h-4 w-16 rounded skeleton-shimmer ml-auto"></span>
         </li>
@@ -150,30 +152,34 @@ export function pageHome() {
       ? `<a href="${stores[0].mapUrl}" target="_blank" rel="noopener" class="ul-link hover:opacity-100">${s.caption}</a>`
       : s.caption
     return `
-    <div class="text-center md:text-left px-1 md:px-0">
-      <p class="font-heading font-bold text-[clamp(26px,8vw,40px)] md:text-[64px] leading-none tracking-[-0.04em] tabular-nums">${s.number}</p>
-      <p class="font-mono text-[9px] md:text-[11px] tracking-[0.08em] md:tracking-[0.24em] leading-snug uppercase opacity-60 mt-2">${caption}</p>
+    <div class="text-left">
+      <p class="font-heading font-bold text-[44px] md:text-[64px] leading-none tracking-[-0.04em] tabular-nums"${s.catalogCount ? ' data-catalog-count' : ''}>${s.catalogCount ? (publicProducts.length || '—') : s.number}</p>
+      <p class="font-mono text-[11px] tracking-[0.14em] md:tracking-[0.24em] leading-snug uppercase opacity-70 mt-2">${caption}</p>
     </div>
   `}).join('')
 
   // Stores HTML
+  const waHref = `https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent('Hola, vengo de la página de G&L')}`
   const storesHtml = stores.map(s => `
-    <div class="group bg-fog hover:bg-ink hover:text-paper p-10 rounded-md min-h-[340px] flex flex-col justify-between transition-[background-color,color] duration-[350ms]">
+    <div class="group bg-fog hover:bg-ink hover:text-paper p-6 md:p-10 rounded-md md:min-h-[340px] flex flex-col justify-between transition-[background-color,color] duration-[350ms]">
       <div>
         <div class="flex items-center justify-between mb-4">
           <span class="font-mono text-[11px] tracking-[0.22em] uppercase opacity-60">Sucursal — ${s.id}</span>
-          <span class="font-mono text-[10px] tracking-[0.24em] uppercase opacity-50">${s.coords}</span>
+          <span class="hidden md:inline font-mono text-[10px] tracking-[0.24em] uppercase opacity-50">${s.coords}</span>
         </div>
-        <h3 class="font-heading font-[800] text-[56px] tracking-[-0.04em] leading-none">${s.name}</h3>
+        <h3 class="font-heading font-[800] text-[44px] md:text-[56px] tracking-[-0.04em] leading-none">${s.name}</h3>
         <p class="font-mono text-[13px] opacity-60 mb-6">${s.fullName}</p>
         <p class="text-[15px] max-w-sm opacity-90 leading-relaxed">${s.address}</p>
       </div>
-      <div class="flex items-end justify-between mt-6">
-        <div class="font-mono text-[11px] tracking-[0.16em] uppercase opacity-60 leading-relaxed">
+      <div class="mt-6 flex flex-col gap-5">
+        <div class="font-mono text-[11px] tracking-[0.12em] uppercase opacity-70 leading-relaxed">
           ${s.hours.map(h => `<span class="block">${h}</span>`).join('')}
         </div>
-        <a href="/sucursales/${s.slug}" class="ul-link text-[14px] font-medium shrink-0">Ver tienda →</a>
-        <a href="${s.mapUrl}" target="_blank" rel="noopener noreferrer" class="ul-link text-[14px] font-medium shrink-0 ml-4">Cómo llegar →</a>
+        <div class="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:items-center">
+          <a href="${s.mapUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center h-11 px-4 md:px-5 rounded-full bg-ink text-paper group-hover:bg-paper group-hover:text-ink text-[14px] font-semibold transition-colors">Cómo llegar</a>
+          <a href="${waHref}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 h-11 px-4 md:px-5 rounded-full border border-current text-[14px] font-semibold"><svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592z"/></svg>WhatsApp</a>
+          <a href="/sucursales/${s.slug}" class="col-span-2 justify-self-start ul-link inline-flex items-center h-11 px-2 text-[14px] font-medium">Ver tienda →</a>
+        </div>
       </div>
     </div>
   `).join('')
@@ -185,23 +191,23 @@ export function pageHome() {
     forceLight: true,
     html: `
       <!-- §3 — Hero -->
-      <section class="max-w-[1440px] mx-auto px-6 lg:px-10 pt-10 lg:pt-14 pb-16 lg:pb-20" id="hero-section">
+      <section class="max-w-[1440px] mx-auto px-6 lg:px-10 pt-6 md:pt-10 lg:pt-14 pb-16 lg:pb-20" id="hero-section">
         <!-- Eyebrow -->
-        <div class="flex items-center gap-4 mb-8">
+        <div class="flex items-center gap-4 mb-5 md:mb-8">
           <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60">Vol.03 — O/I '26</span>
           <span class="h-px flex-1 bg-ink/15"></span>
           <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60">Colima · Mx</span>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-8 lg:gap-6">
           <!-- Left: headline carousel -->
-          <div class="lg:col-span-7 relative min-h-[440px] md:min-h-[540px]">
+          <div class="lg:col-span-7 relative min-h-[420px] md:min-h-[540px]">
             ${heroSlidesLeft}
           </div>
 
           <!-- Right: image carousel -->
           <div class="lg:col-span-5">
-            <div class="aspect-[4/5] bg-fog rounded-md overflow-hidden relative">
+            <div class="aspect-square lg:aspect-[4/5] bg-fog rounded-md overflow-hidden relative">
               ${heroSlidesRight}
             </div>
           </div>
@@ -211,10 +217,10 @@ export function pageHome() {
         <div class="flex items-center justify-between mt-8 gap-4">
           <div class="flex items-center gap-3 shrink-0">
             <span class="font-mono text-[13px] tabular-nums text-ink" id="slide-current">01</span>
-            <div class="w-[160px] h-[2px] bg-ink/10 rounded-full overflow-hidden">
+            <div class="w-[88px] sm:w-[160px] h-[2px] bg-ink/10 rounded-full overflow-hidden">
               <div class="h-full bg-ink origin-left" id="slide-progress" style="transform: scaleX(0)"></div>
             </div>
-            <span class="font-mono text-[13px] tabular-nums text-ink/40">03</span>
+            <span class="font-mono text-[13px] tabular-nums text-ink/60">03</span>
           </div>
           ${topProductCard}
           <div class="flex items-center gap-2 shrink-0">
@@ -231,7 +237,7 @@ export function pageHome() {
       <!-- §4 — Stats Band -->
       <section class="bg-ink text-paper py-8 md:py-12 reveal">
         <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
-          <div class="grid grid-cols-4 md:gap-8 divide-x divide-paper/15 md:divide-x-0">
+          <div class="grid grid-cols-2 gap-x-6 gap-y-7 md:grid-cols-4 md:gap-8">
             ${statsHtml}
           </div>
         </div>
@@ -243,9 +249,9 @@ export function pageHome() {
           <div class="flex flex-col md:flex-row md:items-end md:justify-between mb-14">
             <div>
               <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 block mb-3">§ 01 — Categorías</span>
-              <h2 class="font-heading font-[800] text-[clamp(56px,8vw,128px)] leading-[0.88] tracking-[-0.045em]">Explora<br/>por <span class="text-brand">categoría</span>.</h2>
+              <h2 class="font-heading font-[800] text-[clamp(56px,8vw,128px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.88] tracking-[-0.045em]">Explora<br/>por <span class="text-brand">categoría</span>.</h2>
             </div>
-            <a href="/catalog" class="hidden md:inline-flex ul-link text-[14px] font-medium text-ink/70 hover:text-ink mt-4 md:mt-0">Catálogo completo →</a>
+            <a href="/catalog" class="inline-flex self-start md:self-auto ul-link text-[14px] font-medium text-ink/70 hover:text-ink mt-5 md:mt-0">Catálogo completo →</a>
           </div>
           <div class="grid grid-cols-12 gap-4 auto-rows-[200px] md:auto-rows-[280px]">
             ${categoriesHtml}
@@ -258,12 +264,12 @@ export function pageHome() {
         <!-- Ambient bg text -->
         <div class="absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden="true">
           <div class="marquee-track whitespace-nowrap opacity-[0.04]">
-            <span class="font-heading font-[800] text-[180px] leading-none">BEST · SELLERS · FAVORITOS · 2026 &nbsp;&nbsp;</span>
-            <span class="font-heading font-[800] text-[180px] leading-none">BEST · SELLERS · FAVORITOS · 2026 &nbsp;&nbsp;</span>
+            <span class="font-heading font-[800] text-[180px] leading-none">FAVORITOS · LO MÁS PEDIDO · 2026 &nbsp;&nbsp;</span>
+            <span class="font-heading font-[800] text-[180px] leading-none">FAVORITOS · LO MÁS PEDIDO · 2026 &nbsp;&nbsp;</span>
           </div>
           <div class="marquee-track-rev whitespace-nowrap opacity-[0.04] mt-[-40px]">
-            <span class="font-heading font-[800] text-[180px] leading-none">BEST · SELLERS · FAVORITOS · 2026 &nbsp;&nbsp;</span>
-            <span class="font-heading font-[800] text-[180px] leading-none">BEST · SELLERS · FAVORITOS · 2026 &nbsp;&nbsp;</span>
+            <span class="font-heading font-[800] text-[180px] leading-none">FAVORITOS · LO MÁS PEDIDO · 2026 &nbsp;&nbsp;</span>
+            <span class="font-heading font-[800] text-[180px] leading-none">FAVORITOS · LO MÁS PEDIDO · 2026 &nbsp;&nbsp;</span>
           </div>
         </div>
 
@@ -272,10 +278,10 @@ export function pageHome() {
           <div class="grid grid-cols-1 md:grid-cols-12 md:items-end gap-6 mb-12">
             <div class="md:col-span-7">
               <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 block mb-3">§ 02 — Favoritos</span>
-              <h2 class="font-heading font-[800] text-[clamp(56px,8vw,128px)] leading-[0.88] tracking-[-0.045em]">Lo que más se <span class="text-brand italic">llevan</span>.</h2>
+              <h2 class="font-heading font-[800] text-[clamp(56px,8vw,128px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.88] tracking-[-0.045em]">Lo que más se <span class="text-brand italic">llevan</span>.</h2>
             </div>
             <div class="md:col-span-5 md:text-right">
-              <p class="text-[15px] text-ink/60 leading-relaxed">Productos elegidos por nuestros clientes esta temporada. Pasa el cursor sobre cada uno.</p>
+              <p class="text-[15px] text-ink/60 leading-relaxed">Productos elegidos por nuestros clientes esta temporada.<span class="hidden md:inline"> Pasa el cursor sobre cada uno.</span></p>
             </div>
           </div>
 
@@ -287,22 +293,22 @@ export function pageHome() {
           <!-- Bottom -->
           <div class="flex items-center justify-between mt-8">
             <a href="/catalog" class="ul-link text-[14px] font-medium text-ink/70 hover:text-ink">Ver los ${state.products.length > 0 ? state.products.filter(p => p.badge !== 'Borrador').length : '...'} productos →</a>
-            <span class="font-mono text-[11px] tracking-[0.2em] uppercase text-ink/40">${bestSellers.length > 0 ? String(bestSellers.length).padStart(2, '0') : '00'} productos · vista lista</span>
+            <span class="font-mono text-[11px] tracking-[0.2em] uppercase text-ink/70">${bestSellers.length > 0 ? String(bestSellers.length).padStart(2, '0') : '00'} productos · vista lista</span>
           </div>
         </div>
       </section>
 
       <!-- §7 — Manifesto -->
-      <section class="bg-brand text-paper py-28 lg:py-40 reveal">
+      <section class="bg-brand text-paper py-20 lg:py-40 reveal">
         <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
           <div class="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
             <div class="md:col-span-3">
-              <p class="font-mono text-[11px] tracking-[0.32em] uppercase opacity-70 leading-relaxed">§ 03 — Manifiesto</p>
-              <p class="font-mono text-[11px] tracking-[0.32em] uppercase opacity-70 mt-1">G&L / 2026</p>
+              <p class="font-mono text-[11px] tracking-[0.32em] uppercase opacity-80 leading-relaxed">§ 03 — Manifiesto</p>
+              <p class="font-mono text-[11px] tracking-[0.32em] uppercase opacity-80 mt-1">G&L / 2026</p>
             </div>
             <div class="md:col-span-9">
-              <p class="font-heading font-semibold text-[clamp(28px,3.6vw,52px)] leading-[1.1] tracking-[-0.03em]">
-                No llenamos el clóset por llenarlo. Cada temporada elegimos a mano las mejores marcas — la camisa que se pone una y otra vez, los jeans que solo se ven mejor con el tiempo, la fragancia que la gente te pregunta. <span class="opacity-70">Marcas seleccionadas, al mejor precio. En Colima desde 1995.</span>
+              <p class="font-heading font-semibold text-[22px] leading-[1.3] md:text-[clamp(28px,3.6vw,52px)] md:leading-[1.1] tracking-[-0.03em]">
+                No llenamos el clóset por llenarlo. Cada temporada elegimos a mano las mejores marcas — la camisa que se pone una y otra vez, los jeans que solo se ven mejor con el tiempo, la fragancia que la gente te pregunta. <span class="opacity-80">Marcas seleccionadas, al mejor precio. En Colima desde 1995.</span>
               </p>
               <a href="/catalog" class="ul-link text-[14px] font-medium opacity-80 hover:opacity-100 inline-block mt-8">Descubre nuestras marcas →</a>
             </div>
@@ -316,12 +322,12 @@ export function pageHome() {
           <div class="grid grid-cols-1 md:grid-cols-12 md:items-end gap-10">
             <div class="md:col-span-7">
               <span class="font-mono text-[11px] tracking-[0.28em] uppercase opacity-60 block mb-3">§ 04 — Club G&L</span>
-              <h2 class="font-heading font-[800] text-[clamp(56px,8vw,124px)] leading-[0.86] tracking-[-0.045em]">
+              <h2 class="font-heading font-[800] text-[clamp(56px,8vw,124px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.86] tracking-[-0.045em]">
                 Un correo<br/>al mes.<br/><span class="outline-text">10% off</span><br/><span class="text-brand">de bienvenida.</span>
               </h2>
             </div>
             <div class="md:col-span-5">
-              <p class="text-[15px] text-paper/70 leading-relaxed mb-6">Drops antes que nadie. Rebajas privadas. Cero spam. Pausar o cancelar con un click — siempre.</p>
+              <p class="text-[15px] text-paper/70 leading-relaxed mb-6">Novedades antes que nadie. Rebajas privadas. Cero spam. Pausar o cancelar con un click — siempre.</p>
 
               ${isSubscribed ? `
                 <div class="py-8 text-center">
@@ -333,11 +339,10 @@ export function pageHome() {
                 </div>
               ` : `
                 <form id="newsletter-form" class="border-b border-paper/30 flex items-center focus-within:border-paper transition-colors">
-                  <input type="email" name="email" placeholder="tu@correo.com" class="flex-1 bg-transparent text-[17px] text-paper py-5 pr-4 placeholder:text-paper/30 focus:outline-none" required />
-                  <button type="submit" class="text-[13px] font-bold text-paper shrink-0 hover:text-brand transition-colors">Suscribirme →</button>
+                  <input type="email" name="email" placeholder="tu@correo.com" class="flex-1 min-w-0 bg-transparent text-[17px] text-paper py-5 pr-4 placeholder:text-paper/50 focus:outline-none" required />
+                  <button type="submit" class="shrink-0 inline-flex items-center h-11 px-5 rounded-full bg-paper text-ink text-[14px] font-semibold hover:bg-brand hover:text-paper transition-colors">Suscribirme →</button>
                 </form>
                 <div class="flex items-center justify-between mt-4">
-                  <span class="font-mono text-[11px] tracking-[0.2em] uppercase opacity-60">+2,400 suscriptores</span>
                   <span class="font-mono text-[11px] tracking-[0.2em] uppercase opacity-60">WELCOME10 al instante</span>
                 </div>
               `}
@@ -351,7 +356,7 @@ export function pageHome() {
         <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
           <div class="mb-14">
             <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 block mb-3">§ 05 — Visítanos</span>
-            <h2 class="font-heading font-[800] text-[clamp(56px,7vw,112px)] leading-[0.88] tracking-[-0.045em]">Dos puntos<br/>en <span class="text-brand">Colima</span>.</h2>
+            <h2 class="font-heading font-[800] text-[clamp(56px,7vw,112px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.88] tracking-[-0.045em]">Dos puntos<br/>en <span class="text-brand">Colima</span>.</h2>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             ${storesHtml}
@@ -388,6 +393,13 @@ export function pageHome() {
 
       function resetProgress() {
         if (progressAnim) progressAnim.cancel()
+        clearInterval(autoTimer)
+        // En pantallas tactiles no rota solo: cambiaba el titulo mientras se leia
+        // y no habia como pausarlo con el dedo. Se avanza con flechas o deslizando.
+        if (!canAutoplay()) {
+          if (slideProgress) slideProgress.style.transform = `scaleX(${(currentSlide + 1) / totalSlides})`
+          return
+        }
         if (slideProgress) {
           slideProgress.style.transform = 'scaleX(0)'
           progressAnim = slideProgress.animate(
@@ -395,10 +407,7 @@ export function pageHome() {
             { duration: 6000, easing: 'linear', fill: 'forwards' }
           )
         }
-        clearInterval(autoTimer)
-        if (!prefersReducedMotion()) {
-          autoTimer = setInterval(() => goToSlide(currentSlide + 1), 6000)
-        }
+        autoTimer = setInterval(() => goToSlide(currentSlide + 1), 6000)
       }
 
       // Hidden slides don't get real src until the visible hero finished loading,
@@ -441,12 +450,25 @@ export function pageHome() {
         heroSection.addEventListener('mouseenter', pause)
         heroSection.addEventListener('focusin', pause)
         heroSection.addEventListener('mouseleave', () => {
+          if (!canAutoplay()) return
           if (progressAnim) progressAnim.play()
           clearInterval(autoTimer)
-          if (!prefersReducedMotion()) {
-            autoTimer = setInterval(() => goToSlide(currentSlide + 1), 6000)
-          }
+          autoTimer = setInterval(() => goToSlide(currentSlide + 1), 6000)
         })
+
+        // Deslizar sobre la foto o el texto cambia de slide
+        let startX = null, startY = 0
+        heroSection.addEventListener('touchstart', (e) => {
+          startX = e.touches[0].clientX
+          startY = e.touches[0].clientY
+        }, { passive: true })
+        heroSection.addEventListener('touchend', (e) => {
+          if (startX === null) return
+          const dx = e.changedTouches[0].clientX - startX
+          const dy = e.changedTouches[0].clientY - startY
+          startX = null
+          if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) goToSlide(currentSlide + (dx < 0 ? 1 : -1))
+        }, { passive: true })
       }
 
       // ── Hero CTA links ──
@@ -461,18 +483,20 @@ export function pageHome() {
       // ── Copy coupon (hero slide 3) ──
       const copyBtn = root.querySelector('#hero-copy-coupon')
       if (copyBtn) {
+        // Fuera del click: un segundo click durante el aviso guardaria "¡Copiado!" como texto original
+        const label = copyBtn.querySelector('.copy-label')
+        const arrow = copyBtn.querySelector('.arrow-walk')
+        const orig = label.textContent
         copyBtn.addEventListener('click', () => {
-          navigator.clipboard.writeText('WELCOME10')
-          const label = copyBtn.querySelector('.copy-label')
-          if (label) {
-            const orig = label.textContent
-            label.textContent = '¡Copiado!'
-            copyBtn.querySelector('.arrow-walk').textContent = '✓'
-            setTimeout(() => {
-              label.textContent = orig
-              copyBtn.querySelector('.arrow-walk').textContent = '→'
-            }, 1800)
+          const flash = (text, mark) => {
+            label.textContent = text
+            arrow.textContent = mark
+            setTimeout(() => { label.textContent = orig; arrow.textContent = '→' }, 2400)
           }
+          // Sin clipboard (http, webviews viejos) al menos se ve el codigo para escribirlo
+          if (!navigator.clipboard) return flash('Tu código: WELCOME10', '·')
+          navigator.clipboard.writeText('WELCOME10')
+            .then(() => flash('¡Copiado!', '✓'), () => flash('Tu código: WELCOME10', '·'))
         })
       }
 

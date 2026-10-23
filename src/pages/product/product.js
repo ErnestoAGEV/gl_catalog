@@ -1,6 +1,6 @@
 import { getState, addToCart, trackProductView, getProductById } from '../../store/index.js'
-import { findProductByPath, fitNote, productPath } from '../../utils/productCopy.js'
-import { isInfiniteStock } from '../../utils/stock.js'
+import { findProductByPath, fitNote, productPath, sortSizes } from '../../utils/productCopy.js'
+import { isInStock } from '../../utils/stock.js'
 import { navigate, normalizePath } from '../../core/router.js'
 import { formatMoney } from '../../utils/format.js'
 import { showToast } from '../../utils/toast.js'
@@ -40,12 +40,12 @@ function splitName(name) {
   return `<span class="text-brand">${name}</span>.`
 }
 
-/* ── Stock status ── */
+/* ── Stock status ──
+   Decision del dueno: no se muestran existencias ni pistas de cuantas quedan.
+   Solo "Agotado" cuando el admin escribio un 0. */
 function stockStatus(product) {
-  const s = product.stock
-  if (isInfiniteStock(s) || s > 3) return { label: 'En stock', cls: 'text-brand', dot: 'bg-brand' }
-  if (s <= 0) return { label: 'Agotado', cls: 'text-ink/60', dot: 'bg-ink/60' }
-  return { label: 'Últimas piezas', cls: 'text-amber-500', dot: 'bg-amber-500' }
+  if (isInStock(product)) return { label: 'En stock', cls: 'text-brand', dot: 'bg-brand' }
+  return { label: 'Agotado', cls: 'text-ink/60', dot: 'bg-ink/60' }
 }
 
 /* ── Editorial recommended card ── */
@@ -63,14 +63,14 @@ function recommendedCard(p, i) {
     <a href="${productPath(p)}" class="group block">
       <div class="aspect-[4/5] rounded-md overflow-hidden ${bgCls} relative">
         <img src="${img}" alt="${safeName}" class="w-full h-full ${imgCls} transition-transform duration-700 group-hover:scale-105" loading="lazy" onerror="this.src='/placeholder.webp'"/>
-        <div class="absolute top-3 right-3 font-mono text-[10px] tracking-[0.2em] uppercase text-ink/60 bg-paper/85 backdrop-blur px-2 py-1 rounded-full">${ord}</div>
-        <button data-quick-add="${p.id}" type="button" class="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-paper/90 backdrop-blur flex items-center justify-center text-ink hover:bg-ink hover:text-paper transition-colors opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 z-10" onclick="event.preventDefault();event.stopPropagation();" aria-label="Agregar rápido">
+        <div class="absolute top-3 right-3 font-mono text-[11px] tracking-[0.2em] uppercase text-ink/60 bg-paper/85 backdrop-blur px-2 py-1 rounded-full">${ord}</div>
+        <button data-quick-add="${p.id}" type="button" class="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-paper/90 backdrop-blur flex items-center justify-center text-ink hover:bg-ink hover:text-paper transition-colors opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 focus-visible:opacity-100 focus-visible:translate-y-0 [@media(hover:none)]:opacity-100 [@media(hover:none)]:translate-y-0 z-10" aria-label="Agregar rápido">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
         </button>
       </div>
       <div class="mt-4 flex items-start justify-between gap-2">
         <div class="min-w-0">
-          <div class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink/55 mb-1">${safeType}</div>
+          <div class="font-mono text-[11px] tracking-[0.22em] uppercase text-ink/65 mb-1">${safeType}</div>
           <div class="font-display font-bold text-[16px] leading-tight tracking-[-0.02em] truncate">${safeName}</div>
         </div>
         <div class="text-right whitespace-nowrap flex-shrink-0">
@@ -119,7 +119,7 @@ export function pageProduct(initialState) {
               <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14">
                 <div class="lg:col-span-6">
                   <div class="aspect-[4/5] rounded-md skeleton-shimmer"></div>
-                  <div class="mt-4 grid grid-cols-4 gap-3">${thumbs}</div>
+                  <div class="mt-4 hidden md:grid grid-cols-4 gap-3">${thumbs}</div>
                 </div>
                 <div class="lg:col-span-6">
                   <span class="block h-3 w-24 rounded skeleton-shimmer"></span>
@@ -165,10 +165,25 @@ export function pageProduct(initialState) {
   const { gallery: images, sizeGuide: sizeGuideImage } = splitGalleryImages(allImages)
   const isPerfume = isPerfumeCategory(product.type)
   const discount = product.originalPrice ? Math.round((1 - product.price / product.originalPrice) * 100) : 0
-  const hasSizes = product.sizes && product.sizes.length > 0
+  const sizes = sortSizes(product.sizes)
+  const hasSizes = sizes.length > 0
+  // Con una sola talla no hay nada que elegir: viene marcada y el boton listo
+  const initialSize = sizes.length === 1 ? sizes[0] : null
+  const sizeWord = isPerfume ? 'Presentación' : 'Talla'
+  const inStock = isInStock(product)
   const hasColors = product.colors && product.colors.length > 0
   const sku = escapeHtml(product.sku || 'GL-' + String(product.id).slice(0, 8))
   const ss = stockStatus(product)
+  const bagIcon = '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>'
+  const ctaText = (size) => {
+    if (!inStock) return 'Agotado'
+    if (hasSizes && !size) return isPerfume ? 'Elige la presentación' : 'Selecciona una talla'
+    if (size) return isPerfume ? `Agregar · ${escapeHtml(size)}` : `Agregar · talla ${escapeHtml(size)}`
+    return 'Agregar a la bolsa'
+  }
+  const ctaHint = !inStock
+    ? 'Esta pieza se agotó. Pregúntanos por WhatsApp si vuelve.'
+    : `Elige ${isPerfume ? 'una presentación' : 'una talla'} arriba para agregarla a la bolsa.`
   const categoryHref = product.type ? `/categoria/${encodeURIComponent(product.type)}` : '/catalog'
   const safeName = escapeHtml(product.name)
   const safeType = escapeHtml(product.type || '')
@@ -181,21 +196,21 @@ export function pageProduct(initialState) {
 
   /* ── Badges ── */
   const badges = []
-  if (discount > 0) badges.push(`<span class="font-mono text-[10px] tracking-[0.18em] uppercase bg-brand text-paper px-2.5 py-1 rounded-full">\u2212${discount}%</span>`)
-  else if (product.badge === 'Oferta') badges.push(`<span class="font-mono text-[10px] tracking-[0.18em] uppercase bg-brand text-paper px-2.5 py-1 rounded-full">Oferta</span>`)
-  if (product.badge === 'Nuevo') badges.push(`<span class="font-mono text-[10px] tracking-[0.18em] uppercase bg-paper text-ink px-2.5 py-1 rounded-full">Nuevo</span>`)
-  if (product.badge === 'Más vendido' || product.badge === 'Popular') badges.push(`<span class="font-mono text-[10px] tracking-[0.18em] uppercase bg-ink text-paper px-2.5 py-1 rounded-full">Top</span>`)
+  if (discount > 0) badges.push(`<span class="font-mono text-[11px] tracking-[0.18em] uppercase bg-brand text-paper px-2.5 py-1 rounded-full">\u2212${discount}%</span>`)
+  else if (product.badge === 'Oferta') badges.push(`<span class="font-mono text-[11px] tracking-[0.18em] uppercase bg-brand text-paper px-2.5 py-1 rounded-full">Oferta</span>`)
+  if (product.badge === 'Nuevo') badges.push(`<span class="font-mono text-[11px] tracking-[0.18em] uppercase bg-paper text-ink px-2.5 py-1 rounded-full">Nuevo</span>`)
+  if (product.badge === 'Más vendido' || product.badge === 'Popular') badges.push(`<span class="font-mono text-[11px] tracking-[0.18em] uppercase bg-ink text-paper px-2.5 py-1 rounded-full">Top</span>`)
   const badgesHtml = badges.join('')
 
   /* ── Swatches ── */
   const swatchesHtml = hasColors ? product.colors.map((c, i) =>
-    `<button type="button" class="swatch-btn${i === 0 ? ' active' : ''}" aria-pressed="${i === 0}" data-color="${c}"><span class="swatch-chip" style="background:${hexFor(c)}"></span><span class="name">${c}</span></button>`
+    `<button type="button" class="swatch-btn min-h-11${i === 0 ? ' active' : ''}" aria-pressed="${i === 0}" data-color="${c}"><span class="swatch-chip" style="background:${hexFor(c)}"></span><span class="name">${c}</span></button>`
   ).join('') : ''
 
   /* ── Sizes ── */
-  const sizePillsHtml = hasSizes ? product.sizes.map(s =>
-    `<button type="button" class="size-pill" aria-pressed="false" data-size="${s}">${s}</button>`
-  ).join('') : ''
+  const sizePillsHtml = sizes.map(s =>
+    `<button type="button" class="size-pill${s === initialSize ? ' active' : ''}" aria-pressed="${s === initialSize}" data-size="${escapeHtml(s)}">${escapeHtml(s)}</button>`
+  ).join('')
 
   /* ── Specs ── */
   const specRows = [
@@ -223,16 +238,17 @@ export function pageProduct(initialState) {
           <!-- Sin flex-wrap: en móvil el nombre saltaba a una segunda línea y
                empujaba 28px más la foto y todo lo que va debajo. Ahora la miga
                cabe en una línea y el nombre se corta con puntos suspensivos. -->
-          <div class="flex items-center gap-2 sm:gap-3 font-mono text-[10px] sm:text-[11px] tracking-[0.28em] uppercase sm:flex-wrap">
-            <a href="/" class="text-ink/55 hover:text-ink ul-link flex-shrink-0">Inicio</a>
-            <span class="text-ink/30 flex-shrink-0">/</span>
-            <a href="/catalog" class="text-ink/55 hover:text-ink ul-link flex-shrink-0">Tienda</a>
-            <span class="text-ink/30 flex-shrink-0">/</span>
-            <a href="${categoryHref}" class="text-ink/55 hover:text-ink ul-link flex-shrink-0">${safeType || 'General'}</a>
+          <!-- py/-my en los enlaces: 44px de area tactil sin que la miga crezca -->
+          <div class="flex items-center gap-2 sm:gap-3 font-mono text-[11px] tracking-[0.2em] uppercase sm:flex-wrap">
+            <a href="/" class="text-ink/65 hover:text-ink hover:underline underline-offset-4 flex-shrink-0 py-3.5 -my-3.5">Inicio</a>
+            <span class="text-ink/30 flex-shrink-0" aria-hidden="true">/</span>
+            <a href="/catalog" class="text-ink/65 hover:text-ink hover:underline underline-offset-4 flex-shrink-0 py-3.5 -my-3.5">Tienda</a>
+            <span class="text-ink/30 flex-shrink-0" aria-hidden="true">/</span>
+            <a href="${categoryHref}" class="text-ink/65 hover:text-ink hover:underline underline-offset-4 flex-shrink-0 py-3.5 -my-3.5">${safeType || 'General'}</a>
             <span class="text-ink/30 flex-shrink-0">/</span>
             <span class="text-ink truncate">${safeName}</span>
             <span class="h-px flex-1 bg-ink/15 mx-3 hidden sm:block"></span>
-            <span class="text-ink/55 hidden sm:inline">SKU · ${sku}</span>
+            <span class="text-ink/65 hidden sm:inline">SKU · ${sku}</span>
           </div>
         </div>
       </section>
@@ -256,7 +272,7 @@ export function pageProduct(initialState) {
                   <img id="pdp-stage-img" data-vt-hero style="view-transition-name:gl-product-hero" src="${escapeHtml(images[0])}" alt="${safeName}" fetchpriority="high" decoding="async" class="stage-main"/>
                   ${badgesHtml ? `<div class="absolute top-4 left-4 flex gap-2 z-10">${badgesHtml}</div>` : ''}
                   <div class="absolute top-4 right-4 flex items-center gap-1.5 z-10">
-                    <span class="stage-chip font-mono text-[10px] tracking-[0.2em] uppercase px-2.5 py-1 rounded-full"><span id="pdp-cur">01</span> / <span id="pdp-tot">${String(images.length).padStart(2, '0')}</span></span>
+                    <span class="stage-chip font-mono text-[11px] tracking-[0.2em] uppercase px-2.5 py-1 rounded-full"><span id="pdp-cur">01</span> / <span id="pdp-tot">${String(images.length).padStart(2, '0')}</span></span>
                     <button id="pdp-share" class="stage-btn w-9 h-9 rounded-full flex items-center justify-center" aria-label="Compartir">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                     </button>
@@ -270,11 +286,15 @@ export function pageProduct(initialState) {
                   </button>
                   ` : ''}
                   <div class="absolute left-4 bottom-4 right-4 flex items-end justify-between text-paper z-10">
-                    <span class="font-mono text-[10px] tracking-[0.24em] uppercase bg-ink/75 px-2 py-1 rounded" id="pdp-caption">Imagen 01 de ${String(images.length).padStart(2, '0')}</span>
-                    <button type="button" id="pdp-zoom" aria-pressed="false" class="press font-mono text-[10px] tracking-[0.18em] uppercase bg-ink/75 px-2 py-1 rounded hidden md:inline">Click para zoom</button>
+                    <span class="font-mono text-[11px] tracking-[0.24em] uppercase bg-ink/75 px-2 py-1 rounded" id="pdp-caption">Imagen 01 de ${String(images.length).padStart(2, '0')}</span>
+                    <!-- El boton mide 44px; el fondo oscuro solo envuelve el texto -->
+                    <button type="button" id="pdp-zoom" aria-pressed="false" class="press hidden md:inline-flex items-end min-h-11 -mb-2.5 pb-2.5 font-mono text-[11px] tracking-[0.18em] uppercase"><span id="pdp-zoom-label" class="bg-ink/75 px-2 py-1 rounded">Click para zoom</span></button>
                   </div>
                 </div>
-                ${images.length > 1 ? `<div class="thumb-rail mt-4 overflow-x-auto pb-1" id="pdp-thumbs"></div>` : ''}
+                <!-- En movil no hay tira: empujaba nombre, precio y boton bajo el
+                     pliegue, y ahi ya estan el swipe, las flechas y el contador.
+                     El ! porque .thumb-rail fija display fuera de las capas. -->
+                ${images.length > 1 ? `<div class="thumb-rail max-md:!hidden mt-4 overflow-x-auto pb-1" id="pdp-thumbs"></div>` : ''}
               </div>
             </div>
 
@@ -284,9 +304,9 @@ export function pageProduct(initialState) {
 
                 <!-- Eyebrow -->
                 <div class="flex items-center gap-3 mb-3">
-                  <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55">${safeType}${product.subtitle ? ' · ' + escapeHtml(product.subtitle) : ''}</span>
+                  <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/65">${safeType}${product.subtitle ? ' · ' + escapeHtml(product.subtitle) : ''}</span>
                   <span class="h-px flex-1 bg-ink/15"></span>
-                  <span class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.2em] uppercase ${ss.cls}">
+                  <span class="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.2em] uppercase ${ss.cls}">
                     <span class="w-1.5 h-1.5 rounded-full ${ss.dot}"></span>
                     ${ss.label}
                   </span>
@@ -302,15 +322,14 @@ export function pageProduct(initialState) {
                 </div>
                 ${discount > 0 ? `
                 <div class="flex items-center gap-3 mb-4">
-                  <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-brand">Ahorras ${formatMoney(product.originalPrice - product.price)} · ${discount}%</span>
+                  <span class="font-mono text-[11px] tracking-[0.22em] uppercase text-brand">Ahorras ${formatMoney(product.originalPrice - product.price)} · ${discount}%</span>
                 </div>` : '<div class="mb-4"></div>'}
 
                 <!-- Colors -->
                 ${hasColors ? `
                 <div class="mb-4">
                   <div class="flex items-center justify-between mb-2">
-                    <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55">Color · <span class="text-ink" id="pdp-color-name">${product.colors[0]}</span></span>
-                    <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink/60">${product.colors.length} disponible${product.colors.length > 1 ? 's' : ''}</span>
+                    <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/65">Color · <span class="text-ink" id="pdp-color-name">${product.colors[0]}</span></span>
                   </div>
                   <div class="flex items-center gap-2.5 flex-wrap" id="pdp-colors">${swatchesHtml}</div>
                 </div>` : ''}
@@ -319,9 +338,9 @@ export function pageProduct(initialState) {
                 ${hasSizes ? `
                 <div class="mb-5">
                   <div class="flex items-center justify-between mb-2">
-                    <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55">Talla · <span class="text-ink" id="pdp-size-name">Selecciona</span></span>
+                    <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/65">${sizeWord} · <span class="text-ink" id="pdp-size-name">${initialSize ? escapeHtml(initialSize) : 'Selecciona'}</span></span>
                     ${sizeGuideImage ? `
-                    <button type="button" id="pdp-size-guide" class="ul-link font-mono text-[10px] tracking-[0.22em] uppercase text-ink/65 hover:text-ink inline-flex items-center gap-1.5">
+                    <button type="button" id="pdp-size-guide" class="font-mono text-[11px] tracking-[0.22em] uppercase text-ink/65 hover:text-ink hover:underline underline-offset-4 inline-flex items-center gap-1.5 min-h-11 -my-3.5">
                       <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/></svg>
                       Guía de tallas
                     </button>` : ''}
@@ -331,34 +350,40 @@ export function pageProduct(initialState) {
 
                 <!-- CTAs -->
                 <div class="space-y-2 mb-6">
-                  <button id="qv-add-to-cart" data-product-id="${product.id}" class="press group relative flex items-center justify-center w-full bg-ink text-paper h-14 rounded-full text-[15px] font-semibold hover:bg-brand transition-colors disabled:opacity-40 disabled:cursor-not-allowed"${hasSizes ? ' disabled' : ''}>
+                  <!-- aria-disabled y no disabled: sigue enfocable, asi el teclado
+                       y el lector de pantalla se enteran de por que no agrega, y
+                       el foco no se pierde al marcar "Agregado" -->
+                  <button type="button" id="qv-add-to-cart" data-product-id="${product.id}" ${!inStock || (hasSizes && !initialSize) ? 'aria-disabled="true" aria-describedby="pdp-cta-hint"' : 'aria-disabled="false"'} class="press group relative flex items-center justify-center w-full bg-ink text-paper h-14 rounded-full text-[15px] font-semibold hover:bg-brand transition-colors aria-disabled:opacity-40 aria-disabled:cursor-not-allowed aria-disabled:hover:bg-ink">
                     <span id="pdp-add-label" class="inline-flex items-center gap-2.5">
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                      ${hasSizes ? 'Selecciona una talla' : 'Agregar a la bolsa'}
+                      ${bagIcon}
+                      ${ctaText(initialSize)}
                     </span>
                     <span class="absolute right-2 inset-y-0 my-auto w-10 h-10 rounded-full bg-paper text-ink flex items-center justify-center">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg>
                     </span>
                   </button>
+                  <p id="pdp-cta-hint" class="text-[13px] text-ink/70 text-center" hidden>${ctaHint}</p>
                   <a href="https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent('Hola, me interesa ' + product.name)}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 w-full bg-paper text-ink border border-ink/15 hover:border-ink h-12 rounded-full text-[14px] font-semibold transition-colors">
                     <svg class="w-5 h-5 text-[#25D366]" fill="currentColor" viewBox="0 0 24 24"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.2s-.8 1-.9 1.2-.3.2-.6.1-1.3-.5-2.4-1.5c-.9-.8-1.5-1.8-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5s0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4s-1 1-1 2.5 1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4s.2-1.3.2-1.4-.3-.2-.6-.4M12 21.8a9.9 9.9 0 01-5-1.4l-.4-.2-3.7 1 1-3.7-.2-.4a9.9 9.9 0 01-1.5-5.3c0-5.5 4.4-9.9 9.9-9.9 2.6 0 5.1 1 7 2.9a9.8 9.8 0 012.9 7c0 5.5-4.4 9.9-9.9 9.9m8.4-18.3A11.8 11.8 0 0012 0C5.5 0 .2 5.3.2 11.9c0 2.1.5 4.1 1.6 6L0 24l6.3-1.7a11.9 11.9 0 005.7 1.5c6.6 0 11.9-5.3 11.9-11.9a11.8 11.8 0 00-3.5-8.4z"/></svg>
                     Pregunta por WhatsApp
                   </a>
+                  <p id="pdp-cta-status" class="sr-only" aria-live="polite"></p>
                 </div>
 
-                <!-- Trust strip -->
+                <!-- Trust strip: los mismos datos que /envios y /cambios. Nada de "compra
+                     segura": aqui no se paga en linea, se cierra por WhatsApp -->
                 <div class="grid grid-cols-3 gap-px bg-ink/10 rounded-lg overflow-hidden mb-7">
                   <div class="bg-paper p-3 sm:p-4 text-center">
                     <svg class="w-5 h-5 mx-auto mb-1.5 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9l2-4h14l2 4M3 9v11a1 1 0 001 1h16a1 1 0 001-1V9M3 9h18M16 13a4 4 0 11-8 0"/></svg>
-                    <div class="font-mono text-[9px] sm:text-[10px] tracking-[0.18em] uppercase">Envío 2-3 días</div>
+                    <div class="font-mono text-[11px] tracking-[0.12em] uppercase leading-snug">Envío 3-4 días</div>
                   </div>
                   <div class="bg-paper p-3 sm:p-4 text-center">
                     <svg class="w-5 h-5 mx-auto mb-1.5 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M5 6h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2zM8 14h.01M12 14h4"/></svg>
-                    <div class="font-mono text-[9px] sm:text-[10px] tracking-[0.18em] uppercase">Cambios 15 días</div>
+                    <div class="font-mono text-[11px] tracking-[0.12em] uppercase leading-snug">Cambios 8 días</div>
                   </div>
                   <div class="bg-paper p-3 sm:p-4 text-center">
                     <svg class="w-5 h-5 mx-auto mb-1.5 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.6-4A11.96 11.96 0 0112 2.9 11.96 11.96 0 013.4 6 12 12 0 003 9c0 5.6 3.8 10.3 9 11.6 5.2-1.3 9-6 9-11.6 0-1-.1-2-.4-3z"/></svg>
-                    <div class="font-mono text-[9px] sm:text-[10px] tracking-[0.18em] uppercase">Compra segura</div>
+                    <div class="font-mono text-[11px] tracking-[0.12em] uppercase leading-snug">Confirmamos por WhatsApp</div>
                   </div>
                 </div>
 
@@ -383,7 +408,7 @@ export function pageProduct(initialState) {
                     <svg class="chev w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
                   </summary>
                   <div class="body">
-                    Envío gratis en compras +$${BRAND.freeShippingMin} MXN — todo México. Entrega en 2-3 días hábiles vía Estafeta/DHL. Recoger en tienda sin costo: lo apartamos por 48 horas en Colima Centro o Villa de Álvarez.
+                    Mandamos a todo México: gratis en compras de ${formatMoney(BRAND.freeShippingMin)} o más. Llega en 3 a 4 días hábiles desde que confirmamos el pago, y la guía te la pasamos por WhatsApp. Recoger en tienda no cuesta: lo apartas por WhatsApp y pasas por él a Colima Centro o Villa de Álvarez.
                   </div>
                 </details>
 
@@ -393,16 +418,16 @@ export function pageProduct(initialState) {
                     <svg class="chev w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
                   </summary>
                   <div class="body">
-                    Cambios sin preguntas dentro de los primeros 15 días — con etiqueta y sin uso. Si no te quedó la talla, te la cambiamos por tu cuenta o pasas por la tienda. Escríbenos por WhatsApp.
+                    Tienes 8 días desde que lo recibes para cambiarlo, sin usar y con etiquetas. No hacemos reembolsos, pero sí cambios. Si escogiste otra talla, el envío del cambio corre por tu cuenta; si el error fue nuestro, lo pagamos nosotros. Escríbenos por WhatsApp.
                   </div>
                 </details>
 
                 <!-- Curator note -->
                 ${product.curatorNote ? `
                 <div class="mt-8 border border-ink/10 rounded-lg p-5">
-                  <div class="font-mono text-[10px] tracking-[0.28em] uppercase text-ink/55 mb-3">Nota de la tienda</div>
+                  <div class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/65 mb-3">Nota de la tienda</div>
                   <p class="font-display font-medium text-[16px] leading-snug tracking-[-0.01em]">"${safeCuratorNote}"</p>
-                  <div class="mt-3 font-mono text-[10px] tracking-[0.24em] uppercase text-ink/55">— Equipo G&L</div>
+                  <div class="mt-3 font-mono text-[11px] tracking-[0.24em] uppercase text-ink/65">— Equipo G&L</div>
                 </div>` : ''}
 
               </div>
@@ -454,7 +479,7 @@ export function pageProduct(initialState) {
               <div>
                 <div class="flex items-center gap-1 text-[14px] mb-3">${Array.from({ length: 5 }, (_, i) => `<span${i >= (r.stars || 5) ? ' class="text-ink/30"' : ''}>★</span>`).join('')}</div>
                 <p class="font-display text-[20px] leading-snug tracking-[-0.02em] mb-3">"${r.quote}"</p>
-                <div class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink/55">${r.name || ''}${r.location ? ' · ' + r.location : ''}${r.date ? ' · ' + r.date : ''}</div>
+                <div class="font-mono text-[11px] tracking-[0.22em] uppercase text-ink/65">${r.name || ''}${r.location ? ' · ' + r.location : ''}${r.date ? ' · ' + r.date : ''}</div>
               </div>`).join('')}
             </div>
           </div>
@@ -497,7 +522,7 @@ export function pageProduct(initialState) {
         if (!thumbsEl) return
         thumbsEl.innerHTML = images.map((img, i) => `
           <button type="button" class="thumb${i === idx ? ' active' : ''}${isPerfume ? ' !bg-white' : ''}" data-i="${i}" aria-label="Ver imagen ${i + 1} de ${images.length}"${i === idx ? ' aria-current="true"' : ''}>
-            <span class="idx">${String(i + 1).padStart(2, '0')}</span>
+            <span class="idx" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
             <img src="${img}" alt="thumb ${i + 1}" loading="lazy" decoding="async" class="${isPerfume ? 'object-contain p-1' : ''}"/>
           </button>
         `).join('')
@@ -528,7 +553,8 @@ export function pageProduct(initialState) {
       const toggleZoom = () => {
         const on = stage.classList.toggle('zoomed')
         zoomBtn?.setAttribute('aria-pressed', String(on))
-        if (zoomBtn) zoomBtn.textContent = on ? 'Click para reducir' : 'Click para zoom'
+        const zoomLabel = root.querySelector('#pdp-zoom-label')
+        if (zoomLabel) zoomLabel.textContent = on ? 'Click para reducir' : 'Click para zoom'
       }
       // Swipe horizontal en movil: el click de zoom no debe dispararse tras arrastrar
       let swiped = false
@@ -588,7 +614,14 @@ export function pageProduct(initialState) {
             document.removeEventListener('keydown', onEsc)
             prevFocus?.focus?.()
           }
-          const onEsc = (e) => { if (e.key === 'Escape') close() }
+          const onEsc = (e) => {
+            if (e.key === 'Escape') return close()
+            // Trampa de foco: el unico control es Cerrar, asi que Tab no sale del dialogo
+            if (e.key === 'Tab') {
+              e.preventDefault()
+              modal.querySelector('[data-close]')?.focus()
+            }
+          }
           modal.addEventListener('click', (e) => {
             if (e.target === modal || e.target.closest('[data-close]')) close()
           })
@@ -630,11 +663,32 @@ export function pageProduct(initialState) {
       }
 
       // ── Sizes ──
-      let selectedSize = null
+      let selectedSize = initialSize
       const sizesEl = root.querySelector('#pdp-sizes')
       const sizeNameEl = root.querySelector('#pdp-size-name')
       const addBtn = root.querySelector('#qv-add-to-cart')
       const addLabel = root.querySelector('#pdp-add-label')
+      const hintEl = root.querySelector('#pdp-cta-hint')
+      const statusEl = root.querySelector('#pdp-cta-status')
+      const canAdd = () => inStock && (!hasSizes || Boolean(selectedSize))
+      let addedTimer = 0
+
+      function paintCta() {
+        if (!addBtn) return
+        const blocked = !canAdd()
+        addBtn.setAttribute('aria-disabled', String(blocked))
+        if (blocked) addBtn.setAttribute('aria-describedby', 'pdp-cta-hint')
+        else addBtn.removeAttribute('aria-describedby')
+        if (!blocked && hintEl) hintEl.hidden = true
+        if (addLabel) addLabel.innerHTML = `${bagIcon} ${ctaText(selectedSize)}`
+      }
+
+      // Limpiar antes de escribir: el mismo texto dos veces no se vuelve a anunciar
+      function announce(msg) {
+        if (!statusEl) return
+        statusEl.textContent = ''
+        setTimeout(() => { statusEl.textContent = msg }, 60)
+      }
 
       if (sizesEl) {
         sizesEl.addEventListener('click', (e) => {
@@ -648,44 +702,36 @@ export function pageProduct(initialState) {
           btn.setAttribute('aria-pressed', 'true')
           selectedSize = btn.dataset.size
           if (sizeNameEl) sizeNameEl.textContent = selectedSize
-          if (addBtn) {
-            addBtn.disabled = false
-            if (addLabel) addLabel.innerHTML = `
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-              Agregar · talla ${selectedSize}
-            `
-          }
+          clearTimeout(addedTimer)
+          paintCta()
         })
       }
 
       // ── Add to cart ──
+      let lastAddAt = 0
       function handleAdd() {
-        if (hasSizes && !selectedSize) return
+        if (!canAdd()) {
+          if (hintEl) hintEl.hidden = false
+          announce(ctaHint)
+          return
+        }
+        // El boton ya no se deshabilita (perdia el foco): un doble clic sumaria dos piezas
+        if (Date.now() - lastAddAt < 700) return
+        lastAddAt = Date.now()
         addToCart({ productId: product.id, size: selectedSize || '', color: selectedColor, qty: 1 })
         flyToCart(root.querySelector('#pdp-stage-img'))
-        showToast('¡Producto agregado al carrito!')
+        showToast('¡Producto agregado a la bolsa!')
+        const detail = selectedSize ? ` · ${isPerfume ? '' : 'talla '}${selectedSize}` : ''
+        announce(`${product.name}${detail} agregado a la bolsa.`)
 
-        const origLabel = addLabel ? addLabel.innerHTML : ''
+        // Sin disabled ni repintar el boton: el foco se queda donde estaba y la
+        // talla sigue marcada por si quiere otra pieza igual
         if (addLabel) addLabel.innerHTML = `
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
           ¡Agregado a la bolsa!
         `
-        if (addBtn) addBtn.disabled = true
-
-        setTimeout(() => {
-          if (addLabel) addLabel.innerHTML = origLabel
-          if (addBtn) {
-            addBtn.disabled = false
-            if (hasSizes && !root.querySelector('#pdp-sizes .size-pill.active')) {
-              addBtn.disabled = true
-              selectedSize = null
-              if (addLabel) addLabel.innerHTML = `
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                Selecciona una talla
-              `
-            }
-          }
-        }, 1800)
+        clearTimeout(addedTimer)
+        addedTimer = setTimeout(paintCta, 1800)
       }
 
       addBtn?.addEventListener('click', handleAdd)
@@ -712,6 +758,7 @@ export function pageProduct(initialState) {
       // ── Cleanup ──
       return () => {
         window.removeEventListener('keydown', onKey)
+        clearTimeout(addedTimer)
         io.disconnect()
       }
     }

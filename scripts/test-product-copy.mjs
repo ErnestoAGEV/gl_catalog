@@ -12,6 +12,7 @@ import {
   productTitle,
   sizeSummary,
   socialImage,
+  sortSizes,
 } from '../src/utils/productCopy.js'
 
 // ── marca ──
@@ -205,3 +206,10 @@ const scene7 = 'https://images.lee.com/is/image/Lee/112369188-HERO?$PDP24-XXLARG
 assert.equal(socialImage(scene7), scene7, 'la url con $& no se puede alterar')
 
 console.log('ok — productCopy')
+
+// ── orden de tallas ──
+assert.deepEqual(sortSizes(['28', '30', '26', '27', '29']), ['26', '27', '28', '29', '30'])
+assert.deepEqual(sortSizes(['XL', 'S', 'M', 'L', 'XXL']), ['S', 'M', 'L', 'XL', 'XXL'])
+assert.deepEqual(sortSizes(['100 ml', 'L', '32', '80 ml', 'M', '28']), ['28', '32', 'M', 'L', '80 ml', '100 ml'])
+assert.deepEqual(sortSizes(['M', 'M', ' S ', '']), ['S', 'M'], 'sin duplicados ni vacios')
+assert.deepEqual(sortSizes(undefined), [])

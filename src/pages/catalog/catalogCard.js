@@ -1,5 +1,5 @@
 import { formatMoney } from '../../utils/format.js'
-import { productPath } from '../../utils/productCopy.js'
+import { productPath, sortSizes } from '../../utils/productCopy.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 
 // La foto del hover se pedia con la tarjeta aunque en movil nunca se ve, y
@@ -63,7 +63,7 @@ export function productCard(p, idx) {
   }).join('')
 
   // Sizes
-  const sizeText = (p.sizes || []).slice(0, 5).join(' \u00B7 ')
+  const sizeText = sortSizes(p.sizes || []).slice(0, 5).join(' \u00B7 ')
 
   // Price
   const hasDiscount = p.originalPrice && p.originalPrice > p.price
@@ -75,27 +75,28 @@ export function productCard(p, idx) {
         <img src="${img1}" alt="${p.name}" class="${imgClass}" loading="lazy" decoding="async" />
         <img data-src="${img2}" alt="" class="${imgAltClass}" loading="lazy" decoding="async" />
         <div class="badge-wrap">${badges.join('')}</div>
-        <div class="absolute top-3 right-3 font-mono text-[10px] tracking-[0.2em] uppercase text-ink/60 bg-paper/80 backdrop-blur px-2 py-1 rounded-full">${ord}</div>
+        <div class="hidden md:block absolute top-3 right-3 font-mono text-[11px] tracking-[0.2em] uppercase text-ink/70 bg-paper/80 backdrop-blur px-2 py-1 rounded-full" aria-hidden="true">${ord}</div>
         <div class="quick-add">
-          <button class="qa-btn" data-quickview="${p.id}" type="button">
-            <span>Vista r\u00E1pida</span>
+          <button class="qa-btn" data-quickview="${p.id}" type="button" tabindex="-1">
+            <span>Ver producto</span>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg>
           </button>
         </div>
       </div>
       <div class="mt-4 flex items-start justify-between gap-2">
         <div class="min-w-0">
-          <div class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink/55 mb-1.5">${eyebrow}</div>
-          <h2 class="font-display font-bold text-[15px] md:text-[18px] leading-tight tracking-[-0.02em] truncate">${p.name}</h2>
+          <div class="font-mono text-[11px] tracking-[0.22em] uppercase text-ink/60 mb-1.5">${eyebrow}</div>
+          <!-- Dos lineas reservadas: "American Fly - ..." se distingue y las tarjetas no bailan -->
+          <h2 class="font-display font-bold text-[15px] md:text-[18px] leading-tight tracking-[-0.02em] line-clamp-2 min-h-[2.5em]">${p.name}</h2>
         </div>
         <div class="text-right whitespace-nowrap flex-shrink-0">
-          ${hasDiscount ? `<div class="font-mono text-[11px] text-ink/40 line-through">${formatMoney(p.originalPrice)}</div>` : ''}
+          ${hasDiscount ? `<div class="font-mono text-[11px] text-ink/60 line-through">${formatMoney(p.originalPrice)}</div>` : ''}
           <div class="font-mono text-[13px] md:text-[14px] font-semibold ${priceClass}">${formatMoney(p.price)}</div>
         </div>
       </div>
       <div class="mt-2 flex items-center gap-1.5">
         ${swatches}
-        ${sizeText ? `<span class="font-mono text-[10px] text-ink/45 ml-auto">${sizeText}</span>` : ''}
+        ${sizeText ? `<span class="font-mono text-[11px] text-ink/60 ml-auto">${sizeText}</span>` : ''}
       </div>
     </a>
   `

@@ -32,6 +32,18 @@ export function getSeoForRoute(path, basePath, state) {
 
   if (basePath.startsWith('/categoria/')) {
     const category = decodeURIComponent(basePath.split('/categoria/')[1] || '')
+    // Solo con el catalogo ya cargado: mientras llega no se sabe si existe, y
+    // marcar noindex una categoria real por llegar antes que la base seria peor.
+    const publicos = (state?.products || []).filter((p) => p.badge !== 'Borrador')
+    const tipos = new Set(publicos.map((p) => p.type))
+    if (publicos.length && !state.isLoading && !category.split(',').some((c) => tipos.has(c.trim()))) {
+      return {
+        title: 'Categoría no encontrada | G&L',
+        description: 'Esa categoría no está en el catálogo. Mira lo que hay ahora en la tienda.',
+        canonicalPath: '/catalog',
+        robots: 'noindex,follow',
+      }
+    }
     return {
       title: `${categoryLabel(category)} | G&L`,
       description: `${categoryLabel(category)} de las mejores marcas, con existencias en nuestras dos tiendas de Colima. Envío a todo México.`,
@@ -119,8 +131,8 @@ export function getSeoForRoute(path, basePath, state) {
 
   if (basePath === '/cart') {
     return {
-      title: 'Carrito de Compra | G&L',
-      description: 'Revisa los productos seleccionados en tu carrito de G&L antes de finalizar tu compra.',
+      title: 'Tu bolsa | G&L',
+      description: 'Revisa los productos de tu bolsa de G&L antes de cerrar tu pedido por WhatsApp.',
       canonicalPath: '/cart',
       robots: 'noindex,follow',
     }
