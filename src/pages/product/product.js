@@ -490,6 +490,15 @@ export function pageProduct(initialState) {
 
       <!-- Quick Add Modal Container -->
       <div id="product-modal-container"></div>
+      ${inStock ? `
+      <!-- Barra fija en movil: aparece cuando el boton principal sale de la vista.
+           Es un atajo visual; teclado y lector usan el boton principal. -->
+      <div id="pdp-sticky" class="md:hidden fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] z-40 px-3 pb-2 pointer-events-none translate-y-[160%] transition-transform duration-300 ease-out motion-reduce:transition-none" aria-hidden="true">
+        <div class="pointer-events-auto flex items-center gap-3 rounded-full bg-paper/95 backdrop-blur border border-ink/10 shadow-[0_12px_30px_-12px_rgba(0,0,0,0.35)] pl-4 pr-1.5 py-1.5">
+          <span class="font-display font-extrabold text-[17px] tabular-nums shrink-0${discount > 0 ? ' text-brand' : ''}">${formatMoney(product.price)}</span>
+          <button type="button" id="pdp-sticky-btn" tabindex="-1" class="flex-1 min-w-0 h-11 px-4 rounded-full bg-ink text-paper text-[14px] font-semibold truncate">${ctaText(initialSize)}</button>
+        </div>
+      </div>` : ''}
     `,
 
     /* ══ MOUNT ══ */
@@ -670,6 +679,8 @@ export function pageProduct(initialState) {
       const addLabel = root.querySelector('#pdp-add-label')
       const hintEl = root.querySelector('#pdp-cta-hint')
       const statusEl = root.querySelector('#pdp-cta-status')
+      const sticky = root.querySelector('#pdp-sticky')
+      const stickyBtn = root.querySelector('#pdp-sticky-btn')
       const canAdd = () => inStock && (!hasSizes || Boolean(selectedSize))
       let addedTimer = 0
 
@@ -681,6 +692,7 @@ export function pageProduct(initialState) {
         else addBtn.removeAttribute('aria-describedby')
         if (!blocked && hintEl) hintEl.hidden = true
         if (addLabel) addLabel.innerHTML = `${bagIcon} ${ctaText(selectedSize)}`
+        if (stickyBtn) stickyBtn.innerHTML = ctaText(selectedSize)
       }
 
       // Limpiar antes de escribir: el mismo texto dos veces no se vuelve a anunciar
@@ -736,6 +748,25 @@ export function pageProduct(initialState) {
 
       addBtn?.addEventListener('click', handleAdd)
 
+      // Barra fija: visible solo mientras el boton principal no se ve. El aviso
+      // de "agregado" sube con ella para no quedar tapado (body.pdp-sticky-on).
+      let stickyIo = null
+      if (sticky && addBtn) {
+        stickyIo = new IntersectionObserver(([entry]) => {
+          // Si la ficha queda oculta (se fue a una vista en cache) el boton tampoco se ve: no mostrar
+          const show = !entry.isIntersecting && root.offsetParent !== null
+          sticky.classList.toggle('translate-y-[160%]', !show)
+          document.body.classList.toggle('pdp-sticky-on', show)
+        })
+        stickyIo.observe(addBtn)
+        stickyBtn?.addEventListener('click', () => {
+          if (canAdd()) return handleAdd()
+          // Sin talla: lleva a elegirla en vez de fallar en silencio
+          sizesEl?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          if (hintEl) hintEl.hidden = false
+        })
+      }
+
       // ── Quick add from recommended ──
       const modalContainer = root.querySelector('#product-modal-container')
       if (modalContainer) {
@@ -760,6 +791,8 @@ export function pageProduct(initialState) {
         window.removeEventListener('keydown', onKey)
         clearTimeout(addedTimer)
         io.disconnect()
+        stickyIo?.disconnect()
+        document.body.classList.remove('pdp-sticky-on')
       }
     }
   }

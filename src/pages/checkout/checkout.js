@@ -1,4 +1,5 @@
-import { getProductById, getState, cartTotal, getCoupon, getDiscountAmount, applyCoupon, removeCoupon, saveOrder, clearCart, addToCart } from '../../store/index.js'
+import { getProductById, getState, cartTotal, getCoupon, getDiscountAmount, applyCoupon, removeCoupon, saveOrder, clearCart, addToCart, isFirstPurchaseCouponAvailable } from '../../store/index.js'
+import { isValidWhatsapp } from '../../utils/phone.js'
 import { BRAND } from '../../utils/config.js'
 import { buildOrderMessage, openWhatsAppWithMessage } from '../../utils/whatsapp.js'
 import { on, qs } from '../../utils/dom.js'
@@ -45,12 +46,6 @@ function clearCheckoutSuccess() {
 // ── Helpers de validación ──
 const ZIPCODE_RE  = /^[0-9]{4,6}$/
 
-// 10 digitos MX; se toleran espacios, guiones, parentesis y el prefijo +52 / 521
-export function isValidWhatsapp(value) {
-  const raw = String(value || '').trim()
-  if (!/^[+\d\s\-().]+$/.test(raw)) return false
-  return /^(?:521?)?\d{10}$/.test(raw.replace(/\D/g, ''))
-}
 
 function nameError(value) {
   const name = sanitizeText(value)
@@ -61,7 +56,7 @@ function nameError(value) {
 
 function whatsappError(value) {
   if (!String(value || '').trim()) return 'Ingresa tu número de WhatsApp.'
-  if (!isValidWhatsapp(value)) return 'Escribe tu WhatsApp a 10 dígitos. Ej: 312 123 4567.'
+  if (!isValidWhatsapp(value)) return 'Escribe tu WhatsApp con lada. Ej: 312 123 4567 o +1 619 555 1234.'
   return ''
 }
 
@@ -316,7 +311,7 @@ export function pageCheckout(state) {
         addressWrap.inert = !show
       }
 
-      const setError = (msg, fieldEl = null) => {
+      const setError = (msg, fieldEl = null, { scroll = true } = {}) => {
         if (!msg) {
           errorBox.classList.add('hidden')
           errorBox.textContent = ''
@@ -327,7 +322,7 @@ export function pageCheckout(state) {
         // Resaltar campo con error
         if (fieldEl) setFieldError(fieldEl, msg)
         // Scroll suave al cuadro de error
-        errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        if (scroll) errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' })
       }
 
       refreshConditional()
@@ -349,7 +344,29 @@ export function pageCheckout(state) {
       form.addEventListener('focusout', (e) => {
         const check = blurChecks[e.target.name]
         if (check) setFieldError(e.target, check(e.target.value))
+        if (e.target.name === 'whatsapp') checkFirstPurchaseCoupon(e.target.value)
       })
+
+      // WELCOME10 es de primera compra: si ese WhatsApp ya lo uso, se quita el
+      // cupon antes de enviar y se explica, en vez de rechazar el pedido al final
+      const firstPurchaseMsg = (code) => `${code} es solo para la primera compra y este WhatsApp ya lo usó. Quitamos el cupón y tu total se actualizó.`
+      const dropFirstPurchaseCoupon = (code, opts) => {
+        // Silencioso, como el boton de quitar: un emit repintaria la vista y el aviso se perderia
+        removeCoupon(true)
+        refreshSummaryView()
+        setError(firstPurchaseMsg(code), null, opts)
+      }
+      async function checkFirstPurchaseCoupon(whatsapp) {
+        const coupon = getCoupon()
+        if (!coupon?.firstPurchaseOnly || !isValidWhatsapp(whatsapp)) return
+        const ok = await isFirstPurchaseCouponAvailable(coupon.code, whatsapp)
+        // El cupon o el numero pudieron cambiar mientras llegaba la respuesta
+        const current = root.querySelector('#co-whatsapp')?.value
+        if (!ok && getCoupon()?.code === coupon.code && current === whatsapp) {
+          // Al salir del campo no se mueve la pagina: el usuario va al siguiente
+          dropFirstPurchaseCoupon(coupon.code, { scroll: false })
+        }
+      }
 
       // ── Form Submit ──
       const submitBtns = root.querySelectorAll('button[type="submit"]')
@@ -500,6 +517,12 @@ export function pageCheckout(state) {
           if (error) {
             // place_order devuelve mensajes en claro (carrito vacio, limite de
             // pedidos, producto no disponible); si no, un texto generico.
+            const usedCoupon = getCoupon()
+            if (usedCoupon && /primera compra/i.test(error.message || '')) {
+              dropFirstPurchaseCoupon(usedCoupon.code)
+              setSubmitting(false)
+              return
+            }
             setError(error.message || 'No se pudo registrar tu pedido. Intenta de nuevo por favor.')
             setSubmitting(false)
             return
@@ -515,6 +538,8 @@ export function pageCheckout(state) {
           persistCheckoutSuccess({ name, waUrl })
           navigate('/checkout/success')
           clearCart()
+          // El cupon de bienvenida ya se uso: no debe quedar puesto para el siguiente pedido
+          removeCoupon(true)
         }).catch(err => {
           setError('Ocurrió un error inesperado al conectar con el servidor.')
           setSubmitting(false)

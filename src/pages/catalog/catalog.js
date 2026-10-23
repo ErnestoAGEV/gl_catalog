@@ -967,6 +967,7 @@ export function pageCatalog(initialState) {
         window.removeEventListener('scroll', onToolbarScroll)
         unsubscribe()
         offRoute()
+        clearTimeout(priceTimer)
       }
     },
   }

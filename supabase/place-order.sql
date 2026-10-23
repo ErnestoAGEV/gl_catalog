@@ -6,8 +6,32 @@
 -- Al final se quita la politica de insert publico: la unica puerta es esta.
 --
 -- Correr en el SQL Editor de Supabase ANTES de desplegar el cliente nuevo.
+-- Es idempotente: se puede volver a correr entero cada vez que cambie.
 
 begin;
+
+-- ── Cupones de primera compra (WELCOME10) ───────────────────────────────
+-- Un numero de WhatsApp solo puede usarlos en un pedido no cancelado.
+alter table public.coupons add column if not exists first_purchase_only boolean not null default false;
+update public.coupons set first_purchase_only = true where code = 'WELCOME10';
+
+-- Clave para comparar telefonos: solo digitos, sin el 00 internacional, y los
+-- de Mexico sin 52 / 521 / 044 / 045, para que "+52 1 312...", "00 52 312...",
+-- "044 312..." y "312..." cuenten como el mismo numero.
+-- Misma regla que phoneKey() en src/utils/phone.js.
+create or replace function public.phone_key(p text)
+returns text
+language sql
+immutable
+as $fn$
+  select case
+    when d ~ '^04[45][0-9]{10}$' then right(d, 10)
+    when d ~ '^521[0-9]{10}$'    then right(d, 10)
+    when d ~ '^52[0-9]{10}$'     then right(d, 10)
+    else d
+  end
+  from (select regexp_replace(regexp_replace(coalesce(p, ''), '[^0-9]', '', 'g'), '^00', '') as d) t
+$fn$;
 
 create or replace function public.place_order(
   p_customer_name     text,
@@ -50,7 +74,9 @@ begin
   if length(v_name) < 3 then
     raise exception 'Ingresa tu nombre completo.' using errcode = '22023';
   end if;
-  if v_whatsapp !~ '^[+]?[0-9 \-().]{7,20}$' then
+  -- Mexico a 10 digitos o cualquier pais con lada (Estados Unidos, Guatemala...)
+  if v_whatsapp !~ '^[+]?[0-9 \-().]+$'
+     or length(regexp_replace(v_whatsapp, '[^0-9]', '', 'g')) not between 8 and 15 then
     raise exception 'El numero de WhatsApp no parece valido.' using errcode = '22023';
   end if;
 
@@ -79,6 +105,21 @@ begin
      where code = upper(regexp_replace(p_coupon_code, '[^A-Za-z0-9]', '', 'g'))
        and active = true;
     if found then
+      -- Dos pedidos simultaneos del mismo numero se forman en fila: sin esto
+      -- los dos pasarian la revision antes de que cualquiera inserte
+      if v_coupon.first_purchase_only then
+        perform pg_advisory_xact_lock(hashtext('first_purchase:' || public.phone_key(v_whatsapp)));
+      end if;
+      if v_coupon.first_purchase_only and exists (
+        select 1 from public.orders o
+         where o.coupon_code = v_coupon.code
+           and coalesce(o.status, '') <> 'cancelado'
+           and public.phone_key(o.customer_whatsapp) = public.phone_key(v_whatsapp)
+      ) then
+        -- El sitio reconoce "primera compra" en el mensaje y quita el cupon solo
+        raise exception '% es solo para la primera compra y este WhatsApp ya lo uso.', v_coupon.code
+          using errcode = '22023';
+      end if;
       -- categories puede ser text[] o jsonb segun como se creo la tabla;
       -- to_jsonb() normaliza los dos casos.
       v_cats := coalesce(to_jsonb(v_coupon.categories), '[]'::jsonb);
@@ -160,6 +201,30 @@ $$;
 -- Solo se ejecuta desde el sitio; nadie mas hereda el permiso.
 revoke all on function public.place_order(text, text, text, text, text, jsonb, text) from public;
 grant execute on function public.place_order(text, text, text, text, text, jsonb, text) to anon, authenticated;
+
+-- Aviso temprano para el checkout: ¿este WhatsApp todavia puede usar el cupon?
+-- Solo devuelve si/no; no expone pedidos ni datos del cliente.
+create or replace function public.coupon_first_purchase_ok(p_code text, p_whatsapp text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $fn$
+  select not exists (
+    select 1
+      from public.coupons c
+      join public.orders o on o.coupon_code = c.code
+     where c.code = upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g'))
+       and c.first_purchase_only
+       and coalesce(o.status, '') <> 'cancelado'
+       and public.phone_key(o.customer_whatsapp) = public.phone_key(p_whatsapp)
+       and length(public.phone_key(p_whatsapp)) >= 8
+  )
+$fn$;
+
+revoke all on function public.coupon_first_purchase_ok(text, text) from public;
+grant execute on function public.coupon_first_purchase_ok(text, text) to anon, authenticated;
 
 -- Se cierra la puerta vieja: ya no se puede insertar un pedido a mano.
 drop policy if exists "orders_public_insert" on public.orders;

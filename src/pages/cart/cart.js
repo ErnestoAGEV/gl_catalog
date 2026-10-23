@@ -80,16 +80,21 @@ export function pageCart(state) {
   const countText = itemCount ? String(itemCount).padStart(2, '0') : '0'
   const pieceWord = itemCount === 1 ? 'pieza' : 'piezas'
 
-  // Upsell: 3 random products not in cart, not draft, in stock
-  const cartItemIds = new Set(cart.map(i => i.productId))
-  const eligibleUpsell = state.products.filter(p =>
-    p.badge !== 'Borrador' && !cartItemIds.has(p.id) && (isInfiniteStock(p.stock) || Number(p.stock) > 0)
-  )
-  // Si falta para el envio gratis, primero lo mas barato que cierra la diferencia
-  const gap = BRAND.freeShippingMin - cartTotal()
-  const closers = gap > 0 ? eligibleUpsell.filter(p => Number(p.price) >= gap).sort((a, b) => a.price - b.price) : []
-  const rest = eligibleUpsell.filter(p => !closers.includes(p)).sort(() => 0.5 - Math.random())
-  const upsellProducts = [...closers, ...rest].slice(0, 3)
+  // Upsell: 3 productos que no estan en la bolsa, no borrador, con stock.
+  // El orden al azar se fija una vez: al cambiar cantidades se recalcula la
+  // eleccion sin que las tarjetas cambien de foto en cada clic.
+  const upsellPool = state.products
+    .filter(p => p.badge !== 'Borrador' && (isInfiniteStock(p.stock) || Number(p.stock) > 0))
+    .sort(() => 0.5 - Math.random())
+  const pickUpsell = () => {
+    const inCart = new Set(getState().cart.map(i => i.productId))
+    const eligible = upsellPool.filter(p => !inCart.has(p.id))
+    // Si falta para el envio gratis, primero lo mas barato que cierra la diferencia
+    const gap = BRAND.freeShippingMin - cartTotal()
+    const closers = gap > 0 ? eligible.filter(p => Number(p.price) >= gap).sort((a, b) => a.price - b.price) : []
+    const rest = eligible.filter(p => !closers.includes(p))
+    return [...closers, ...rest].slice(0, 3)
+  }
 
   return {
     title: 'Bolsa | G&L',
@@ -200,7 +205,13 @@ export function pageCart(state) {
       const recommendedSection = qs(root, '#cart-recommended')
 
       // ── Render upsell ──
+      let shownUpsellKey = ''
       function renderUpsell() {
+        const upsellProducts = pickUpsell()
+        const key = upsellProducts.map(p => p.id).join(',')
+        // Misma seleccion: no repintar, pero la seccion pudo ocultarse con la bolsa vacia
+        if (key === shownUpsellKey) { recommendedSection.classList.toggle('hidden', !upsellProducts.length); return }
+        shownUpsellKey = key
         if (upsellProducts.length === 0) {
           recommendedSection.classList.add('hidden')
           return

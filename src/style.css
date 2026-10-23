@@ -1263,3 +1263,8 @@ header.hs-open .hs-form { animation: hs-in .26s cubic-bezier(.16,1,.3,1); }
 /* El borde del campo ya marca el foco; sin el anillo global encima */
 .hs-form input:focus-visible { outline: none; }
 .hs-form:focus-within { border-color: var(--color-ink); }
+
+/* Con la barra fija de la ficha visible, el aviso de "agregado" sube para no quedar debajo */
+@media (max-width: 767px) {
+  body.pdp-sticky-on #toast-container { bottom: calc(9.5rem + env(safe-area-inset-bottom, 0px)); }
+}

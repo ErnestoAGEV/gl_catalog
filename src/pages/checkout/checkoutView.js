@@ -115,7 +115,7 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
               </div>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6">
                 ${fieldHTML({ name: 'name', label: 'Nombre completo', placeholder: 'Eduardo N&uacute;&ntilde;ez', autocomplete: 'name', attrs: 'required aria-required="true"' })}
-                ${fieldHTML({ name: 'whatsapp', label: 'WhatsApp (10 d&iacute;gitos)', placeholder: '312 123 4567', autocomplete: 'tel', attrs: 'type="tel" inputmode="tel" required aria-required="true"' })}
+                ${fieldHTML({ name: 'whatsapp', label: 'WhatsApp (con lada si no es de M&eacute;xico)', placeholder: '312 123 4567', autocomplete: 'tel', attrs: 'type="tel" inputmode="tel" required aria-required="true"' })}
               </div>
             </section>
 
