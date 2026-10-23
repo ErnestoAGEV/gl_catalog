@@ -714,8 +714,16 @@ body.dark {
 .dark .bottom-sheet { background: #0b1020; }
 .dark .bottom-sheet button { border-color: rgba(255,255,255,0.1); color: #e5e7eb; }
 
-@media (min-width: 769px) {
+@media (min-width: 48rem) {
   .sheet-backdrop:not(.force-show), .bottom-sheet:not(.force-show) { display: none !important; }
+}
+/* Escritorio: el panel de filtros del catalogo deja de ser hoja y es la
+   columna fija junto a la parrilla (va despues para ganar al display:none).
+   En rem, como lg de Tailwind y el matchMedia del catalogo */
+@media (min-width: 64rem) {
+  .bottom-sheet.filter-panel { display: block !important; inset: auto; position: sticky; top: var(--hdr-h, 68px); align-self: start; transform: none; transition: none; box-shadow: none; border-radius: 0; background: transparent; z-index: auto; max-height: calc(100dvh - var(--hdr-h, 68px)); padding-bottom: 32px; scrollbar-width: thin; scrollbar-color: transparent transparent; }
+  .bottom-sheet.filter-panel:hover { scrollbar-color: rgba(10,10,15,.2) transparent; }
+  .sheet-backdrop.open { display: none !important; }
 }
 
 /* Collapse state hides secondary row */
@@ -732,13 +740,6 @@ body.dark {
 
 /* ─── Mobile catalog optimizations (≤768px) ─── */
 @media (max-width: 768px) {
-  /* Mobile filter drawer: good tap targets */
-  #filter-controls-mobile select,
-  #filter-controls-mobile input {
-    min-height: 38px;
-    font-size: 13px;
-  }
-
   /* Cart floating button: icon-only on mobile */
   a[href="/cart"].fixed {
     padding: 0.4rem 0.75rem 0.4rem 0.6rem;

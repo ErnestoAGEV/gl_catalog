@@ -1,6 +1,7 @@
 import { formatMoney } from '../../utils/format.js'
-import { productPath, sortSizes } from '../../utils/productCopy.js'
+import { productBrand, productModel, productPath, sortSizes } from '../../utils/productCopy.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
+import { escapeHtml } from '../../utils/sanitize.js'
 
 // La foto del hover se pedia con la tarjeta aunque en movil nunca se ve, y
 // cada foto cuenta contra el cached egress de Supabase. Se pide al pasar el raton.
@@ -53,13 +54,16 @@ export function productCard(p, idx) {
     badges.push(`<span class="badge-dot bg-ink text-paper">Top</span>`)
   }
 
-  // Eyebrow text
-  const eyebrow = p.type || ''
+  // "Oggi - Leader Negro": la marca arriba y el modelo como nombre. Sin
+  // separador no hay marca que sacar y arriba va la categoria, como antes.
+  const model = productModel(p.name)
+  const hasBrand = model !== String(p.name || '').trim()
+  const eyebrow = hasBrand ? productBrand(p.name) : (p.type || '')
 
   // Colors / swatches
   const swatches = (p.colors || []).map(c => {
     const hex = c.startsWith('#') ? c : colorNameToHex(c)
-    return `<span class="swatch" style="background:${hex}"></span>`
+    return `<span class="swatch" style="background:${escapeHtml(hex)}"></span>`
   }).join('')
 
   // Sizes
@@ -86,8 +90,8 @@ export function productCard(p, idx) {
       <div class="mt-4 flex items-start justify-between gap-2">
         <div class="min-w-0">
           <div class="font-mono text-[11px] tracking-[0.22em] uppercase text-ink/60 mb-1.5">${eyebrow}</div>
-          <!-- Dos lineas reservadas: "American Fly - ..." se distingue y las tarjetas no bailan -->
-          <h2 class="font-display font-bold text-[15px] md:text-[18px] leading-tight tracking-[-0.02em] line-clamp-2 min-h-[2.5em]">${p.name}</h2>
+          <!-- Dos lineas reservadas: las tarjetas no bailan con modelos largos -->
+          <h2 class="font-display font-bold text-[15px] md:text-[18px] leading-tight tracking-[-0.02em] line-clamp-2 min-h-[2.5em]">${hasBrand ? model : p.name}</h2>
         </div>
         <div class="text-right whitespace-nowrap flex-shrink-0">
           ${hasDiscount ? `<div class="font-mono text-[11px] text-ink/60 line-through">${formatMoney(p.originalPrice)}</div>` : ''}
@@ -102,7 +106,7 @@ export function productCard(p, idx) {
   `
 }
 
-function colorNameToHex(name) {
+export function colorNameToHex(name) {
   const map = {
     'negro': '#0A0A0F', 'blanco': '#FFFFFF', 'azul': '#214fc7',
     'rojo': '#b03832', 'verde': '#3b4a3e', 'gris': '#6b7280',

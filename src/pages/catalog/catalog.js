@@ -5,7 +5,7 @@ import { formatMoney } from '../../utils/format.js'
 import { on, qs, lockScroll, unlockScroll } from '../../utils/dom.js'
 import { navigate, normalizePath, onRouteChange } from '../../core/router.js'
 import { uniqueSorted, getFilterState, applyFilters, getCategoryOrder } from './catalogFilters.js'
-import { skeletonGrid, productCard } from './catalogCard.js'
+import { skeletonGrid, productCard, colorNameToHex } from './catalogCard.js'
 import { handleQuickAdd } from './catalogQuickAdd.js'
 import { escapeHtml } from '../../utils/sanitize.js'
 import { BRAND } from '../../utils/config.js'
@@ -65,8 +65,8 @@ export function pageCatalog(initialState) {
   // Hero content
   const safeInitialType = escapeHtml(initialType)
   let heroH1 = initialType
-    ? `Solo<br/><span class="text-brand">${safeInitialType}</span>.`
-    : `Todo el<br/><span class="text-brand">cat\u00E1logo</span>.`
+    ? `Solo <span class="text-brand">${safeInitialType}</span>.`
+    : `Todo el <span class="text-brand">cat\u00E1logo</span>.`
   let heroDesc = initialType
     ? (TYPE_DESCRIPTIONS[initialType] || `Explora nuestra selecci\u00F3n de ${initialType.toLowerCase()}.`)
     : 'Camisas, denim, polos, knits y fragancias. Elegidas a mano en Colima \u2014 al mejor precio.'
@@ -74,7 +74,7 @@ export function pageCatalog(initialState) {
   // La marca manda sobre la categoria: /marca/wrangler no es una categoria.
   const safeBrandName = escapeHtml(brandName)
   if (urlBrand) {
-    heroH1 = `Solo<br/><span class="text-brand">${safeBrandName}</span>.`
+    heroH1 = `Solo <span class="text-brand">${safeBrandName}</span>.`
     heroDesc = brandItems.length
       ? brandIntro(brandName, brandItems)
       : `Piezas de ${brandName} en G&L Colima.`
@@ -94,6 +94,13 @@ export function pageCatalog(initialState) {
 
   const chipHtml = orderTypes(types).map(t => chipButton(t, initialType === t)).join('')
 
+  // aria-pressed pinta la fila activa; setActiveChip la mueve igual que a los chips
+  const catRow = (t, label, count, active) =>
+    `<button type="button" data-cat="${escapeHtml(t)}" aria-pressed="${active}" class="flex items-center justify-between gap-3 min-h-[36px] text-left text-[14px] text-ink/70 hover:text-ink aria-pressed:text-ink aria-pressed:font-semibold transition-colors"><span class="truncate">${escapeHtml(label)}</span><span class="font-mono text-[11px] tabular-nums text-ink/60">${count}</span></button>`
+  const catListFor = (list, all, active) =>
+    catRow('', 'Todo', all.length, !active) + orderTypes(list).map(t => catRow(t, t, all.filter(p => p.type === t).length, active === t)).join('')
+  const catListHtml = catListFor(types, publicProducts, initialType)
+
   return {
     title: 'Cat\u00E1logo | G&L',
     noPaddingTop: true,
@@ -101,50 +108,95 @@ export function pageCatalog(initialState) {
     forceLight: true,
     hideHeaderOnMobile: true,
     html: `
-      <!-- HERO HEADER -->
-      <section class="py-8 md:py-10 lg:py-12 border-b border-ink/10">
+      <!-- Encabezado compacto: los productos tienen que asomar en la primera pantalla -->
+      <section class="pt-4 pb-4 md:pt-8 md:pb-6 lg:pb-8 border-b border-ink/10 lg:border-b-0">
         <div class="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-10">
-          <div class="flex items-center gap-2 md:gap-3 mb-4 md:mb-8">
+          <div class="flex items-center gap-2 md:gap-3 mb-3 md:mb-5">
             <a href="/" class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 hover:text-ink">Inicio</a>
             <span class="text-ink/30">/</span>
-            <span class="font-mono text-[11px] tracking-[0.28em] uppercase">Cat\u00E1logo</span>
+            <span class="font-mono text-[11px] tracking-[0.28em] uppercase">Catálogo</span>
             <span class="h-px flex-1 bg-ink/15 mx-2 md:mx-3 hidden md:block"></span>
-            <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55 hidden md:inline" id="hero-meta">O/I '26 \u00B7 ${publicProducts.length} piezas</span>
+            <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55 hidden md:inline" id="hero-meta">O/I '26 · ${publicProducts.length} piezas</span>
           </div>
-          <div class="grid grid-cols-12 gap-4 md:gap-6 lg:gap-10 items-end">
-            <div class="col-span-12 lg:col-span-9">
-              <h1 id="hero-h1" class="font-display font-extrabold text-[clamp(40px,10vw,184px)] leading-[0.88] tracking-[-0.04em]">${heroH1}</h1>
+          <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-1.5 md:gap-10">
+            <div class="flex items-baseline justify-between gap-4">
+              <h1 id="hero-h1" class="font-display font-extrabold text-[30px] md:text-[44px] lg:text-[56px] leading-none tracking-[-0.035em] text-balance">${heroH1}</h1>
+              <span id="resultCountHero" class="md:hidden shrink-0 font-mono text-[11px] tracking-[0.18em] uppercase tabular-nums text-ink/60" aria-live="polite">${publicProducts.length} piezas</span>
             </div>
-            <div class="col-span-12 lg:col-span-3 lg:text-right mt-3 lg:mt-0">
-              <p id="hero-desc" class="text-[14px] md:text-[15px] text-ink/70 max-w-[360px] lg:ml-auto leading-relaxed">${heroDesc}</p>
-            </div>
+            <p id="hero-desc" class="text-[13px] md:text-[14px] text-ink/65 max-w-[440px] leading-relaxed md:text-right line-clamp-2">${heroDesc}</p>
           </div>
         </div>
       </section>
 
+      <!-- Escritorio (lg): filtros en columna fija a la izquierda de la parrilla -->
+      <div class="max-w-[1440px] mx-auto lg:px-10 lg:grid lg:grid-cols-[232px_minmax(0,1fr)] lg:gap-10 xl:gap-14">
+      <!-- Un solo panel de filtros: hoja inferior en movil y tableta, columna en
+           escritorio. inert mientras la hoja esta cerrada; en lg el JS lo quita -->
+      <div id="filter-controls-mobile" class="bottom-sheet filter-panel" role="dialog" aria-modal="true" aria-labelledby="filters-title" inert>
+        <div class="bg-paper rounded-t-2xl lg:rounded-none lg:bg-transparent">
+          <div class="sticky top-0 z-10 bg-paper flex items-center justify-between gap-3 px-6 pt-5 pb-3 lg:static lg:bg-transparent lg:px-0 lg:pt-8 lg:pb-4 lg:border-b lg:border-ink/10">
+            <h2 id="filters-title" class="font-display font-extrabold text-[24px] tracking-[-0.03em] lg:font-mono lg:font-medium lg:text-[11px] lg:tracking-[0.24em] lg:uppercase">Filtros</h2>
+            <button type="button" id="close-filters-x" class="lg:hidden -mr-2 flex items-center justify-center w-11 h-11 rounded-full text-ink hover:bg-fog transition-colors" aria-label="Cerrar filtros">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-width="2" d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+            <button type="button" data-reset-filters class="hidden lg:inline-flex items-center min-h-[32px] font-mono text-[11px] tracking-[0.18em] uppercase text-ink/60 hover:text-brand transition-colors">Limpiar</button>
+          </div>
+          <div class="px-6 pt-2 pb-6 lg:px-0 lg:pt-6 space-y-7">
+            <fieldset class="hidden lg:block min-w-0">
+              <legend class="font-mono text-[11px] tracking-[0.24em] uppercase text-ink/60">Categoría</legend>
+              <div id="cat-list" class="mt-2 flex flex-col">${catListHtml}</div>
+            </fieldset>
+            <fieldset class="min-w-0">
+              <legend class="font-mono text-[11px] tracking-[0.24em] uppercase text-ink/60">Talla</legend>
+              <select name="size" class="hidden" tabindex="-1" aria-hidden="true">${options(sizes, 'Talla')}</select>
+              <div id="size-picks" class="mt-3 flex flex-wrap gap-2"></div>
+            </fieldset>
+            <fieldset class="min-w-0">
+              <legend class="font-mono text-[11px] tracking-[0.24em] uppercase text-ink/60">Color</legend>
+              <select name="color" class="hidden" tabindex="-1" aria-hidden="true">${options(colors, 'Color')}</select>
+              <div id="color-picks" class="mt-3 flex flex-wrap gap-2"></div>
+            </fieldset>
+            <fieldset class="min-w-0">
+              <legend class="font-mono text-[11px] tracking-[0.24em] uppercase text-ink/60">Precio</legend>
+              <div class="mt-3 flex items-center gap-2">
+                <input name="minPrice" aria-label="Precio mínimo" aria-describedby="price-hint" inputmode="numeric" type="number" min="0" placeholder="Mín. $" class="flex-1 min-w-0 h-11 rounded-full border border-ink/15 bg-white px-4 font-mono text-[16px] lg:text-[13px] focus:outline-none focus:border-ink/60" />
+                <span class="text-ink/40" aria-hidden="true">–</span>
+                <input name="maxPrice" aria-label="Precio máximo" aria-describedby="price-hint" inputmode="numeric" type="number" min="0" placeholder="Máx. $" class="flex-1 min-w-0 h-11 rounded-full border border-ink/15 bg-white px-4 font-mono text-[16px] lg:text-[13px] focus:outline-none focus:border-ink/60" />
+              </div>
+              <p id="price-hint" class="mt-2 text-[13px] font-medium text-ink empty:hidden" aria-live="polite"></p>
+            </fieldset>
+          </div>
+          <!-- Fija abajo: con tallas y colores la hoja crece y el boton quedaba fuera -->
+          <div class="sheet-actions sticky bottom-0 bg-paper border-t border-ink/10 px-6 pt-3 pb-[max(16px,env(safe-area-inset-bottom))] gap-3 items-center lg:!hidden">
+            <button id="reset-filters-mobile" type="button" class="h-12 px-5 rounded-full border border-ink/15 text-ink/70 hover:text-ink hover:border-ink/40 text-[13px] font-semibold transition-colors cursor-pointer">Limpiar</button>
+            <button id="close-filters" type="button" class="flex-1 h-12 rounded-full bg-ink text-paper hover:bg-brand text-[13px] font-semibold transition-colors cursor-pointer"><span id="sheet-result-count">Ver ${publicProducts.length} productos</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="min-w-0">
       <!-- STICKY TOOLBAR -->
-      <section id="catalog-toolbar" class="sticky top-0 md:top-[68px] z-30 bg-paper/95 backdrop-blur-md border-b border-ink/10 toolbar-shadow">
-        <div class="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-10 py-2.5 md:py-4">
+      <section id="catalog-toolbar" class="sticky top-0 md:top-[var(--hdr-h,68px)] z-30 bg-paper/95 backdrop-blur-md border-b border-ink/10 toolbar-shadow">
+        <div class="px-4 md:px-6 lg:px-0 py-2.5 md:py-4">
           <!-- Banda unica: categorias + busqueda + talla + orden + filtros -->
           <!-- En movil tres filas: buscar + filtros, categorias, conteo + orden -->
           <div class="flex flex-wrap md:flex-nowrap items-center gap-x-2 gap-y-2 md:gap-3">
             <!-- Chips de categoria: en movil fila propia a todo lo ancho, con el
                  borde derecho desvanecido para que se note que hay mas al deslizar -->
-            <div class="flex items-center gap-1.5 md:gap-2 relative overflow-x-auto hide-scrollbar basis-full md:basis-auto md:flex-1 min-w-0 order-3 md:order-1 -mx-1 pl-1 pr-8 md:px-1 [mask-image:linear-gradient(to_right,#000_calc(100%_-_40px),transparent)] md:[mask-image:none]" id="cat-chips" role="group" aria-label="Categor\u00EDas">
+            <div class="flex items-center gap-1.5 md:gap-2 relative overflow-x-auto hide-scrollbar basis-full md:basis-auto md:flex-1 min-w-0 order-3 md:order-1 lg:hidden -mx-1 pl-1 pr-8 md:px-1 [mask-image:linear-gradient(to_right,#000_calc(100%_-_40px),transparent)] md:[mask-image:none]" id="cat-chips" role="group" aria-label="Categor\u00EDas">
               <button type="button" class="chip flex-shrink-0 !text-[11px]${!initialType ? ' active' : ''}" aria-pressed="${!initialType}" data-cat="">Todo \u00B7 <span class="opacity-60 ml-1" id="totalCount">${publicProducts.length}</span></button>
               ${chipHtml}
             </div>
             <!-- Sort + filters button -->
-            <span id="resultCountMobile" class="md:hidden order-4 basis-1/2 grow min-w-0 truncate font-mono text-[11px] tracking-[0.18em] uppercase text-ink/60" aria-live="polite">${publicProducts.length} resultados</span>
-            <div class="relative flex items-center gap-1.5 flex-shrink-0 order-5 md:order-3">
-              <select id="sizeSelect" name="size" class="bare chip !pr-8 !text-[11px] max-md:!hidden" aria-label="Filtrar por talla" style="background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 stroke=%22%230A0A0F%22 stroke-width=%221.6%22 viewBox=%220 0 24 24%22><path stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 9l6 6 6-6%22/></svg>'); background-repeat:no-repeat; background-position:right 10px center; background-size:10px;">${options(sizes, 'Talla')}</select>
+            <span id="resultCountMobile" class="hidden lg:block lg:order-none lg:basis-auto order-4 basis-1/2 grow min-w-0 truncate font-mono text-[11px] tracking-[0.18em] uppercase text-ink/60" aria-live="polite">${publicProducts.length} resultados</span>
+            <div class="relative flex items-center gap-1.5 flex-shrink-0 order-5 md:order-3 max-md:!hidden">
+              <select id="sizeSelect" name="size" class="bare chip !pr-8 !text-[11px] max-md:!hidden lg:!hidden" aria-label="Filtrar por talla" style="background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 stroke=%22%230A0A0F%22 stroke-width=%221.6%22 viewBox=%220 0 24 24%22><path stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 9l6 6 6-6%22/></svg>'); background-repeat:no-repeat; background-position:right 10px center; background-size:10px;">${options(sizes, 'Talla')}</select>
               <select id="sortSelect" aria-label="Ordenar" class="bare chip !pr-8 min-w-[132px] !text-[11px] max-md:!h-[44px] max-md:!border-transparent max-md:!bg-transparent max-md:-mr-2" style="background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 stroke=%22%230A0A0F%22 stroke-width=%221.6%22 viewBox=%220 0 24 24%22><path stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 9l6 6 6-6%22/></svg>'); background-repeat:no-repeat; background-position:right 10px center; background-size:10px;">
                 <option value="">Destacados</option>
                 <option value="price-asc">Precio \u2191</option>
                 <option value="price-desc">Precio \u2193</option>
               </select>
             </div>
-            <button id="open-filters-btn" type="button" class="chip flex-shrink-0 relative justify-center order-2 md:order-4 max-md:!h-[44px] max-md:!px-4" title="Filtros" aria-label="Abrir filtros" aria-haspopup="dialog" aria-controls="filter-controls-mobile">
+            <button id="open-filters-btn" type="button" class="chip flex-shrink-0 relative justify-center order-2 md:order-4 lg:!hidden max-md:!hidden" title="Filtros" aria-label="Abrir filtros" aria-haspopup="dialog" aria-controls="filter-controls-mobile">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18M7 12h10m-6 8h2"/></svg>
               <span class="md:hidden">Filtros</span>
               <span id="filters-badge" class="hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] rounded-full bg-brand text-paper text-[11px] font-bold flex items-center justify-center px-1"></span>
@@ -153,7 +205,7 @@ export function pageCatalog(initialState) {
               <div class="flex items-center w-full h-[44px] md:h-10 rounded-full border border-ink/10 focus-within:border-ink/50 bg-fog/50 px-3 md:px-4 gap-2">
                 <svg class="w-3.5 h-3.5 md:w-4 md:h-4 text-ink/60 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 <input type="search" id="catalog-search" class="flex-1 bg-transparent focus:outline-none text-[16px] md:text-[13px] font-mono min-w-0" autocomplete="off" placeholder="Buscar..." value="${escapeHtml(getSearchQuery() || '')}" aria-label="Buscar productos" />
-                <span id="resultCount" class="hidden md:block shrink-0 font-mono text-[11px] tabular-nums text-ink/60">${publicProducts.length}</span>
+                <span id="resultCount" class="hidden md:block lg:hidden shrink-0 font-mono text-[11px] tabular-nums text-ink/60">${publicProducts.length}</span>
               </div>
             </div>
           </div>
@@ -176,34 +228,32 @@ export function pageCatalog(initialState) {
         </select>
       </div>
 
-      <!-- Mobile bottom sheet filter panel -->
-      <!-- inert mientras esta cerrado: solo se traslada fuera de pantalla y sus
-           controles seguian en el orden de tabulacion -->
-      <div id="filter-controls-mobile" class="bottom-sheet" role="dialog" aria-modal="true" aria-labelledby="filters-title" inert>
-        <div class="bg-paper rounded-t-2xl pt-6 px-6 pb-8">
-          <h2 id="filters-title" class="font-display font-extrabold text-[28px] tracking-[-0.03em] mb-6">Filtros</h2>
-          <div class="grid grid-cols-2 gap-3 mb-4">
-            <select name="type" aria-label="Categor\u00EDa" class="h-11 rounded-full border border-ink/10 px-4 font-mono text-[12px]">${options(types, 'Tipo')}</select>
-            <select name="size" aria-label="Talla" class="h-11 rounded-full border border-ink/10 px-4 font-mono text-[12px]">${options(sizes, 'Talla')}</select>
-            <select name="color" aria-label="Color" class="h-11 rounded-full border border-ink/10 px-4 font-mono text-[12px]">${options(colors, 'Color')}</select>
-          </div>
-          <div class="mb-6"><div class="flex gap-3">
-            <input name="minPrice" aria-label="Precio m\u00EDnimo" aria-describedby="price-hint" inputmode="numeric" type="number" min="0" placeholder="Precio m\u00EDn." class="flex-1 min-w-0 h-11 rounded-full border border-ink/10 px-4 font-mono text-[12px]" />
-            <input name="maxPrice" aria-label="Precio m\u00E1ximo" aria-describedby="price-hint" inputmode="numeric" type="number" min="0" placeholder="Precio m\u00E1x." class="flex-1 min-w-0 h-11 rounded-full border border-ink/10 px-4 font-mono text-[12px]" />
-          </div>
-          <p id="price-hint" class="mt-2 text-[13px] font-medium text-ink empty:hidden" aria-live="polite"></p></div>
-          <div class="sheet-actions flex gap-3 items-center">
-            <button id="reset-filters-mobile" type="button" class="h-12 px-5 rounded-full border border-ink/15 text-ink/70 hover:text-ink hover:border-ink/40 text-[13px] font-semibold transition-colors cursor-pointer">Limpiar</button>
-            <button id="close-filters" type="button" class="flex-1 h-12 rounded-full bg-ink text-paper hover:bg-brand text-[13px] font-semibold transition-colors cursor-pointer"><span id="sheet-result-count">Ver ${publicProducts.length} productos</span></button>
-          </div>
-        </div>
-      </div>
       <div id="sheet-backdrop" class="sheet-backdrop"></div>
 
+      <!-- Movil: filtrar y ordenar al alcance del pulgar, encima de la navegacion.
+           El <select> va transparente sobre su mitad: abre el selector nativo -->
+      <div id="shop-bar" class="md:hidden fixed inset-x-4 z-[35] bottom-[calc(var(--mnav-h,64px)+12px)] flex h-12 rounded-full bg-ink text-paper shadow-[0_8px_24px_rgba(10,10,15,.28)]">
+        <button id="open-filters-bar" type="button" class="relative flex-1 flex items-center justify-center gap-2 text-[13px] font-semibold" aria-haspopup="dialog" aria-controls="filter-controls-mobile">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18M7 12h10m-6 8h2"/></svg>
+          Filtrar
+          <span id="filters-badge-bar" class="hidden min-w-[18px] h-[18px] rounded-full bg-brand text-paper text-[11px] font-bold items-center justify-center px-1"></span>
+        </button>
+        <span class="w-px my-3 bg-paper/20" aria-hidden="true"></span>
+        <label class="relative flex-1 flex items-center justify-center gap-2 text-[13px] font-semibold">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 4v16m0 0l-3-3m3 3l3-3M17 20V4m0 0l-3 3m3-3l3 3"/></svg>
+          <span id="sort-bar-label">Destacados</span>
+          <select id="sortSelectBar" data-sort aria-label="Ordenar" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+            <option value="">Destacados</option>
+            <option value="price-asc">Precio \u2191</option>
+            <option value="price-desc">Precio \u2193</option>
+          </select>
+        </label>
+      </div>
+
       <!-- PRODUCT GRID -->
-      <section class="py-8 md:py-12 lg:py-16">
-        <div class="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-10">
-          <div id="catalog-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 md:gap-x-4 gap-y-8 md:gap-y-12 lg:gap-y-16">${skeletonGrid(PRODUCTS_PER_PAGE)}</div>
+      <section class="pt-5 pb-32 md:pt-8 md:pb-12 lg:pb-16">
+        <div class="px-4 md:px-6 lg:px-0">
+          <div id="catalog-grid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-3 md:gap-x-4 gap-y-7 md:gap-y-10 lg:gap-y-12">${skeletonGrid(PRODUCTS_PER_PAGE)}</div>
 
           <!-- Empty state -->
           <div id="empty-state" class="hidden py-24 text-center">
@@ -231,6 +281,8 @@ export function pageCatalog(initialState) {
           </div>
         </div>
       </section>
+      </div>
+      </div>
 
       <!-- EDITORIAL ASESORIA BLOCK -->
       <section class="bg-brand text-paper py-12 md:py-20 lg:py-28">
@@ -269,14 +321,14 @@ export function pageCatalog(initialState) {
       const setActiveChip = (val) => {
         const changed = val !== scrolledChip
         scrolledChip = val
-        root.querySelectorAll('#cat-chips .chip').forEach(b => {
+        root.querySelectorAll('#cat-chips .chip, #cat-list [data-cat]').forEach(b => {
           const on = (b.dataset.cat || '') === val
           b.classList.toggle('active', on)
           b.setAttribute('aria-pressed', String(on))
           // Al llegar a /categoria/Polos el chip activo quedaba fuera, a la derecha.
           // Solo al cambiar de categoria: renderGrid llama esto en cada tecla del buscador
           const row = b.parentElement
-          if (on && changed && (b.offsetLeft < row.scrollLeft || b.offsetLeft + b.offsetWidth > row.scrollLeft + row.clientWidth)) row.scrollLeft = b.offsetLeft - 16
+          if (on && changed && row.id === 'cat-chips' && (b.offsetLeft < row.scrollLeft || b.offsetLeft + b.offsetWidth > row.scrollLeft + row.clientWidth)) row.scrollLeft = b.offsetLeft - 16
         })
       }
 
@@ -315,6 +367,19 @@ export function pageCatalog(initialState) {
         const seo = getSeoForRoute(basePath, basePath, state)
         applySeo({ title: seo.title, description: seo.description, canonicalPath: seo.canonicalPath || basePath, robots: seo.robots })
       }
+
+      // El header mide 68px solo con cierto ancho (el boton Bolsa lo engorda):
+      // la barra y la columna de filtros se pegan a su altura real
+      const headerEl = root.querySelector('header')
+      // Igual la navegacion inferior del movil: mide 4rem mas la zona segura del
+      // iPhone, y la barra de Filtrar/Ordenar se le encimaba
+      const mnavEl = root.querySelector('[data-mnav] nav')
+      const headerObserver = new ResizeObserver(() => {
+        if (headerEl?.offsetHeight) root.style.setProperty('--hdr-h', `${headerEl.offsetHeight}px`)
+        if (mnavEl?.offsetHeight) root.style.setProperty('--mnav-h', `${mnavEl.offsetHeight}px`)
+      })
+      if (headerEl) headerObserver.observe(headerEl)
+      if (mnavEl) headerObserver.observe(mnavEl)
 
       // -- Toolbar: se retira al bajar, vuelve al subir (solo movil) --
       const toolbar = root.querySelector('#catalog-toolbar')
@@ -367,7 +432,11 @@ export function pageCatalog(initialState) {
         if (filters.color) root.querySelectorAll('select[name="color"]').forEach(s => { s.value = filters.color })
         if (filters.minPrice) root.querySelectorAll('input[name="minPrice"]').forEach(i => { i.value = filters.minPrice })
         if (filters.maxPrice) root.querySelectorAll('input[name="maxPrice"]').forEach(i => { i.value = filters.maxPrice })
-        if (filters.sort) { const s = root.querySelector('#sort-select'); if (s) s.value = filters.sort }
+        if (filters.sort) {
+          // Tambien los visibles: al volver de un producto decian "Destacados" con otro orden puesto
+          root.querySelectorAll('#sort-select, #sortSelect, #sortSelectBar').forEach(s => { s.value = filters.sort })
+          syncSortLabel()
+        }
       }
 
       // ── Pagination ──
@@ -415,7 +484,7 @@ export function pageCatalog(initialState) {
         if (!toolbar || !anchor || restoringState) return
         // El toolbar es sticky: su rect miente en cuanto se pega. La referencia
         // fiable es la seccion de resultados, que no lo es.
-        const stickyOffset = window.matchMedia('(min-width: 768px)').matches ? 68 : 0
+        const stickyOffset = window.matchMedia('(min-width: 768px)').matches ? (headerEl?.offsetHeight || 68) : 0
         const top = anchor.getBoundingClientRect().top + window.scrollY - toolbar.offsetHeight - stickyOffset
         if (window.scrollY <= top) return
         const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -424,6 +493,30 @@ export function pageCatalog(initialState) {
 
       // Declarado aqui, arriba de renderGrid, porque scrollToResults lo lee.
       let restoringState = Boolean(savedCatalogState)
+
+      const pickerInner = {
+        size: (v) => escapeHtml(v),
+        color: (v) => `<span class="swatch-chip" style="background:${escapeHtml(colorNameToHex(v))}"></span><span class="name">${escapeHtml(v)}</span>`,
+      }
+      const syncPickers = (lists) => {
+        for (const [name, items] of Object.entries(lists)) {
+          const wrap = root.querySelector(`#${name}-picks`)
+          const sel = root.querySelector(`#filter-controls-mobile select[name="${name}"]`)
+          if (!wrap || !sel) continue
+          // Perfumes no tiene colores: sin opciones la seccion entera sobra
+          wrap.closest('fieldset').hidden = !items.length
+          const key = items.join('|')
+          if (wrap.dataset.items !== key) {
+            wrap.dataset.items = key
+            wrap.innerHTML = items.map(v => `<button type="button" class="${name === 'size' ? 'size-pill' : 'swatch-btn min-h-11'}" data-pick="${name}" data-val="${escapeHtml(v)}" aria-pressed="false">${pickerInner[name](v)}</button>`).join('')
+          }
+          wrap.querySelectorAll('[data-pick]').forEach(b => {
+            const on = b.dataset.val === sel.value
+            b.classList.toggle('active', on)
+            b.setAttribute('aria-pressed', String(on))
+          })
+        }
+      }
 
       const renderGrid = (options = {}) => {
         const filters = getFilterState(root)
@@ -455,6 +548,15 @@ export function pageCatalog(initialState) {
           sel.innerHTML = `<option value="">Color</option>${currentColors.map(x => `<option value="${x}">${x}</option>`).join('')}`
           if (curr && currentColors.includes(curr)) sel.value = curr
         })
+        // Solo las tallas y colores que existen donde estas: en Pantalones no
+        // tiene sentido ofrecer M o 100 ml. Lo ya elegido se queda a la vista.
+        const scopeTypes = grid.dataset.multiTypeFilter ? grid.dataset.multiTypeFilter.split(',') : (filters.type ? [filters.type] : null)
+        const scoped = publicProducts.filter(p => (!scopeTypes || scopeTypes.includes(p.type)) && (!activeBrand || isBrandOf(p, activeBrand)))
+        const withChosen = (list, value) => (value && !list.includes(value) ? [...list, value] : list)
+        syncPickers({
+          size: withChosen(sortSizes(scoped.flatMap(p => p.sizes || [])), filters.size),
+          color: withChosen(uniqueSorted(scoped.flatMap(p => p.colors || [])), filters.color),
+        })
 
         // Los chips de categoria se pintaron con la plantilla, cuando los productos
         // todavia no habian llegado de la base: sin esto se quedan en "Todo" para
@@ -467,6 +569,12 @@ export function pageCatalog(initialState) {
             chipsRow.dataset.types = wanted.join('|')
             const todo = chipsRow.querySelector('.chip[data-cat=""]')
             chipsRow.innerHTML = (todo ? todo.outerHTML : '') + wanted.map(t => chipButton(t, false)).join('')
+          }
+          const catList = root.querySelector('#cat-list')
+          const listKey = `${wanted.join('|')}#${publicProducts.length}`
+          if (catList && catList.dataset.key !== listKey) {
+            catList.dataset.key = listKey
+            catList.innerHTML = catListFor(currentTypes, publicProducts, '')
           }
           setActiveChip(grid.dataset.multiTypeFilter || filters.type || '')
         }
@@ -484,7 +592,7 @@ export function pageCatalog(initialState) {
         if (missingLabel) {
           const h1 = root.querySelector('#hero-h1')
           const desc = root.querySelector('#hero-desc')
-          if (h1) h1.innerHTML = `No encontramos<br/><span class="text-brand">«${escapeHtml(missingLabel)}»</span>`
+          if (h1) h1.innerHTML = `No encontramos <span class="text-brand">«${escapeHtml(missingLabel)}»</span>`
           if (desc) desc.textContent = activeBrand ? 'Esa marca no está en el catálogo ahora.' : 'Esa categoría no está en el catálogo ahora.'
           grid.innerHTML = ''
           grid.classList.add('hidden')
@@ -512,7 +620,7 @@ export function pageCatalog(initialState) {
             const nombre = productBrand(suyos[0].name)
             const h1 = root.querySelector('#hero-h1')
             const desc = root.querySelector('#hero-desc')
-            if (h1) h1.innerHTML = `Solo<br/><span class="text-brand">${escapeHtml(nombre)}</span>.`
+            if (h1) h1.innerHTML = `Solo <span class="text-brand">${escapeHtml(nombre)}</span>.`
             if (desc) desc.textContent = brandIntro(nombre, suyos)
           }
         }
@@ -613,6 +721,8 @@ export function pageCatalog(initialState) {
           resultEl.textContent = count
           resultEl.title = `${count} ${count === 1 ? 'resultado' : 'resultados'}${searchQuery ? ` para «${searchQuery}»` : ''}`
         }
+        const heroCount = root.querySelector('#resultCountHero')
+        if (heroCount) heroCount.textContent = `${count} ${count === 1 ? 'pieza' : 'piezas'}`
         if (resultElMobile) {
           let mtext = `${count} resultado${count !== 1 ? 's' : ''}`
           if (searchQuery) mtext += ` \u00B7 \u00AB${searchQuery}\u00BB`
@@ -643,12 +753,11 @@ export function pageCatalog(initialState) {
             : ''
         }
 
-        const badgeMobile = root.querySelector('#filters-badge')
-
-        if (badgeMobile) {
-          if (advancedCount > 0) { badgeMobile.textContent = advancedCount; badgeMobile.classList.remove('hidden') }
-          else { badgeMobile.classList.add('hidden') }
-        }
+        root.querySelectorAll('#filters-badge, #filters-badge-bar').forEach(badge => {
+          badge.textContent = advancedCount
+          badge.classList.toggle('hidden', !advancedCount)
+          if (badge.id === 'filters-badge-bar') badge.classList.toggle('inline-flex', advancedCount > 0)
+        })
 
         // Filtros activos visibles y removibles sin abrir el panel (movil)
         const activeWrap = root.querySelector('#active-filters')
@@ -689,7 +798,7 @@ export function pageCatalog(initialState) {
         const h1 = root.querySelector('#hero-h1')
         const desc = root.querySelector('#hero-desc')
         const safeVal = escapeHtml(val)
-        if (h1) h1.innerHTML = val ? `Solo<br/><span class="text-brand">${safeVal}</span>.` : `Todo el<br/><span class="text-brand">cat\u00E1logo</span>.`
+        if (h1) h1.innerHTML = val ? `Solo <span class="text-brand">${safeVal}</span>.` : `Todo el <span class="text-brand">cat\u00E1logo</span>.`
         if (desc) desc.textContent = val ? (TYPE_DESCRIPTIONS[val] || `Explora nuestra selecci\u00F3n de ${val.toLowerCase()}.`) : 'Camisas, denim, polos, knits y fragancias. Elegidas a mano en Colima \u2014 al mejor precio.'
 
         renderGrid({ resetPage: true })
@@ -697,15 +806,16 @@ export function pageCatalog(initialState) {
       })
 
       // ── Sort ──
-      const sortSelect = root.querySelector('#sortSelect')
-      if (sortSelect) {
-        sortSelect.addEventListener('change', () => {
-          // Sync to hidden sort select
-          const sortHidden = root.querySelector('#sort-select')
-          if (sortHidden) sortHidden.value = sortSelect.value
-          renderGrid({ resetPage: true })
-        })
+      const syncSortLabel = () => {
+        const bar = root.querySelector('#sortSelectBar')
+        const label = root.querySelector('#sort-bar-label')
+        if (bar && label) label.textContent = bar.options[bar.selectedIndex]?.text || 'Destacados'
       }
+      on(root, 'change', '#sortSelect, #sortSelectBar', (ev, el) => {
+        root.querySelectorAll('#sortSelect, #sortSelectBar, #sort-select').forEach(s => { if (s !== el) s.value = el.value })
+        syncSortLabel()
+        renderGrid({ resetPage: true })
+      })
 
       // ── Filter sheet (works on all breakpoints) ──
       // Dialogo de verdad: foco dentro al abrir, Tab no se escapa, Esc y el
@@ -713,7 +823,7 @@ export function pageCatalog(initialState) {
       const mobilePanel = root.querySelector('#filter-controls-mobile')
       const sheetBackdrop = root.querySelector('#sheet-backdrop')
       let sheetTrigger = null
-      const sheetFocusables = () => [...mobilePanel.querySelectorAll('select, input, button')].filter(el => !el.disabled)
+      const sheetFocusables = () => [...mobilePanel.querySelectorAll('select, input, button')].filter(el => !el.disabled && el.getClientRects().length)
       const openSheet = () => {
         if (!mobilePanel || mobilePanel.classList.contains('open')) return
         sheetTrigger = document.activeElement
@@ -743,6 +853,8 @@ export function pageCatalog(initialState) {
         sheetTrigger = null
       })
       mobilePanel?.addEventListener('keydown', (e) => {
+        // En escritorio el panel es una columna mas: Tab tiene que poder salir
+        if (!mobilePanel.classList.contains('open')) return
         if (e.key === 'Escape') { e.preventDefault(); closeSheet(); return }
         if (e.key !== 'Tab') return
         const items = sheetFocusables()
@@ -753,7 +865,27 @@ export function pageCatalog(initialState) {
       })
 
       root.querySelector('#open-filters-btn')?.addEventListener('click', () => openSheet())
+      root.querySelector('#open-filters-bar')?.addEventListener('click', () => openSheet())
       root.querySelector('#close-filters')?.addEventListener('click', closeSheet)
+      root.querySelector('#close-filters-x')?.addEventListener('click', closeSheet)
+
+      // En escritorio el mismo panel es la columna fija: ni dialogo ni inert
+      const lgMq = window.matchMedia('(min-width: 64rem)')
+      const syncPanelMode = () => {
+        if (!mobilePanel) return
+        if (lgMq.matches) {
+          closeSheet()
+          mobilePanel.inert = false
+          mobilePanel.setAttribute('role', 'region')
+          mobilePanel.removeAttribute('aria-modal')
+        } else {
+          mobilePanel.setAttribute('role', 'dialog')
+          mobilePanel.setAttribute('aria-modal', 'true')
+          if (!mobilePanel.classList.contains('open')) mobilePanel.inert = true
+        }
+      }
+      syncPanelMode()
+      lgMq.addEventListener('change', syncPanelMode)
       sheetBackdrop?.addEventListener('click', closeSheet)
 
       const clearSearch = () => {
@@ -765,7 +897,8 @@ export function pageCatalog(initialState) {
       // Reset unico: lo usan el panel, el boton de escritorio y el estado vacio.
       // No cierra el panel: "Limpiar" ahi es para volver a elegir, no para salir.
       const resetAllFilters = ({ keepSearch = false } = {}) => {
-        root.querySelectorAll('select[name="type"], select[name="size"], select[name="color"], #sort-select, #sortSelect').forEach(sel => sel.selectedIndex = 0)
+        root.querySelectorAll('select[name="type"], select[name="size"], select[name="color"], #sort-select, #sortSelect, #sortSelectBar').forEach(sel => sel.selectedIndex = 0)
+        syncSortLabel()
         root.querySelectorAll('input[name="minPrice"], input[name="maxPrice"]').forEach(inp => { inp.value = '' })
         if (!keepSearch) clearSearch()
         delete grid.dataset.multiTypeFilter
@@ -773,7 +906,7 @@ export function pageCatalog(initialState) {
         setActiveChip('')
         const h1 = root.querySelector('#hero-h1')
         const desc = root.querySelector('#hero-desc')
-        if (h1) h1.innerHTML = `Todo el<br/><span class="text-brand">catálogo</span>.`
+        if (h1) h1.innerHTML = `Todo el <span class="text-brand">catálogo</span>.`
         if (desc) desc.textContent = 'Camisas, denim, polos, knits y fragancias. Elegidas a mano en Colima — al mejor precio.'
         window.history.replaceState(null, '', withQuery('/catalog'))
         seoSettled = false   // title y canonical siguen a la url nueva
@@ -782,6 +915,15 @@ export function pageCatalog(initialState) {
 
       // La busqueda tiene su propia pildora: limpiar filtros no la borra
       root.querySelector('#reset-filters-mobile')?.addEventListener('click', () => resetAllFilters({ keepSearch: true }))
+      root.querySelector('[data-reset-filters]')?.addEventListener('click', () => resetAllFilters({ keepSearch: true }))
+
+      // Tocar la talla o el color activo lo quita
+      on(root, 'click', '[data-pick]', (ev, btn) => {
+        const sel = root.querySelector(`#filter-controls-mobile select[name="${btn.dataset.pick}"]`)
+        if (!sel) return
+        sel.value = sel.value === btn.dataset.val ? '' : btn.dataset.val
+        applyControl(sel)
+      })
       seeAllBtn.addEventListener('click', () => resetAllFilters())
       clearSearchBtn.addEventListener('click', () => {
         clearSearch()
@@ -802,10 +944,12 @@ export function pageCatalog(initialState) {
         const val = el.value
         // Sync across all panels
         root.querySelectorAll(`[name="${name}"]`).forEach(s => { if (s !== el) s.value = val })
-        delete grid.dataset.multiTypeFilter
-        activeBrand = ''
 
         if (name === 'type') {
+          // Solo cambiar de categoria saca de /marca/x: elegir talla en Wrangler
+          // mostraba tallas de todo el catalogo con el titulo "Solo Wrangler"
+          delete grid.dataset.multiTypeFilter
+          activeBrand = ''
           const path = val ? `/categoria/${encodeURIComponent(val)}` : '/catalog'
           window.history.replaceState(null, '', withQuery(path))
           seoSettled = false   // title y canonical siguen a la url nueva
@@ -964,6 +1108,8 @@ export function pageCatalog(initialState) {
       // ── Cleanup ──
       return () => {
         window.removeEventListener('scroll', onToolbarScroll)
+        lgMq.removeEventListener('change', syncPanelMode)
+        headerObserver.disconnect()
         unsubscribe()
         offRoute()
         clearTimeout(priceTimer)
