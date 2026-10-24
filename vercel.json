@@ -78,6 +78,11 @@
   ],
   "redirects": [
     {
+      "source": "/products",
+      "destination": "/catalog",
+      "permanent": true
+    },
+    {
       "source": "/producto/ff60bff1-eaca-4eeb-a3ef-edfc3598bbc2",
       "destination": "/producto/oggi-chinos-900-gris-ff60bff1",
       "permanent": true
