@@ -1,5 +1,6 @@
 import { BRAND } from '../utils/config.js'
 import { INSTAGRAM_URL } from '../pages/home/homeData.js'
+import { resolveHomeContent } from '../pages/home/homeContent.js'
 import { normalizePath } from '../core/router.js'
 import { getSearchQuery } from '../store/index.js'
 import { headerSearchButtons, headerSearchForm, headerSearchPanel } from './headerSearch.js'
@@ -105,6 +106,13 @@ function container(children, theme = 'dark') {
   </div>`
 }
 
+const MARQUEE_DEFAULT = `★ Envío gratis +$${BRAND.freeShippingMin} MXN — Nueva temporada 2026 — Cierre por WhatsApp en minutos — 2 tiendas físicas en Colima — Usa WELCOME10 · 10% off 1ª compra — `
+
+/** Texto (HTML ya escapado) de la barra de anuncios: admin → Contenido, o el de siempre. */
+export function marqueeHtml(rows) {
+  return resolveHomeContent(rows, { marqueeDefault: MARQUEE_DEFAULT }).marquee
+}
+
 export function layoutPublic({ contentHtml, state, showSearch = false, noPaddingTop = false, hideHeaderOnMobile = false, fullWidth = false, forceLight = false, hideHeader = false }) {
   const count = (state.cart || []).reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
   const theme = forceLight ? 'light' : (state.theme || 'dark')
@@ -116,7 +124,8 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
   const current = (on) => on ? ' aria-current="page"' : ''
   const navLink = (href, label, on) => `<a class="text-[14px] font-medium ${on ? 'text-ink' : 'text-ink/70'} hover:text-ink transition-colors ul-link" href="${href}"${current(on)}>${label}</a>`
 
-  const marqueeItems = `★ Envío gratis +$${BRAND.freeShippingMin} MXN — Nueva temporada 2026 — Cierre por WhatsApp en minutos — 2 tiendas físicas en Colima — Usa WELCOME10 · 10% off 1ª compra — `
+  // Espacio duro al final: las cuatro copias van en flex y un espacio normal se pierde entre ellas.
+  const marqueeItems = `${marqueeHtml(state?.siteContent).trimEnd()}&nbsp;&nbsp;`
 
   const bottomMargin = hideHeader ? '' : 'mb-16 md:mb-0'
   const mainClasses = fullWidth
@@ -127,10 +136,10 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
     <!-- Marquee Announcement Bar -->
     <div class="bg-ink text-paper border-b border-white/10 overflow-hidden ${hideHeader ? 'hidden' : (hideHeaderOnMobile ? 'hidden md:block' : '')}">
       <div class="marquee-track flex whitespace-nowrap py-2.5">
-        <span class="font-mono text-[11px] tracking-[0.22em] uppercase">${marqueeItems}</span>
-        <span class="font-mono text-[11px] tracking-[0.22em] uppercase">${marqueeItems}</span>
-        <span class="font-mono text-[11px] tracking-[0.22em] uppercase">${marqueeItems}</span>
-        <span class="font-mono text-[11px] tracking-[0.22em] uppercase">${marqueeItems}</span>
+        <span data-marquee class="font-mono text-[11px] tracking-[0.22em] uppercase">${marqueeItems}</span>
+        <span data-marquee class="font-mono text-[11px] tracking-[0.22em] uppercase">${marqueeItems}</span>
+        <span data-marquee class="font-mono text-[11px] tracking-[0.22em] uppercase">${marqueeItems}</span>
+        <span data-marquee class="font-mono text-[11px] tracking-[0.22em] uppercase">${marqueeItems}</span>
       </div>
     </div>
 
@@ -261,15 +270,15 @@ export function layoutAdmin({ title, contentHtml, state }) {
   }
 
   const NAV = [
-    { path: '/admin/dashboard', icon: 'dashboard', label: 'Dashboard', group: 'Panel' },
-    { path: '/admin/orders', icon: 'orders', label: 'Órdenes', group: 'Operación' },
-    { path: '/admin/products', icon: 'products', label: 'Productos', group: 'Operación' },
-    { path: '/admin/categories', icon: 'tag', label: 'Categorías', group: 'Catálogo' },
-    { path: '/admin/coupons', icon: 'coupon', label: 'Cupones', group: 'Catálogo' },
-    { path: '/admin/newsletter', icon: 'mail', label: 'Newsletter', group: 'Clientes' },
+    { path: '/admin/dashboard', icon: 'dashboard', label: 'Dashboard', group: 'Tienda' },
+    { path: '/admin/orders', icon: 'orders', label: 'Órdenes', group: 'Tienda' },
+    { path: '/admin/products', icon: 'products', label: 'Productos', group: 'Tienda' },
+    { path: '/admin/categories', icon: 'tag', label: 'Categorías', group: 'Tienda' },
+    { path: '/admin/coupons', icon: 'coupon', label: 'Cupones', group: 'Tienda' },
+    { path: '/admin/banners', icon: 'image', label: 'Contenido', group: 'Tienda' },
     { path: '/admin/clientes', icon: 'users', label: 'Clientes', group: 'Clientes' },
-    { path: '/admin/reportes', icon: 'chart', label: 'Reportes', group: 'Análisis' },
-    { path: '/admin/banners', icon: 'image', label: 'Contenido', group: 'Sitio' },
+    { path: '/admin/newsletter', icon: 'mail', label: 'Newsletter', group: 'Clientes' },
+    { path: '/admin/reportes', icon: 'chart', label: 'Reportes', group: 'Clientes' },
   ]
 
   const TITLES = {
@@ -314,12 +323,12 @@ export function layoutAdmin({ title, contentHtml, state }) {
   })
 
   const navHtml = groups.map(g => `
-    <div class="px-3 mb-1 mt-5 first:mt-0">
+    <div class="px-3 mb-1 mt-4 first:mt-0">
       <p class="eyebrow text-white/35 px-3 mb-2">${g.name}</p>
       <div class="space-y-0.5">
         ${g.items.map(n => {
           const on = currentPath === n.path || (currentPath === '/admin' && n.path === '/admin/dashboard')
-          return `<a href="${n.path}" class="admin-nav-link ${on ? 'active' : ''} group flex items-center gap-3 px-3 h-10 rounded-[11px] text-[14px] ${on ? 'font-semibold' : 'font-medium'} transition-colors ${on ? 'bg-white/10 text-white' : 'text-white/55 hover:text-white hover:bg-white/[0.06]'}">
+          return `<a href="${n.path}" class="admin-nav-link ${on ? 'active' : ''} group flex items-center gap-3 px-3 h-9 rounded-[11px] text-[14px] ${on ? 'font-semibold' : 'font-medium'} transition-colors ${on ? 'bg-white/10 text-white' : 'text-white/55 hover:text-white hover:bg-white/[0.06]'}">
             <span class="admin-rail"></span>
             <span class="${on ? 'text-white' : 'text-white/45 group-hover:text-white/80'} transition-colors">${I(n.icon)}</span>
             ${n.label}
@@ -330,7 +339,7 @@ export function layoutAdmin({ title, contentHtml, state }) {
 
   const sidebarContent = `
     <div class="flex flex-col h-full">
-      <div class="px-6 pt-6 pb-5">
+      <div class="px-6 pt-5 pb-4">
         <a href="/admin/dashboard" class="flex items-center gap-2.5">
           <div class="w-9 h-9 rounded-[10px] bg-white flex items-center justify-center">
             <span class="font-display font-extrabold text-ink text-[15px] tracking-tight">G&L</span>
@@ -342,16 +351,11 @@ export function layoutAdmin({ title, contentHtml, state }) {
         </a>
       </div>
       <nav class="flex-1 overflow-y-auto adm-scroll-thin pb-4">${navHtml}</nav>
-      <div class="px-4 pb-5 pt-3 mt-auto border-t border-white/[0.07]">
-        <a href="/" class="flex items-center gap-3 px-3 h-10 rounded-[11px] text-[14px] font-medium text-white/55 hover:text-white hover:bg-white/[0.06] transition-colors">
-          <span class="text-white/45">${I('store')}</span> Ver tienda
-        </a>
-        <div class="flex items-center gap-3 px-3 mt-3 pt-3 border-t border-white/[0.07]">
-          <div class="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-white text-[12px] font-bold">GL</div>
-          <div class="min-w-0 flex-1 leading-tight">
-            <p class="text-[13px] font-semibold text-white truncate">Gerencia</p>
-            <p class="text-[11px] text-white/40 truncate">admin@glboutique.mx</p>
-          </div>
+      <div class="px-4 py-4 mt-auto border-t border-white/[0.07]">
+        <div class="flex items-center gap-2 px-2">
+          <div class="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-white text-[12px] font-bold shrink-0">GL</div>
+          <p class="min-w-0 flex-1 text-[13px] font-semibold text-white truncate">Gerencia</p>
+          <a href="/" title="Ver tienda" aria-label="Ver tienda" class="text-white/40 hover:text-white p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors">${I('store', 'w-[17px] h-[17px]')}</a>
           <button id="admin-logout" title="Cerrar sesión" class="text-white/40 hover:text-white p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors">${I('logout', 'w-[17px] h-[17px]')}</button>
         </div>
       </div>

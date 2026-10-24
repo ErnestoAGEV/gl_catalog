@@ -382,7 +382,7 @@ export function productTitle(product) {
     `${name} | ${dama ? `${singular} dama` : singular} | G&L`,
     `${name} | G&L`,
   ]
-  return candidatos.find((t) => t.length <= MAX_TITLE) || candidatos.at(-1)
+  return candidatos.find((t) => t.length <= MAX_TITLE) || candidatos[candidatos.length - 1]
 }
 
 // ── URL del producto ────────────────────────────────────────────────────────

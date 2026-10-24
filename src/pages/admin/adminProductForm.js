@@ -48,7 +48,10 @@ export function productFormHTML(allColors, dynamicCategories, allBrands = []) {
 
             <!-- ── Images ── -->
             <div>
-              <p class="eyebrow text-faint mb-2">Imágenes</p>
+              <div class="flex items-baseline justify-between mb-2">
+                <p class="eyebrow text-faint">Imágenes</p>
+                <span id="image-count" class="text-[11.5px] text-faint tnum"></span>
+              </div>
               <div id="image-previews" class="grid grid-cols-5 gap-2 mb-2"></div>
 
               <div id="dropzone" class="relative rounded-xl2 border-2 border-dashed border-line-strong bg-paper hover:bg-canvas flex flex-col items-center justify-center p-5 transition-colors cursor-pointer group">
@@ -60,10 +63,14 @@ export function productFormHTML(allColors, dynamicCategories, allBrands = []) {
                 <input type="file" id="file-input" accept="image/*" multiple class="absolute inset-0 opacity-0 cursor-pointer" aria-label="Seleccionar imágenes" />
               </div>
 
-              <div class="flex items-start gap-2 mt-2">
-                <textarea name="imageUrls" rows="2" class="adm-fld text-[12px] resize-none flex-1" placeholder="O pega URLs separadas por comas..."></textarea>
-                <button type="button" id="clear-images" class="mt-2 text-[10px] font-bold uppercase tracking-wider text-muted hover:text-bad transition-colors shrink-0 whitespace-nowrap">Limpiar</button>
-              </div>
+              <!-- Las fotos ya subidas viven en este textarea; casi nadie pega enlaces a mano, asi que va plegado -->
+              <details class="mt-2 group/urls">
+                <summary class="text-[12px] font-medium text-muted hover:text-ink cursor-pointer select-none">Pegar enlaces de imágenes</summary>
+                <div class="flex items-start gap-2 mt-2">
+                  <textarea name="imageUrls" rows="3" class="adm-fld text-[12px] resize-y flex-1" placeholder="Enlaces separados por comas"></textarea>
+                  <button type="button" id="clear-images" class="mt-2 text-[11px] font-semibold text-muted hover:text-bad transition-colors shrink-0 whitespace-nowrap">Quitar todas</button>
+                </div>
+              </details>
             </div>
 
             <!-- ── Brand + Name ── -->
@@ -78,13 +85,13 @@ export function productFormHTML(allColors, dynamicCategories, allBrands = []) {
                 <input name="name" class="adm-fld" placeholder="Ej: Camisa Oxford Slim" />
               </div>
             </div>
-            <p class="text-[11px] text-white/40 -mt-1">Se guardan juntos como <span class="font-mono">Marca - Nombre</span>. Escoge la marca de la lista para no crear dos versiones de la misma.</p>
+            <p class="text-[11.5px] text-muted -mt-1">Se guardan juntos como <span class="font-mono">Marca - Nombre</span>. Escoge la marca de la lista para no crear dos versiones de la misma.</p>
 
             <!-- ── Description ── -->
             <div>
               <label class="adm-lbl">Descripción</label>
               <textarea name="description" rows="3" class="adm-fld resize-y" placeholder="Cómo cae, de qué tela es, para quién es. Ej: corte recto slim, tiro largo, cintura media. Mezclilla con stretch."></textarea>
-              <p class="text-[11px] text-white/40 mt-1.5">Opcional. Si lo dejas vacío la tienda usa el texto de la familia (Vaxter, Wrangler Slim, etc.). Lo que escribas aquí manda sobre ese texto.</p>
+              <p class="text-[11.5px] text-muted mt-1.5">Opcional. Si lo dejas vacío la tienda usa el texto de la familia (Vaxter, Wrangler Slim, etc.). Lo que escribas aquí manda sobre ese texto.</p>
             </div>
 
             <!-- ── Category + Badge ── -->
@@ -119,7 +126,8 @@ export function productFormHTML(allColors, dynamicCategories, allBrands = []) {
                 </div>
                 <div>
                   <label class="adm-lbl">Stock</label>
-                  <input name="stock" type="number" min="0" inputmode="numeric" class="adm-fld tnum" placeholder="∞" />
+                  <input name="stock" type="number" min="0" inputmode="numeric" class="adm-fld tnum" placeholder="∞" aria-describedby="stock-help" />
+                  <p id="stock-help" class="text-[11px] text-faint mt-1">Vacío = sin límite</p>
                 </div>
               </div>
             </div>

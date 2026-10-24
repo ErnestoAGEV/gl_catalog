@@ -11,6 +11,9 @@ function getInitialTheme() {
 export const state = {
   products: [],
   categories: [],
+  // Filas de site_content (contenido editable de la home). siteContentRev sube con cada cambio real.
+  siteContent: [],
+  siteContentRev: 0,
   isLoading: true,
   cart: readJson(STORAGE_KEYS.cart, []),
   isAdminAuthed: false,

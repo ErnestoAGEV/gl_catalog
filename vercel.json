@@ -1252,5 +1252,27 @@
       "destination": "/producto/sherman-morgan-playeras-oversize-blanco-f915b068",
       "permanent": true
     }
-  ]
+  ],
+  "images": {
+    "sizes": [
+      640,
+      1080,
+      1600
+    ],
+    "qualities": [
+      75
+    ],
+    "formats": [
+      "image/avif",
+      "image/webp"
+    ],
+    "minimumCacheTTL": 2678400,
+    "remotePatterns": [
+      {
+        "protocol": "https",
+        "hostname": "bcnfbrhcubpysqpyhbvf.supabase.co",
+        "pathname": "^/storage/v1/object/public/.*$"
+      }
+    ]
+  }
 }

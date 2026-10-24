@@ -169,7 +169,7 @@ export function pageAdminClientes(state) {
                       <th class="eyebrow text-faint font-medium px-5 py-3">Cliente</th>
                       <th class="eyebrow text-faint font-medium px-5 py-3">WhatsApp</th>
                       <th class="eyebrow text-faint font-medium px-5 py-3 cursor-pointer select-none" data-sort="orderCount">
-                        <span class="inline-flex items-center gap-1">Ordenes ${sortKey === 'orderCount' ? (sortDir === 'asc' ? ICON.chevUp('w-3.5 h-3.5') : ICON.chevDown('w-3.5 h-3.5')) : ''}</span>
+                        <span class="inline-flex items-center gap-1">Órdenes ${sortKey === 'orderCount' ? (sortDir === 'asc' ? ICON.chevUp('w-3.5 h-3.5') : ICON.chevDown('w-3.5 h-3.5')) : ''}</span>
                       </th>
                       <th class="eyebrow text-faint font-medium px-5 py-3 text-right cursor-pointer select-none" data-sort="totalSpent">
                         <span class="inline-flex items-center gap-1">Total gastado ${sortKey === 'totalSpent' ? (sortDir === 'asc' ? ICON.chevUp('w-3.5 h-3.5') : ICON.chevDown('w-3.5 h-3.5')) : ''}</span>

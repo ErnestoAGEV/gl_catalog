@@ -13,7 +13,9 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { categoryLabel, getSeoForRoute } from '../src/core/routeSeo.js'
 import { infoPages } from '../src/pages/info/infoData.js'
-import { INSTAGRAM_URL, STORE_PHONE, stores } from '../src/pages/home/homeData.js'
+import { INSTAGRAM_URL, STORE_PHONE, stores, heroSlides as defaultHeroSlides } from '../src/pages/home/homeData.js'
+import { resolveHomeContent } from '../src/pages/home/homeContent.js'
+import { heroLeftHtml, heroRightHtml, categoriesHtml, statsHtml, manifestoHtml, slideCountHtml } from '../src/pages/home/homeSections.js'
 import {
   colorPhrase,
   productBrand,
@@ -526,9 +528,48 @@ const homeShellCounted = products.length
   ? homeShell.replace(/(data-catalog-count[^>]*>)\d+</, (_, open) => `${open}${products.length}<`)
   : homeShell
 
+// Contenido editable (admin → Contenido): se escribe en el shell con las mismas
+// plantillas que usa home.js, para que Google y la vista previa de WhatsApp vean
+// lo que ve el cliente. Con su propio try/catch: si site_content no responde, la
+// home sale con el snapshot de index.html y el build sigue.
+let homeShellContent = homeShellCounted
+let patchHomeHead = (head) => head
+try {
+  const rows = SUPABASE_URL ? await supabaseSelect('site_content', 'select=*') : []
+  const c = resolveHomeContent(rows, { marqueeDefault: '', optimize: true })
+  const countByType = (type) => products.filter((p) => p.type === type).length
+  const put = (shell, name, html) => {
+    const re = new RegExp(`(<!--hc:${name}-->)[\\s\\S]*?(<!--/hc:${name}-->)`)
+    if (!re.test(shell)) {
+      console.warn(`[prerender] Falta el marcador hc:${name} en index.html: esa seccion queda como en el snapshot`)
+      return shell
+    }
+    return shell.replace(re, (_, open, close) => `${open}${html}${close}`)
+  }
+  homeShellContent = put(homeShellContent, 'hero-left', heroLeftHtml(c.heroSlides))
+  homeShellContent = put(homeShellContent, 'hero-right', heroRightHtml(c.heroSlides))
+  homeShellContent = put(homeShellContent, 'hero-count', slideCountHtml(c.heroSlides.length))
+  homeShellContent = put(homeShellContent, 'stats', statsHtml(c.stats, products.length))
+  homeShellContent = put(homeShellContent, 'tiles', categoriesHtml(c.categoryTiles, countByType))
+  homeShellContent = put(homeShellContent, 'manifesto', manifestoHtml(c.manifesto))
+  if (c.marquee) {
+    homeShellContent = homeShellContent.replace(/(<span data-marquee[^>]*>)[\s\S]*?(<\/span>)/g, (_, open, close) => `${open}${c.marquee}&nbsp;&nbsp;${close}`)
+  }
+  // Si cambio la foto del primer slide, el preload del <head> debe apuntar a la nueva:
+  // si no, cada visita bajaria la vieja de mas antes de pintar la buena.
+  const first = c.heroSlides[0]
+  if (first.image !== defaultHeroSlides[0].image) {
+    const link = `<link rel="preload" as="image" fetchpriority="high" href="${escapeHtml(first.image)}"${first.srcset ? ` imagesrcset="${escapeHtml(first.srcset)}" imagesizes="(max-width: 1023px) 92vw, 40vw"` : ''} />`
+    patchHomeHead = (head) => head.replace(/<link\s+rel="preload"\s+as="image"[\s\S]*?\/>/, () => link)
+  }
+} catch (err) {
+  console.warn('[prerender] site_content no disponible; la home queda con el snapshot:', err.message)
+}
+
 routes.push({
   path: '/',
-  shell: homeShellCounted.replace(HOME_SHELL_MARK, () => `${contactFooter()}\n      ${HOME_SHELL_MARK}`),
+  patchHead: patchHomeHead,
+  shell: homeShellContent.replace(HOME_SHELL_MARK, () => `${contactFooter()}\n      ${HOME_SHELL_MARK}`),
 })
 
 routes.push({
@@ -979,7 +1020,7 @@ for (const route of routes) {
     extraLd,
   })
 
-  writeRoute(route.path, head + route.shell + tail)
+  writeRoute(route.path, (route.patchHead ? route.patchHead(head) : head) + route.shell + tail)
 }
 
 // 404 real: Vercel sirve dist/404.html cuando ninguna ruta hace match

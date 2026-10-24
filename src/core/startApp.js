@@ -1,7 +1,8 @@
 import { getRoute, onRouteChange, startRouter, navigate, scrollPositions } from './router.js'
 import { bindHeaderSearch } from '../components/headerSearch.js'
 import { closeMiniCart } from '../components/miniCart.js'
-import { getState, isAdminAuthed, loadProducts, loadCategories, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession, getAdminOrders } from '../store/index.js'
+import { marqueeHtml } from '../components/layout.js'
+import { getState, isAdminAuthed, loadProducts, loadCategories, loadSiteContent, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession, getAdminOrders } from '../store/index.js'
 import { renderRoute } from './views.js'
 import { showToast } from '../utils/toast.js'
 import { supabase } from './supabase.js'
@@ -96,6 +97,7 @@ export async function startApp(mountEl) {
 
   loadProducts()
   loadCategories()
+  loadSiteContent()
 
   // Apply initial theme
   const applyTheme = () => {
@@ -681,7 +683,7 @@ export async function startApp(mountEl) {
   // ─── Smart re-render: only re-render a page when its relevant state slice changes ───
   // Catalog and Admin products manage their own updates via their own subscribe, so we skip full-page rebuilds here.
   const routeRelevantKeys = {
-    '/':              (s) => `${s.products.length}|${s.isLoading}|${s.products.filter(p => p.badge !== 'Borrador').length}`,
+    '/':              (s) => `${s.products.length}|${s.isLoading}|${s.products.filter(p => p.badge !== 'Borrador').length}|${s.siteContentRev}`,
     '/producto':      (s) => `${s.products.length}|${s.isLoading}`,
     // La página del carrito se repinta sola en cada +/-; incluir el carrito
     // aquí forzaba además un rebuild completo que se veía como una recarga.
@@ -691,6 +693,7 @@ export async function startApp(mountEl) {
   }
 
   let prevSignatures = {}
+  let prevSiteContentRev = getState().siteContentRev
   let prevAdminAuthed = isAdminAuthed()
 
   const unsub = subscribe((state) => {
@@ -722,7 +725,14 @@ export async function startApp(mountEl) {
       }
     })
 
-    // 2. Selective page re-render
+    // 2. Barra de anuncios: se parchea en sitio en cualquier ruta, sin repintar la pagina.
+    if (state.siteContentRev !== prevSiteContentRev) {
+      prevSiteContentRev = state.siteContentRev
+      const marquee = `${marqueeHtml(state.siteContent).trimEnd()}&nbsp;&nbsp;`
+      document.querySelectorAll('[data-marquee]').forEach(el => { if (el.innerHTML !== marquee) el.innerHTML = marquee })
+    }
+
+    // 3. Selective page re-render
     const currentPath = getRoute()
 
     // La sesión admin puede resolverse después del primer render (ver el

@@ -1,6 +1,46 @@
-import { state } from './state.js'
+import { state, emit } from './state.js'
 import { supabase } from '../core/supabase.js'
 import { ensureAdminAccess } from './auth.js'
+import { resizeForUpload } from '../utils/resizeImage.js'
+
+const CACHE_KEY = 'gl_site_content_cache'
+const CACHE_TS_KEY = 'gl_site_content_cache_ts'
+const CACHE_TTL = 60 * 60 * 1000
+
+function setSiteContent(rows) {
+  if (JSON.stringify(rows) === JSON.stringify(state.siteContent)) return
+  state.siteContent = rows
+  state.siteContentRev++
+  emit()
+}
+
+/**
+ * Contenido de la home para la tienda. Con cache caliente pinta al instante y
+ * refresca en segundo plano; son ~2 KB, una consulta por navegador por hora.
+ */
+export async function loadSiteContent() {
+  if (!supabase) return
+  try {
+    const cached = localStorage.getItem(CACHE_KEY)
+    const ts = Number(localStorage.getItem(CACHE_TS_KEY))
+    if (cached) setSiteContent(JSON.parse(cached))
+    if (cached && Date.now() - ts < CACHE_TTL) return
+  } catch { /* cache corrupta: se ignora */ }
+
+  const rows = await getSiteContent()
+  if (!rows.length) return // un fallo de red no debe borrar lo que hay
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(rows))
+    localStorage.setItem(CACHE_TS_KEY, String(Date.now()))
+  } catch { /* storage lleno: sin cache */ }
+  setSiteContent(rows)
+}
+
+/** Tras editar en el admin: relee y actualiza la cache de este navegador. */
+export async function refreshSiteContent() {
+  try { localStorage.removeItem(CACHE_TS_KEY) } catch { /* sin storage */ }
+  await loadSiteContent()
+}
 
 export async function getSiteContent() {
   if (!supabase) return []
@@ -54,6 +94,18 @@ export async function addSiteContent(payload) {
     if (import.meta.env.DEV) console.error('Error adding site content:', err)
     return { data: null, error: err }
   }
+}
+
+/** Varias filas en una sola peticion: o entran todas o ninguna (no deja secciones a medias). */
+export async function addSiteContentRows(rows) {
+  if (!supabase) return { data: null, error: 'No hay conexion con la base de datos.' }
+
+  const access = await ensureAdminAccess()
+  if (!access.ok) return { data: null, error: access.error }
+
+  const { data, error } = await supabase.from('site_content').insert(rows).select()
+  if (error && import.meta.env.DEV) console.error('Error adding site content rows:', error)
+  return { data, error }
 }
 
 export async function updateSiteContent(id, updates) {
@@ -115,11 +167,22 @@ export async function reorderSiteContent(ids) {
   return { error: null }
 }
 
-export async function uploadSiteImage(file) {
+/** Sube una foto del contenido ya reducida (1400px JPEG) y devuelve sus medidas para evitar saltos de layout. */
+export async function uploadSiteImage(original) {
   if (!supabase) return { url: null, error: 'No hay conexion con la base de datos.' }
 
   const access = await ensureAdminAccess()
   if (!access.ok) return { url: null, error: access.error }
+
+  const file = await resizeForUpload(original)
+  let w = null
+  let h = null
+  try {
+    const bitmap = await createImageBitmap(file)
+    w = bitmap.width
+    h = bitmap.height
+    bitmap.close?.()
+  } catch { /* sin medidas: la home usa las del default */ }
 
   const safeName = file.name
     .normalize('NFD')
@@ -145,5 +208,5 @@ export async function uploadSiteImage(file) {
     .from('site-content')
     .getPublicUrl(data.path)
 
-  return { url: publicUrl, error: null }
+  return { url: publicUrl, w, h, error: null }
 }

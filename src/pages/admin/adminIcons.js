@@ -44,6 +44,7 @@ export const ICON = {
   card: (c) => S('<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>', c),
   chart: (c) => S('<path d="M3 3v18h18"/><path d="M7 16l4-5 4 3 5-6"/>', c),
   image: (c) => S('<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>', c),
+  grip: (c) => S('<circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/>', c),
 }
 
 export function statusPill(status) {

@@ -1,7 +1,7 @@
 // Static data for the admin products page
 
 export const BADGE_OPTIONS = [
-  { value: '', label: 'Sin badge', color: 'bg-gray-500' },
+  { value: '', label: 'Sin etiqueta', color: 'bg-gray-500' },
   { value: 'Nuevo', label: 'Nuevo', color: 'bg-blue-500' },
   { value: 'Oferta', label: 'Oferta', color: 'bg-red-500' },
   { value: 'Popular', label: 'Popular', color: 'bg-amber-500' },

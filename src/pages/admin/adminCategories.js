@@ -2,6 +2,7 @@ import { getCategories, addCategory, updateCategory, deleteCategory, reorderCate
 import { showToast } from '../../utils/toast.js'
 import { confirmDelete } from './adminConfirm.js'
 import { ICON } from './adminIcons.js'
+import { makeSortable, dragHandle } from './adminSortable.js'
 
 export function pageAdminCategories(state) {
   return {
@@ -20,7 +21,7 @@ export function pageAdminCategories(state) {
         <!-- Info banner -->
         <div class="flex items-start gap-3 bg-brand-tint-2 border border-brand-tint rounded-xl2 px-4 py-3">
           ${ICON.info('w-5 h-5 text-brand shrink-0 mt-0.5')}
-          <p class="text-[13px] text-brand-ink leading-relaxed">El orden aquí determina cómo se muestran en el catálogo público. Usa las flechas para reordenar.</p>
+          <p class="text-[13px] text-brand-ink leading-relaxed">El orden aquí determina cómo se muestran en el catálogo público. Arrastra una categoría para cambiar su lugar.</p>
         </div>
 
         <!-- List -->
@@ -63,11 +64,8 @@ export function pageAdminCategories(state) {
         listEl.innerHTML = categories.map((cat, i) => {
           const count = productCounts[cat.name] || 0
           return `
-          <div class="group flex items-center gap-3 bg-paper rounded-xl2 border border-line hover:border-line-strong hover:shadow-card px-3.5 py-3 transition-all" data-category-id="${cat.id}" data-category-name="${cat.name}">
-            <div class="flex flex-col items-center gap-0.5 shrink-0">
-              <button type="button" data-move-up="${cat.id}" class="w-6 h-6 rounded-md flex items-center justify-center text-faint hover:text-ink hover:bg-canvas transition-colors disabled:opacity-25 disabled:pointer-events-none" ${i === 0 ? 'disabled' : ''} title="Mover arriba">${ICON.chevUp('w-4 h-4')}</button>
-              <button type="button" data-move-down="${cat.id}" class="w-6 h-6 rounded-md flex items-center justify-center text-faint hover:text-ink hover:bg-canvas transition-colors disabled:opacity-25 disabled:pointer-events-none" ${i === categories.length - 1 ? 'disabled' : ''} title="Mover abajo">${ICON.chevDown('w-4 h-4')}</button>
-            </div>
+          <div class="group flex items-center gap-3 bg-paper rounded-xl2 border border-line hover:border-line-strong hover:shadow-card px-3.5 py-3 transition-[border-color,box-shadow] select-none cursor-grab" data-sort-id="${cat.id}" data-category-id="${cat.id}" data-category-name="${cat.name}">
+            ${dragHandle(cat.name)}
             <div class="w-8 h-8 rounded-lg bg-canvas border border-line flex items-center justify-center eyebrow text-muted tnum shrink-0">${String(i + 1).padStart(2, '0')}</div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
@@ -88,34 +86,10 @@ export function pageAdminCategories(state) {
       }
 
       const bindEvents = () => {
-        // Move Up
-        listEl.querySelectorAll('[data-move-up]').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const id = btn.dataset.moveUp
-            const idx = categories.findIndex(c => c.id === id)
-            if (idx <= 0) return
-            const ids = categories.map(c => c.id)
-            ;[ids[idx - 1], ids[idx]] = [ids[idx], ids[idx - 1]]
-            btn.disabled = true
-            const { error } = await reorderCategories(ids)
-            if (error) showToast('Error al reordenar', 'error')
-            renderList()
-          })
-        })
-
-        // Move Down
-        listEl.querySelectorAll('[data-move-down]').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const id = btn.dataset.moveDown
-            const idx = categories.findIndex(c => c.id === id)
-            if (idx === -1 || idx >= categories.length - 1) return
-            const ids = categories.map(c => c.id)
-            ;[ids[idx], ids[idx + 1]] = [ids[idx + 1], ids[idx]]
-            btn.disabled = true
-            const { error } = await reorderCategories(ids)
-            if (error) showToast('Error al reordenar', 'error')
-            renderList()
-          })
+        makeSortable(listEl, async (ids) => {
+          const { error } = await reorderCategories(ids)
+          showToast(error ? 'No se pudo guardar el orden. Inténtalo de nuevo.' : 'Orden guardado', error ? 'error' : 'success')
+          renderList()
         })
 
         // Toggle Active (gl-toggle click)

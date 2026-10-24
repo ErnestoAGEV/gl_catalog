@@ -178,6 +178,7 @@ export function pageAdminProducts(state) {
       let isDeleteModalOpen = false
       let selectedColorBadges = new Set()
       let isEditing = false
+      let isDirty = false
       let selectedFiles = []
       let savedScrollPos = 0
 
@@ -228,13 +229,16 @@ export function pageAdminProducts(state) {
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
               </div>
-              <div class="absolute top-1 left-1 bg-ink/60 text-white text-[9px] px-1.5 py-0.5 rounded max-w-[calc(100%-2rem)] truncate backdrop-blur-sm">${item.label}</div>
+              ${item.kind === 'file' ? '<div class="absolute top-1 left-1 bg-brand text-white text-[9px] font-semibold px-1.5 py-0.5 rounded" title="Se sube al guardar">Nueva</div>' : ''}
               <div class="absolute bottom-0 left-0 right-0 bg-ink/60 text-white text-[10px] px-1.5 py-1 text-center backdrop-blur-sm">
                 ${i === 0 ? '<span class="font-bold">Portada</span>' : `<button type="button" class="underline hover:text-brand-tint w-full" data-cover-kind="${item.kind}" data-cover-idx="${item.idx}">Marcar portada</button>`}
               </div>
             </div>
           `).join('')
         }
+        const count = qs(root, '#image-count')
+        if (count) count.textContent = items.length ? `${items.length} de 5` : ''
+        if (dropzone) dropzone.classList.toggle('hidden', items.length >= 5)
       }
 
       if (imageUrlsTextarea) imageUrlsTextarea.addEventListener('input', renderPreviews)
@@ -339,18 +343,21 @@ export function pageAdminProducts(state) {
             canvas.width = width
             canvas.height = height
             const ctx = canvas.getContext('2d')
+            // JPEG no tiene transparencia: sin fondo, un PNG transparente sale negro.
+            ctx.fillStyle = '#ffffff'
+            ctx.fillRect(0, 0, width, height)
             ctx.drawImage(img, 0, 0, width, height)
 
             canvas.toBlob(
               (blob) => {
                 if (!blob) return reject(new Error('Compression failed'))
                 // Create a new File from the blob, preserving a clean name
-                const ext = '.webp'
+                const ext = '.jpg'
                 const baseName = file.name.replace(/\.[^.]+$/, '')
-                const compressedFile = new File([blob], baseName + ext, { type: 'image/webp' })
+                const compressedFile = new File([blob], baseName + ext, { type: 'image/jpeg' })
                 resolve(compressedFile)
               },
-              'image/webp',
+              'image/jpeg',
               quality
             )
           }
@@ -517,6 +524,10 @@ export function pageAdminProducts(state) {
       const showForm = (editing = false) => {
         savedScrollPos = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0
         isEditing = editing
+        // form.reset() no vacia un input hidden: el id del ultimo producto editado
+        // se quedaba y "Nuevo producto" terminaba sobreescribiendolo. Editar lo vuelve a poner.
+        form.elements.id.value = ''
+        isDirty = false
         formSection.classList.remove('hidden')
         formSection.classList.add('flex')
         lockScroll()
@@ -528,6 +539,7 @@ export function pageAdminProducts(state) {
 
       const hideForm = (resetPage = false) => {
         isEditing = false
+        isDirty = false
         formSection.classList.add('hidden')
         formSection.classList.remove('flex')
         unlockScroll()
@@ -626,15 +638,33 @@ export function pageAdminProducts(state) {
         })
       }
 
+      // Un clic fuera del panel o Escape no deben tirar un producto a medio capturar.
+      const requestClose = async () => {
+        if (form.querySelector('button[type="submit"]').disabled) return // guardando: cerrar dejaria la subida a medias
+        if ((isDirty || selectedFiles.length) && !await confirmDelete({
+          title: '¿Descartar cambios?',
+          message: 'Lo que capturaste en este producto no se ha guardado y se va a perder.',
+          confirmLabel: 'Descartar',
+        })) return
+        hideForm()
+      }
       toggleFormBtn.addEventListener('click', () => showForm(false))
-      cancelBtn.addEventListener('click', hideForm)
+      cancelBtn.addEventListener('click', requestClose)
 
       const modalCloseTop = root.querySelector('#modal-close-top')
-      if (modalCloseTop) modalCloseTop.addEventListener('click', hideForm)
+      if (modalCloseTop) modalCloseTop.addEventListener('click', requestClose)
+
+      form.addEventListener('input', () => { isDirty = true })
+      form.addEventListener('change', () => { isDirty = true })
 
       formSection.addEventListener('click', (e) => {
-        if (e.target === formSection) hideForm()
+        if (e.target === formSection) requestClose()
       })
+      const onEscape = (e) => {
+        if (e.key !== 'Escape' || formSection.classList.contains('hidden') || document.getElementById('adm-confirm-modal')) return
+        requestClose()
+      }
+      document.addEventListener('keydown', onEscape)
 
       // Logout está ahora manejado globalmente por layout.js
 
@@ -643,7 +673,8 @@ export function pageAdminProducts(state) {
         ev.preventDefault()
         setError('')
 
-        const idInput = qs(root, 'input[name="id"]')
+        // Se lee una sola vez, antes de las subidas: si el panel se reabre a medio guardar, el input ya apunta a otro producto.
+        const editingId = qs(root, 'input[name="id"]').value
         // La marca no tiene columna propia: vive al principio del nombre. El
         // formulario la separa para que se escoja de una lista y deje de haber
         // dos grafias de la misma marca, pero se guarda unida como siempre.
@@ -681,7 +712,7 @@ export function pageAdminProducts(state) {
         // en border-current para que herede el blanco del boton primario.
         submitBtn.innerHTML = `
           <span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" aria-hidden="true"></span>
-          <span>${idInput.value ? 'Guardando cambios' : 'Guardando'}</span>
+          <span>${editingId ? 'Guardando cambios' : 'Guardando'}</span>
         `
 
         try {
@@ -692,12 +723,16 @@ export function pageAdminProducts(state) {
               const { publicUrl, error: uploadError } = await uploadProductImage(file)
               if (uploadError) throw new Error('Error al subir imagen: ' + uploadError.message)
               imageUrls.push(publicUrl)
+              // Ya subida: si el guardado falla y reintentan, no se vuelve a subir (cada copia gasta Storage).
+              selectedFiles = selectedFiles.filter(f => f !== file)
+              imageUrlsTextarea.value = imageUrls.join(', ')
+              renderPreviews()
             }
           }
 
           const images = imageUrls.slice(0, 5)
-          if (idInput.value) {
-            const { error } = await updateProduct(idInput.value, { name, description, type, price, originalPrice, stock, badge, sizes, colors, images })
+          if (editingId) {
+            const { error } = await updateProduct(editingId, { name, description, type, price, originalPrice, stock, badge, sizes, colors, images })
             if (error) throw new Error('Error al actualizar: ' + error.message)
             hideForm(false) // Do not reset pagination for updates
           } else {
@@ -835,6 +870,7 @@ export function pageAdminProducts(state) {
 
       return () => {
         unsubscribe()
+        document.removeEventListener('keydown', onEscape)
         document.getElementById('delete-confirm-modal')?.remove()
       }
     },

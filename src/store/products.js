@@ -3,6 +3,7 @@ import { STORAGE_KEYS } from '../utils/config.js'
 import { readJson, writeJson } from '../utils/storage.js'
 import { supabase } from '../core/supabase.js'
 import { ensureAdminAccess } from './auth.js'
+import { changedColumns } from '../utils/changedColumns.js'
 import { withTimeout } from '../utils/async.js'
 import { resizeForUpload } from '../utils/resizeImage.js'
 
@@ -234,7 +235,9 @@ export async function updateProduct(id, updates) {
   const access = await checkAdmin()
   if (!access.ok) return { error: access.error }
 
-  const row = mapProductToRow({ ...getProductById(id), ...updates })
+  // Solo las columnas que llegan en updates: el resto sale del cache local (hasta
+  // una hora viejo) y el switch de publicar pisaba precio y fotos editados desde otro equipo.
+  const row = changedColumns(mapProductToRow({ ...getProductById(id), ...updates }), updates)
 
   const update = (payload) => withTimeout(
     supabase.from('products').update(payload).eq('id', id),

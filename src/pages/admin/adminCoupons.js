@@ -121,7 +121,7 @@ export function pageAdminCoupons() {
                 <button data-close class="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-ink hover:bg-canvas transition-colors">${ICON.close('w-[18px] h-[18px]')}</button>
               </div>
               <form data-form class="px-5 pb-5 space-y-4 overflow-y-auto adm-scroll-thin flex-1">
-                ${isEdit ? `<input type="hidden" name="id" value="${coupon.id}">` : ''}
+                ${isEdit ? `<input type="hidden" name="id" value="${coupon.code}">` : ''}
                 <div>
                   <label class="adm-lbl">Código *</label>
                   <input name="code" type="text" required maxlength="20" value="${isEdit ? coupon.code : ''}" class="adm-fld font-mono uppercase" placeholder="VERANO25" ${isEdit ? 'readonly style="background:#F5F6F8;cursor:not-allowed"' : ''} />

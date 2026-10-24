@@ -84,8 +84,20 @@ export async function updateCategory(id, updates) {
   const access = await ensureAdminAccess()
   if (!access.ok) return { error: access.error }
 
+  const oldName = state.categories.find(c => c.id === id)?.name
   const { error } = await supabase.from('categories').update(updates).eq('id', id)
   if (error) return { error }
+
+  // Los productos guardan la categoria por nombre (type): sin esto, al renombrar se quedaban fuera del catalogo.
+  if (updates.name && oldName && updates.name !== oldName) {
+    const { error: productsError } = await supabase.from('products').update({ type: updates.name }).eq('type', oldName)
+    if (productsError) {
+      // Sin revertir, tras recargar ya no habria forma de volver a mover esos productos.
+      await supabase.from('categories').update({ name: oldName }).eq('id', id)
+      return { error: productsError }
+    }
+    state.products.forEach(p => { if (p.type === oldName) p.type = updates.name })
+  }
 
   const idx = state.categories.findIndex(c => c.id === id)
   if (idx !== -1) {
@@ -118,7 +130,11 @@ export async function reorderCategories(orderedIds) {
 
   for (const u of updates) {
     const { error } = await supabase.from('categories').update({ display_order: u.display_order }).eq('id', u.id)
-    if (error) return { error }
+    if (error) {
+      // A medio camino quedan ordenes repetidos: se relee lo que de verdad quedo guardado.
+      await loadCategoriesFromSupabase()
+      return { error }
+    }
   }
 
   for (const u of updates) {

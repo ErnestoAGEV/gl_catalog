@@ -93,6 +93,14 @@ export const categoryTiles = [
   },
 ]
 
+// Texto del bloque azul (§7). El admin lo puede sobreescribir desde Contenido.
+export const manifesto = {
+  text: 'No llenamos el clóset por llenarlo. Cada temporada elegimos a mano las mejores marcas — la camisa que se pone una y otra vez, los jeans que solo se ven mejor con el tiempo, la fragancia que la gente te pregunta.',
+  tail: 'Marcas seleccionadas, al mejor precio. En Colima desde 1995.',
+  ctaLabel: 'Descubre nuestras marcas →',
+  ctaHref: '/catalog',
+}
+
 export const stats = [
   { number: '31<span class="text-brand">.</span>', caption: 'Años vistiendo a Colima<span class="hidden md:inline"> · desde 1995</span>' },
   // Antes decia "2.4k clientes activos", un numero sin fuente. El de piezas sale del catalogo real.
