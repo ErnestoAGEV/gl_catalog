@@ -40,7 +40,8 @@ export function makeSortable(listEl, onSave) {
 
       let startY = e.pageY // pagina, no pantalla: el auto-scroll no debe despegar la fila del cursor
       let moved = false
-      row.setPointerCapture(e.pointerId)
+      // Sin captura el arrastre sigue: la fila viaja bajo el dedo y recibe los moves igual.
+      try { row.setPointerCapture(e.pointerId) } catch { /* puntero ya liberado */ }
 
       const onMove = (ev) => {
         if (!moved) {
