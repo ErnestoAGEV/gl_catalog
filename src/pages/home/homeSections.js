@@ -131,3 +131,34 @@ export function manifestoHtml(manifesto) {
 }
 
 export const slideCountHtml = (n) => String(n).padStart(2, '0')
+
+// Seccion entera, no solo el contenido: asi index.html solo lleva el marcador.
+export function reviewsHtml(reviews) {
+  const storeOf = (slug) => stores.find(s => s.slug === slug)
+  return `
+      <section class="py-24 lg:py-32 reveal">
+        <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
+          <div class="grid grid-cols-1 md:grid-cols-12 md:items-end gap-8 mb-12">
+            <div class="md:col-span-7">
+              <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 block mb-3">§ 05 — Opiniones</span>
+              <h2 class="font-heading font-[800] text-[clamp(56px,7vw,112px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.98] tracking-[-0.045em]">Lo que dicen<br/>en <span class="text-brand">Google</span>.</h2>
+            </div>
+            <div class="md:col-span-5 flex gap-10 md:justify-end">
+              ${Object.entries(reviews.ratings).map(([slug, r]) => `
+              <a href="${storeOf(slug).mapUrl}" target="_blank" rel="noopener" class="group block">
+                <p class="font-heading font-bold text-[44px] md:text-[56px] leading-none tracking-[-0.04em] tabular-nums">${r.value}<span class="text-brand text-[0.6em] align-top ml-1" aria-hidden="true">★</span></p>
+                <p class="font-mono text-[11px] tracking-[0.14em] uppercase text-ink/60 mt-2 group-hover:text-ink transition-colors">${storeOf(slug).name} · ${r.count} opiniones</p>
+              </a>`).join('')}
+            </div>
+          </div>
+          <ul class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 list-none p-0">
+            ${reviews.items.map((r, i) => `
+            <li class="${i >= 4 ? 'hidden md:flex' : 'flex'} flex-col justify-between gap-6 bg-fog rounded-md p-6 md:p-8">
+              <blockquote class="text-[17px] leading-relaxed text-ink">“${r.text}”</blockquote>
+              <p class="font-mono text-[11px] tracking-[0.14em] uppercase text-ink/60">${r.author} · ${storeOf(r.store).name}</p>
+            </li>`).join('')}
+          </ul>
+          <a href="${stores[0].mapUrl}" target="_blank" rel="noopener" class="ul-link inline-flex items-center min-h-11 mt-6 text-[14px] font-medium text-ink/70 hover:text-ink">Ver todas las opiniones en Google →</a>
+        </div>
+      </section>`
+}

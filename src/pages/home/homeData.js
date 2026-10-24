@@ -113,6 +113,21 @@ export const stats = [
   { number: '02', caption: 'Tiendas en Colima' },
 ]
 
+// Opiniones copiadas a mano de las fichas de Maps el 24-oct-2026; solo se
+// corrigieron mayusculas y comas, y el autor va con inicial. Sin fecha: "hace 4 meses" caduca en una pagina fija. Sin schema, por la
+// misma razon que la valoracion de stats. Para cambiarlas, copiar otras de Maps.
+export const reviews = {
+  ratings: { 'colima-centro': { value: '4.8', count: 84 }, 'villa-de-alvarez': { value: '4.2', count: 12 } },
+  items: [
+    { text: 'Excelente servicio, una gran atención al cliente, super bonita toda la ropa y los perfumes, todo está muy limpio y ordenado, 10/10', author: 'Emily C.', store: 'colima-centro' },
+    { text: 'Varios estilos de ropa, me gusta comprar, soy cliente desde hace 20 años... compraba en su tienda de Sears, del Centro, y ahora de que está en la Villa.', author: 'C. Vizcaíno', store: 'villa-de-alvarez' },
+    { text: 'Ahí compro siempre mis básicos, excelente precio siempre!!', author: 'Nicolás V.', store: 'colima-centro' },
+    { text: 'Una joya escondida. Buena ropa a muy buen precio.', author: 'Luis V.', store: 'villa-de-alvarez' },
+    { text: 'Muy buena experiencia de compra. El lugar es fresco y la atención cálida.', author: 'Josué V.', store: 'colima-centro' },
+    { text: 'Excelente servicio, no busquen en otro lado.', author: 'Francisco V.', store: 'villa-de-alvarez' },
+  ],
+}
+
 // Fuente unica de las dos sucursales. Aparte de la home, la leen las paginas
 // de /sucursales y scripts/prerender.mjs, que genera el JSON-LD de
 // ClothingStore a partir de aqui — antes estaba escrito a mano en index.html

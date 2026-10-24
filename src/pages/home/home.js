@@ -6,9 +6,9 @@ import { navigate } from '../../core/router.js'
 import { bestSellerRow, homeSkeletonCard } from './homeCards.js'
 import { sanitizeEmail } from '../../utils/sanitize.js'
 import { formatMoney } from '../../utils/format.js'
-import { stores } from './homeData.js'
+import { stores, reviews } from './homeData.js'
 import { resolveHomeContent } from './homeContent.js'
-import { region, heroLeftHtml, heroRightHtml, categoriesHtml, statsHtml, manifestoHtml, slideCountHtml } from './homeSections.js'
+import { region, heroLeftHtml, heroRightHtml, categoriesHtml, statsHtml, manifestoHtml, slideCountHtml, reviewsHtml } from './homeSections.js'
 
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const canAutoplay = () => !prefersReducedMotion() && window.matchMedia('(hover: hover) and (pointer: fine)').matches
@@ -242,11 +242,14 @@ export function pageHome() {
         </div>
       </section>
 
-      <!-- §9 — Sucursales -->
+      <!-- §9 — Opiniones de Google -->
+      ${region('reviews', reviewsHtml(reviews))}
+
+      <!-- §10 — Sucursales -->
       <section class="py-24 lg:py-32 reveal scroll-mt-[72px]" id="sucursales">
         <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
           <div class="mb-14">
-            <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 block mb-3">§ 05 — Visítanos</span>
+            <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 block mb-3">§ 06 — Visítanos</span>
             <h2 class="font-heading font-[800] text-[clamp(56px,7vw,112px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.88] tracking-[-0.045em]">Dos puntos<br/>en <span class="text-brand">Colima</span>.</h2>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

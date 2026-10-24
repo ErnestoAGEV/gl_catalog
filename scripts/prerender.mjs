@@ -15,7 +15,8 @@ import { categoryLabel, getSeoForRoute } from '../src/core/routeSeo.js'
 import { infoPages } from '../src/pages/info/infoData.js'
 import { INSTAGRAM_URL, STORE_PHONE, stores, heroSlides as defaultHeroSlides } from '../src/pages/home/homeData.js'
 import { resolveHomeContent } from '../src/pages/home/homeContent.js'
-import { heroLeftHtml, heroRightHtml, categoriesHtml, statsHtml, manifestoHtml, slideCountHtml } from '../src/pages/home/homeSections.js'
+import { heroLeftHtml, heroRightHtml, categoriesHtml, statsHtml, manifestoHtml, slideCountHtml, reviewsHtml } from '../src/pages/home/homeSections.js'
+import { reviews } from '../src/pages/home/homeData.js'
 import {
   colorPhrase,
   productBrand,
@@ -552,6 +553,7 @@ try {
   homeShellContent = put(homeShellContent, 'stats', statsHtml(c.stats, products.length))
   homeShellContent = put(homeShellContent, 'tiles', categoriesHtml(c.categoryTiles, countByType))
   homeShellContent = put(homeShellContent, 'manifesto', manifestoHtml(c.manifesto))
+  homeShellContent = put(homeShellContent, 'reviews', reviewsHtml(reviews))
   if (c.marquee) {
     homeShellContent = homeShellContent.replace(/(<span data-marquee[^>]*>)[\s\S]*?(<\/span>)/g, (_, open, close) => `${open}${c.marquee}&nbsp;&nbsp;${close}`)
   }
