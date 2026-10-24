@@ -697,9 +697,10 @@ function assertOneSelfReference(product, group) {
   return group
 }
 
-/** @id estable del grupo: el nombre no vale como fragmento de URL. */
-const groupId = (name) =>
-  `${BASE_URL}/#grupo-${name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
+/** Clave estable del grupo: Search Console rechaza el nombre crudo como productGroupID. */
+const groupKey = (name) =>
+  name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+const groupId = (name) => `${BASE_URL}/#grupo-${groupKey(name)}`
 
 console.log(
   `[prerender] ${variantGroups.size} grupos de variantes ` +
@@ -796,7 +797,7 @@ for (const product of products) {
         size: product.sizes?.length ? product.sizes : undefined,
         ...(group
           ? {
-              inProductGroupWithID: product.name.trim(),
+              inProductGroupWithID: groupKey(product.name),
               isVariantOf: { '@id': groupId(product.name) },
             }
           : {}),
@@ -822,7 +823,9 @@ for (const product of products) {
               '@type': 'ProductGroup',
               '@id': groupId(product.name),
               name: product.name,
-              productGroupID: product.name.trim(),
+              productGroupID: groupKey(product.name),
+              // Con los colores de todo el grupo, no solo los de esta variante.
+              description: productDescription({ ...product, colors: [...new Set(group.flatMap((v) => v.colors || []))] }),
               category: product.type || undefined,
               brand: { '@type': 'Brand', name: productBrand(product.name) },
               // Solo el color: la base no guarda stock ni precio por talla, asi
