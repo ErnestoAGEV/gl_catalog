@@ -141,14 +141,18 @@ export const stores = [
     headingPlace: 'el <span class="text-brand">Centro</span> de Colima',
     schemaId: 'tienda',
     pageCopy: {
-      lead: 'A media cuadra del Jardín Libertad, en pleno Centro. Si andas haciendo vueltas por el portal, te queda de paso.',
+      // Referencias dadas por el dueno (27-oct-2026). La de "media cuadra del
+      // Jardin Libertad" era falsa: no reintroducirla.
+      lead: 'En pleno Centro, en la esquina de Zaragoza y Álvaro Obregón. Es la más grande de las dos.',
       llegar:
-        'Zaragoza 140, entre el Jardín Libertad y el mercado. Es zona de Centro, así que a media mañana cuesta estacionarse: si vienes en coche, escríbenos antes y te decimos por dónde conviene entrar ese día.',
+        'Zaragoza 140, esquina con Álvaro Obregón, una cuadra arriba de la calle Madero. Queda a un lado del estacionamiento Zaragoza: si vienes en coche, ahí lo dejas.',
       horario:
         'Ojo con el mediodía: esta tienda cierra de 14:00 a 16:30 y vuelve a abrir por la tarde. Los domingos abrimos solo la mañana. Si te queda justo, la de Villa de Álvarez tiene horario corrido.',
+      surtido:
+        'Es la más grande: secciones completas de Wrangler y Lee, la mesa de jeans Oggi y un pasillo entero de camisas de vestir. Además Branigans, Soul&Blues, Sherman Morgan, Oaktree y Bazzoto, pantalones de vestir de gabardina, zapatos Lobo Solo y Verde Tabaco, y perfumes.',
     },
     coords: '19.2424 N · 103.7254 W',
-    address: 'Zaragoza #140, Col. Centro, Colima. A media cuadra del Jardín Libertad.',
+    address: 'Zaragoza #140, esq. Álvaro Obregón, Col. Centro, Colima. A un lado del estacionamiento Zaragoza.',
     hours: ['Lun—Sáb · 10:30—14:00 · 16:30—20:00', 'Dom · 10:30—14:00'],
     mapUrl: 'https://www.google.com/maps/place/G%26L+Colima/@19.2424015,-103.7280069,17z/data=!3m2!4b1!5s0x84255aab867046b3:0x293c46c0e72ef43a!4m6!3m5!1s0x84255aab8670a0bf:0x969da2ab885623e0!8m2!3d19.2424015!4d-103.725432!16s%2Fg%2F11c45qrg02?entry=ttu',
     postal: {
@@ -184,14 +188,16 @@ export const stores = [
     headingPlace: '<span class="text-brand">Villa de Álvarez</span>',
     schemaId: 'tienda-villa',
     pageCopy: {
-      lead: 'Sobre la avenida principal de Villa de Álvarez, con horario corrido. Es la que conviene si andas con prisa o solo puedes pasar a mediodía.',
+      lead: 'Sobre la avenida María Ahumada de Gómez, con horario corrido. Es la que conviene si andas con prisa o solo puedes pasar a mediodía.',
       llegar:
-        'María Ahumada de Gómez 30, local 6, sobre la avenida principal. Se llega directo sin meterse a calles cerradas, y hay dónde dejar el coche cerca.',
+        'María Ahumada de Gómez 30, local 6, a una cuadra del Little Caesars de la misma avenida.',
       horario:
         'Horario corrido de lunes a sábado, de 9:00 a 20:00 sin cerrar a mediodía — es la diferencia con la del Centro, que sí cierra. Los domingos abrimos solo la mañana.',
+      surtido:
+        'El mismo surtido que la del Centro, en menos espacio: Wrangler, Lee, Oggi, Branigans, Soul&Blues, Sherman Morgan, Oaktree y Bazzoto, camisas y pantalones de vestir, zapatos Lobo Solo y Verde Tabaco, perfumes, gorras y mochilas.',
     },
     coords: '19.2713 N · 103.7332 W',
-    address: 'María Ahumada de Gómez #30, Local #6. Sobre la avenida principal.',
+    address: 'María Ahumada de Gómez #30, Local #6, Villa de Álvarez. A una cuadra del Little Caesars.',
     hours: ['Lun—Sáb · 09:00—20:00', 'Dom · 10:30—14:00'],
     mapUrl: 'https://www.google.com/maps/place/G%26L+Villa+de+%C3%81lvarez/@19.271313,-103.770113,17z/data=!3m1!4b1!4m6!3m5!1s0x842545c072adffd5:0xdfee853b24213661!8m2!3d19.2713167!4d-103.7332035!16s%2Fg%2F11h53ml_dy?entry=ttu',
     postal: {

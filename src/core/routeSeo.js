@@ -4,8 +4,8 @@
 import { findProductByPath, productDescription, productPath, productTitle } from '../utils/productCopy.js'
 import { findBrandBySlug } from '../utils/brands.js'
 
-// "Camisas para hombre", no "Camisas en Colima": la ciudad en cada title se leia
-// forzada. Colima vive en la descripcion y en las paginas de sucursal.
+// "Camisas para hombre", no "Camisas en Colima": la tienda vende a todo Mexico
+// (decision del dueno, oct-2026). Colima vive solo en las paginas de sucursal.
 export function categoryLabel(category) {
   const label = category.replace(/,/g, ' y ')
   return /dama/i.test(label) ? label : `${label} para hombre`
@@ -14,8 +14,10 @@ export function categoryLabel(category) {
 export function getSeoForRoute(path, basePath, state) {
   if (basePath === '/') {
     return {
-      title: 'G&L Boutique | Ropa y perfumes para hombre',
-      description: 'Camisas, polos, jeans y perfumes de las mejores marcas. Dos tiendas en Colima desde 1995 y envío a todo México.',
+      // El slogan va primero: es lo que se ve en la pestana. Lo de despues es lo
+      // que le dice a Google (y a quien lee el resultado) que vende.
+      title: 'G&L Boutique | Tu fit perfecto · Ropa de marca para hombre',
+      description: 'Camisas, polos, jeans, zapatos y perfumes de marca para hombre. Envío a todo México, gratis desde $1,499, y atención personal por WhatsApp. Desde 1995.',
       canonicalPath: '/',
       robots: 'index,follow',
     }
@@ -24,7 +26,7 @@ export function getSeoForRoute(path, basePath, state) {
   if (basePath === '/catalog') {
     return {
       title: 'Catálogo de ropa para hombre | G&L',
-      description: 'Explora el catálogo de G&L: camisas, polos, jeans y perfumes para hombre. Compra en línea o por WhatsApp.',
+      description: 'Camisas, polos, jeans, zapatos y perfumes de marca para hombre. Envío a todo México; compra en línea o por WhatsApp.',
       canonicalPath: '/catalog',
       robots: 'index,follow',
     }
@@ -46,7 +48,7 @@ export function getSeoForRoute(path, basePath, state) {
     }
     return {
       title: `${categoryLabel(category)} | G&L`,
-      description: `${categoryLabel(category)} de las mejores marcas, con existencias en nuestras dos tiendas de Colima. Envío a todo México.`,
+      description: `${categoryLabel(category)} de las mejores marcas. Envío a todo México, gratis desde $1,499, y atención por WhatsApp.`,
       canonicalPath: basePath,
       robots: 'index,follow',
     }
@@ -58,8 +60,8 @@ export function getSeoForRoute(path, basePath, state) {
       return {
         title: `${marca.name} para hombre | G&L`,
         description:
-          `${marca.items.length} piezas de ${marca.name} con existencias en nuestras dos tiendas de Colima. ` +
-          `Precios, tallas y compra por WhatsApp.`,
+          `${marca.items.length} piezas de ${marca.name} para hombre. ` +
+          `Precios, tallas y envío a todo México; compra en línea o por WhatsApp.`,
         canonicalPath: basePath,
         robots: 'index,follow',
       }
@@ -96,20 +98,20 @@ export function getSeoForRoute(path, basePath, state) {
 
   const infoSeo = {
     '/sucursales': {
-      title: 'Sucursales en Colima y Villa de Álvarez | G&L',
-      description: 'Las dos tiendas físicas de G&L: Colima Centro y Villa de Álvarez. Direcciones, horarios y cómo llegar.',
+      title: 'Tiendas de ropa para hombre en Colima y Villa de Álvarez | G&L',
+      description: 'Visítanos en el Centro de Colima o en Villa de Álvarez: el mismo surtido en las dos. Direcciones, horarios y cómo llegar.',
     },
     '/sucursales/colima-centro': {
-      title: 'Tienda de ropa para hombre en Colima Centro | G&L',
-      description: 'G&L Colima Centro, Zaragoza 140 a media cuadra del Jardín Libertad. Camisas, polos, jeans y perfumes. Horarios y cómo llegar.',
+      title: 'Tienda de ropa para hombre en el Centro de Colima | G&L',
+      description: 'Zaragoza 140 esquina con Álvaro Obregón, junto al estacionamiento Zaragoza. Wrangler, Lee, Oggi, Branigans, zapatos y perfumes. Horario y cómo llegar.',
     },
     '/sucursales/villa-de-alvarez': {
       title: 'Tienda de ropa para hombre en Villa de Álvarez | G&L',
-      description: 'G&L Villa de Álvarez, María Ahumada de Gómez 30 Local 6. Moda masculina, catálogo completo y atención por WhatsApp.',
+      description: 'María Ahumada de Gómez 30, local 6, con horario corrido de 9:00 a 20:00. Wrangler, Lee, Oggi, Branigans, zapatos y perfumes para hombre.',
     },
     '/nosotros': {
-      title: 'Nosotros | Boutique de moda masculina desde 1995 | G&L',
-      description: 'G&L viste a los hombres colimenses desde 1995. Dos tiendas físicas, marcas escogidas a mano y atención por WhatsApp.',
+      title: 'Nosotros | Boutique de ropa para hombre desde 1995 | G&L',
+      description: 'G&L viste hombres desde 1995. Empezamos en Colima y hoy enviamos a todo México: marcas escogidas a mano y atención personal por WhatsApp.',
     },
     '/envios': {
       title: 'Envíos y formas de pago | G&L',

@@ -90,7 +90,7 @@ export function pageHome() {
         <div class="flex items-center gap-4 mb-5 md:mb-8">
           <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60">Vol.03 — O/I '26</span>
           <span class="h-px flex-1 bg-ink/15"></span>
-          <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60">Colima · Mx</span>
+          <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60">Envíos a todo México</span>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-8 lg:gap-6">
@@ -250,7 +250,7 @@ export function pageHome() {
         <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
           <div class="mb-14">
             <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 block mb-3">§ 06 — Visítanos</span>
-            <h2 class="font-heading font-[800] text-[clamp(56px,7vw,112px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.88] tracking-[-0.045em]">Dos puntos<br/>en <span class="text-brand">Colima</span>.</h2>
+            <h2 class="font-heading font-[800] text-[clamp(56px,7vw,112px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.88] tracking-[-0.045em]">Y si andas<br/>por <span class="text-brand">Colima</span>.</h2>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             ${storesHtml}

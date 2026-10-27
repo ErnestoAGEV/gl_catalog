@@ -35,7 +35,9 @@ const storePages = Object.fromEntries(
         },
         {
           h: 'Qué encuentras aquí',
-          body: 'El mismo catálogo que ves en línea: camisas, polos, playeras, pantalones, shorts, zapatos y perfumes. Y alguien que conoce el inventario de memoria y te dice cómo viene cada marca de talla. Si buscas algo puntual, mándanos mensaje antes de venir y te confirmamos si lo tenemos en la tuya.',
+          // Propio de cada tienda: el mismo parrafo en las dos paginas era
+          // contenido duplicado.
+          body: `${store.pageCopy.surtido} Si buscas algo puntual, mándanos mensaje antes de venir y te confirmamos si está en tu talla.`,
         },
       ],
       store: store.slug,
@@ -48,7 +50,7 @@ export const infoPages = {
   '/sucursales': {
     eyebrow: 'Sucursales',
     heading: 'Dos tiendas<br/>en <span class="text-brand">Colima</span>.',
-    lead: 'Una en el Centro y otra en Villa de Álvarez. En las dos está el catálogo completo y alguien que conoce el inventario de memoria.',
+    lead: 'Una en el Centro de Colima, en la esquina de Zaragoza y Álvaro Obregón, y otra en Villa de Álvarez con horario corrido. El surtido es el mismo en las dos; la del Centro es más grande.',
     sections: [
       {
         h: 'Antes de venir',
@@ -66,21 +68,21 @@ export const infoPages = {
   ...storePages,
 
   '/nosotros': {
-    eyebrow: 'Desde 1995 · Colima',
-    heading: 'Vistiendo a los<br/>hombres <span class="text-brand">colimenses</span>.',
+    eyebrow: 'Nosotros',
+    heading: 'Desde 1995<br/>vistiendo <span class="text-brand">hombres</span>.',
     lead: 'Treinta años detrás del mostrador dan para conocer a la gente. Sabemos qué camisa aguanta el calor de mayo, qué jean se ve bien el viernes y también el lunes, y qué busca cada cliente que cruza la puerta.',
     sections: [
       {
         h: 'Lo que hacemos',
-        body: 'G&L es una boutique de moda masculina en Colima. No inventamos ropa: la escogemos. Cada temporada revisamos marca por marca y nos quedamos con lo que de verdad aguanta — telas que no se deforman al tercer lavado, cortes que le quedan a un hombre real y precios que no insultan a nadie.',
+        body: 'G&L es una boutique de ropa para hombre que nació en Colima. No inventamos ropa: la escogemos. Cada temporada revisamos marca por marca y nos quedamos con lo que de verdad aguanta — telas que no se deforman al tercer lavado, cortes que le quedan a un hombre real y precios que no insultan a nadie.',
       },
       {
         h: 'Dos tiendas, la misma gente',
-        body: 'Una en el Centro, a media cuadra del Jardín Libertad. Otra en Villa de Álvarez, sobre la avenida principal. En las dos te atiende alguien que conoce el inventario de memoria y te orienta con la talla: cómo viene cada marca, si encoge, si conviene subir o bajar. La idea es que te lleves la correcta a la primera.',
+        body: 'Una en el Centro de Colima, en la esquina de Zaragoza y Álvaro Obregón. Otra en Villa de Álvarez, sobre la avenida María Ahumada de Gómez. El surtido es el mismo; la del Centro es más grande. En las dos te atiende alguien que conoce el inventario de memoria y te orienta con la talla: cómo viene cada marca, si encoge, si conviene subir o bajar. La idea es que te lleves la correcta a la primera.',
       },
       {
         h: 'Y por WhatsApp, igual',
-        body: 'La tienda en línea es una extensión del mostrador, no un reemplazo. Escoges aquí, cierras por WhatsApp y platicas con una persona. Si tienes duda de la talla, pregunta antes de comprar: para eso estamos.',
+        body: 'La tienda en línea es una extensión del mostrador, no un reemplazo. Escoges aquí, cierras por WhatsApp y platicas con una persona. Si tienes duda de la talla, pregunta antes de comprar: para eso estamos. Y si no estás en Colima, te lo mandamos a cualquier parte de México.',
       },
     ],
     cta: { label: 'Ver el catálogo', href: '/catalog' },

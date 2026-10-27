@@ -47,7 +47,7 @@ export function applySeo({
   if (title) document.title = title
 
   const canonicalUrl = new URL(canonicalPath || '/', BASE_URL).toString()
-  const safeDescription = description || 'Moda masculina premium en Colima. Compra camisas, polos, jeans y perfumes en G&L.'
+  const safeDescription = description || 'Ropa de marca para hombre con envío a todo México. Camisas, polos, jeans, zapatos y perfumes en G&L.'
 
   setMetaByName('description', safeDescription)
   setMetaByName('robots', robots)
@@ -55,12 +55,12 @@ export function applySeo({
 
   setMetaByProperty('og:type', 'website')
   setMetaByProperty('og:url', canonicalUrl)
-  setMetaByProperty('og:title', title || 'G&L | Tu fit perfecto')
+  setMetaByProperty('og:title', title || 'G&L Boutique | Tu fit perfecto')
   setMetaByProperty('og:description', safeDescription)
   setMetaByProperty('og:image', image)
 
   setMetaByName('twitter:card', 'summary_large_image')
-  setMetaByName('twitter:title', title || 'G&L | Tu fit perfecto')
+  setMetaByName('twitter:title', title || 'G&L Boutique | Tu fit perfecto')
   setMetaByName('twitter:description', safeDescription)
   setMetaByName('twitter:image', image)
 }

@@ -453,7 +453,7 @@ function storeLd(store) {
     '@type': 'ClothingStore',
     '@id': `${BASE_URL}/#${store.schemaId}`,
     name: store.fullName,
-    description: 'Moda masculina premium en Colima. Camisas, polos, jeans y perfumes.',
+    description: `Tienda de ropa para hombre de G&L en ${store.postal.addressLocality}: camisas, polos, jeans, zapatos y perfumes de marca.`,
     url: absolute(`/sucursales/${store.slug}`),
     logo: `${BASE_URL}/icon-512.png?v=2`,
     // Fotos del local antes que el icono: es lo que Google muestra y lo que
@@ -579,7 +579,7 @@ routes.push({
   shell: contentShell(`
             ${breadcrumbNav([{ name: 'Inicio', path: '/' }, { name: 'Tienda', path: '/catalog' }])}
             <h1 class="font-heading font-[800] text-[clamp(40px,7vw,88px)] leading-[0.9] tracking-[-0.03em] mb-6">Tienda</h1>
-            <p class="text-[17px] text-ink/70 max-w-[560px] leading-relaxed mb-10">${products.length} piezas de moda masculina en Colima: camisas, polos, jeans, playeras y perfumes.</p>
+            <p class="text-[17px] text-ink/70 max-w-[560px] leading-relaxed mb-10">${products.length} piezas de ropa de marca para hombre: camisas, polos, jeans, playeras, zapatos y perfumes. Envío a todo México.</p>
             <ul class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
               ${categories.map((c) => `<li><a class="ul-link text-[15px] font-medium" href="/categoria/${encodeURIComponent(c)}">${escapeHtml(c)}</a></li>`).join('\n              ')}
             </ul>
@@ -973,8 +973,9 @@ const brandLd = jsonLd({
   },
   image: `${BASE_URL}/icon-512.png?v=2`,
   description:
-    'Boutique de moda masculina en Colima desde 1995. Camisas, polos, jeans, ' +
-    'playeras, shorts y perfumes, con dos tiendas fisicas y venta por WhatsApp.',
+    'Boutique de ropa para hombre desde 1995. Camisas, polos, jeans, playeras, ' +
+    'shorts, zapatos y perfumes de marca, con envio a todo Mexico, venta por WhatsApp ' +
+    'y dos tiendas fisicas en Colima.',
   foundingDate: '1995',
   telephone: STORE_PHONE,
   areaServed: { '@type': 'Country', name: 'MX' },
@@ -1061,8 +1062,8 @@ writeFileSync(
 writeFileSync(
   join(DIST, 'spa.html'),
   buildHead({
-    title: 'G&L | Tu fit perfecto',
-    description: 'Moda masculina premium en Colima. Camisas, polos, jeans y perfumes en G&L.',
+    title: 'G&L Boutique | Tu fit perfecto',
+    description: 'Ropa de marca para hombre con envío a todo México. Camisas, polos, jeans, zapatos y perfumes en G&L.',
     robots: 'noindex,follow',
     canonical: null,
     image: DEFAULT_IMAGE,
@@ -1131,10 +1132,11 @@ ${urls
 // Se genera, no se escribe a mano: las categorias salen de la base y ya
 // pasaron de 7 a 8 solas. Un archivo fijo se queda viejo sin que nadie lo note.
 
-const llms = `# G&L — Boutique de moda masculina en Colima, México
+const llms = `# G&L — Boutique de ropa para hombre, desde 1995
 
-> Tienda de ropa para hombre con dos sucursales físicas en Colima (Centro y
-> Villa de Álvarez) y venta en línea que se cierra por WhatsApp. Desde 1995.
+> Tienda de ropa de marca para hombre con envío a todo México, venta en línea
+> que se cierra por WhatsApp y dos sucursales físicas en Colima (Centro y
+> Villa de Álvarez). Desde 1995.
 > ${products.length} prendas publicadas: ${categories.join(', ')}.
 
 ## Páginas principales

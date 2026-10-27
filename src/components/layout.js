@@ -191,7 +191,7 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
         <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
           <div class="md:col-span-6">
             <p class="font-mono text-[12px] tracking-[0.24em] uppercase opacity-60 mb-4">Tu fit, perfecto. Desde 1995.</p>
-            <p class="text-[15px] text-paper/70 max-w-md leading-relaxed">Boutique de moda masculina en Colima, México. Las mejores marcas, elegidas a mano, al mejor precio. Envío a todo el país y atención por WhatsApp.</p>
+            <p class="text-[15px] text-paper/70 max-w-md leading-relaxed">Boutique de ropa para hombre desde 1995. Las mejores marcas, elegidas a mano, al mejor precio. Envío a todo México, atención por WhatsApp y dos tiendas en Colima.</p>
           </div>
           <div class="md:col-span-2">
             <h4 class="font-mono text-[11px] tracking-[0.24em] uppercase opacity-60 mb-4">Tienda</h4>
