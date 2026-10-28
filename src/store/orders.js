@@ -7,7 +7,7 @@ import { ensureAdminAccess } from './auth.js'
  * `products` y revalida el cupon antes de insertar. Aca solo se dice QUE se
  * quiere comprar. Ver supabase/place-order.sql
  */
-export async function saveOrder({ name, whatsapp, paymentMethod, deliveryMethod, address, items, couponCode }) {
+export async function saveOrder({ name, whatsapp, email, paymentMethod, deliveryMethod, address, items, couponCode }) {
   if (!supabase) return { error: 'No hay conexión a la base de datos' }
   const { error } = await supabase.rpc('place_order', {
     p_customer_name: name,
@@ -17,6 +17,7 @@ export async function saveOrder({ name, whatsapp, paymentMethod, deliveryMethod,
     p_address: address || null,
     p_items: items,
     p_coupon_code: couponCode || null,
+    p_customer_email: email || null,
   })
   return { error }
 }
@@ -40,14 +41,23 @@ export async function getAdminOrders() {
   }
 }
 
-export async function updateAdminOrderStatus(orderId, newStatus) {
+export function updateAdminOrderStatus(orderId, newStatus) {
+  return updateAdminOrder(orderId, { status: newStatus })
+}
+
+/** Costo de envio que se cobro aparte; null lo borra */
+export function updateAdminOrderShipping(orderId, shippingCost) {
+  return updateAdminOrder(orderId, { shipping_cost: shippingCost })
+}
+
+async function updateAdminOrder(orderId, fields) {
   const access = await ensureAdminAccess()
   if (!access.ok) return { error: access.error.message }
 
   try {
     const { data, error } = await supabase
       .from('orders')
-      .update({ status: newStatus })
+      .update(fields)
       .eq('id', orderId)
       .select()
       .single()
@@ -55,7 +65,7 @@ export async function updateAdminOrderStatus(orderId, newStatus) {
     if (error) throw error
     return { data, error: null }
   } catch (err) {
-    if (import.meta.env.DEV) console.error('Error updating order status:', err)
+    if (import.meta.env.DEV) console.error('Error updating order:', err)
     return { error: err.message }
   }
 }

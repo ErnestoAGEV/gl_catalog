@@ -1,4 +1,4 @@
-import { getAdminOrders, updateAdminOrderStatus, getProductById, getState } from '../../store/index.js'
+import { getAdminOrders, updateAdminOrderStatus, updateAdminOrderShipping, getProductById, getState } from '../../store/index.js'
 import { splitGalleryImages } from '../../utils/productImages.js'
 import { isPerfumeCategory } from './adminProductsData.js'
 import { formatMoney } from '../../utils/format.js'
@@ -59,6 +59,81 @@ function itemThumb(item) {
   if (!gallery.length) return ''
   const fit = isPerfumeCategory(product?.type) ? 'object-contain bg-white p-0.5' : 'object-cover'
   return `<img src="${esc(gallery[0])}" alt="" loading="lazy" class="w-full h-full ${fit}" />`
+}
+
+// Hoja de pedido para imprimir. Se abre en una ventana aparte, asi que todo va
+// en linea (estilos y la URL absoluta del logo) y se imprime al cargar el logo.
+function printOrderHtml(d) {
+  const shipping = d.shipping == null ? null : Number(d.shipping) || 0
+  const toPay = (Number(d.total) || 0) + (shipping || 0)
+  const rows = (d.items || []).map(i => {
+    const variant = [i.size ? `Talla ${esc(i.size)}` : '', i.color ? esc(i.color) : ''].filter(Boolean).join(' · ') || 'Única'
+    const qty = Number(i.qty) || 0
+    return `<tr><td class="q">${qty}</td><td><b>${esc(i.name) || 'Producto'}</b><span>${variant}</span></td><td class="n">${formatMoney(i.price || 0)}</td><td class="n">${formatMoney((Number(i.price) || 0) * qty)}</td></tr>`
+  }).join('')
+  const row = (label, value, cls = '') => `<div class="t ${cls}"><span>${label}</span><span>${value}</span></div>`
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Orden #${esc(d.shortId)}</title><style>
+    @page{size:letter;margin:14mm}
+    *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body{margin:0;font-family:"Helvetica Neue",Arial,sans-serif;color:#15171C;font-size:13px;line-height:1.45}
+    .sheet{max-width:760px;margin:0 auto;padding:8px}
+    header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:16px;border-bottom:3px solid #214FC7}
+    header img{height:54px;display:block}
+    header .shop{font-size:11px;color:#767B86;margin-top:6px}
+    header .id{text-align:right}
+    header .id small{display:block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#767B86}
+    header .id strong{display:block;font-size:24px;letter-spacing:-.02em}
+    header .id em{font-style:normal;font-size:12px;color:#2B2E36}
+    .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}
+    .card{border:1px solid #E9EAEE;border-radius:12px;padding:12px 14px}
+    .card h3{margin:0 0 6px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#214FC7}
+    .card p{margin:2px 0}
+    .card .big{font-size:15px;font-weight:700}
+    .pill{display:inline-block;margin-top:6px;background:#EAEFFB;color:#1A3E9E;border-radius:99px;padding:2px 10px;font-size:11px;font-weight:700}
+    table{width:100%;border-collapse:collapse}
+    thead th{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#767B86;text-align:left;padding:8px 10px;border-bottom:1px solid #DCDEE4}
+    tbody td{padding:10px;border-bottom:1px solid #E9EAEE;vertical-align:top}
+    tbody td span{display:block;font-size:11.5px;color:#767B86}
+    .q{width:42px;font-weight:700;text-align:center}
+    .n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+    thead th.n{text-align:right}
+    .totals{margin:16px 0 0 auto;width:280px}
+    .t{display:flex;justify-content:space-between;padding:5px 0;font-variant-numeric:tabular-nums}
+    .t.muted{color:#767B86}
+    .t.disc{color:#1E9E6A}
+    .t.grand{margin-top:6px;padding:10px 14px;background:#214FC7;color:#fff;border-radius:10px;font-size:16px;font-weight:800}
+    footer{margin-top:28px;padding-top:12px;border-top:1px solid #E9EAEE;text-align:center;font-size:11px;color:#767B86}
+  </style></head><body><div class="sheet">
+    <header>
+      <div><img src="${location.origin}/email-logo.png" alt="G&amp;L"><div class="shop">glboutique.com.mx</div></div>
+      <div class="id"><small>Pedido</small><strong>#${esc(d.shortId)}</strong><em>${esc(d.when) || 'Sin fecha'}</em></div>
+    </header>
+    <div class="cards">
+      <div class="card"><h3>Cliente</h3>
+        <p class="big">${esc(d.customerName) || 'Sin nombre'}</p>
+        <p>WhatsApp: ${esc(d.customerWhatsapp) || 'Sin teléfono'}</p>
+        ${d.customerEmail ? `<p>Correo: ${esc(d.customerEmail)}</p>` : ''}
+        <span class="pill">${esc(d.paymentLabel) || 'Pago sin definir'}</span>
+      </div>
+      <div class="card"><h3>Entrega</h3>
+        <p class="big">${esc(d.deliveryMethod) || 'Sin método'}</p>
+        <p>${esc(d.address) || 'Recoge en tienda'}</p>
+      </div>
+    </div>
+    <table><thead><tr><th class="q">Cant.</th><th>Producto</th><th class="n">Precio</th><th class="n">Importe</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="4">Sin productos</td></tr>'}</tbody></table>
+    <div class="totals">
+      ${row('Subtotal', formatMoney(d.subtotal || 0), 'muted')}
+      ${Number(d.discount) > 0 ? row(`Descuento${d.couponCode ? ` (${esc(d.couponCode)})` : ''}`, `−${formatMoney(d.discount)}`, 'disc') : ''}
+      ${shipping != null ? row('Envío', shipping > 0 ? formatMoney(shipping) : 'Gratis', 'muted') : ''}
+      ${row('Total', formatMoney(toPay), 'grand')}
+    </div>
+    <footer>Gracias por tu compra en G&amp;L · Dudas o cambios por WhatsApp</footer>
+  </div><script>
+    var img = document.images[0];
+    function go(){ window.focus(); window.print() }
+    if (img.complete) go(); else { img.onload = go; img.onerror = go }
+  </script></body></html>`
 }
 
 function initials(name) {
@@ -238,9 +313,8 @@ export function pageAdminOrders(state) {
             let data; try { data = JSON.parse(decodeURIComponent(btn.getAttribute('data-print') || '')) } catch { showToast('Error al preparar impresión', 'error'); return }
             const pw = window.open('', '_blank', 'width=900,height=700')
             if (!pw) { showToast('Ventana bloqueada', 'error'); return }
-            const itemsH = (data.items || []).map(i => `<tr><td>${esc(i.name)||'Producto'}</td><td>${esc(i.size)||'Única'}</td><td>${Number(i.qty)||0}</td><td>${formatMoney(i.price||0)}</td></tr>`).join('')
-            pw.document.write(`<html><head><title>Orden #${(data.id||'').toString().slice(0,8)}</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111827}h1{margin:0 0 8px}.meta{margin:4px 0;color:#374151}table{width:100%;border-collapse:collapse;margin-top:16px}th,td{border:1px solid #e5e7eb;padding:8px;text-align:left;font-size:14px}th{background:#f9fafb}</style></head><body><h1>Detalle de orden</h1><p class="meta"><strong>Pedido:</strong> #${(data.id||'').toString().slice(0,8)}</p><p class="meta"><strong>Cliente:</strong> ${esc(data.customerName)||'Sin nombre'}</p><p class="meta"><strong>WhatsApp:</strong> ${esc(data.customerWhatsapp)||'Sin teléfono'}</p><p class="meta"><strong>Fecha:</strong> ${esc(data.when)||'Sin fecha'}</p><p class="meta"><strong>Entrega:</strong> ${esc(data.deliveryMethod)||'Sin método'}</p><p class="meta"><strong>Dirección:</strong> ${esc(data.address)||'Sin dirección'}</p><p class="meta"><strong>Pago:</strong> ${esc(data.paymentLabel)||'Sin definir'}</p><p class="meta"><strong>Total:</strong> ${formatMoney(data.total||0)}</p><table><thead><tr><th>Producto</th><th>Talla</th><th>Cantidad</th><th>Precio</th></tr></thead><tbody>${itemsH||'<tr><td colspan="4">Sin productos</td></tr>'}</tbody></table></body></html>`)
-            pw.document.close(); pw.focus(); pw.print()
+            pw.document.write(printOrderHtml(data))
+            pw.document.close()
           }
         })
         return drawer
@@ -256,11 +330,15 @@ export function pageAdminOrders(state) {
         const payment = getPaymentMeta(order.payment_method)
         const createdAt = new Date(order.created_at)
         const when = Number.isNaN(createdAt.getTime()) ? 'Sin fecha' : `${createdAt.toLocaleDateString()} ${createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-        const printPayload = encodeURIComponent(JSON.stringify({ id: order.id, customerName: order.customer_name, customerWhatsapp: order.customer_whatsapp, when, deliveryMethod: order.delivery_method, address: order.address, paymentLabel: payment.label, total: Number(order.total) || 0, items }))
-        // not-html: se copia al portapapeles como texto plano
-        const summaryLines = [`Pedido #${String(order.id).slice(0,8)}`, `Cliente: ${order.customer_name||'Sin nombre'}`, `WhatsApp: ${order.customer_whatsapp||'Sin teléfono'}`, `Fecha: ${when}`, `Entrega: ${order.delivery_method||'Sin método'}`, `Dirección: ${order.address||'Sin dirección'}`, `Pago: ${payment.label}`, 'Productos:', ...(items.length ? items.map(i => `- ${i?.qty||0}x ${i?.name||'Producto'} (${i?.size||'Única'}) · ${formatMoney(i?.price||0)}`) : ['- Sin productos']), `Total: ${formatMoney(order.total||0)}`]
-
         const itemsTotal = items.reduce((a, it) => a + (Number(it?.price) || 0) * (Number(it?.qty) || 0), 0)
+        const subtotal = order.subtotal != null ? Number(order.subtotal) : itemsTotal
+        const discount = Number(order.discount) || 0
+        const shipping = order.shipping_cost == null ? null : Number(order.shipping_cost)
+        const toPay = (Number(order.total) || 0) + (shipping || 0)
+        const printPayload = encodeURIComponent(JSON.stringify({ shortId: String(order.id).slice(0, 8), customerName: order.customer_name, customerWhatsapp: order.customer_whatsapp, customerEmail: order.customer_email, when, deliveryMethod: order.delivery_method, address: order.address, paymentLabel: payment.label, subtotal, discount, couponCode: order.coupon_code, shipping, total: Number(order.total) || 0, items }))
+        // not-html: se copia al portapapeles como texto plano
+        const summaryLines = [`Pedido #${String(order.id).slice(0,8)}`, `Cliente: ${order.customer_name||'Sin nombre'}`, `WhatsApp: ${order.customer_whatsapp||'Sin teléfono'}`, ...(order.customer_email ? [`Correo: ${order.customer_email}`] : []), `Fecha: ${when}`, `Entrega: ${order.delivery_method||'Sin método'}`, `Dirección: ${order.address||'Sin dirección'}`, `Pago: ${payment.label}`, 'Productos:', ...(items.length ? items.map(i => `- ${i?.qty||0}x ${i?.name||'Producto'} (${i?.size||'Única'}) · ${formatMoney(i?.price||0)}`) : ['- Sin productos']), ...(shipping != null ? [`Envío: ${formatMoney(shipping)}`] : []), `Total: ${formatMoney(toPay)}`]
+
         const deliveryIcon = (order.delivery_method || '').includes('domicilio') ? 'truck' : 'store'
         const deliveryLabel = (order.delivery_method || '').includes('domicilio') ? 'Domicilio' : 'En tienda'
 
@@ -281,6 +359,7 @@ export function pageAdminOrders(state) {
                 <div class="min-w-0">
                   <p class="font-semibold text-ink text-[15px] truncate">${esc(order.customer_name)||'Sin nombre'}</p>
                   <p class="text-[13px] text-brand tnum">${esc(order.customer_whatsapp)||'Sin teléfono'}</p>
+                  ${order.customer_email ? `<p class="text-[12.5px] text-muted truncate">${esc(order.customer_email)}</p>` : ''}
                 </div>
               </div>
             </div>
@@ -331,15 +410,49 @@ export function pageAdminOrders(state) {
               </div>
             </div>
 
+            <!-- Envío: lo captura el admin cuando ya sabe cuánto costó -->
+            <form data-shipping-form class="bg-paper rounded-xl2 border border-line p-4">
+              <label for="order-shipping" class="eyebrow text-faint mb-1.5 block">Costo de envío</label>
+              <div class="flex gap-2">
+                <div class="relative flex-1">
+                  <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-faint text-[14px]">$</span>
+                  <input id="order-shipping" name="shipping" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" value="${shipping != null ? shipping : ''}" class="adm-fld pl-7 tnum" />
+                </div>
+                <button type="submit" class="adm-btn adm-btn-ink h-10 px-4 text-[13px]">Guardar</button>
+              </div>
+              <p class="text-[11.5px] text-faint mt-1.5">Vacío = sin envío. Se suma al total de la hoja impresa.</p>
+            </form>
+
             <!-- Total -->
             <div class="bg-paper rounded-xl2 border border-line px-4 py-3">
-              <div class="flex items-center justify-between text-[13px] text-muted mb-1"><span>Subtotal</span><span class="tnum">${formatMoney(itemsTotal)}</span></div>
-              <div class="flex items-center justify-between"><span class="font-display font-bold text-ink text-[16px]">Total</span><span class="font-display font-extrabold text-ink text-[20px] tnum">${formatMoney(order.total||0)}</span></div>
+              <div class="flex items-center justify-between text-[13px] text-muted mb-1"><span>Subtotal</span><span class="tnum">${formatMoney(subtotal)}</span></div>
+              ${discount > 0 ? `<div class="flex items-center justify-between text-[13px] text-ok mb-1"><span>Descuento${order.coupon_code ? ` (${esc(order.coupon_code)})` : ''}</span><span class="tnum">−${formatMoney(discount)}</span></div>` : ''}
+              ${shipping != null ? `<div class="flex items-center justify-between text-[13px] text-muted mb-1"><span>Envío</span><span class="tnum">${shipping > 0 ? formatMoney(shipping) : 'Gratis'}</span></div>` : ''}
+              <div class="flex items-center justify-between"><span class="font-display font-bold text-ink text-[16px]">Total</span><span class="font-display font-extrabold text-ink text-[20px] tnum">${formatMoney(toPay)}</span></div>
             </div>
           </div>`
 
-        drawer.classList.remove('hidden')
-        lockScroll()
+        content.querySelector('[data-shipping-form]')?.addEventListener('submit', async (e) => {
+          e.preventDefault()
+          const form = e.currentTarget
+          const raw = form.shipping.value.trim()
+          const value = raw === '' ? null : Math.round(Number(raw) * 100) / 100
+          if (value != null && !(value >= 0 && value < 100000)) { showToast('Escribe un costo de envío válido', 'error'); return }
+          const btn = form.querySelector('button[type="submit"]')
+          btn.disabled = true
+          const { error } = await updateAdminOrderShipping(order.id, value)
+          btn.disabled = false
+          if (error) { showToast('No se pudo guardar el envío', 'error'); return }
+          order.shipping_cost = value
+          showToast('Envío guardado', 'success')
+          openOrderDetails(order.id)   // repinta totales y la hoja de impresión
+        })
+
+        // Al repintar (guardar envío) el drawer ya está abierto: no se bloquea dos veces
+        if (drawer.classList.contains('hidden')) {
+          drawer.classList.remove('hidden')
+          lockScroll()
+        }
       }
 
       // ── KPI Update ──

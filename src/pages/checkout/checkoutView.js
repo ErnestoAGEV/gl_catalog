@@ -178,6 +178,7 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
                 </div>
               </div>
               <div class="grid grid-cols-1 md:grid-cols-12 gap-x-6">
+                ${fieldHTML({ name: 'email', label: 'Correo (para el aviso de env&iacute;o)', span: 'md:col-span-12', placeholder: 'tucorreo@gmail.com', autocomplete: 'email', attrs: 'type="email" inputmode="email"' })}
                 ${fieldHTML({ name: 'street', label: 'Calle', span: 'md:col-span-8', placeholder: 'Av. Constituci&oacute;n', autocomplete: 'address-line1' })}
                 ${fieldHTML({ name: 'numExt', label: 'N&uacute;m. ext.', span: 'md:col-span-2', placeholder: '140' })}
                 ${fieldHTML({ name: 'numInt', label: 'N&uacute;m. int.', span: 'md:col-span-2', placeholder: '&mdash;', autocomplete: 'address-line2' })}

@@ -482,6 +482,10 @@ export function pageCatalog(initialState) {
         // el grid se oculta, y un elemento sin display mide cero.
         const anchor = grid?.closest('section')
         if (!toolbar || !anchor || restoringState) return
+        // Con el panel de filtros abierto el body esta fijo (lockScroll) y
+        // window.scrollY vale 0: scrollTo no hace nada y al cerrar se volvia a
+        // la posicion vieja. Se deja pendiente y se hace al cerrar el panel.
+        if (document.body.style.position === 'fixed') { scrollAfterSheet = true; return }
         // El toolbar es sticky: su rect miente en cuanto se pega. La referencia
         // fiable es la seccion de resultados, que no lo es.
         const stickyOffset = window.matchMedia('(min-width: 768px)').matches ? (headerEl?.offsetHeight || 68) : 0
@@ -493,6 +497,7 @@ export function pageCatalog(initialState) {
 
       // Declarado aqui, arriba de renderGrid, porque scrollToResults lo lee.
       let restoringState = Boolean(savedCatalogState)
+      let scrollAfterSheet = false
 
       const pickerInner = {
         size: (v) => escapeHtml(v),
@@ -842,6 +847,7 @@ export function pageCatalog(initialState) {
         unlockScroll()
         if (sheetTrigger?.isConnected) sheetTrigger.focus({ preventScroll: true })
         sheetTrigger = null
+        if (scrollAfterSheet) { scrollAfterSheet = false; scrollToResults() }
       }
       // Al salir de la ruta con el panel abierto, la vista queda en cache: se
       // cierra sin desbloquear (el router ya lo hizo) ni mover el foco a algo oculto
@@ -851,6 +857,7 @@ export function pageCatalog(initialState) {
         mobilePanel.inert = true
         sheetBackdrop?.classList.remove('open', 'force-show')
         sheetTrigger = null
+        scrollAfterSheet = false
       })
       mobilePanel?.addEventListener('keydown', (e) => {
         // En escritorio el panel es una columna mas: Tab tiene que poder salir

@@ -15,6 +15,16 @@ begin;
 alter table public.coupons add column if not exists first_purchase_only boolean not null default false;
 update public.coupons set first_purchase_only = true where code = 'WELCOME10';
 
+-- Correo del cliente (se pide en envio a domicilio) y costo de envio que el
+-- admin captura despues en el pedido. El total sigue siendo solo productos.
+alter table public.orders add column if not exists customer_email text;
+alter table public.orders add column if not exists shipping_cost numeric;
+
+-- La firma cambio (p_customer_email): la vieja se borra para que no queden
+-- dos versiones y PostgREST no sepa cual llamar.
+drop function if exists public.place_order(text, text, text, text, text, jsonb, text);
+drop function if exists public.coupon_first_purchase_ok(text, text);
+
 -- Clave para comparar telefonos: solo digitos, sin el 00 internacional, y los
 -- de Mexico sin 52 / 521 / 044 / 045, para que "+52 1 312...", "00 52 312...",
 -- "044 312..." y "312..." cuenten como el mismo numero.
@@ -40,7 +50,8 @@ create or replace function public.place_order(
   p_delivery_method   text,
   p_address           text,
   p_items             jsonb,          -- [{ "productId": ..., "size": ..., "color": ..., "qty": 1 }]
-  p_coupon_code       text default null
+  p_coupon_code       text default null,
+  p_customer_email    text default null
 )
 returns public.orders
 language plpgsql
@@ -62,6 +73,7 @@ declare
   v_name       text;
   v_whatsapp   text;
   v_address    text;
+  v_email      text;
   v_recent     int;
   v_order      public.orders;
 begin
@@ -70,6 +82,7 @@ begin
   v_name     := left(btrim(translate(coalesce(p_customer_name, ''), '<>', '')), 200);
   v_whatsapp := btrim(coalesce(p_customer_whatsapp, ''));
   v_address  := nullif(left(btrim(translate(coalesce(p_address, ''), '<>', '')), 500), '');
+  v_email    := nullif(lower(btrim(coalesce(p_customer_email, ''))), '');
 
   if length(v_name) < 3 then
     raise exception 'Ingresa tu nombre completo.' using errcode = '22023';
@@ -78,6 +91,11 @@ begin
   if v_whatsapp !~ '^[+]?[0-9 \-().]+$'
      or length(regexp_replace(v_whatsapp, '[^0-9]', '', 'g')) not between 8 and 15 then
     raise exception 'El numero de WhatsApp no parece valido.' using errcode = '22023';
+  end if;
+  -- Opcional en la base (sitios viejos en cache no lo mandan); el checkout lo
+  -- exige en envio a domicilio. Misma regla que EMAIL_RE en sanitize.js.
+  if v_email is not null and (length(v_email) > 254 or v_email !~ '^[^[:space:]@]+@[^[:space:]@]+[.][^[:space:]@]+$') then
+    raise exception 'El correo no parece valido.' using errcode = '22023';
   end if;
 
   -- ── Limite anti-inundacion: 5 pedidos por numero cada 10 minutos ──────
@@ -109,15 +127,20 @@ begin
       -- los dos pasarian la revision antes de que cualquiera inserte
       if v_coupon.first_purchase_only then
         perform pg_advisory_xact_lock(hashtext('first_purchase:' || public.phone_key(v_whatsapp)));
+        if v_email is not null then
+          perform pg_advisory_xact_lock(hashtext('first_purchase_email:' || v_email));
+        end if;
       end if;
+      -- Cuenta el mismo WhatsApp o el mismo correo: cambiar de numero no basta
       if v_coupon.first_purchase_only and exists (
         select 1 from public.orders o
          where o.coupon_code = v_coupon.code
            and coalesce(o.status, '') <> 'cancelado'
-           and public.phone_key(o.customer_whatsapp) = public.phone_key(v_whatsapp)
+           and (public.phone_key(o.customer_whatsapp) = public.phone_key(v_whatsapp)
+                or (v_email is not null and o.customer_email = v_email))
       ) then
         -- El sitio reconoce "primera compra" en el mensaje y quita el cupon solo
-        raise exception '% es solo para la primera compra y este WhatsApp ya lo uso.', v_coupon.code
+        raise exception '% es solo para la primera compra y este WhatsApp o correo ya lo uso.', v_coupon.code
           using errcode = '22023';
       end if;
       -- categories puede ser text[] o jsonb segun como se creo la tabla;
@@ -177,11 +200,12 @@ begin
   v_total    := round(v_subtotal, 2) - v_discount;
 
   insert into public.orders (
-    customer_name, customer_whatsapp, payment_method, delivery_method,
+    customer_name, customer_whatsapp, customer_email, payment_method, delivery_method,
     address, cart_items, subtotal, discount, coupon_code, total, status
   ) values (
     v_name,
     v_whatsapp,
+    v_email,
     left(coalesce(p_payment_method, ''), 80),
     left(coalesce(p_delivery_method, ''), 80),
     v_address,
@@ -199,12 +223,12 @@ end;
 $$;
 
 -- Solo se ejecuta desde el sitio; nadie mas hereda el permiso.
-revoke all on function public.place_order(text, text, text, text, text, jsonb, text) from public;
-grant execute on function public.place_order(text, text, text, text, text, jsonb, text) to anon, authenticated;
+revoke all on function public.place_order(text, text, text, text, text, jsonb, text, text) from public;
+grant execute on function public.place_order(text, text, text, text, text, jsonb, text, text) to anon, authenticated;
 
--- Aviso temprano para el checkout: ¿este WhatsApp todavia puede usar el cupon?
--- Solo devuelve si/no; no expone pedidos ni datos del cliente.
-create or replace function public.coupon_first_purchase_ok(p_code text, p_whatsapp text)
+-- Aviso temprano para el checkout: ¿este WhatsApp o correo todavia puede usar
+-- el cupon? Solo devuelve si/no; no expone pedidos ni datos del cliente.
+create or replace function public.coupon_first_purchase_ok(p_code text, p_whatsapp text, p_email text default null)
 returns boolean
 language sql
 stable
@@ -218,13 +242,16 @@ as $fn$
      where c.code = upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g'))
        and c.first_purchase_only
        and coalesce(o.status, '') <> 'cancelado'
-       and public.phone_key(o.customer_whatsapp) = public.phone_key(p_whatsapp)
-       and length(public.phone_key(p_whatsapp)) >= 8
+       and (
+         (public.phone_key(o.customer_whatsapp) = public.phone_key(p_whatsapp)
+          and length(public.phone_key(p_whatsapp)) >= 8)
+         or (nullif(btrim(p_email), '') is not null and o.customer_email = lower(btrim(p_email)))
+       )
   )
 $fn$;
 
-revoke all on function public.coupon_first_purchase_ok(text, text) from public;
-grant execute on function public.coupon_first_purchase_ok(text, text) to anon, authenticated;
+revoke all on function public.coupon_first_purchase_ok(text, text, text) from public;
+grant execute on function public.coupon_first_purchase_ok(text, text, text) to anon, authenticated;
 
 -- Se cierra la puerta vieja: ya no se puede insertar un pedido a mano.
 drop policy if exists "orders_public_insert" on public.orders;

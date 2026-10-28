@@ -54,12 +54,12 @@ export async function applyCoupon(code, silent = false) {
 
 /**
  * Aviso temprano para cupones de primera compra (WELCOME10): pregunta a la base
- * si ese WhatsApp ya lo uso. La regla de verdad vive en place_order; esto solo
+ * si ese WhatsApp o correo ya lo uso. La regla de verdad vive en place_order; esto solo
  * evita que el cliente se entere al final. Si la consulta falla, no se bloquea.
  */
-export async function isFirstPurchaseCouponAvailable(code, whatsapp) {
-  if (!supabase || !code || !whatsapp) return true
-  const { data, error } = await supabase.rpc('coupon_first_purchase_ok', { p_code: code, p_whatsapp: whatsapp })
+export async function isFirstPurchaseCouponAvailable(code, whatsapp, email = '') {
+  if (!supabase || !code || (!whatsapp && !email)) return true
+  const { data, error } = await supabase.rpc('coupon_first_purchase_ok', { p_code: code, p_whatsapp: whatsapp || '', p_email: email || null })
   if (error) return true
   return data !== false
 }

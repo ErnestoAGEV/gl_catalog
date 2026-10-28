@@ -7,7 +7,7 @@ import { formatMoney } from '../../utils/format.js'
 import { isInfiniteStock } from '../../utils/stock.js'
 import { checkoutHTML, checkoutSummaryHTML, couponAppliedHTML, couponInputHTML, checkoutSuccessHTML } from './checkoutView.js'
 import { sizeSelectionModal, trapModal } from '../catalog/catalogModals.js'
-import { sanitizeText, sanitizeCouponCode } from '../../utils/sanitize.js'
+import { sanitizeText, sanitizeCouponCode, sanitizeEmail } from '../../utils/sanitize.js'
 import { navigate } from '../../core/router.js'
 
 const CHECKOUT_SUCCESS_STORAGE_KEY = 'gl_checkout_success'
@@ -51,6 +51,12 @@ function nameError(value) {
   const name = sanitizeText(value)
   if (!name) return 'Ingresa tu nombre completo.'
   if (name.length < 3) return 'El nombre debe tener al menos 3 caracteres.'
+  return ''
+}
+
+function emailError(value) {
+  if (!String(value || '').trim()) return 'Ingresa tu correo.'
+  if (!sanitizeEmail(value).valid) return 'El correo no parece válido. Ej: tucorreo@gmail.com'
   return ''
 }
 
@@ -340,29 +346,38 @@ export function pageCheckout(state) {
       })
 
       // Validacion al salir del campo, no solo al enviar
-      const blurChecks = { name: nameError, whatsapp: whatsappError }
+      const blurChecks = { name: nameError, whatsapp: whatsappError, email: emailError }
       form.addEventListener('focusout', (e) => {
         const check = blurChecks[e.target.name]
         if (check) setFieldError(e.target, check(e.target.value))
-        if (e.target.name === 'whatsapp') checkFirstPurchaseCoupon(e.target.value)
+        if (e.target.name === 'whatsapp' || e.target.name === 'email') checkFirstPurchaseCoupon()
       })
 
       // WELCOME10 es de primera compra: si ese WhatsApp ya lo uso, se quita el
       // cupon antes de enviar y se explica, en vez de rechazar el pedido al final
-      const firstPurchaseMsg = (code) => `${code} es solo para la primera compra y este WhatsApp ya lo usó. Quitamos el cupón y tu total se actualizó.`
+      const firstPurchaseMsg = (code) => `${code} es solo para la primera compra y este WhatsApp o correo ya lo usó. Quitamos el cupón y tu total se actualizó.`
       const dropFirstPurchaseCoupon = (code, opts) => {
         // Silencioso, como el boton de quitar: un emit repintaria la vista y el aviso se perderia
         removeCoupon(true)
         refreshSummaryView()
         setError(firstPurchaseMsg(code), null, opts)
       }
-      async function checkFirstPurchaseCoupon(whatsapp) {
+      // El correo solo cuenta en envio a domicilio, que es donde se pide
+      const currentEmail = () => {
+        const delivery = qs(root, 'select[name="deliveryMethod"]').value
+        const email = sanitizeEmail(root.querySelector('#co-email')?.value || '')
+        return needsAddress('', delivery) && email.valid ? email.value : ''
+      }
+      async function checkFirstPurchaseCoupon() {
         const coupon = getCoupon()
-        if (!coupon?.firstPurchaseOnly || !isValidWhatsapp(whatsapp)) return
-        const ok = await isFirstPurchaseCouponAvailable(coupon.code, whatsapp)
-        // El cupon o el numero pudieron cambiar mientras llegaba la respuesta
-        const current = root.querySelector('#co-whatsapp')?.value
-        if (!ok && getCoupon()?.code === coupon.code && current === whatsapp) {
+        const raw = root.querySelector('#co-whatsapp')?.value || ''
+        const whatsapp = isValidWhatsapp(raw) ? raw : ''
+        const email = currentEmail()
+        if (!coupon?.firstPurchaseOnly || (!whatsapp && !email)) return
+        const ok = await isFirstPurchaseCouponAvailable(coupon.code, whatsapp, email)
+        // El cupon, el numero o el correo pudieron cambiar mientras llegaba la respuesta
+        const stillSame = (root.querySelector('#co-whatsapp')?.value || '') === raw && currentEmail() === email
+        if (!ok && getCoupon()?.code === coupon.code && stillSame) {
           // Al salir del campo no se mueve la pagina: el usuario va al siguiente
           dropFirstPurchaseCoupon(coupon.code, { scroll: false })
         }
@@ -420,8 +435,14 @@ export function pageCheckout(state) {
         // ── Validaciones de dirección ──
         const requireAddress = needsAddress(paymentMethod, deliveryMethod)
         let fullAddress = ''
+        let email = ''
 
         if (requireAddress) {
+          const emailEl = root.querySelector('input[name="email"]')
+          const emailMsg = emailError(emailEl?.value)
+          if (emailMsg) return setError(emailMsg, emailEl)
+          email = sanitizeEmail(emailEl.value).value
+
           const streetEl       = root.querySelector('input[name="street"]')
           const numExtEl       = root.querySelector('input[name="numExt"]')
           const numIntEl       = root.querySelector('input[name="numInt"]')
@@ -499,6 +520,7 @@ export function pageCheckout(state) {
         const orderData = {
           name,
           whatsapp,
+          email: email || null,
           paymentMethod,
           deliveryMethod,
           address: requireAddress ? fullAddress : null,
