@@ -11,8 +11,8 @@ export const WELCOME_DEFAULTS = {
   code: 'WELCOME10',
   codeNote: '10% en tu primera compra',
   ctaLabel: 'Ver el catálogo',
-  ctaUrl: 'https://glboutique.com.mx/catalog',
-  imageUrl: 'https://glboutique.com.mx/heroeGL.jpg',
+  ctaUrl: 'https://www.glboutique.com.mx/catalog',
+  imageUrl: 'https://www.glboutique.com.mx/heroeGL.jpg',
   bodyMode: 'text',
 }
 
@@ -32,7 +32,7 @@ export const UNSUB_PLACEHOLDER = '{{BAJA_URL}}'
 
 // public/email-logo.png: el logo en PNG (el .webp no se ve en Outlook) con fondo blanco,
 // porque el interior de las letras es transparente y en modo oscuro desaparece.
-export const LOGO_URL = 'https://glboutique.com.mx/email-logo.png'
+export const LOGO_URL = 'https://www.glboutique.com.mx/email-logo.png'
 const FONT = "Manrope, 'Helvetica Neue', Helvetica, Arial, sans-serif"
 
 // Solo http(s): un javascript: en un enlace del correo no debe pasar.
@@ -59,7 +59,7 @@ export function newsletterEmailHtml(input = {}, whatsapp = '') {
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(f.preheader)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F5F6F8;"><tr><td align="center" class="gl-wrap" style="padding:24px 8px;">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#FFFFFF;border-radius:4px;">
-  <tr><td class="gl-pad" style="padding:32px 20px 0;"><a href="https://glboutique.com.mx" style="text-decoration:none;"><img src="${LOGO_URL}" width="116" height="65" alt="G&amp;L" style="display:block;border:0;border-radius:6px;margin-left:-8px;font-family:${FONT};font-size:26px;font-weight:800;color:#214FC7;"></a></td></tr>
+  <tr><td class="gl-pad" style="padding:32px 20px 0;"><a href="https://www.glboutique.com.mx" style="text-decoration:none;"><img src="${LOGO_URL}" width="116" height="65" alt="G&amp;L" style="display:block;border:0;border-radius:6px;margin-left:-8px;font-family:${FONT};font-size:26px;font-weight:800;color:#214FC7;"></a></td></tr>
   <tr><td class="gl-pad" style="padding:40px 20px 8px;">
     <h1 class="gl-title" style="margin:0 0 24px;font-family:${FONT};font-size:44px;line-height:44px;font-weight:800;letter-spacing:-2px;color:#15171C;word-break:break-word;">${esc(f.title)}</h1>
     ${paragraphs}
@@ -83,10 +83,52 @@ export function newsletterEmailHtml(input = {}, whatsapp = '') {
   </td></tr>` : '<tr><td style="padding:0 0 32px;"></td></tr>'}
   ${img ? `<tr><td><img src="${esc(img)}" width="600" alt="" style="display:block;width:100%;max-width:600px;height:auto;border:0;"></td></tr>` : ''}
   <tr><td class="gl-pad" style="padding:24px 20px 32px;border-top:1px solid #E6E8EC;font-family:${FONT};font-size:12px;line-height:19px;color:#5B606B;">
-    ¿Dudas? Escríbenos por <a href="${wa}" style="color:#214FC7;">WhatsApp</a>.<br>
+    ¿Dudas? Escríbenos por <a href="${wa}" style="color:#214FC7;">WhatsApp</a> o responde a este correo.<br>
     Recibes este correo porque te uniste al Club G&amp;L en glboutique.com.mx. <a href="${UNSUB_PLACEHOLDER}" style="color:#5B606B;">Darme de baja</a>
   </td></tr>
 </table>
 </td></tr></table>
 </body></html>`
+}
+
+const VOID_TAGS = new Set(['br', 'hr', 'img', 'meta', 'link', 'input', 'col', 'area', 'source', 'wbr', 'base'])
+// HTML válido aunque no se cierren: el navegador las cierra solo.
+const OPTIONAL_CLOSE = new Set(['p', 'li', 'td', 'th', 'tr', 'option', 'thead', 'tbody'])
+const BLOCKED_TAGS = ['script', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'textarea', 'select', 'meta', 'base']
+
+/**
+ * Revisa el HTML del modo HTML antes de guardar o enviar. errors bloquean (roto
+ * o peligroso); warnings avisan de cosas que muchos correos ignoran.
+ * shortcut: revisión por regex, no un parser completo; atrapa los errores comunes al pegar HTML.
+ */
+export function checkEmailHtml(html = '') {
+  const errors = []
+  const warnings = []
+  const src = String(html).replace(/<!--[\s\S]*?-->/g, '')
+
+  for (const tag of BLOCKED_TAGS) {
+    if (new RegExp(`<\\s*${tag}\\b`, 'i').test(src)) errors.push(`<${tag}> no está permitido en correos.`)
+  }
+  if (/<[^>]+\son[a-z]+\s*=/i.test(src)) errors.push('Los atributos on... (onclick, onerror) no están permitidos.')
+  if (/(href|src)\s*=\s*["']?\s*(javascript|vbscript):/i.test(src)) errors.push('Los enlaces javascript: no están permitidos.')
+
+  // Etiquetas sin cerrar o cerradas de más, con una pila.
+  const stack = []
+  for (const [, slash, name, selfClose] of src.matchAll(/<(\/?)([a-z][a-z0-9]*)\b[^>]*?(\/?)>/gi)) {
+    const tag = name.toLowerCase()
+    if (VOID_TAGS.has(tag) || selfClose) continue
+    if (!slash) { stack.push(tag); continue }
+    const at = stack.lastIndexOf(tag)
+    if (at === -1) { errors.push(`Sobra un </${tag}> sin su <${tag}>.`); continue }
+    for (const open of stack.splice(at).slice(1)) if (!OPTIONAL_CLOSE.has(open)) errors.push(`Falta cerrar <${open}>.`)
+  }
+  for (const open of stack) if (!OPTIONAL_CLOSE.has(open)) errors.push(`Falta cerrar <${open}>.`)
+  if (/<[^>]*$/.test(src)) errors.push('Hay una etiqueta sin terminar (falta ">").')
+
+  if (/<\s*(style|link)\b/i.test(src)) warnings.push('Muchos correos ignoran <style> y <link>: pon los estilos en style="..." de cada etiqueta.')
+  if (/<img\b(?![^>]*\balt\s*=)[^>]*>/i.test(src)) warnings.push('Hay imágenes sin alt: si el correo bloquea imágenes, no se verá nada en su lugar.')
+  if (/<img\b[^>]*\bsrc\s*=\s*["']?\s*(http:|data:)/i.test(src)) warnings.push('Usa imágenes con https://: Gmail no muestra las http:// ni las data:.')
+  if (/display\s*:\s*(flex|grid)/i.test(src)) warnings.push('Outlook no entiende display:flex ni grid: usa tablas para acomodar columnas.')
+
+  return { errors: [...new Set(errors)], warnings }
 }

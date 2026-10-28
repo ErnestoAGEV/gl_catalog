@@ -2,7 +2,8 @@
 // derecha. Lo usan la bienvenida y los envíos a suscriptores (adminNewsletter.js).
 import { getEmailTemplate } from '../../store/index.js'
 import { BRAND } from '../../utils/config.js'
-import { newsletterEmailHtml, UNSUB_PLACEHOLDER } from './newsletterEmail.js'
+import { escapeHtml as esc } from '../../utils/sanitize.js'
+import { newsletterEmailHtml, checkEmailHtml, UNSUB_PLACEHOLDER } from './newsletterEmail.js'
 
 const FIELDS = [
   ['subject', 'Asunto', 'input', 120],
@@ -29,7 +30,7 @@ export function emailEditorHtml({ id, title, subtitle, actions }) {
     const control = tag === 'select'
       ? `<select id="${fid}" name="${name}" class="adm-fld"><option value="text">Texto</option><option value="html">HTML</option></select>`
       : tag === 'textarea'
-        ? `<textarea id="${fid}" name="${name}" rows="8" maxlength="${max}" class="adm-fld resize-y font-mono text-[13px]"></textarea><p data-body-hint class="text-[11.5px] text-faint mt-1"></p>`
+        ? `<textarea id="${fid}" name="${name}" rows="8" maxlength="${max}" class="adm-fld resize-y font-mono text-[13px]"></textarea><p data-body-hint class="text-[11.5px] text-faint mt-1"></p><ul data-body-issues class="mt-2 space-y-1 text-[12px]" aria-live="polite"></ul>`
         : `<input id="${fid}" name="${name}" maxlength="${max}" class="adm-fld" />`
     return `<div><label class="adm-lbl" for="${fid}">${label}</label>${control}</div>`
   }
@@ -57,17 +58,22 @@ export function emailEditorHtml({ id, title, subtitle, actions }) {
 
 /**
  * Carga la plantilla guardada (o los defaults) y mantiene la vista previa al día.
- * @returns {Promise<{ saved: object|null, error: any, readFields: () => object, render: (fields?: object) => string, setStatus: (t: string) => void }>}
+ * @returns {Promise<{ saved: object|null, error: any, readFields: () => object, render: (fields?: object) => string, setStatus: (t: string) => void, htmlErrors: () => string[] }>}
  */
 export async function mountEmailEditor(form, { key, defaults }) {
   const preview = form.querySelector('[data-preview]')
   const status = form.querySelector('[data-status]')
   const hint = form.querySelector('[data-body-hint]')
+  const issuesList = form.querySelector('[data-body-issues]')
 
   const readFields = () => Object.fromEntries(FIELDS.map(([name]) => [name, form.elements[name].value.trim()]))
   const render = (fields = readFields()) => newsletterEmailHtml(fields, BRAND.whatsapp)
+  const check = () => (form.elements.bodyMode.value === 'html' ? checkEmailHtml(form.elements.body.value) : { errors: [], warnings: [] })
   const refresh = () => {
     hint.textContent = BODY_HINT[form.elements.bodyMode.value]
+    const { errors, warnings } = check()
+    issuesList.innerHTML = errors.map(t => `<li class="text-bad font-medium">✕ ${esc(t)}</li>`).join('')
+      + warnings.map(t => `<li class="text-muted">! ${esc(t)}</li>`).join('')
     preview.srcdoc = render().replaceAll(UNSUB_PLACEHOLDER, '#')
   }
 
@@ -78,7 +84,7 @@ export async function mountEmailEditor(form, { key, defaults }) {
   refresh()
   form.addEventListener('input', refresh)
 
-  return { saved, error, readFields, render, setStatus: (t) => { status.textContent = t } }
+  return { saved, error, readFields, render, setStatus: (t) => { status.textContent = t }, htmlErrors: () => check().errors }
 }
 
 export const savedAt = (date) => `Guardado el ${new Date(date).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })}`

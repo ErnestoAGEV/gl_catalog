@@ -1,4 +1,4 @@
-import { getAdminSubscribers, saveEmailTemplate, sendNewsletter } from '../../store/index.js'
+import { getAdminSubscribers, saveEmailTemplate, sendNewsletter, getLastCampaign } from '../../store/index.js'
 import { escapeHtml as esc } from '../../utils/sanitize.js'
 import { showToast } from '../../utils/toast.js'
 import { ICON, statCard } from './adminIcons.js'
@@ -8,6 +8,8 @@ import { emailEditorHtml, mountEmailEditor, savedAt } from './adminEmailEditor.j
 
 const TEST_EMAIL_KEY = 'gl_newsletter_test_email'
 const isActive = (s) => !s.unsubscribed_at
+const FREE_DAILY_LIMIT = 100 // plan gratis de Resend
+const people = (n) => `${n} ${n === 1 ? 'persona' : 'personas'}`
 
 function formatSubscriberDate(sub) {
   const raw = sub?.created_at || sub?.subscribed_at || sub?.createdAt || sub?.subscribedAt || sub?.updated_at || sub?.updatedAt
@@ -87,7 +89,8 @@ export function pageAdminNewsletter(state) {
             <button type="button" data-draft class="adm-btn adm-btn-ghost" disabled>Guardar borrador</button>
             <input name="testEmail" type="email" placeholder="Correo para la prueba" aria-label="Correo para la prueba" class="adm-fld sm:w-52" />
             <button type="button" data-test class="adm-btn adm-btn-ghost" disabled>Enviarme una prueba</button>
-            <button type="submit" data-submit class="adm-btn adm-btn-primary" disabled>${ICON.mail('w-4 h-4')} Enviar</button>`,
+            <button type="submit" data-submit class="adm-btn adm-btn-primary" disabled>${ICON.mail('w-4 h-4')} Enviar</button>
+            <p data-campaign class="basis-full text-[12.5px] text-muted" aria-live="polite"></p>`,
         })}
 
         ${emailEditorHtml({
@@ -218,6 +221,7 @@ async function setupWelcomeEmail(form) {
     if (submit.disabled) return
     const f = editor.readFields()
     if (!f.subject || !f.title) return showToast('El asunto y el título son obligatorios', 'error')
+    if (editor.htmlErrors().length) return showToast('Corrige el HTML del mensaje antes de guardar', 'error')
     submit.disabled = true
     const { error } = await saveEmailTemplate('welcome', { subject: f.subject, html: editor.render(f), fields: f, enabled: form.elements.enabled.checked })
     submit.disabled = false
@@ -237,6 +241,23 @@ async function setupCampaign(form, activeCount) {
   const editor = await mountEmailEditor(form, { key: 'campaign', defaults: CAMPAIGN_DEFAULTS })
   if (editor.saved) editor.setStatus(`Borrador: ${savedAt(editor.saved.updated_at).toLowerCase()}`)
 
+  // Estado del último envío; mientras queden correos en cola se consulta cada 10 s.
+  const campaignLine = form.querySelector('[data-campaign]')
+  let poll = null
+  const showCampaign = async () => {
+    clearTimeout(poll)
+    const c = await getLastCampaign()
+    if (!form.isConnected) return
+    if (!c) { poll = setTimeout(showCampaign, 30000); return } // fallo de red o aún sin envíos
+    const when = new Date(c.created_at).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })
+    const parts = [`${c.delivered} entregados a Resend`]
+    if (c.failed) parts.push(`${c.failed} fallidos`)
+    if (c.pending) parts.push(`${c.pending} en cola`)
+    campaignLine.textContent = `Último envío, "${c.subject}" (${when}): ${parts.join(', ')} de ${c.total}.`
+    if (c.pending) poll = setTimeout(showCampaign, 10000)
+  }
+  showCampaign()
+
   // Corre una accion con los botones bloqueados para que no se dispare dos veces.
   const busy = async (fn) => {
     buttons.forEach(b => { b.disabled = true })
@@ -249,6 +270,7 @@ async function setupCampaign(form, activeCount) {
   const ready = () => {
     const m = message()
     if (!m.subject || !m.f.title) { showToast('El asunto y el título son obligatorios', 'error'); return null }
+    if (editor.htmlErrors().length) { showToast('Corrige el HTML del mensaje antes de enviar', 'error'); return null }
     return m
   }
   const saveDraft = (m) => saveEmailTemplate('campaign', { subject: m.subject || '(sin asunto)', html: m.html, fields: m.f, enabled: false })
@@ -278,10 +300,12 @@ async function setupCampaign(form, activeCount) {
       const m = ready()
       if (!m) return
       if (!activeCount) return showToast('Aún no hay suscriptores activos', 'error')
-      const people = `${activeCount} ${activeCount === 1 ? 'persona' : 'personas'}`
+      const overLimit = activeCount > FREE_DAILY_LIMIT
+        ? ` Ojo: el plan gratis de Resend manda ${FREE_DAILY_LIMIT} correos al día; con más necesitas el plan de pago o algunos no saldrán.`
+        : ''
       const ok = await confirmDelete({
-        title: `¿Enviar a ${people}?`,
-        message: `"${m.subject}" llegará a todos los suscriptores activos. Un envío no se puede deshacer.`,
+        title: `¿Enviar a ${people(activeCount)}?`,
+        message: `"${m.subject}" llegará a todos los suscriptores activos. Un envío no se puede deshacer.${overLimit}`,
         confirmLabel: 'Enviar ahora',
         icon: 'mail',
       })
@@ -289,9 +313,8 @@ async function setupCampaign(form, activeCount) {
       await saveDraft(m) // queda como referencia de lo último que se mandó
       const { count, error } = await sendNewsletter({ subject: m.subject, html: m.html })
       if (error) return showToast(error, 'error')
-      const sent = `${count} ${count === 1 ? 'persona' : 'personas'}`
-      editor.setStatus(`Envío solicitado a ${sent} el ${new Date().toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })}. Resend lo entrega en unos minutos; el detalle está en resend.com → Emails.`)
-      showToast(`Envío solicitado a ${sent}`, 'success')
+      showToast(`En camino a ${people(count)}`, 'success')
+      showCampaign()
     })
   })
 

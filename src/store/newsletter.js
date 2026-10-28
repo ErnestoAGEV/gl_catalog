@@ -62,6 +62,16 @@ export async function sendNewsletter({ subject, html, testEmail = null }) {
   return error ? { error: error.message || 'No se pudo enviar.' } : { count: data }
 }
 
+/** Estado del último envío: { subject, created_at, total, delivered, failed, pending } o null. */
+export async function getLastCampaign() {
+  if (!supabase) return null
+  const access = await ensureAdminAccess()
+  if (!access.ok) return null
+  const { data, error } = await supabase.rpc('newsletter_last_campaign')
+  if (error && import.meta.env.DEV) console.error('Error fetching last campaign:', error)
+  return error ? null : data
+}
+
 /** Enlace de baja de los correos: true si se dio de baja, false si el enlace no es de nadie, null si falló la red. */
 export async function unsubscribeNewsletter(token) {
   if (!/^[0-9a-f-]{36}$/i.test(token || '')) return false
