@@ -1218,8 +1218,9 @@ details.acc .body { padding-bottom: 18px; font-size: 14px; color: rgba(10,10,15,
 /* ── Controles sobre la foto ──
    Superficie propia con borde y sombra: el translúcido sin borde desaparecía
    sobre fotos claras y se ensuciaba sobre las oscuras. */
+/* Sin position aquí: esta regla va fuera de las capas y le ganaba al
+   "absolute" de las flechas de la galería, que caían debajo de la foto. */
 .stage-chip, .stage-btn {
-  position: relative; z-index: 10;
   background: var(--color-paper);
   color: var(--color-ink);
   border: 1px solid rgba(10,10,15,.10);
