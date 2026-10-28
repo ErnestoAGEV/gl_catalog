@@ -812,6 +812,8 @@ body.dark {
   max-width: 100%;
   overflow: hidden;
 }
+/* En movil a lo ancho: con 320px quedaba cargado a la izquierda y asomaba la barra de la ficha */
+@media (max-width: 768px) { .mini-cart-inner { width: 100%; } }
 
 .dark .mini-cart-inner {
   box-shadow: 0 8px 30px -4px rgb(0 0 0 / 0.4), 0 2px 8px -2px rgb(0 0 0 / 0.3);

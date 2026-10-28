@@ -57,39 +57,39 @@ export function showMiniCart(productId) {
   el.setAttribute('role', 'dialog')
   el.setAttribute('aria-label', 'Producto agregado a tu bolsa')
   el.innerHTML = `
-    <div class="mini-cart-inner ${isDark ? 'bg-gray-900 border-gray-700/80 text-white' : 'bg-white border-gray-200 text-gray-900'}">
+    <div class="mini-cart-inner ${isDark ? 'bg-gray-900 border-gray-700/80 text-white' : 'bg-paper border-ink/10 text-ink'}">
       <!-- Header -->
       <div class="flex items-center justify-between px-4 pt-3.5 pb-2">
         <div class="flex items-center gap-1.5">
-          <svg class="w-4 h-4 text-green-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <svg class="w-4 h-4 ${isDark ? 'text-green-500' : 'text-brand'} shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
           <span class="text-[13px] font-semibold">Agregado a tu bolsa</span>
         </div>
-        <button class="mini-cart-close p-1 -mr-1 rounded-full ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'} transition-colors" aria-label="Cerrar">
-          <svg class="w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        <button class="mini-cart-close p-1 -mr-1 rounded-full ${isDark ? 'hover:bg-gray-800' : 'hover:bg-ink/5'} transition-colors" aria-label="Cerrar">
+          <svg class="w-4 h-4 ${isDark ? 'text-gray-400' : 'text-ink/60'}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
 
       <!-- Product row -->
       <div class="flex gap-3 px-4 py-2.5">
-        <div class="w-14 h-[72px] md:w-12 md:h-16 rounded-lg overflow-hidden shrink-0 ${isDark ? 'bg-gray-800' : 'bg-gray-100'} border ${isDark ? 'border-gray-700' : 'border-gray-200'}">
+        <div class="w-14 h-[72px] md:w-12 md:h-16 rounded-lg overflow-hidden shrink-0 ${isDark ? 'bg-gray-800' : 'bg-fog'} border ${isDark ? 'border-gray-700' : 'border-ink/10'}">
           <img src="${img}" alt="${safeName}" class="w-full h-full ${imgFit}" loading="lazy" />
         </div>
         <div class="flex-1 min-w-0">
           <p class="text-[13px] font-medium truncate leading-snug">${safeName}</p>
-          <p class="text-[12px] ${isDark ? 'text-gray-400' : 'text-gray-500'} mt-0.5">Cant: 1</p>
+          <p class="text-[12px] ${isDark ? 'text-gray-400' : 'text-ink/60'} mt-0.5">Cant: 1</p>
           <p class="text-[14px] font-bold mt-0.5">${formatMoney(product.price)}</p>
         </div>
       </div>
 
       <!-- Subtotal -->
-      <div class="flex items-center justify-between px-4 py-2 border-t ${isDark ? 'border-gray-800' : 'border-gray-100'}">
-        <span class="text-[12px] ${isDark ? 'text-gray-400' : 'text-gray-500'}">Subtotal (${count} ${count === 1 ? 'artículo' : 'artículos'})</span>
+      <div class="flex items-center justify-between px-4 py-2 border-t ${isDark ? 'border-gray-800' : 'border-ink/10'}">
+        <span class="text-[12px] ${isDark ? 'text-gray-400' : 'text-ink/60'}">Subtotal (${count} ${count === 1 ? 'artículo' : 'artículos'})</span>
         <span class="text-[13px] font-bold">${formatMoney(subtotal)}</span>
       </div>
 
       <!-- CTA -->
       <div class="px-4 pb-3.5 pt-1">
-        <a href="/cart" class="mini-cart-cta flex items-center justify-center gap-1.5 w-full py-2.5 rounded-lg text-[13px] font-semibold transition-all active:scale-[0.97] ${isDark ? 'bg-white text-gray-900 hover:bg-gray-100' : 'bg-gray-900 text-white hover:bg-gray-800'}">
+        <a href="/cart" class="mini-cart-cta flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full text-[13px] font-semibold transition-all active:scale-[0.97] ${isDark ? 'bg-white text-gray-900 hover:bg-gray-100' : 'bg-ink text-paper hover:bg-ink/90'}">
           Ver bolsa
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </a>

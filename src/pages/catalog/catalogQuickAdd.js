@@ -32,7 +32,8 @@ export function handleQuickAdd(ev, btn, modalContainer) {
     btn.dataset.busy = '1'
 
     addToCart({ productId: id, size, color: '', qty: 1 })
-    flyToCart(btn.closest('a')?.querySelector('img'))
+    // En movil el aviso sale justo encima de la bolsa y la foto volaba por encima de el
+    if (window.matchMedia('(min-width: 769px)').matches) flyToCart(btn.closest('a')?.querySelector('img'))
 
     // Animación: icono → spinner → check
     const icon = btn.querySelector('.quick-add-icon')
