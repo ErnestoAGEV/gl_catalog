@@ -947,7 +947,7 @@ for (const [path, page] of Object.entries(infoPages)) {
 
 // Rutas de carrito/checkout: noindex, pero necesitan HTML propio para no
 // depender del rewrite catch-all
-for (const path of ['/cart', '/checkout', '/checkout/success']) {
+for (const path of ['/cart', '/checkout', '/checkout/success', '/baja']) {
   routes.push({ path, shell: contentShell('') })
 }
 
@@ -1180,7 +1180,7 @@ Instagram: ${INSTAGRAM_URL}
 ## No citar
 
 Estas rutas son transaccionales o privadas, no informativas:
-/admin, /api, /cart, /checkout, /checkout/success
+/admin, /api, /cart, /checkout, /checkout/success, /baja
 
 Última generación: ${today}
 `

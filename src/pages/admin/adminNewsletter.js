@@ -1,6 +1,13 @@
-import { getAdminSubscribers } from '../../store/index.js'
+import { getAdminSubscribers, saveEmailTemplate, sendNewsletter } from '../../store/index.js'
 import { escapeHtml as esc } from '../../utils/sanitize.js'
+import { showToast } from '../../utils/toast.js'
 import { ICON, statCard } from './adminIcons.js'
+import { confirmDelete } from './adminConfirm.js'
+import { WELCOME_DEFAULTS, CAMPAIGN_DEFAULTS } from './newsletterEmail.js'
+import { emailEditorHtml, mountEmailEditor, savedAt } from './adminEmailEditor.js'
+
+const TEST_EMAIL_KEY = 'gl_newsletter_test_email'
+const isActive = (s) => !s.unsubscribed_at
 
 function formatSubscriberDate(sub) {
   const raw = sub?.created_at || sub?.subscribed_at || sub?.createdAt || sub?.subscribedAt || sub?.updated_at || sub?.updatedAt
@@ -71,6 +78,32 @@ export function pageAdminNewsletter(state) {
           <!-- Footer -->
           <div id="nl-footer" class="px-5 py-3 border-t border-line text-[12.5px] text-muted tnum"></div>
         </div>
+
+        ${emailEditorHtml({
+          id: 'cp-form',
+          title: 'Enviar correo a suscriptores',
+          subtitle: 'Llega a todas las personas suscritas que no se han dado de baja.',
+          actions: `
+            <button type="button" data-draft class="adm-btn adm-btn-ghost" disabled>Guardar borrador</button>
+            <input name="testEmail" type="email" placeholder="Correo para la prueba" aria-label="Correo para la prueba" class="adm-fld sm:w-52" />
+            <button type="button" data-test class="adm-btn adm-btn-ghost" disabled>Enviarme una prueba</button>
+            <button type="submit" data-submit class="adm-btn adm-btn-primary" disabled>${ICON.mail('w-4 h-4')} Enviar</button>`,
+        })}
+
+        ${emailEditorHtml({
+          id: 'wl-form',
+          title: 'Correo de bienvenida',
+          subtitle: 'Le llega a cada persona que se suscribe al boletín.',
+          actions: `
+            <label class="flex items-center gap-3 cursor-pointer">
+              <span class="text-[13px] font-semibold text-body">Enviar al suscribirse</span>
+              <span class="relative inline-flex items-center">
+                <input type="checkbox" name="enabled" class="sr-only peer" checked>
+                <span class="w-10 h-6 bg-line-strong rounded-full peer peer-checked:bg-brand peer-focus-visible:ring-2 peer-focus-visible:ring-brand after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:shadow-sm after:transition-all peer-checked:after:translate-x-4"></span>
+              </span>
+            </label>
+            <button type="submit" data-submit class="adm-btn adm-btn-primary" disabled>Guardar correo</button>`,
+        })}
       </div>
     `,
 
@@ -82,10 +115,13 @@ export function pageAdminNewsletter(state) {
       const searchInput = root.querySelector('#nl-search')
       const exportBtn = root.querySelector('#nl-export')
 
+      setupWelcomeEmail(root.querySelector('#wl-form'))
+
       tbody.innerHTML = `<tr><td colspan="3" class="px-5 py-12 text-center text-faint"><div class="animate-pulse">${ICON.mail('w-8 h-8 mx-auto mb-2 text-line-strong')}<p class="text-[13px]">Cargando suscriptores...</p></div></td></tr>`
       mobileList.innerHTML = `<div class="px-5 py-12 text-center text-faint animate-pulse">${ICON.mail('w-8 h-8 mx-auto mb-2 text-line-strong')}<p class="text-[13px]">Cargando...</p></div>`
 
       const subscribers = await getAdminSubscribers()
+      setupCampaign(root.querySelector('#cp-form'), subscribers.filter(isActive).length)
 
       // ── KPI calculations ──
       const now = new Date()
@@ -103,7 +139,7 @@ export function pageAdminNewsletter(state) {
       const topDomain = Object.entries(domains).sort((a, b) => b[1] - a[1])[0]
 
       kpis.innerHTML = `
-        ${statCard({ eyebrow: 'Total suscritos', value: subscribers.length.toLocaleString(), icon: 'mail', foot: 'Todos los registros' })}
+        ${statCard({ eyebrow: 'Suscritos activos', value: subscribers.filter(isActive).length.toLocaleString(), icon: 'mail', foot: `${subscribers.filter(s => !isActive(s)).length} dados de baja` })}
         ${statCard({ eyebrow: 'Nuevos (7 días)', value: newThisWeek.toString(), icon: 'trendUp', delta: newThisWeek > 0 ? `+${newThisWeek}` : '0', deltaDir: newThisWeek > 0 ? 'up' : 'flat', accent: '#1E9E6A' })}
         ${statCard({ eyebrow: 'Top dominio', value: topDomain ? `@${topDomain[0]}` : '—', icon: 'users', foot: topDomain ? `${topDomain[1]} suscriptores` : '' })}
       `
@@ -130,7 +166,9 @@ export function pageAdminNewsletter(state) {
               <span class="text-[13.5px] font-medium text-ink truncate">${esc(sub.email)}</span>
             </div></td>
             <td class="px-5 py-3"><span class="text-[13px] text-muted tnum">${formatSubscriberDate(sub)}</span> <span class="text-[11px] text-faint">${formatSubscriberTime(sub)}</span></td>
-            <td class="px-5 py-3"><span class="inline-flex items-center gap-1.5 px-2.5 h-[22px] rounded-full text-[11px] font-semibold text-ok bg-ok-tint"><span class="w-1.5 h-1.5 rounded-full bg-ok"></span>Activo</span></td>
+            <td class="px-5 py-3">${isActive(sub)
+              ? '<span class="inline-flex items-center gap-1.5 px-2.5 h-[22px] rounded-full text-[11px] font-semibold text-ok bg-ok-tint"><span class="w-1.5 h-1.5 rounded-full bg-ok"></span>Activo</span>'
+              : '<span class="inline-flex items-center gap-1.5 px-2.5 h-[22px] rounded-full text-[11px] font-semibold text-muted bg-canvas"><span class="w-1.5 h-1.5 rounded-full bg-line-strong"></span>Dado de baja</span>'}</td>
           </tr>`
         }).join('')
 
@@ -141,7 +179,9 @@ export function pageAdminNewsletter(state) {
               <p class="text-[13px] font-medium text-ink truncate">${esc(sub.email)}</p>
               <p class="text-[11.5px] text-faint mt-0.5 tnum">${formatSubscriberDate(sub)}</p>
             </div>
-            <span class="inline-flex items-center gap-1 px-2 h-[20px] rounded-full text-[10px] font-semibold text-ok bg-ok-tint shrink-0">Activo</span>
+            ${isActive(sub)
+              ? '<span class="inline-flex items-center gap-1 px-2 h-[20px] rounded-full text-[10px] font-semibold text-ok bg-ok-tint shrink-0">Activo</span>'
+              : '<span class="inline-flex items-center gap-1 px-2 h-[20px] rounded-full text-[10px] font-semibold text-muted bg-canvas shrink-0">Dado de baja</span>'}
           </div></div>`
         }).join('')
 
@@ -154,7 +194,7 @@ export function pageAdminNewsletter(state) {
 
       exportBtn?.addEventListener('click', () => {
         if (!subscribers.length) return
-        const rows = ['Email,Fecha de registro', ...subscribers.map(s => `${s.email},${formatSubscriberDate(s)}`)].join('\n')
+        const rows = ['Email,Fecha de registro,Estado', ...subscribers.map(s => `${s.email},${formatSubscriberDate(s)},${isActive(s) ? 'Activo' : 'Dado de baja'}`)].join('\n')
         const blob = new Blob([rows], { type: 'text/csv;charset=utf-8;' })
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
@@ -165,4 +205,96 @@ export function pageAdminNewsletter(state) {
       })
     }
   }
+}
+
+async function setupWelcomeEmail(form) {
+  const submit = form.querySelector('[data-submit]')
+  const editor = await mountEmailEditor(form, { key: 'welcome', defaults: WELCOME_DEFAULTS })
+  form.elements.enabled.checked = editor.saved ? editor.saved.enabled : true
+  editor.setStatus(editor.saved ? savedAt(editor.saved.updated_at) : 'Aún no se ha guardado: hasta que lo guardes, no se envía ningún correo.')
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    if (submit.disabled) return
+    const f = editor.readFields()
+    if (!f.subject || !f.title) return showToast('El asunto y el título son obligatorios', 'error')
+    submit.disabled = true
+    const { error } = await saveEmailTemplate('welcome', { subject: f.subject, html: editor.render(f), fields: f, enabled: form.elements.enabled.checked })
+    submit.disabled = false
+    if (error) return showToast('No se pudo guardar el correo', 'error')
+    editor.setStatus(savedAt(Date.now()))
+    showToast('Correo de bienvenida guardado', 'success')
+  })
+  // Sin esto, un fallo de red pintaria los textos por defecto y Guardar pisaria el correo real.
+  if (editor.error) return editor.setStatus('No se pudo cargar el correo guardado. Recarga la página para editarlo.')
+  submit.disabled = false
+}
+
+async function setupCampaign(form, activeCount) {
+  const buttons = [...form.querySelectorAll('[data-draft], [data-test], [data-submit]')]
+  const testInput = form.elements.testEmail
+  try { testInput.value = localStorage.getItem(TEST_EMAIL_KEY) || '' } catch { /* sin storage */ }
+  const editor = await mountEmailEditor(form, { key: 'campaign', defaults: CAMPAIGN_DEFAULTS })
+  if (editor.saved) editor.setStatus(`Borrador: ${savedAt(editor.saved.updated_at).toLowerCase()}`)
+
+  // Corre una accion con los botones bloqueados para que no se dispare dos veces.
+  const busy = async (fn) => {
+    buttons.forEach(b => { b.disabled = true })
+    try { await fn() } finally { buttons.forEach(b => { b.disabled = false }) }
+  }
+  const message = () => {
+    const f = editor.readFields()
+    return { f, subject: f.subject, html: editor.render(f) }
+  }
+  const ready = () => {
+    const m = message()
+    if (!m.subject || !m.f.title) { showToast('El asunto y el título son obligatorios', 'error'); return null }
+    return m
+  }
+  const saveDraft = (m) => saveEmailTemplate('campaign', { subject: m.subject || '(sin asunto)', html: m.html, fields: m.f, enabled: false })
+
+  form.querySelector('[data-draft]').addEventListener('click', () => busy(async () => {
+    const { error } = await saveDraft(message())
+    if (error) return showToast('No se pudo guardar el borrador', 'error')
+    editor.setStatus(`Borrador: ${savedAt(Date.now()).toLowerCase()}`)
+    showToast('Borrador guardado', 'success')
+  }))
+
+  form.querySelector('[data-test]').addEventListener('click', () => busy(async () => {
+    const m = ready()
+    if (!m) return
+    const testEmail = testInput.value.trim()
+    if (!testInput.checkValidity() || !testEmail) { testInput.focus(); return showToast('Escribe el correo donde quieres la prueba', 'error') }
+    try { localStorage.setItem(TEST_EMAIL_KEY, testEmail) } catch { /* sin storage */ }
+    const { error } = await sendNewsletter({ subject: `[Prueba] ${m.subject}`, html: m.html, testEmail })
+    if (error) return showToast(error, 'error')
+    showToast(`Prueba solicitada a ${testEmail}: revisa tu bandeja en un minuto`, 'success')
+  }))
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault()
+    if (form.querySelector('[data-submit]').disabled) return
+    busy(async () => {
+      const m = ready()
+      if (!m) return
+      if (!activeCount) return showToast('Aún no hay suscriptores activos', 'error')
+      const people = `${activeCount} ${activeCount === 1 ? 'persona' : 'personas'}`
+      const ok = await confirmDelete({
+        title: `¿Enviar a ${people}?`,
+        message: `"${m.subject}" llegará a todos los suscriptores activos. Un envío no se puede deshacer.`,
+        confirmLabel: 'Enviar ahora',
+        icon: 'mail',
+      })
+      if (!ok) return
+      await saveDraft(m) // queda como referencia de lo último que se mandó
+      const { count, error } = await sendNewsletter({ subject: m.subject, html: m.html })
+      if (error) return showToast(error, 'error')
+      const sent = `${count} ${count === 1 ? 'persona' : 'personas'}`
+      editor.setStatus(`Envío solicitado a ${sent} el ${new Date().toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })}. Resend lo entrega en unos minutos; el detalle está en resend.com → Emails.`)
+      showToast(`Envío solicitado a ${sent}`, 'success')
+    })
+  })
+
+  if (editor.error) return editor.setStatus('No se pudo cargar el borrador. Recarga la página para editarlo.')
+  buttons.forEach(b => { b.disabled = false })
 }

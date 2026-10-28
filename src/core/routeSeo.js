@@ -149,6 +149,15 @@ export function getSeoForRoute(path, basePath, state) {
     }
   }
 
+  if (basePath === '/baja') {
+    return {
+      title: 'Darse de baja | G&L',
+      description: 'Darse de baja del boletín de G&L.',
+      canonicalPath: '/baja',
+      robots: 'noindex,nofollow',
+    }
+  }
+
   if (basePath === '/checkout/success') {
     return {
       title: 'Pedido Confirmado | G&L',

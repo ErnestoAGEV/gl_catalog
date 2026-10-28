@@ -1115,6 +1115,7 @@ details.acc .body { padding-bottom: 18px; font-size: 14px; color: rgba(10,10,15,
   .adm-btn-primary:hover { background:var(--color-brand-ink); }
   .adm-btn-ghost { background:#fff; color:var(--color-body); border:1px solid var(--color-line); padding:9px 15px; }
   .adm-btn-ghost:hover { background:var(--color-canvas); border-color:var(--color-line-strong); }
+  .adm-btn:disabled { opacity:.5; cursor:not-allowed; pointer-events:none; }
   .adm-btn-ink { background:var(--color-ink); color:#fff; padding:10px 16px; }
   .adm-btn-ink:hover { background:#2B2E36; }
 }

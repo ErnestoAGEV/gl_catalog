@@ -9,6 +9,7 @@ import { pageCart } from '../pages/cart/cart.js'
 import { pageCheckout, pageCheckoutSuccess } from '../pages/checkout/checkout.js'
 import { pageAdminLogin } from '../pages/admin/adminLogin.js'
 import { pageNotFound } from '../pages/notFound/notFound.js'
+import { pageUnsubscribe } from '../pages/unsubscribe/unsubscribe.js'
 import { pageInfo } from '../pages/info/info.js'
 import { infoPages } from '../pages/info/infoData.js'
 import { getSeoForRoute } from './routeSeo.js'
@@ -24,6 +25,7 @@ const publicRoutes = {
   '/cart': pageCart,
   '/checkout': pageCheckout,
   '/checkout/success': pageCheckoutSuccess,
+  '/baja': pageUnsubscribe,
 }
 
 // Lazy-loaded admin pages — solo se descargan cuando el usuario visita el panel
