@@ -50,6 +50,19 @@ export function updateAdminOrderShipping(orderId, shippingCost) {
   return updateAdminOrder(orderId, { shipping_cost: shippingCost })
 }
 
+/**
+ * Manda al cliente el correo de confirmacion (una vez por pedido). Devuelve el
+ * estado de send_order_confirmation: 'sent', 'no_email', 'already_sent'...
+ * Ver supabase/order-confirmation.sql
+ */
+export async function sendOrderConfirmation(orderId, { subject, html }) {
+  const access = await ensureAdminAccess()
+  if (!access.ok) return { error: access.error.message }
+  const { data, error } = await supabase.rpc('send_order_confirmation', { p_order_id: String(orderId), p_subject: subject, p_html: html })
+  if (error && import.meta.env.DEV) console.error('Error sending order confirmation:', error)
+  return { result: data, error }
+}
+
 async function updateAdminOrder(orderId, fields) {
   const access = await ensureAdminAccess()
   if (!access.ok) return { error: access.error.message }

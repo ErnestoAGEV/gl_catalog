@@ -1,4 +1,6 @@
-import { getAdminOrders, updateAdminOrderStatus, updateAdminOrderShipping, getProductById, getState } from '../../store/index.js'
+import { getAdminOrders, updateAdminOrderStatus, updateAdminOrderShipping, sendOrderConfirmation, getProductById, getState } from '../../store/index.js'
+import { orderConfirmationEmail } from './orderEmail.js'
+import { BRAND } from '../../utils/config.js'
 import { splitGalleryImages } from '../../utils/productImages.js'
 import { isPerfumeCategory } from './adminProductsData.js'
 import { formatMoney } from '../../utils/format.js'
@@ -360,6 +362,7 @@ export function pageAdminOrders(state) {
                   <p class="font-semibold text-ink text-[15px] truncate">${esc(order.customer_name)||'Sin nombre'}</p>
                   <p class="text-[13px] text-brand tnum">${esc(order.customer_whatsapp)||'Sin teléfono'}</p>
                   ${order.customer_email ? `<p class="text-[12.5px] text-muted truncate">${esc(order.customer_email)}</p>` : ''}
+                  ${order.confirmation_sent_at ? `<p class="text-[11.5px] text-ok">Correo de confirmación enviado</p>` : ''}
                 </div>
               </div>
             </div>
@@ -599,6 +602,15 @@ export function pageAdminOrders(state) {
                 return
               }
               showToast(`Estado actualizado a "${(STATUS_META[newStatus] || {}).label || newStatus}"`, 'success')
+              if (newStatus === 'completado' && order.customer_email && !order.confirmation_sent_at) {
+                const { result, error: mailError } = await sendOrderConfirmation(order.id, orderConfirmationEmail(order, BRAND.whatsapp))
+                if (result === 'sent') {
+                  order.confirmation_sent_at = new Date().toISOString()
+                  showToast(`Correo de confirmación enviado a ${esc(order.customer_email)}`, 'success')
+                } else if (mailError || result === 'no_key') {
+                  showToast('El pedido se actualizó, pero no se pudo enviar el correo al cliente', 'error')
+                }
+              }
             })
           })
         })
