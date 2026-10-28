@@ -1,6 +1,7 @@
 import { adminLogout, addProduct, updateProduct, deleteProduct, uploadProductImage, getCategoryNames, subscribe } from '../../store/index.js'
 import { navigate } from '../../core/router.js'
 import { isInfiniteStock } from '../../utils/stock.js'
+import { rankProducts } from '../../store/searchRank.js'
 import { on, qs, lockScroll, unlockScroll } from '../../utils/dom.js'
 import { showToast } from '../../utils/toast.js'
 import { parseList, isPerfumeCategory, isShoeCategory } from './adminProductsData.js'
@@ -439,12 +440,12 @@ export function pageAdminProducts(state) {
         if (kpiOut) kpiOut.textContent = state.products.filter(p => !isInfiniteStock(p.stock) && stockAsNumber(p.stock) <= 0).length
 
         const term = currentSearchTerm.toLowerCase()
-        const filtered = state.products.filter(p => {
-          const matchesTerm = !term
-            || p.name.toLowerCase().includes(term)
-            || p.type.toLowerCase().includes(term)
-            || (p.badge && p.badge.toLowerCase().includes(term))
-
+        // El mismo buscador de la tienda (sinonimos, plurales, errores de dedo),
+        // con borradores; con texto puesto, en orden de relevancia.
+        // Al final, lo que trae el texto a media palabra: el admin busca por clave ("zwk" -> WZWK).
+        const ranked = term ? rankProducts(state.products, term, { includeDrafts: true }) : state.products
+        const pool = term ? [...new Set([...ranked, ...state.products.filter(p => p.name.toLowerCase().includes(term))])] : ranked
+        const filtered = pool.filter(p => {
           const matchesType = currentFilters.type === 'all' || p.type === currentFilters.type
 
           const isPublished = p.badge !== 'Borrador'
@@ -460,7 +461,7 @@ export function pageAdminProducts(state) {
             || (currentFilters.stock === 'low' && (!infinite && qty > 0 && qty <= 10))
             || (currentFilters.stock === 'out' && (!infinite && qty <= 0))
 
-          return matchesTerm && matchesType && matchesStatus && matchesStock
+          return matchesType && matchesStatus && matchesStock
         })
 
         const hasActiveFilters = Boolean(term)
