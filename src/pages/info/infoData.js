@@ -158,8 +158,8 @@ export const infoPages = {
         body: 'Es nuestro canal principal. Por ahí resolvemos dudas de tallas, apartamos prendas, cerramos pedidos y damos seguimiento a los envíos.',
       },
       {
-        h: 'Instagram',
-        body: 'Publicamos lo que va llegando en @glboutiquecol. Si viste algo ahí y lo quieres, mándanos la foto por WhatsApp y te decimos si hay tallas.',
+        h: 'Instagram y Facebook',
+        body: 'Publicamos lo que va llegando en Instagram (@glboutiquecol) y en nuestra página de Facebook. Si viste algo ahí y lo quieres, mándanos la foto por WhatsApp y te decimos si hay tallas.',
       },
     ],
     showStores: true,

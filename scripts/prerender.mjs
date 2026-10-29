@@ -13,7 +13,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { categoryLabel, getSeoForRoute } from '../src/core/routeSeo.js'
 import { infoPages } from '../src/pages/info/infoData.js'
-import { INSTAGRAM_URL, STORE_PHONE, stores, heroSlides as defaultHeroSlides } from '../src/pages/home/homeData.js'
+import { INSTAGRAM_URL, FACEBOOK_URL, STORE_PHONE, stores, heroSlides as defaultHeroSlides } from '../src/pages/home/homeData.js'
 import { resolveHomeContent } from '../src/pages/home/homeContent.js'
 import { heroLeftHtml, heroRightHtml, categoriesHtml, statsHtml, manifestoHtml, slideCountHtml, reviewsHtml } from '../src/pages/home/homeSections.js'
 import { reviews } from '../src/pages/home/homeData.js'
@@ -981,7 +981,7 @@ const brandLd = jsonLd({
   areaServed: { '@type': 'Country', name: 'MX' },
   // Perfiles que confirman la entidad desde fuera. Solo los reales: un sameAs
   // inventado es peor que ninguno.
-  sameAs: [INSTAGRAM_URL, ...stores.map((store) => store.mapUrl)],
+  sameAs: [INSTAGRAM_URL, FACEBOOK_URL, ...stores.map((store) => store.mapUrl)],
   contactPoint: {
     '@type': 'ContactPoint',
     contactType: 'customer service',
@@ -1146,7 +1146,7 @@ const llms = `# G&L — Boutique de ropa para hombre, desde 1995
 - [Sucursales](${absolute('/sucursales')}): las dos tiendas físicas, con direcciones y horarios
 - [Envíos y formas de pago](${absolute('/envios')}): costos, tiempos y métodos de pago
 - [Cambios](${absolute('/cambios')}): política de cambios — sin reembolso en efectivo, 8 días
-- [Contacto](${absolute('/contacto')}): WhatsApp e Instagram
+- [Contacto](${absolute('/contacto')}): WhatsApp, Instagram y Facebook
 
 ## Categorías
 
@@ -1164,6 +1164,7 @@ ${stores
 
 Teléfono y WhatsApp: ${STORE_PHONE}
 Instagram: ${INSTAGRAM_URL}
+Facebook: ${FACEBOOK_URL}
 
 ## Datos que conviene citar bien
 
