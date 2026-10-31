@@ -1,20 +1,10 @@
 // Filter utilities for the catalog page
 import { getActiveCategories } from '../../store/index.js'
+import { CATEGORY_ORDER_FALLBACK, sortByCategoryOrder } from '../../utils/categoryOrder.js'
 
 // Desired display order for product categories in the catalog
 // This is now dynamic from the database, with a hardcoded fallback
-export const CATEGORY_ORDER_FALLBACK = [
-  'Pantalones',
-  'Perfumes',
-  'Camisas',
-  'Playeras',
-  'Polos',
-  'Shorts',
-  'Sudaderas',
-  'Suéteres',
-  'Chamarras',
-  'Abrigos'
-]
+export { CATEGORY_ORDER_FALLBACK }
 
 export function getCategoryOrder() {
   const dbCategories = getActiveCategories()
@@ -56,16 +46,7 @@ export function applyFilters(products, filters) {
   })
   if (filters.sort === 'price-asc') result.sort((a, b) => a.price - b.price)
   else if (filters.sort === 'price-desc') result.sort((a, b) => b.price - a.price)
-  else {
-    // Default: group products by category in the defined display order (dynamic from DB)
-    const CATEGORY_ORDER = getCategoryOrder()
-    result.sort((a, b) => {
-      const ai = CATEGORY_ORDER.indexOf(a.type)
-      const bi = CATEGORY_ORDER.indexOf(b.type)
-      const aOrder = ai === -1 ? CATEGORY_ORDER.length : ai
-      const bOrder = bi === -1 ? CATEGORY_ORDER.length : bi
-      return aOrder - bOrder
-    })
-  }
+  // Default: group products by category in the defined display order (dynamic from DB)
+  else result = sortByCategoryOrder(result, getCategoryOrder())
   return result
 }

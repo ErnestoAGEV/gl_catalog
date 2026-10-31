@@ -13,6 +13,11 @@
     <meta name="robots" content="index,follow" />
     <!-- canonical is set dynamically by seo.js per route — do NOT hardcode here -->
 
+    <!-- Catalogo y fotos salen de Supabase: abrir la conexion ya. Dos porque las
+         fotos van sin CORS y el fetch de datos con CORS, y no comparten socket. -->
+    <link rel="preconnect" href="https://bcnfbrhcubpysqpyhbvf.supabase.co" />
+    <link rel="preconnect" href="https://bcnfbrhcubpysqpyhbvf.supabase.co" crossorigin />
+
     <!-- Preload the first hero image (LCP) — keep in sync with heroSlides[0] in homeData.js.
          Las diapositivas 2 y 3 van en prioridad baja: no se ven hasta que el carrusel
          avanza, y en prioridad normal se llevaban 87 KB del arranque compitiendo con

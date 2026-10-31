@@ -30,6 +30,7 @@ import { isInStock } from '../src/utils/stock.js'
 import { relatedProducts } from '../src/utils/related.js'
 import { brandIndex, brandIntro } from '../src/utils/brands.js'
 import { isPerfumeCategory } from '../src/pages/admin/adminProductsData.js'
+import { CATEGORY_ORDER_FALLBACK, sortByCategoryOrder } from '../src/utils/categoryOrder.js'
 
 const BASE_URL = 'https://www.glboutique.com.mx'
 const DIST = 'dist'
@@ -154,8 +155,13 @@ const headTemplate = template.slice(0, appOpenAt + APP_OPEN.length)
 const homeShell = template.slice(appOpenAt + APP_OPEN.length, shellEndAt)
 const tail = template.slice(shellEndAt)
 
+const HERO_PRELOAD = /<!-- Preload the first hero image[\s\S]*?-->\s*<link\s+rel="preload"\s+as="image"[\s\S]*?\/>/
+if (!HERO_PRELOAD.test(headTemplate)) {
+  throw new Error('No encuentro el preload del hero en dist/index.html — revisa HERO_PRELOAD')
+}
+
 /** Reescribe el <head> de la plantilla con los metadatos de una ruta. */
-function buildHead({ title, description, robots, canonical, image, images, extraLd, ogType, preloadImage }) {
+function buildHead({ title, description, robots, canonical, image, images, extraLd, ogType, preloadImage, keepHeroPreload = false }) {
   let head = headTemplate
 
   // Ojo: el reemplazo va SIEMPRE como funcion. Con un string, JS expande `$&`,
@@ -164,6 +170,10 @@ function buildHead({ title, description, robots, canonical, image, images, extra
   const sub = (pattern, text) => {
     head = head.replace(pattern, () => text)
   }
+
+  // La foto del hero solo se ve en la home; en el resto competia en prioridad
+  // alta con la foto que de verdad pinta la pagina.
+  if (!keepHeroPreload) sub(HERO_PRELOAD, '')
 
   sub(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(title)}</title>`)
 
@@ -280,7 +290,7 @@ function productGrid(items) {
         i < EAGER_GRID_IMAGES ? 'fetchpriority="high"' : 'loading="lazy"'
       return `<li>
                 <a href="${productPath(p)}" class="block">
-                  <img src="${escapeHtml(p.image_url || '/placeholder.webp')}" alt="${escapeHtml(p.name)}" width="600" height="800" ${prioridad} decoding="async" class="w-full h-auto rounded-xl object-cover">
+                  <img src="${escapeHtml(p.images?.[0] || p.image_url || '/placeholder.webp')}" alt="${escapeHtml(p.name)}" width="600" height="800" ${prioridad} decoding="async" class="w-full h-auto rounded-xl object-cover">
                   <h2 class="mt-3 block text-[14px] font-medium">${escapeHtml(p.name)}</h2>
                   <span class="block font-mono text-[13px] text-ink/60">$${escapeHtml(p.price)} MXN</span>
                 </a>
@@ -490,11 +500,13 @@ const CAMPOS = 'id,name,price,original_price,type,image_url,images,description,s
 // funcionando con created_at, como hasta ahora.
 async function fetchProducts() {
   try {
-    return await supabaseSelect('products', `select=${CAMPOS},updated_at`)
+    // Mismo orden que loadProducts() en el navegador: si no, la parrilla
+    // prerenderizada y la del JS piden fotos distintas.
+    return await supabaseSelect('products', `select=${CAMPOS},updated_at&order=created_at.desc`)
   } catch (err) {
     if (!String(err.message).includes('updated_at')) throw err
     console.warn('[prerender] Sin columna updated_at: el sitemap usa created_at. Corre supabase/add_updated_at.sql')
-    return supabaseSelect('products', `select=${CAMPOS}`)
+    return supabaseSelect('products', `select=${CAMPOS}&order=created_at.desc`)
   }
 }
 
@@ -507,6 +519,17 @@ if (!SUPABASE_URL) {
 }
 
 const categories = [...new Set(products.map((p) => p.type).filter(Boolean))].sort()
+
+// Orden "Destacados" de /catalog, el mismo que aplica el JS (getCategoryOrder).
+let categoryOrder = CATEGORY_ORDER_FALLBACK
+if (SUPABASE_URL) {
+  try {
+    const rows = await supabaseSelect('categories', 'select=name&active=eq.true&order=display_order.asc')
+    if (rows.length) categoryOrder = rows.map((r) => r.name)
+  } catch (err) {
+    console.warn('[prerender] categories no disponible; /catalog usa el orden por defecto:', err.message)
+  }
+}
 
 const routes = []
 
@@ -587,7 +610,7 @@ routes.push({
             <ul class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
               ${brands.map((b) => `<li><a class="ul-link text-[15px] font-medium" href="/marca/${b.slug}">${escapeHtml(b.name)}</a></li>`).join('\n              ')}
             </ul>
-            ${productGrid(products)}`),
+            ${productGrid(sortByCategoryOrder(products, categoryOrder))}`),
   ld: [
     {
       '@context': 'https://schema.org',
@@ -654,7 +677,7 @@ for (const brand of brands) {
             ${breadcrumbNav(trail)}
             <h1 class="font-heading font-[800] text-[clamp(40px,7vw,88px)] leading-[0.9] tracking-[-0.03em] mb-6">${escapeHtml(brand.name)}</h1>
             <p class="text-[17px] text-ink/70 max-w-[640px] leading-relaxed mb-10">${escapeHtml(brandIntro(brand.name, brand.items))}</p>
-            ${productGrid(brand.items)}`),
+            ${productGrid(sortByCategoryOrder(brand.items, categoryOrder))}`),
     ld: [
       {
         '@context': 'https://schema.org',
@@ -1023,6 +1046,7 @@ for (const route of routes) {
     // Solo en la ficha: es la unica plantilla con una imagen que manda sobre el
     // resto. En el catalogo, precargar una de 239 no ayuda a nadie.
     preloadImage: route.path.startsWith('/producto/') ? route.image : undefined,
+    keepHeroPreload: route.path === '/',
     extraLd,
   })
 

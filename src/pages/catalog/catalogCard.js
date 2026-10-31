@@ -11,6 +11,10 @@ document.addEventListener('pointerover', (e) => {
   if (alt) { alt.src = alt.dataset.src; alt.removeAttribute('data-src') }
 })
 
+// Las que caen sobre el pliegue: mismas 4 que el prerender (EAGER_GRID_IMAGES),
+// asi la foto ya va en camino desde el HTML y aqui sale de la cache.
+const EAGER_CARDS = 4
+
 export function skeletonCard() {
   return `
     <div class="block">
@@ -76,7 +80,7 @@ export function productCard(p, idx) {
   return `
     <a href="${productPath(p)}" class="pcard group block" data-product-id="${p.id}" style="--i:${idx}">
       <div class="pimg-wrap${isPerfume ? ' bg-white' : ''}">
-        <img src="${img1}" alt="${p.name}" class="${imgClass}" loading="lazy" decoding="async" />
+        <img src="${img1}" alt="${p.name}" class="${imgClass}" ${idx < EAGER_CARDS ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async" />
         <img data-src="${img2}" alt="" class="${imgAltClass}" loading="lazy" decoding="async" />
         <div class="badge-wrap">${badges.join('')}</div>
         <div class="hidden md:block absolute top-3 right-3 font-mono text-[11px] tracking-[0.2em] uppercase text-ink/70 bg-paper/80 backdrop-blur px-2 py-1 rounded-full" aria-hidden="true">${ord}</div>
