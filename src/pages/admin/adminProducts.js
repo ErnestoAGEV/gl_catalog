@@ -6,7 +6,7 @@ import { on, qs, lockScroll, unlockScroll } from '../../utils/dom.js'
 import { showToast } from '../../utils/toast.js'
 import { parseList, isPerfumeCategory, isShoeCategory } from './adminProductsData.js'
 import { productCard, productCardMobile } from './adminProductCard.js'
-import { productFormHTML } from './adminProductForm.js'
+import { productFormHTML, colorBadgesHTML } from './adminProductForm.js'
 import { productBrand, productModel } from '../../utils/productCopy.js'
 import { confirmDelete } from './adminConfirm.js'
 import { ICON } from './adminIcons.js'
@@ -55,7 +55,8 @@ export function pageAdminProducts(state) {
   const allTypes = [...new Set(state.products.map(p => (p.type || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'))
   
   // Extract unique colors from all products (passed to form for quick-select badges)
-  const allColors = [...new Set(state.products.flatMap(p => p.colors || []).map(c => c.trim()))].sort()
+  const collectColors = () => [...new Set(state.products.flatMap(p => p.colors || []).map(c => c.trim()))].sort()
+  let allColors = collectColors()
   const allBrands = [...new Set(state.products.map(p => productBrand(p.name)))].filter(b => b !== 'G&L').sort()
 
   // Get dynamic categories from DB (falls back to hardcoded in the form)
@@ -525,6 +526,10 @@ export function pageAdminProducts(state) {
       const showForm = (editing = false) => {
         savedScrollPos = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0
         isEditing = editing
+        // La pagina se pinta una sola vez; si los productos llegaron despues, la paleta salia vacia.
+        allColors = collectColors()
+        qs(root, '#color-badges').innerHTML = colorBadgesHTML(allColors)
+        updateColorBadges()
         // form.reset() no vacia un input hidden: el id del ultimo producto editado
         // se quedaba y "Nuevo producto" terminaba sobreescribiendolo. Editar lo vuelve a poner.
         form.elements.id.value = ''

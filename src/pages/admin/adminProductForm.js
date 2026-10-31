@@ -14,6 +14,14 @@ import { ICON } from './adminIcons.js'
  * @param {string[]} [allBrands] - Existing brands, for the datalist
  * @param {string[]} [dynamicCategories] - Categories loaded from DB (falls back to CATEGORY_OPTIONS)
  */
+export function colorBadgesHTML(allColors) {
+  return allColors.length > 0 ? allColors.map(color => `
+    <button type="button" class="px-2.5 py-1 rounded-lg border border-line bg-canvas text-[12px] font-medium text-body hover:border-line-strong transition-colors" data-color-badge="${color}">
+      ${color}
+    </button>
+  `).join('') : '<span class="text-[12px] text-faint italic">No hay colores registrados</span>'
+}
+
 export function productFormHTML(allColors, dynamicCategories, allBrands = []) {
   const brandOptions = allBrands.map(b => `<option value="${b}"></option>`).join('')
   const badgeOptions = BADGE_OPTIONS.map(b =>
@@ -188,12 +196,8 @@ export function productFormHTML(allColors, dynamicCategories, allBrands = []) {
 
               <div id="existing-colors-container" class="mb-3">
                 <p class="eyebrow text-faint mb-1.5">Paleta guardada</p>
-                <div class="flex flex-wrap gap-1.5">
-                  ${allColors.length > 0 ? allColors.map(color => `
-                    <button type="button" class="px-2.5 py-1 rounded-lg border border-line bg-canvas text-[12px] font-medium text-body hover:border-line-strong transition-colors" data-color-badge="${color}">
-                      ${color}
-                    </button>
-                  `).join('') : '<span class="text-[12px] text-faint italic">No hay colores registrados</span>'}
+                <div id="color-badges" class="flex flex-wrap gap-1.5">
+                  ${colorBadgesHTML(allColors)}
                 </div>
               </div>
 
