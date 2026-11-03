@@ -57,8 +57,13 @@ export function getSeoForRoute(path, basePath, state) {
   if (basePath.startsWith('/marca/')) {
     const marca = findBrandBySlug(state?.products || [], basePath.split('/marca/')[1])
     if (marca) {
+      // La gente busca "pantalones paddocks", "oaktree camisas": el tipo va en el title.
+      const cuenta = {}
+      for (const p of marca.items) if (p.type) cuenta[p.type] = (cuenta[p.type] || 0) + 1
+      const tipos = Object.keys(cuenta).sort((a, b) => cuenta[b] - cuenta[a]).slice(0, 2)
+      const prefijo = tipos.map((t, i) => (i ? t.toLowerCase() : t)).join(' y ')
       return {
-        title: `${marca.name} para hombre | G&L`,
+        title: `${prefijo ? `${prefijo} ${marca.name}` : marca.name} para hombre | G&L`,
         description:
           `${marca.items.length} piezas de ${marca.name} para hombre. ` +
           `Precios, tallas y envío a todo México; compra en línea o por WhatsApp.`,
