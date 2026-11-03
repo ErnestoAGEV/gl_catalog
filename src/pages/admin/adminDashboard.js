@@ -334,7 +334,7 @@ export function pageAdminDashboard(state) {
                   <div class="space-y-3.5">
                     ${d.top.length > 0 ? d.top.map((t, i) => `<div class="flex items-center gap-3">
                       <span class="w-6 h-6 rounded-md bg-canvas border border-line flex items-center justify-center eyebrow text-muted tnum shrink-0">${i + 1}</span>
-                      <p class="flex-1 min-w-0 text-[13.5px] font-medium text-body truncate">${t[0]}</p>
+                      <p class="flex-1 min-w-0 text-[13.5px] font-medium text-body truncate">${esc(t[0])}</p>
                       <span class="text-[12.5px] font-semibold text-ink tnum shrink-0">${t[1]} uds</span>
                     </div>`).join('') : '<p class="text-[13px] text-muted">Sin datos en el periodo.</p>'}
                   </div>

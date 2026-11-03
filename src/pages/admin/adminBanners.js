@@ -204,6 +204,7 @@ export function pageAdminBanners() {
         const cats = getCategories().filter(c => c.active !== false)
         const options = [
           ['/catalog', 'Toda la tienda'],
+          // not-html: texto plano, se escapa al pintar con esc(l)
           ...cats.map(c => [`/categoria/${encodeURIComponent(c.name)}`, `Categoría: ${c.name}`]),
           ['/sucursales', 'Sucursales'],
           ['/nosotros', 'Nosotros'],

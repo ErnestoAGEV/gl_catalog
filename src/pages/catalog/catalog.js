@@ -68,7 +68,7 @@ export function pageCatalog(initialState) {
     ? `Solo <span class="text-brand">${safeInitialType}</span>.`
     : `Todo el <span class="text-brand">cat\u00E1logo</span>.`
   let heroDesc = initialType
-    ? (TYPE_DESCRIPTIONS[initialType] || `Explora nuestra selecci\u00F3n de ${initialType.toLowerCase()}.`)
+    ? (TYPE_DESCRIPTIONS[initialType] || `Explora nuestra selecci\u00F3n de ${safeInitialType.toLowerCase()}.`)
     : 'Camisas, denim, polos, knits y fragancias. Elegidas a mano en Colima \u2014 al mejor precio.'
 
   // La marca manda sobre la categoria: /marca/wrangler no es una categoria.

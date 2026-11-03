@@ -1,5 +1,6 @@
 import { getAdminOrders } from '../../store/index.js'
 import { formatMoney } from '../../utils/format.js'
+import { escapeHtml as esc } from '../../utils/sanitize.js'
 import { ICON, statCard } from './adminIcons.js'
 
 function isSuccessful(status) {
@@ -205,7 +206,7 @@ export function pageAdminReportes(state) {
             const barW = Math.max(4, (val / maxVal) * 100)
             return `<div>
               <div class="flex items-center justify-between mb-1.5">
-                <span class="text-[13px] font-medium text-body truncate">${cat}</span>
+                <span class="text-[13px] font-medium text-body truncate">${esc(cat)}</span>
                 <span class="text-[12.5px] font-semibold text-ink tnum shrink-0 ml-3">${formatMoney(val)} <span class="text-faint font-normal">(${pct}%)</span></span>
               </div>
               <div class="h-2.5 bg-canvas rounded-full overflow-hidden">
@@ -240,7 +241,7 @@ export function pageAdminReportes(state) {
                   <span class="w-6 h-6 rounded-md bg-canvas border border-line flex items-center justify-center eyebrow text-muted tnum">${i + 1}</span>
                 </td>
                 <td class="py-3 pr-3">
-                  <span class="text-[13.5px] font-medium text-body">${p.name}</span>
+                  <span class="text-[13.5px] font-medium text-body">${esc(p.name)}</span>
                 </td>
                 <td class="py-3 pr-3 text-right">
                   <span class="text-[13px] font-semibold text-ink tnum">${p.qty}</span>
@@ -267,7 +268,7 @@ export function pageAdminReportes(state) {
               <div class="flex items-center justify-between mb-1.5">
                 <span class="flex items-center gap-2 text-[13px] font-medium text-body">
                   <span class="w-8 h-8 rounded-[9px] bg-brand-tint-2 text-brand flex items-center justify-center shrink-0">${getPayIcon(method)}</span>
-                  <span class="truncate">${method}</span>
+                  <span class="truncate">${esc(method)}</span>
                 </span>
                 <span class="text-[12.5px] font-semibold text-ink tnum shrink-0 ml-3">${count} <span class="text-faint font-normal">(${pct}%)</span></span>
               </div>

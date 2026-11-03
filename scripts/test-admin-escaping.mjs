@@ -8,7 +8,7 @@ import { escapeHtml, sanitizeText } from '../src/utils/sanitize.js'
 
 const DIR = 'src/pages/admin'
 // Campos que llena el cliente, no el admin
-const FIELDS = /\$\{\s*(?:esc\()?\s*[\w.?]*(customer_name|customer_whatsapp|customerName|customerWhatsapp|\.address|sub\.email|c\.name|c\.whatsapp|initials\()/g
+const FIELDS = /\$\{\s*(?:esc\()?\s*[\w.?]*(customer_name|customer_whatsapp|customerName|customerWhatsapp|\.address|sub\.email|c\.name|c\.whatsapp|initials\(|method\b)/g
 
 const leaks = []
 for (const file of readdirSync(DIR).filter(f => f.endsWith('.js'))) {
