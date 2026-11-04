@@ -6,6 +6,7 @@
 // description era la misma plantilla para los 235. Esto no sustituye a una
 // descripcion escrita a mano —cuando el campo `description` tenga texto, ese
 // gana— pero al menos cada producto dice algo distinto y util.
+import { groupOf } from './related.js'
 
 // Largo del id que se pega al final del slug. 8 hex de un uuid v4 dan 4 mil
 // millones de combinaciones: de sobra para 235 productos, y no hace falta que
@@ -25,7 +26,7 @@ const TYPE_SINGULAR = {
 // Las fragancias guardan la presentacion ("100 ml") en el campo de tallas
 const isFragrance = (type) => String(type || '').startsWith('Perfume')
 
-const LETTER_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
+const LETTER_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'XXXXL']
 
 const MAX_LENGTH = 158
 
@@ -104,6 +105,29 @@ export function sortSizes(sizes) {
     const [gb, vb] = rank(b)
     return ga - gb || va - vb || a.localeCompare(b, 'es')
   })
+}
+
+// Filtro de tallas del catalogo: en "Todo" se juntaban 25 tallas de cintura,
+// letra, calzado y ml. Se agrupan por tipo de prenda, no por el valor: el 28
+// de un pantalon y el 28 de un zapato no son la misma talla.
+const SIZE_GROUP_LABELS = [['top', 'Ropa'], ['other', 'Otras'], ['bottom', 'Cintura'], ['shoes', 'Calzado'], ['perfume', 'Perfume']]
+
+export function sizeGroups(products) {
+  const byGroup = new Map()
+  for (const p of products || []) {
+    const type = groupOf(p.type)
+    for (const raw of p.sizes || []) {
+      const size = String(raw).trim()
+      // La letra siempre es talla de ropa y los ml de perfume, sea cual sea la prenda
+      const g = LETTER_ORDER.includes(size.toUpperCase()) ? 'top' : /\d\s*ml$/i.test(size) ? 'perfume' : type
+      if (!byGroup.has(g)) byGroup.set(g, [])
+      byGroup.get(g).push(size)
+    }
+  }
+  return SIZE_GROUP_LABELS
+    .filter(([g]) => byGroup.has(g))
+    .map(([g, label]) => ({ label, sizes: sortSizes(byGroup.get(g)) }))
+    .filter(x => x.sizes.length)
 }
 
 /** "Azul", "Azul y Negro", "Azul, Negro y Gris" */

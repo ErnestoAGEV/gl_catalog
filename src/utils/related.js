@@ -14,7 +14,7 @@
  */
 import { isPerfumeCategory, isShoeCategory } from '../pages/admin/adminProductsData.js'
 
-function groupOf(type) {
+export function groupOf(type) {
   if (isPerfumeCategory(type)) return 'perfume'
   if (isShoeCategory(type)) return 'shoes'
   if (/pantal|short|bermuda|jean|chino/i.test(type || '')) return 'bottom'

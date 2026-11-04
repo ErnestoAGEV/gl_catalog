@@ -13,6 +13,7 @@ import {
   sizeSummary,
   socialImage,
   sortSizes,
+  sizeGroups,
 } from '../src/utils/productCopy.js'
 
 // ── marca ──
@@ -213,3 +214,28 @@ assert.deepEqual(sortSizes(['XL', 'S', 'M', 'L', 'XXL']), ['S', 'M', 'L', 'XL', 
 assert.deepEqual(sortSizes(['100 ml', 'L', '32', '80 ml', 'M', '28']), ['28', '32', 'M', 'L', '80 ml', '100 ml'])
 assert.deepEqual(sortSizes(['M', 'M', ' S ', '']), ['S', 'M'], 'sin duplicados ni vacios')
 assert.deepEqual(sortSizes(undefined), [])
+// XXXXL va despues de XXXL, no despues de los ml
+assert.deepEqual(sortSizes(['XXXXL', '100 ml', 'XXXL', 'S']), ['S', 'XXXL', 'XXXXL', '100 ml'])
+
+// ── filtro de tallas agrupado por tipo de prenda ──
+const grupos = sizeGroups([
+  { type: 'Polos', sizes: ['M', 'XXXXL', 'S'] },
+  { type: 'Pantalones', sizes: ['32', '28'] },
+  { type: 'Shorts', sizes: ['30'] },
+  { type: 'Zapatos', sizes: ['28', '26'] },
+  { type: 'Perfumes', sizes: ['100 ml'] },
+])
+assert.deepEqual(grupos, [
+  { label: 'Ropa', sizes: ['S', 'M', 'XXXXL'] },
+  { label: 'Cintura', sizes: ['28', '30', '32'] },
+  { label: 'Calzado', sizes: ['26', '28'] },
+  { label: 'Perfume', sizes: ['100 ml'] },
+])
+// Shorts con talla de letra: la letra va con la ropa, no con la cintura
+assert.deepEqual(sizeGroups([{ type: 'Shorts', sizes: ['M', '30'] }, { type: 'Polos', sizes: ['S'] }]), [
+  { label: 'Ropa', sizes: ['S', 'M'] },
+  { label: 'Cintura', sizes: ['30'] },
+])
+// Una sola clase de prenda: un solo grupo
+assert.deepEqual(sizeGroups([{ type: 'Pantalones', sizes: ['30'] }]), [{ label: 'Cintura', sizes: ['30'] }])
+assert.deepEqual(sizeGroups([]), [])

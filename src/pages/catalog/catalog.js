@@ -1,5 +1,5 @@
 import { searchProducts, setSearchQuery, getSearchQuery, subscribe, getState } from '../../store/index.js'
-import { findProductByPath, productBrand, productPath, sortSizes } from '../../utils/productCopy.js'
+import { findProductByPath, productBrand, productPath, sortSizes, sizeGroups } from '../../utils/productCopy.js'
 import { brandSlug, brandIntro } from '../../utils/brands.js'
 import { formatMoney } from '../../utils/format.js'
 import { on, qs, lockScroll, unlockScroll } from '../../utils/dom.js'
@@ -501,17 +501,22 @@ export function pageCatalog(initialState) {
         size: (v) => escapeHtml(v),
         color: (v) => `<span class="swatch-chip" style="background:${escapeHtml(colorNameToHex(v))}"></span><span class="name">${escapeHtml(v)}</span>`,
       }
-      const syncPickers = (lists) => {
+      const pickButton = (name, v) => `<button type="button" class="${name === 'size' ? 'size-pill' : 'swatch-btn min-h-11'}" data-pick="${name}" data-val="${escapeHtml(v)}" aria-pressed="false">${pickerInner[name](v)}</button>`
+      const syncPickers = (lists, groups = {}) => {
         for (const [name, items] of Object.entries(lists)) {
           const wrap = root.querySelector(`#${name}-picks`)
           const sel = root.querySelector(`#filter-controls-mobile select[name="${name}"]`)
           if (!wrap || !sel) continue
           // Perfumes no tiene colores: sin opciones la seccion entera sobra
           wrap.closest('fieldset').hidden = !items.length
-          const key = items.join('|')
+          // Tallas de varios tipos (Ropa, Cintura, Calzado, Perfume): cada grupo con su etiqueta
+          const grouped = groups[name] && groups[name].length > 1 ? groups[name] : null
+          const key = grouped ? grouped.map(g => `${g.label}:${g.sizes.join(',')}`).join('|') : items.join('|')
           if (wrap.dataset.items !== key) {
             wrap.dataset.items = key
-            wrap.innerHTML = items.map(v => `<button type="button" class="${name === 'size' ? 'size-pill' : 'swatch-btn min-h-11'}" data-pick="${name}" data-val="${escapeHtml(v)}" aria-pressed="false">${pickerInner[name](v)}</button>`).join('')
+            wrap.innerHTML = grouped
+              ? grouped.map(g => `<div class="w-full"><p class="font-mono text-[11px] tracking-[0.18em] uppercase text-ink/55 mb-2">${escapeHtml(g.label)}</p><div class="flex flex-wrap gap-2">${g.sizes.map(v => pickButton(name, v)).join('')}</div></div>`).join('')
+              : items.map(v => pickButton(name, v)).join('')
           }
           wrap.querySelectorAll('[data-pick]').forEach(b => {
             const on = b.dataset.val === sel.value
@@ -556,10 +561,13 @@ export function pageCatalog(initialState) {
         const scopeTypes = grid.dataset.multiTypeFilter ? grid.dataset.multiTypeFilter.split(',') : (filters.type ? [filters.type] : null)
         const scoped = publicProducts.filter(p => (!scopeTypes || scopeTypes.includes(p.type)) && (!activeBrand || isBrandOf(p, activeBrand)))
         const withChosen = (list, value) => (value && !list.includes(value) ? [...list, value] : list)
+        const groupsOfSizes = sizeGroups(scoped)
+        // Una talla ya elegida que no esta en esta vista se queda a la vista
+        if (filters.size && !groupsOfSizes.some(g => g.sizes.includes(filters.size))) groupsOfSizes.push({ label: 'Elegida', sizes: [filters.size] })
         syncPickers({
           size: withChosen(sortSizes(scoped.flatMap(p => p.sizes || [])), filters.size),
           color: withChosen(uniqueSorted(scoped.flatMap(p => p.colors || [])), filters.color),
-        })
+        }, { size: groupsOfSizes })
 
         // Los chips de categoria se pintaron con la plantilla, cuando los productos
         // todavia no habian llegado de la base: sin esto se quedan en "Todo" para
