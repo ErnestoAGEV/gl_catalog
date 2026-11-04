@@ -69,3 +69,13 @@ export function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;')
 }
+
+/**
+ * decodeURIComponent que no truena: una URL mal escrita (/categoria/%E0)
+ * lanza URIError y tumbaba la pagina. Si no se puede decodificar, va tal cual.
+ * @param {string} str
+ * @returns {string}
+ */
+export function safeDecode(str) {
+  try { return decodeURIComponent(str) } catch { return str }
+}

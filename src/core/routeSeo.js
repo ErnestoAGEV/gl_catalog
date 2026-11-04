@@ -3,6 +3,7 @@
 
 import { findProductByPath, productDescription, productPath, productTitle } from '../utils/productCopy.js'
 import { findBrandBySlug } from '../utils/brands.js'
+import { safeDecode } from '../utils/sanitize.js'
 
 // "Camisas para hombre", no "Camisas en Colima": la tienda vende a todo Mexico
 // (decision del dueno, oct-2026). Colima vive solo en las paginas de sucursal.
@@ -33,7 +34,7 @@ export function getSeoForRoute(path, basePath, state) {
   }
 
   if (basePath.startsWith('/categoria/')) {
-    const category = decodeURIComponent(basePath.split('/categoria/')[1] || '')
+    const category = safeDecode(basePath.split('/categoria/')[1] || '')
     // Solo con el catalogo ya cargado: mientras llega no se sabe si existe, y
     // marcar noindex una categoria real por llegar antes que la base seria peor.
     const publicos = (state?.products || []).filter((p) => p.badge !== 'Borrador')

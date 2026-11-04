@@ -10,6 +10,7 @@
  * temprano un crawler y un comprador acaban viendo cosas distintas.
  */
 import { productBrand, sizeSummary } from './productCopy.js'
+import { safeDecode } from './sanitize.js'
 import { isPerfumeCategory } from '../pages/admin/adminProductsData.js'
 
 /** Mínimo de piezas para que una marca merezca página propia. */
@@ -52,7 +53,7 @@ export function brandIndex(products, min = MIN_PRODUCTOS_POR_MARCA) {
 
 /** Resuelve el slug de la URL a su marca. Devuelve null si no tiene página. */
 export function findBrandBySlug(products, slug, min = MIN_PRODUCTOS_POR_MARCA) {
-  const buscado = brandSlug(decodeURIComponent(slug || ''))
+  const buscado = brandSlug(safeDecode(slug || ''))
   return brandIndex(products, min).find((b) => b.slug === buscado) || null
 }
 

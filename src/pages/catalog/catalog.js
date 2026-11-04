@@ -7,7 +7,7 @@ import { navigate, normalizePath, onRouteChange } from '../../core/router.js'
 import { uniqueSorted, getFilterState, applyFilters, getCategoryOrder } from './catalogFilters.js'
 import { skeletonGrid, productCard, colorNameToHex } from './catalogCard.js'
 import { handleQuickAdd } from './catalogQuickAdd.js'
-import { escapeHtml } from '../../utils/sanitize.js'
+import { escapeHtml, safeDecode } from '../../utils/sanitize.js'
 import { BRAND } from '../../utils/config.js'
 import { applySeo } from '../../core/seo.js'
 import { getSeoForRoute } from '../../core/routeSeo.js'
@@ -43,7 +43,7 @@ export function pageCatalog(initialState) {
   const basePath = normalizePath(window.location.pathname)
   let initialType = ''
   if (basePath.startsWith('/categoria/')) {
-    initialType = decodeURIComponent(basePath.split('/categoria/')[1]) || ''
+    initialType = safeDecode(basePath.split('/categoria/')[1]) || ''
   }
 
   // Marca desde la URL. Se guarda el slug y se filtra comparando slugs, no el
@@ -51,7 +51,7 @@ export function pageCatalog(initialState) {
   // primer paint, cuando la base todavia no ha respondido — el mismo agujero
   // que dejaba las categorias mostrando el catalogo entero.
   const urlBrand = basePath.startsWith('/marca/')
-    ? brandSlug(decodeURIComponent(basePath.split('/marca/')[1] || ''))
+    ? brandSlug(safeDecode(basePath.split('/marca/')[1] || ''))
     : ''
   let activeBrand = urlBrand
   const isBrandOf = (p, slug) => brandSlug(productBrand(p.name)) === slug
@@ -1080,7 +1080,7 @@ export function pageCatalog(initialState) {
       const pendingTypeFilter = sessionStorage.getItem('gl_pending_type_filter')
       let urlTypeFilter = null
       if (basePath.startsWith('/categoria/')) {
-        urlTypeFilter = decodeURIComponent(basePath.split('/categoria/')[1]) || null
+        urlTypeFilter = safeDecode(basePath.split('/categoria/')[1]) || null
       }
       const filterToApply = pendingTypeFilter || urlTypeFilter
       if (filterToApply) {

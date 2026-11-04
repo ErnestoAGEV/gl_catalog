@@ -9,6 +9,8 @@ assert.equal(brandSlug('Wrangler'), 'wrangler')
 assert.equal(brandSlug("Collor's"), 'collor-s')
 assert.equal(brandSlug('Soul&Blues'), 'soul-blues')
 assert.equal(brandSlug('Limón Silvestre'), 'limon-silvestre')
+// Una URL mal escrita (%E0) no debe tronar
+assert.doesNotThrow(() => findBrandBySlug('%E0', []))
 
 const p = (name, type, extra = {}) => ({ id: name, name, type, price: 500, sizes: ['30', '32'], ...extra })
 
