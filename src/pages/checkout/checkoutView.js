@@ -11,7 +11,7 @@ const waIconSmall = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24
 // Cada campo con su label asociado y un hueco para su error (aria-describedby)
 function fieldHTML({ name, label, span = '', placeholder = '', autocomplete = '', attrs = '', textarea = false }) {
   const id = `co-${name}`
-  const common = `id="${id}" name="${name}" placeholder="${placeholder}" ${autocomplete ? `autocomplete="${autocomplete}"` : ''} ${attrs} class="placeholder:!text-ink/60"`
+  const common = `id="${id}" name="${name}" placeholder="${placeholder}" ${autocomplete ? `autocomplete="${autocomplete}"` : ''} ${attrs} class="placeholder:!text-ink/40"`
   return `
                 <div class="field ${span}">
                   <label for="${id}" class="!text-[11px]">${label}</label>
@@ -58,19 +58,17 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
   <div class="w-full">
 
     <!-- Hero Strip -->
-    <section class="pt-12 lg:pt-16 pb-8 border-b border-ink/10">
+    <section class="pt-6 lg:pt-16 pb-6 lg:pb-8 border-b border-ink/10">
       <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
-        <div class="flex items-center gap-3 mb-8 reveal in">
+        <div class="flex items-center gap-3 mb-4 lg:mb-8 reveal in">
           <a href="/cart" class="inline-flex items-center min-h-11 gap-2 font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55 hover:text-ink transition-colors">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
             Volver a la bolsa
           </a>
-          <span class="h-px flex-1 bg-ink/15 mx-3"></span>
-          <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55">Tiempo estimado &middot; 90 segundos</span>
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-end">
           <div class="lg:col-span-9">
-            <h1 class="font-display font-extrabold text-[clamp(64px,11vw,184px)] leading-[0.86] tracking-[-0.04em]">
+            <h1 class="font-display font-extrabold text-[clamp(48px,11vw,184px)] leading-[0.86] tracking-[-0.04em]">
               Cierra tu<br/><span class="text-brand">pedido</span>.
             </h1>
           </div>
@@ -84,7 +82,7 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
     </section>
 
     <!-- Main 2-column -->
-    <section class="py-12 lg:py-16">
+    <section class="py-6 lg:py-16">
       <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
 
@@ -114,8 +112,8 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
                 <span class="ml-auto font-mono text-[11px] tracking-[0.24em] uppercase text-brand">En curso &rarr;</span>
               </div>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-                ${fieldHTML({ name: 'name', label: 'Nombre completo', placeholder: 'Eduardo N&uacute;&ntilde;ez', autocomplete: 'name', attrs: 'required aria-required="true"' })}
-                ${fieldHTML({ name: 'whatsapp', label: 'WhatsApp (con lada si no es de M&eacute;xico)', placeholder: '312 123 4567', autocomplete: 'tel', attrs: 'type="tel" inputmode="tel" required aria-required="true"' })}
+                ${fieldHTML({ name: 'name', label: 'Nombre completo', placeholder: 'Ej. Eduardo N&uacute;&ntilde;ez', autocomplete: 'name', attrs: 'required aria-required="true"' })}
+                ${fieldHTML({ name: 'whatsapp', label: 'WhatsApp (con lada si no es de M&eacute;xico)', placeholder: 'Ej. 312 123 4567', autocomplete: 'tel', attrs: 'type="tel" inputmode="tel" required aria-required="true"' })}
               </div>
             </section>
 
@@ -153,7 +151,7 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
                   <span class="dot after:!hidden">${checkIcon}</span>
                   <div class="flex-1">
                     <div class="font-display font-bold text-[18px] leading-none tracking-[-0.02em]">Env&iacute;o a domicilio</div>
-                    <div class="meta mt-2 font-mono text-[11px] text-ink/55">2&mdash;3 d&iacute;as &middot; todo M&eacute;xico</div>
+                    <div class="meta mt-2 font-mono text-[11px] text-ink/55">3 a 4 d&iacute;as h&aacute;biles &middot; todo M&eacute;xico</div>
                   </div>
                   <div class="font-mono text-[11px] tracking-wider uppercase text-right">${freeShipping ? 'Gratis' : `Gratis desde ${formatMoney(BRAND.freeShippingMin)}`}</div>
                 </button>
@@ -178,15 +176,15 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
                 </div>
               </div>
               <div class="grid grid-cols-1 md:grid-cols-12 gap-x-6">
-                ${fieldHTML({ name: 'email', label: 'Correo (para el aviso de env&iacute;o)', span: 'md:col-span-12', placeholder: 'tucorreo@gmail.com', autocomplete: 'email', attrs: 'type="email" inputmode="email"' })}
-                ${fieldHTML({ name: 'street', label: 'Calle', span: 'md:col-span-8', placeholder: 'Av. Constituci&oacute;n', autocomplete: 'address-line1' })}
-                ${fieldHTML({ name: 'numExt', label: 'N&uacute;m. ext.', span: 'md:col-span-2', placeholder: '140' })}
-                ${fieldHTML({ name: 'numInt', label: 'N&uacute;m. int.', span: 'md:col-span-2', placeholder: '&mdash;', autocomplete: 'address-line2' })}
-                ${fieldHTML({ name: 'neighborhood', label: 'Colonia', span: 'md:col-span-6', placeholder: 'Centro', autocomplete: 'address-level3' })}
-                ${fieldHTML({ name: 'city', label: 'Ciudad', span: 'md:col-span-3', placeholder: 'Colima', autocomplete: 'address-level2' })}
-                ${fieldHTML({ name: 'zipCode', label: 'C&oacute;digo postal', span: 'md:col-span-3', placeholder: '28000', autocomplete: 'postal-code', attrs: 'inputmode="numeric" maxlength="6"' })}
-                ${fieldHTML({ name: 'state', label: 'Estado', span: 'md:col-span-6', placeholder: 'Colima', autocomplete: 'address-level1' })}
-                ${fieldHTML({ name: 'references', label: 'Referencias', span: 'md:col-span-6', placeholder: 'Casa azul, entre Hidalgo y Aldama', textarea: true })}
+                ${fieldHTML({ name: 'email', label: 'Correo (para el aviso de env&iacute;o)', span: 'md:col-span-12', placeholder: 'Ej. tucorreo@gmail.com', autocomplete: 'email', attrs: 'type="email" inputmode="email"' })}
+                ${fieldHTML({ name: 'street', label: 'Calle', span: 'md:col-span-8', placeholder: 'Ej. Av. Constituci&oacute;n', autocomplete: 'address-line1' })}
+                ${fieldHTML({ name: 'numExt', label: 'N&uacute;m. ext.', span: 'md:col-span-2', placeholder: 'Ej. 140' })}
+                ${fieldHTML({ name: 'numInt', label: 'N&uacute;m. int.', span: 'md:col-span-2', placeholder: 'Opcional', autocomplete: 'address-line2' })}
+                ${fieldHTML({ name: 'neighborhood', label: 'Colonia', span: 'md:col-span-6', placeholder: 'Ej. Centro', autocomplete: 'address-level3' })}
+                ${fieldHTML({ name: 'city', label: 'Ciudad', span: 'md:col-span-3', placeholder: 'Ej. Guadalajara', autocomplete: 'address-level2' })}
+                ${fieldHTML({ name: 'zipCode', label: 'C&oacute;digo postal', span: 'md:col-span-3', placeholder: 'Ej. 28000', autocomplete: 'postal-code', attrs: 'inputmode="numeric" maxlength="6"' })}
+                ${fieldHTML({ name: 'state', label: 'Estado', span: 'md:col-span-6', placeholder: 'Ej. Jalisco', autocomplete: 'address-level1' })}
+                ${fieldHTML({ name: 'references', label: 'Referencias', span: 'md:col-span-6', placeholder: 'Ej. Casa azul, entre Hidalgo y Aldama', textarea: true })}
               </div>
             </section>
 
@@ -218,9 +216,17 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
 
           <!-- RIGHT: Order Summary -->
           <aside class="lg:col-span-5 order-first lg:order-none">
-            <div id="checkout-summary-column">
-              ${checkoutSummaryHTML({ subtotal, discount, total, freeShipping, itemCount, coupon, upsellProducts })}
-            </div>
+            <details id="co-summary" class="group/sum" open>
+              <summary class="lg:hidden flex items-center justify-between gap-3 bg-fog rounded-lg px-5 min-h-14 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                <span id="co-summary-count" class="font-mono text-[11px] tracking-[0.2em] uppercase text-ink/70">Tu pedido &middot; ${itemCount} ${itemCount === 1 ? 'pieza' : 'piezas'}</span>
+                <span class="flex items-center gap-2 font-display font-bold text-[18px] digit-tabular"><span id="co-summary-total">${formatMoney(total)}</span>
+                  <svg class="w-4 h-4 transition-transform group-open/sum:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </span>
+              </summary>
+              <div id="checkout-summary-column" class="mt-3 lg:mt-0">
+                ${checkoutSummaryHTML({ subtotal, discount, total, freeShipping, itemCount, coupon, upsellProducts })}
+              </div>
+            </details>
           </aside>
 
         </div>
@@ -271,17 +277,17 @@ export function checkoutSummaryHTML({ subtotal, discount, total, freeShipping, i
       </div>
 
       <!-- Trust strip -->
-      <div class="grid grid-cols-3 gap-px bg-ink/10 rounded-lg overflow-hidden">
-        <div class="bg-paper p-3 sm:p-5 text-center">
-          <svg class="w-5 h-5 mx-auto mb-2 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.6-4A11.96 11.96 0 0112 2.9 11.96 11.96 0 013.4 6 12 12 0 003 9c0 5.6 3.8 10.3 9 11.6 5.2-1.3 9-6 9-11.6 0-1-.1-2-.4-3z"/></svg>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-px bg-ink/10 rounded-lg overflow-hidden">
+        <div class="bg-paper px-4 py-3 sm:p-5 flex sm:block items-center gap-3 sm:text-center">
+          <svg class="w-5 h-5 shrink-0 sm:mx-auto sm:mb-2 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.6-4A11.96 11.96 0 0112 2.9 11.96 11.96 0 013.4 6 12 12 0 003 9c0 5.6 3.8 10.3 9 11.6 5.2-1.3 9-6 9-11.6 0-1-.1-2-.4-3z"/></svg>
           <div class="font-mono text-[11px] tracking-[0.12em] uppercase leading-snug">Sin pago en l&iacute;nea</div>
         </div>
-        <div class="bg-paper p-3 sm:p-5 text-center">
-          <svg class="w-5 h-5 mx-auto mb-2 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8M8 14h5m-9 6l1.5-4A8 8 0 1112 20a8 8 0 01-3.6-.9L4 20z"/></svg>
+        <div class="bg-paper px-4 py-3 sm:p-5 flex sm:block items-center gap-3 sm:text-center">
+          <svg class="w-5 h-5 shrink-0 sm:mx-auto sm:mb-2 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8M8 14h5m-9 6l1.5-4A8 8 0 1112 20a8 8 0 01-3.6-.9L4 20z"/></svg>
           <div class="font-mono text-[11px] tracking-[0.12em] uppercase leading-snug">Confirmamos por WhatsApp</div>
         </div>
-        <div class="bg-paper p-3 sm:p-5 text-center">
-          <svg class="w-5 h-5 mx-auto mb-2 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        <div class="bg-paper px-4 py-3 sm:p-5 flex sm:block items-center gap-3 sm:text-center">
+          <svg class="w-5 h-5 shrink-0 sm:mx-auto sm:mb-2 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
           <div class="font-mono text-[11px] tracking-[0.12em] uppercase leading-snug">Transferencia o en tienda</div>
         </div>
       </div>

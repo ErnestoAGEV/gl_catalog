@@ -166,6 +166,16 @@ export function pageCheckout(state) {
       }
       setupGroup('pay-group', 'paymentMethod')
       setupGroup('dlv-group', 'deliveryMethod')
+      // Pagar al recoger solo tiene sentido recogiendo: marca la tienda sola.
+      // Y si elige envio a domicilio, el pago vuelve a transferencia.
+      root.querySelector('#pay-group')?.addEventListener('click', (e) => {
+        if (e.target.closest('.choice')?.dataset.val === 'recoger') root.querySelector('#dlv-group [data-val="tienda"]:not(.active)')?.click()
+      })
+      root.querySelector('#dlv-group')?.addEventListener('click', (e) => {
+        if (e.target.closest('.choice')?.dataset.val === 'envio') root.querySelector('#pay-group [data-val="transferencia"]:not(.active)')?.click()
+      })
+      // El resumen arranca plegado en celular: el formulario queda a la vista
+      if (window.matchMedia('(max-width: 1023px)').matches) root.querySelector('#co-summary')?.removeAttribute('open')
       const form = qs(root, '#checkout-form')
       const addressWrap = qs(root, '#address-wrap')
       const errorBox = qs(root, '#form-error')
@@ -242,6 +252,11 @@ export function pageCheckout(state) {
           attachCouponHandlers()
           attachUpsellHandlers()
         }
+        // La linea plegada del celular vive fuera del wrapper: se actualiza aparte
+        const sumTotal = root.querySelector('#co-summary-total')
+        if (sumTotal) sumTotal.textContent = formatMoney(currentTotal)
+        const sumCount = root.querySelector('#co-summary-count')
+        if (sumCount) sumCount.textContent = `Tu pedido · ${currentItemCount} ${currentItemCount === 1 ? 'pieza' : 'piezas'}`
       }
 
       const attachUpsellHandlers = () => {
