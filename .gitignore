@@ -30,3 +30,6 @@ dist-ssr
 .npmrc
 glboutique.com.mx-audit/
 .image-backup/
+
+# Bocetos del brainstorming (servidor local)
+.superpowers/
