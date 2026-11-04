@@ -175,7 +175,10 @@ export function pageCheckout(state) {
         if (e.target.closest('.choice')?.dataset.val === 'envio') root.querySelector('#pay-group [data-val="transferencia"]:not(.active)')?.click()
       })
       // El resumen arranca plegado en celular: el formulario queda a la vista
-      if (window.matchMedia('(max-width: 1023px)').matches) root.querySelector('#co-summary')?.removeAttribute('open')
+      const narrow = window.matchMedia('(max-width: 1023px)')
+      if (narrow.matches) root.querySelector('#co-summary')?.removeAttribute('open')
+      // En escritorio no hay boton para abrirlo: si la pantalla crece, se abre
+      narrow.addEventListener('change', (e) => { if (!e.matches) root.querySelector('#co-summary')?.setAttribute('open', '') })
       const form = qs(root, '#checkout-form')
       const addressWrap = qs(root, '#address-wrap')
       const errorBox = qs(root, '#form-error')

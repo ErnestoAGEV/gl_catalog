@@ -842,8 +842,12 @@ body.dark {
 
 /* Outline text */
 /* El trazo lleva color propio: con currentColor heredaba el transparent y el texto desaparecia */
-.outline-text { color: transparent; -webkit-text-stroke: 1.5px var(--color-ink); letter-spacing: -0.01em; }
-:is(.bg-ink, .text-paper) .outline-text { -webkit-text-stroke-color: var(--color-paper); }
+/* La fuente variable arma cada letra con piezas que se traslapan: con solo
+   contorno se ven las lineas internas. Se rellena con el color del fondo y el
+   contorno va debajo del relleno (paint-order), asi el relleno las tapa; por
+   eso el trazo es del doble (queda 1.5px visible por fuera). */
+.outline-text { color: var(--color-paper); -webkit-text-stroke: 3px var(--color-ink); paint-order: stroke fill; letter-spacing: -0.01em; }
+:is(.bg-ink, .text-paper) .outline-text { color: var(--color-ink); -webkit-text-stroke-color: var(--color-paper); }
 
 /* Underline link animation */
 .ul-link { position: relative; text-decoration: none; }

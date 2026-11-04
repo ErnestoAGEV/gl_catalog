@@ -8,7 +8,7 @@ import { navigate } from '../../core/router.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 import { escapeHtml } from '../../utils/sanitize.js'
 import { colorHex } from '../../utils/colors.js'
-import { relatedProducts, isLookPairing } from '../../utils/related.js'
+import { relatedProducts, isLookPairing, groupOf } from '../../utils/related.js'
 
 
 function lineRow(item, idx) {
@@ -24,7 +24,7 @@ function lineRow(item, idx) {
   const ord = String(idx + 1).padStart(2, '0')
   const sub = (p.price || 0) * (Number(item.qty) || 0)
   const hasDiscount = p.originalPrice && p.originalPrice > p.price
-  const colorHex = colorHex(item.color)
+  const swatch = colorHex(item.color)
   const sku = escapeHtml(p.sku || `GL-${String(item.productId).slice(0, 8)}`)
   const sizeLabel = isPerfumeCategory(p.type) || /\d+\s*ml$/i.test(item.size || '') ? 'Presentaci\u00F3n' : 'Talla'
 
@@ -41,7 +41,7 @@ function lineRow(item, idx) {
           </div>
           <div class="font-display font-extrabold text-[clamp(18px,2vw,28px)] leading-[1] tracking-[-0.03em] mb-2 line-clamp-2 pb-0.5">${safeName}</div>
           <div class="flex items-center gap-2 md:gap-3 font-mono text-[11px] text-ink/55 flex-wrap">
-            ${safeColor ? `<span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-full border border-ink/15" style="background:${colorHex}"></span>${safeColor}</span><span class="opacity-40">\u00B7</span>` : ''}
+            ${safeColor ? `<span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-full border border-ink/15" style="background:${swatch}"></span>${safeColor}</span><span class="opacity-40">\u00B7</span>` : ''}
             ${safeSize ? `<span>${sizeLabel} ${safeSize}</span><span class="opacity-40">\u00B7</span>` : ''}
             <span class="hidden md:inline">${sku}</span>
           </div>
@@ -91,7 +91,9 @@ export function pageCart(state) {
     const eligible = anchor ? relatedProducts(anchor, pool, pool.length) : pool
     // Si falta para el envio gratis, primero lo mas barato que cierra la diferencia
     const gap = BRAND.freeShippingMin - cartTotal()
-    const closers = gap > 0 ? eligible.filter(p => Number(p.price) >= gap).sort((a, b) => a.price - b.price) : []
+    // Con ropa en la bolsa, el que cierra la diferencia tiene que combinar: si no, siempre salia un perfume
+    const pairs = anchor && isLookPairing(anchor) ? relatedProducts(anchor, pool, pool.length).filter(p => groupOf(p.type) !== 'perfume' && groupOf(p.type) !== groupOf(anchor.type)) : eligible
+    const closers = gap > 0 ? pairs.filter(p => Number(p.price) >= gap).sort((a, b) => a.price - b.price) : []
     const rest = eligible.filter(p => !closers.includes(p))
     return [...closers, ...rest].slice(0, 3)
   }
