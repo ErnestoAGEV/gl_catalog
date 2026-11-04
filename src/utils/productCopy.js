@@ -397,7 +397,10 @@ export function productTitle(product) {
   const singular = typeSingular(product?.type)
   const dama = product?.type === 'Perfumes Dama'
   const color = colorPhrase(product?.colors)
-  const name = color ? `${product?.name} en ${color}` : product?.name
+  // "White Peak - Amarillo en Amarillo": si el nombre ya dice el color, no se repite
+  const fold = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
+  const saysColor = color && fold(product?.name).split(/[^a-z0-9]+/).includes(fold(color))
+  const name = color && !saysColor ? `${product?.name} en ${color}` : product?.name
 
   // "para dama" se conserva un escalon mas que "para hombre": la tienda es de
   // moda masculina, asi que ahi el publico si distingue.

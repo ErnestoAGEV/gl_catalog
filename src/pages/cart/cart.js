@@ -7,18 +7,9 @@ import { BRAND } from '../../utils/config.js'
 import { navigate } from '../../core/router.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 import { escapeHtml } from '../../utils/sanitize.js'
+import { colorHex } from '../../utils/colors.js'
 import { relatedProducts, isLookPairing } from '../../utils/related.js'
 
-function colorNameToHex(name) {
-  const map = {
-    'negro': '#0A0A0F', 'blanco': '#FFFFFF', 'azul': '#214fc7',
-    'rojo': '#b03832', 'verde': '#3b4a3e', 'gris': '#6b7280',
-    'beige': '#d6c4a4', 'marino': '#19355c', 'oliva': '#566042',
-    'hueso': '#F4EFE3', 'carb\u00F3n': '#3a3530', 'caf\u00E9': '#5c3d2e',
-    'crudo': '#1d2a4a',
-  }
-  return map[(name || '').toLowerCase()] || '#6b7280'
-}
 
 function lineRow(item, idx) {
   const p = getProductById(item.productId)
@@ -33,7 +24,7 @@ function lineRow(item, idx) {
   const ord = String(idx + 1).padStart(2, '0')
   const sub = (p.price || 0) * (Number(item.qty) || 0)
   const hasDiscount = p.originalPrice && p.originalPrice > p.price
-  const colorHex = colorNameToHex(item.color)
+  const colorHex = colorHex(item.color)
   const sku = escapeHtml(p.sku || `GL-${String(item.productId).slice(0, 8)}`)
   const sizeLabel = isPerfumeCategory(p.type) || /\d+\s*ml$/i.test(item.size || '') ? 'Presentaci\u00F3n' : 'Talla'
 

@@ -12,26 +12,8 @@ import { splitGalleryImages } from '../../utils/productImages.js'
 import { relatedProducts, isLookPairing } from '../../utils/related.js'
 import { flyToCart, lockScroll, unlockScroll } from '../../utils/dom.js'
 import { pageNotFound } from '../notFound/notFound.js'
-import { findSizeGuide, measuresFor, guideLabel } from '../../utils/sizeGuides.js'
-
-/* ── Color name → hex map ── */
-const COLOR_HEX = {
-  'negro': '#0A0A0F', 'blanco': '#FFFFFF', 'azul': '#214fc7',
-  'rojo': '#b03832', 'verde': '#3b4a3e', 'gris': '#6b7280',
-  'beige': '#d6c4a4', 'marino': '#19355c', 'oliva': '#566042',
-  'hueso': '#F4EFE3', 'carbón': '#3a3530', 'café': '#5c3d2e',
-  'crudo': '#E8DFD0', 'arena': '#C2B280', 'celeste': '#87CEEB',
-  'rosa': '#E8A0BF', 'mostaza': '#D4A017', 'vino': '#722F37',
-  'lavanda': '#B57EDC', 'coral': '#FF7F50', 'menta': '#98FF98',
-  'terracota': '#CC6333', 'perla': '#EAE0C8', 'piedra': '#928E85',
-  'chocolate': '#3C1414', 'marfil': '#FFFFF0', 'nude': '#E8C4A2',
-  'khaki': '#C3B091', 'camel': '#C19A6B', 'ceniza': '#B2BEB5',
-}
-function hexFor(name) {
-  if (!name) return '#D4D4D4'
-  if (name.startsWith('#')) return name
-  return COLOR_HEX[name.toLowerCase()] || '#D4D4D4'
-}
+import { findSizeGuide, measuresFor, guideLabel, rowsForProduct } from '../../utils/sizeGuides.js'
+import { colorHex } from '../../utils/colors.js'
 
 /* ── Name formatting: last word → brand color ── */
 function splitName(name) {
@@ -99,7 +81,7 @@ function measuresHtml(guide, size) {
   </div>`
 }
 
-function guideTableHtml(guide, selectedSize, productName) {
+function guideTableHtml(guide, selectedSize, productName, productSizes) {
   const wa = `https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent('Hola, tengo una duda de talla del ' + productName)}`
   return `
     <h2 class="font-display font-extrabold text-[20px] tracking-[-0.02em] text-ink mb-3">${escapeHtml(guideLabel(guide))} — medidas de la prenda</h2>
@@ -110,7 +92,7 @@ function guideTableHtml(guide, selectedSize, productName) {
           ${guide.columns.map(c => `<th scope="col" class="text-left font-mono text-[11px] tracking-[0.18em] uppercase text-ink/65 py-2 pr-3 border-b border-ink/15">${escapeHtml(c)}</th>`).join('')}
         </tr></thead>
         <tbody>
-          ${guide.rows.map(r => {
+          ${rowsForProduct(guide, productSizes).map(r => {
             const on = selectedSize && String(r.size) === String(selectedSize)
             return `<tr class="${on ? 'bg-brand/10 font-semibold' : ''}"${on ? ' aria-current="true"' : ''}>
               <th scope="row" class="text-left py-2 pr-3 border-b border-ink/10">${escapeHtml(r.size)}</th>
@@ -245,7 +227,7 @@ export function pageProduct(initialState) {
 
   /* ── Swatches ── */
   const swatchesHtml = hasColors ? product.colors.map((c, i) =>
-    `<button type="button" class="swatch-btn min-h-11${i === 0 ? ' active' : ''}" aria-pressed="${i === 0}" data-color="${c}"><span class="swatch-chip" style="background:${hexFor(c)}"></span><span class="name">${c}</span></button>`
+    `<button type="button" class="swatch-btn min-h-11${i === 0 ? ' active' : ''}" aria-pressed="${i === 0}" data-color="${c}"><span class="swatch-chip" style="background:${colorHex(c)}"></span><span class="name">${c}</span></button>`
   ).join('') : ''
 
   /* ── Sizes ── */
@@ -658,7 +640,7 @@ export function pageProduct(initialState) {
                 </button>
               </div>
               ${sizeGuide
-                ? guideTableHtml(sizeGuide, selectedSize, product.name)
+                ? guideTableHtml(sizeGuide, selectedSize, product.name, sizes)
                 : `<img src="${escapeHtml(sizeGuideImage)}" alt="Guía de tallas de ${safeName}" class="w-full h-auto rounded"/>`}
             </div>`
           const close = () => {

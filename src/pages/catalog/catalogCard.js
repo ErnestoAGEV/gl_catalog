@@ -2,6 +2,7 @@ import { formatMoney } from '../../utils/format.js'
 import { productBrand, productModel, productPath, sortSizes } from '../../utils/productCopy.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 import { escapeHtml } from '../../utils/sanitize.js'
+import { colorHex } from '../../utils/colors.js'
 
 // La foto del hover se pedia con la tarjeta aunque en movil nunca se ve, y
 // cada foto cuenta contra el cached egress de Supabase. Se pide al pasar el raton.
@@ -110,12 +111,5 @@ export function productCard(p, idx) {
   `
 }
 
-export function colorNameToHex(name) {
-  const map = {
-    'negro': '#0A0A0F', 'blanco': '#FFFFFF', 'azul': '#214fc7',
-    'rojo': '#b03832', 'verde': '#3b4a3e', 'gris': '#6b7280',
-    'beige': '#d6c4a4', 'marino': '#19355c', 'oliva': '#566042',
-    'hueso': '#F4EFE3', 'carbón': '#3a3530', 'café': '#5c3d2e',
-  }
-  return map[name.toLowerCase()] || name
-}
+// La muestra de color sale del mapa unico de utils/colors.js
+export const colorNameToHex = colorHex

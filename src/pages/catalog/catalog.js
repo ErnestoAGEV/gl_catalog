@@ -746,7 +746,8 @@ export function pageCatalog(initialState) {
 
         // Total count chip
         const totalEl = root.querySelector('#totalCount')
-        if (totalEl) totalEl.textContent = publicProducts.length
+        // En /marca/x, "Todo" son los productos de esa marca, no los 248 de la tienda
+        if (totalEl) totalEl.textContent = activeBrand ? publicProducts.filter(p => isBrandOf(p, activeBrand)).length : publicProducts.length
 
         // Hero meta
         const heroMeta = root.querySelector('#hero-meta')

@@ -3,7 +3,7 @@
 // sola a cada producto cuyo nombre empieza asi. Lo que se prueba es lo que
 // puede romper en silencio: que le toque la guia equivocada a un producto.
 import assert from 'node:assert/strict'
-import { findSizeGuide, guideRow, measuresFor, defaultColumns, guideLabel, sameGuideDraft } from '../src/utils/sizeGuides.js'
+import { findSizeGuide, guideRow, measuresFor, defaultColumns, guideLabel, sameGuideDraft, rowsForProduct } from '../src/utils/sizeGuides.js'
 
 const g = (brand, type, cut, extra = {}) => ({ id: `${brand}|${type}|${cut}`, brand, type, cut, columns: ['Cintura', 'Largo', 'Tiro'], rows: [{ size: '32', values: ['82', '105', '26'] }], note: null, ...extra })
 const vaxter = g('Oggi', 'Pantalones', 'Vaxter')
@@ -53,5 +53,11 @@ assert.equal(sameGuideDraft({ ...d(), rows: [{ size: '30', values: ['78', '105']
 assert.equal(sameGuideDraft({ ...d(), columns: ['Cintura', 'Largo', ''] }, d()), false)            // agrego columna
 assert.equal(sameGuideDraft({ ...d(), cut: ' Vaxter ' }, d()), true)                                // espacios no cuentan
 assert.equal(sameGuideDraft({ ...d(), rows: [{ size: '30', values: ['78', '104', ''] }] }, d()), true) // celda vacia de mas no cuenta
+
+// Tabla completa: solo las tallas que el producto vende; si ninguna coincide, todas
+const wp7 = g('White Peak', 'Polos', '', { columns: ['Largo'], rows: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'XXXXL'].map(size => ({ size, values: ['1'] })) })
+assert.deepEqual(rowsForProduct(wp7, ['S', 'M', 'L', 'XL', 'XXL']).map(r => r.size), ['S', 'M', 'L', 'XL', 'XXL'])
+assert.deepEqual(rowsForProduct(wp7, ['32']).map(r => r.size).length, 7)
+assert.deepEqual(rowsForProduct(wp7, []).map(r => r.size).length, 7)
 
 console.log('ok — size guides')

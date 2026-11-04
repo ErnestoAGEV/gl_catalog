@@ -78,3 +78,10 @@ const draftKey = (d) => JSON.stringify({
 export function sameGuideDraft(a, b) {
   return draftKey(a) === draftKey(b)
 }
+
+/** Filas de la tabla completa: las tallas que el producto vende; si ninguna coincide, todas. */
+export function rowsForProduct(guide, sizes) {
+  const sold = new Set((sizes || []).map(String))
+  const mine = (guide?.rows || []).filter(r => sold.has(String(r.size)))
+  return mine.length ? mine : (guide?.rows || [])
+}
