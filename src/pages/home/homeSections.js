@@ -140,7 +140,6 @@ export function reviewsHtml(reviews) {
         <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
           <div class="grid grid-cols-1 md:grid-cols-12 md:items-end gap-8 mb-12">
             <div class="md:col-span-7">
-              <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 block mb-3">§ 05 — Opiniones</span>
               <h2 class="font-heading font-[800] text-[clamp(56px,7vw,112px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.98] tracking-[-0.045em]">Lo que dicen<br/>en <span class="text-brand">Google</span>.</h2>
             </div>
             <div class="md:col-span-5 flex gap-10 md:justify-end">

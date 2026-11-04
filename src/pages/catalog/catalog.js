@@ -67,7 +67,7 @@ export function pageCatalog(initialState) {
     : `Todo el <span class="text-brand">cat\u00E1logo</span>.`
   let heroDesc = initialType
     ? (TYPE_DESCRIPTIONS[initialType] || `Explora nuestra selecci\u00F3n de ${safeInitialType.toLowerCase()}.`)
-    : 'Camisas, denim, polos, knits y fragancias. Elegidas a mano en Colima \u2014 al mejor precio.'
+    : 'Camisas, pantalones, polos, zapatos y perfumes. Elegidos a mano en Colima \u2014 al mejor precio.'
 
   // La marca manda sobre la categoria: /marca/wrangler no es una categoria.
   const safeBrandName = escapeHtml(brandName)
@@ -114,7 +114,7 @@ export function pageCatalog(initialState) {
             <span class="text-ink/30">/</span>
             <span class="font-mono text-[11px] tracking-[0.28em] uppercase">Catálogo</span>
             <span class="h-px flex-1 bg-ink/15 mx-2 md:mx-3 hidden md:block"></span>
-            <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55 hidden md:inline" id="hero-meta">O/I '26 · ${publicProducts.length} piezas</span>
+            <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55 hidden md:inline" id="hero-meta">${publicProducts.length} piezas</span>
           </div>
           <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-1.5 md:gap-10">
             <div class="flex items-baseline justify-between gap-4">
@@ -287,7 +287,7 @@ export function pageCatalog(initialState) {
         <div class="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-10">
           <div class="grid grid-cols-12 gap-3 md:gap-6">
             <div class="col-span-12 md:col-span-3 mb-2 md:mb-0">
-              <div class="font-mono text-[11px] tracking-[0.32em] uppercase opacity-80">\u00A7 \u2014 Asesor\u00EDa</div>
+              <div class="font-mono text-[11px] tracking-[0.32em] uppercase opacity-80">Asesor\u00EDa</div>
             </div>
             <div class="col-span-12 md:col-span-9">
               <p class="font-display font-medium text-[22px] md:text-[clamp(28px,3.4vw,48px)] leading-[1.2] md:leading-[1.1] tracking-[-0.02em] md:tracking-[-0.03em]">
@@ -742,7 +742,7 @@ export function pageCatalog(initialState) {
 
         // Hero meta
         const heroMeta = root.querySelector('#hero-meta')
-        if (heroMeta) heroMeta.textContent = `O/I '26 \u00B7 ${publicProducts.length} piezas`
+        if (heroMeta) heroMeta.textContent = `${publicProducts.length} piezas`
 
         // Advanced filter badges (size, color, minPrice, maxPrice)
         const f = getFilterState(root)
@@ -802,7 +802,7 @@ export function pageCatalog(initialState) {
         const desc = root.querySelector('#hero-desc')
         const safeVal = escapeHtml(val)
         if (h1) h1.innerHTML = val ? `Solo <span class="text-brand">${safeVal}</span>.` : `Todo el <span class="text-brand">cat\u00E1logo</span>.`
-        if (desc) desc.textContent = val ? (TYPE_DESCRIPTIONS[val] || `Explora nuestra selecci\u00F3n de ${val.toLowerCase()}.`) : 'Camisas, denim, polos, knits y fragancias. Elegidas a mano en Colima \u2014 al mejor precio.'
+        if (desc) desc.textContent = val ? (TYPE_DESCRIPTIONS[val] || `Explora nuestra selecci\u00F3n de ${val.toLowerCase()}.`) : 'Camisas, pantalones, polos, zapatos y perfumes. Elegidos a mano en Colima \u2014 al mejor precio.'
 
         renderGrid({ resetPage: true })
         animateCategoryChange()
@@ -912,7 +912,7 @@ export function pageCatalog(initialState) {
         const h1 = root.querySelector('#hero-h1')
         const desc = root.querySelector('#hero-desc')
         if (h1) h1.innerHTML = `Todo el <span class="text-brand">catálogo</span>.`
-        if (desc) desc.textContent = 'Camisas, denim, polos, knits y fragancias. Elegidas a mano en Colima — al mejor precio.'
+        if (desc) desc.textContent = 'Camisas, pantalones, polos, zapatos y perfumes. Elegidos a mano en Colima — al mejor precio.'
         window.history.replaceState(null, '', withQuery('/catalog'))
         seoSettled = false   // title y canonical siguen a la url nueva
         renderGrid({ resetPage: true })

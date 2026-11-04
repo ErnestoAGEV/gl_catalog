@@ -88,9 +88,9 @@ export function pageHome() {
       <section class="max-w-[1440px] mx-auto px-6 lg:px-10 pt-6 md:pt-10 lg:pt-14 pb-16 lg:pb-20" id="hero-section">
         <!-- Eyebrow -->
         <div class="flex items-center gap-4 mb-5 md:mb-8">
-          <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60">Vol.03 — O/I '26</span>
+          <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 whitespace-nowrap"><span class="hidden sm:inline">Colima · </span>Desde 1995</span>
           <span class="h-px flex-1 bg-ink/15"></span>
-          <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60">Envíos a todo México</span>
+          <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 whitespace-nowrap">Envíos a todo México</span>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-8 lg:gap-6">
@@ -142,7 +142,6 @@ export function pageHome() {
         <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
           <div class="flex flex-col md:flex-row md:items-end md:justify-between mb-14">
             <div>
-              <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 block mb-3">§ 01 — Categorías</span>
               <h2 class="font-heading font-[800] text-[clamp(56px,8vw,128px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.88] tracking-[-0.045em]">Explora<br/>por <span class="text-brand">categoría</span>.</h2>
             </div>
             <a href="/catalog" class="inline-flex self-start md:self-auto ul-link text-[14px] font-medium text-ink/70 hover:text-ink mt-5 md:mt-0">Catálogo completo →</a>
@@ -171,7 +170,6 @@ export function pageHome() {
           <!-- Header -->
           <div class="grid grid-cols-1 md:grid-cols-12 md:items-end gap-6 mb-12">
             <div class="md:col-span-7">
-              <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 block mb-3">§ 02 — Favoritos</span>
               <h2 class="font-heading font-[800] text-[clamp(56px,8vw,128px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.88] tracking-[-0.045em]">Lo que más se <span class="text-brand italic">llevan</span>.</h2>
             </div>
             <div class="md:col-span-5 md:text-right">
@@ -197,7 +195,7 @@ export function pageHome() {
         <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
           <div class="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
             <div class="md:col-span-3">
-              <p class="font-mono text-[11px] tracking-[0.32em] uppercase opacity-80 leading-relaxed">§ 03 — Manifiesto</p>
+              <p class="font-mono text-[11px] tracking-[0.32em] uppercase opacity-80 leading-relaxed">Manifiesto</p>
               <p class="font-mono text-[11px] tracking-[0.32em] uppercase opacity-80 mt-1">G&L / 2026</p>
             </div>
             <div class="md:col-span-9">
@@ -212,7 +210,6 @@ export function pageHome() {
         <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
           <div class="grid grid-cols-1 md:grid-cols-12 md:items-end gap-10">
             <div class="md:col-span-7">
-              <span class="font-mono text-[11px] tracking-[0.28em] uppercase opacity-60 block mb-3">§ 04 — Club G&L</span>
               <h2 class="font-heading font-[800] text-[clamp(56px,8vw,124px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.86] tracking-[-0.045em]">
                 Un correo<br/>al mes.<br/><span class="outline-text">10% off</span><br/><span class="text-brand">de bienvenida.</span>
               </h2>
@@ -249,7 +246,6 @@ export function pageHome() {
       <section class="py-24 lg:py-32 reveal scroll-mt-[72px]" id="sucursales">
         <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
           <div class="mb-14">
-            <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 block mb-3">§ 06 — Visítanos</span>
             <h2 class="font-heading font-[800] text-[clamp(56px,7vw,112px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.88] tracking-[-0.045em]">Y si andas<br/>por <span class="text-brand">Colima</span>.</h2>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

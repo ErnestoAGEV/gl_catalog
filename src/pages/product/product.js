@@ -508,7 +508,6 @@ export function pageProduct(initialState) {
         <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 reveal">
             <div class="lg:col-span-4">
-              <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 block mb-4">§ — Reseñas</span>
               <h2 class="font-display font-extrabold text-[clamp(40px,6vw,80px)] leading-[0.88] tracking-[-0.04em] mb-6">
                 <span class="text-brand">${avg}</span><span class="text-ink/30">/5</span>
               </h2>

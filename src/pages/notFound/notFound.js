@@ -29,7 +29,7 @@ export function pageNotFound(state, options = {}) {
 
             <!-- Cifra -->
             <div class="lg:col-span-6">
-              <span class="font-mono text-[10px] sm:text-[11px] tracking-[0.28em] uppercase text-ink/55 block mb-4">§ Error 404</span>
+              <span class="font-mono text-[10px] sm:text-[11px] tracking-[0.28em] uppercase text-ink/55 block mb-4">Error 404</span>
               <p class="font-display font-extrabold leading-[0.82] tracking-[-0.045em] text-[clamp(96px,20vw,260px)] outline-text select-none" aria-hidden="true">404.</p>
             </div>
 

@@ -842,7 +842,7 @@ body.dark {
 
 /* Outline text */
 /* El trazo lleva color propio: con currentColor heredaba el transparent y el texto desaparecia */
-.outline-text { color: transparent; -webkit-text-stroke: 1.5px var(--color-ink); }
+.outline-text { color: transparent; -webkit-text-stroke: 1.5px var(--color-ink); letter-spacing: -0.01em; }
 :is(.bg-ink, .text-paper) .outline-text { -webkit-text-stroke-color: var(--color-paper); }
 
 /* Underline link animation */
