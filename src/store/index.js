@@ -8,5 +8,6 @@ export { toggleWishlist, isInWishlist, getWishlistProducts } from './wishlist.js
 export { getTheme, toggleTheme } from './theme.js'
 export { subscribeNewsletter, isSubscribedNewsletter, getAdminSubscribers, getEmailTemplate, saveEmailTemplate, sendNewsletter, getLastCampaign, unsubscribeNewsletter } from './newsletter.js'
 export { saveOrder, getAdminOrders, updateAdminOrderStatus, updateAdminOrderShipping, sendOrderConfirmation } from './orders.js'
+export { loadSizeGuides, getSizeGuides, addSizeGuide, updateSizeGuide, deleteSizeGuide } from './sizeGuides.js'
 export { loadCategories, getCategories, getActiveCategories, getCategoryNames, addCategory, updateCategory, deleteCategory, reorderCategories } from './categories.js'
 export { loadSiteContent, refreshSiteContent, getSiteContent, getSiteContentBySection, addSiteContent, addSiteContentRows, updateSiteContent, deleteSiteContent, reorderSiteContent, uploadSiteImage } from './siteContent.js'

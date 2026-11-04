@@ -11,6 +11,8 @@ function getInitialTheme() {
 export const state = {
   products: [],
   categories: [],
+  // Guias de tallas por marca + tipo + corte (ver utils/sizeGuides.js)
+  sizeGuides: [],
   // Filas de site_content (contenido editable de la home). siteContentRev sube con cada cambio real.
   siteContent: [],
   siteContentRev: 0,
