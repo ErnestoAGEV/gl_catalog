@@ -2,7 +2,7 @@ import { getSizeGuides, addSizeGuide, updateSizeGuide, deleteSizeGuide, getCateg
 import { showToast } from '../../utils/toast.js'
 import { escapeHtml as esc } from '../../utils/sanitize.js'
 import { productBrand } from '../../utils/productCopy.js'
-import { findSizeGuide, defaultColumns, guideLabel } from '../../utils/sizeGuides.js'
+import { findSizeGuide, defaultColumns, guideLabel, sameGuideDraft } from '../../utils/sizeGuides.js'
 import { confirmDelete } from './adminConfirm.js'
 import { isPerfumeCategory } from './adminProductsData.js'
 import { ICON } from './adminIcons.js'
@@ -145,6 +145,23 @@ export function pageAdminSizeGuides() {
         const errorEl = modal.querySelector('[data-error]')
         const submitBtn = modal.querySelector('[data-submit]')
         const close = () => modal.remove()
+        // Igual que el formulario de producto: cerrar con algo capturado pregunta antes de perderlo
+        const initial = JSON.parse(JSON.stringify(draft))
+        let asking = false
+        const requestClose = async () => {
+          if (asking || submitBtn.disabled) return
+          if (!sameGuideDraft(draft, initial)) {
+            asking = true
+            const ok = await confirmDelete({
+              title: '¿Descartar cambios?',
+              message: 'Lo que capturaste en esta guía no se ha guardado y se va a perder.',
+              confirmLabel: 'Descartar',
+            })
+            asking = false
+            if (!ok) return
+          }
+          close()
+        }
 
         const paintPreview = () => {
           const probe = { id: '__draft__', ...draft }
@@ -216,10 +233,15 @@ export function pageAdminSizeGuides() {
           paintPreview()
         })
 
-        modal.querySelector('[data-close]').addEventListener('click', close)
-        modal.querySelector('[data-cancel]').addEventListener('click', close)
-        modal.addEventListener('click', (e) => { if (e.target === modal) close() })
-        modal.addEventListener('keydown', (e) => { if (e.key === 'Escape') close() })
+        modal.querySelector('[data-close]').addEventListener('click', requestClose)
+        modal.querySelector('[data-cancel]').addEventListener('click', requestClose)
+        modal.addEventListener('click', (e) => { if (e.target === modal) requestClose() })
+        modal.addEventListener('keydown', (e) => {
+          if (e.key !== 'Escape') return
+          // Sin esto, la misma tecla llega al dialogo de confirmacion recien abierto y lo cierra
+          e.stopPropagation()
+          requestClose()
+        })
 
         form.addEventListener('submit', async (e) => {
           e.preventDefault()

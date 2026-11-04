@@ -59,3 +59,22 @@ export function defaultColumns(type) {
 export function guideLabel(guide) {
   return `${guide.brand} · ${String(guide.cut || '').trim() || guide.type}`
 }
+
+// Forma comparable de un borrador del admin: sin espacios de mas ni celdas vacias al final
+const draftKey = (d) => JSON.stringify({
+  brand: String(d.brand || '').trim(),
+  type: d.type || '',
+  cut: String(d.cut || '').trim(),
+  note: String(d.note || '').trim(),
+  columns: (d.columns || []).map(c => String(c).trim()),
+  rows: (d.rows || []).map(r => {
+    const values = (r.values || []).map(v => String(v ?? '').trim())
+    while (values.length && !values[values.length - 1]) values.pop()
+    return { size: String(r.size || '').trim(), values }
+  }),
+})
+
+/** true si el borrador no cambio: cerrar el formulario no pierde nada. */
+export function sameGuideDraft(a, b) {
+  return draftKey(a) === draftKey(b)
+}

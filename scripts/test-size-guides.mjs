@@ -3,7 +3,7 @@
 // sola a cada producto cuyo nombre empieza asi. Lo que se prueba es lo que
 // puede romper en silencio: que le toque la guia equivocada a un producto.
 import assert from 'node:assert/strict'
-import { findSizeGuide, guideRow, measuresFor, defaultColumns, guideLabel } from '../src/utils/sizeGuides.js'
+import { findSizeGuide, guideRow, measuresFor, defaultColumns, guideLabel, sameGuideDraft } from '../src/utils/sizeGuides.js'
 
 const g = (brand, type, cut, extra = {}) => ({ id: `${brand}|${type}|${cut}`, brand, type, cut, columns: ['Cintura', 'Largo', 'Tiro'], rows: [{ size: '32', values: ['82', '105', '26'] }], note: null, ...extra })
 const vaxter = g('Oggi', 'Pantalones', 'Vaxter')
@@ -45,5 +45,13 @@ assert.deepEqual(defaultColumns('Zapatos'), ['Largo de plantilla'])
 assert.deepEqual(defaultColumns('Perfumes'), [])
 assert.equal(guideLabel(vaxter), 'Oggi · Vaxter')
 assert.equal(guideLabel(wp), 'White Peak · Polos')
+
+// Cerrar el formulario de guia: solo pregunta si hay algo capturado que se perderia
+const d = () => ({ brand: 'Oggi', type: 'Pantalones', cut: 'Vaxter', note: '', columns: ['Cintura', 'Largo'], rows: [{ size: '30', values: ['78', '104'] }] })
+assert.equal(sameGuideDraft(d(), d()), true)
+assert.equal(sameGuideDraft({ ...d(), rows: [{ size: '30', values: ['78', '105'] }] }, d()), false) // cambio una medida
+assert.equal(sameGuideDraft({ ...d(), columns: ['Cintura', 'Largo', ''] }, d()), false)            // agrego columna
+assert.equal(sameGuideDraft({ ...d(), cut: ' Vaxter ' }, d()), true)                                // espacios no cuentan
+assert.equal(sameGuideDraft({ ...d(), rows: [{ size: '30', values: ['78', '104', ''] }] }, d()), true) // celda vacia de mas no cuenta
 
 console.log('ok — size guides')
