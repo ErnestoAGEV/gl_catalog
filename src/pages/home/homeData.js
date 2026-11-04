@@ -105,11 +105,13 @@ export const stats = [
   { number: '31<span class="text-brand">.</span>', caption: 'Años vistiendo a Colima<span class="hidden md:inline"> · desde 1995</span>' },
   // Antes decia "2.4k clientes activos", un numero sin fuente. El de piezas sale del catalogo real.
   { catalogCount: true, caption: 'Piezas en catálogo' },
-  // La valoracion es la de Google (ficha de Centro: 4.8, 84 opiniones al 22-oct-2026), asi que se enlaza a su ficha: un
+  // La valoracion es la de Google de las dos tiendas, ponderada por opiniones:
+  // Centro 4.8 (84) y Villa de Alvarez 4.2 (12) -> (4.8*84 + 4.2*12) / 96 = 4.7.
+  // Se enlaza a la seccion de opiniones, que muestra las dos fichas: un
   // numero sin fuente es solo marketing. En schema NO va — una valoracion
   // declarada por el propio negocio no da rich results y puede costar una
   // accion manual. reviewsLink lo resuelve home.js con el mapUrl de la tienda.
-  { number: '4.8<span class="text-[0.56em] opacity-40">/5</span>', caption: '84 opiniones en Google', reviewsLink: true },
+  { number: '4.7<span class="text-[0.56em] opacity-40">/5</span>', caption: '96 opiniones en Google', reviewsLink: true },
   { number: '02', caption: 'Tiendas en Colima' },
 ]
 

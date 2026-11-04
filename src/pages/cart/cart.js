@@ -7,6 +7,7 @@ import { BRAND } from '../../utils/config.js'
 import { navigate } from '../../core/router.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 import { escapeHtml } from '../../utils/sanitize.js'
+import { relatedProducts, isLookPairing } from '../../utils/related.js'
 
 function colorNameToHex(name) {
   const map = {
@@ -86,9 +87,17 @@ export function pageCart(state) {
   const upsellPool = state.products
     .filter(p => p.badge !== 'Borrador' && (isInfiniteStock(p.stock) || Number(p.stock) > 0))
     .sort(() => 0.5 - Math.random())
+  // La prenda de la bolsa que manda en "Completa tu look": la primera que combina con algo
+  const lookAnchor = () => {
+    const inBag = getState().cart.map(i => getProductById(i.productId)).filter(Boolean)
+    return inBag.find(isLookPairing) || inBag[0] || null
+  }
   const pickUpsell = () => {
     const inCart = new Set(getState().cart.map(i => i.productId))
-    const eligible = upsellPool.filter(p => !inCart.has(p.id))
+    const anchor = lookAnchor()
+    const pool = upsellPool.filter(p => !inCart.has(p.id))
+    // Mismo orden que la ficha: primero lo que combina con lo de la bolsa
+    const eligible = anchor ? relatedProducts(anchor, pool, pool.length) : pool
     // Si falta para el envio gratis, primero lo mas barato que cierra la diferencia
     const gap = BRAND.freeShippingMin - cartTotal()
     const closers = gap > 0 ? eligible.filter(p => Number(p.price) >= gap).sort((a, b) => a.price - b.price) : []
@@ -178,10 +187,7 @@ export function pageCart(state) {
             <div class="mt-10 md:mt-12 lg:mt-8 lg:col-span-8 lg:col-start-5" id="cart-recommended">
               <div class="flex items-end justify-between mb-6">
                 <div>
-                  <div class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55 mb-3">\u00A7 \u2014 Completa tu look</div>
-                  <h2 class="font-display font-extrabold text-[clamp(28px,5vw,64px)] leading-[0.9] tracking-[-0.04em]">
-                    Tambi\u00E9n va con<br/>lo de tu bolsa.
-                  </h2>
+                  <h2 id="upsell-title" class="font-display font-extrabold text-[clamp(28px,5vw,64px)] leading-[0.9] tracking-[-0.04em]"></h2>
                 </div>
                 <a href="/catalog" class="hidden md:inline-flex ul-link text-[13px] font-semibold pb-2">Ver m\u00E1s \u2192</a>
               </div>
@@ -217,6 +223,8 @@ export function pageCart(state) {
           return
         }
         recommendedSection.classList.remove('hidden')
+        const titleEl = qs(root, '#upsell-title')
+        if (titleEl) titleEl.innerHTML = isLookPairing(lookAnchor()) ? 'Completa<br/>tu look.' : 'También te<br/>puede gustar.'
         upsellGrid.innerHTML = upsellProducts.map(p => {
           const img = escapeHtml(p.images?.[0] || 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&h=750&fit=crop')
           const safeName = escapeHtml(p.name)
@@ -313,8 +321,8 @@ export function pageCart(state) {
               <div class="mt-1 font-mono text-[11px] tracking-[0.18em] uppercase text-ink/55">A\u00F1os en Colima</div>
             </div>
             <div class="bg-paper p-3 md:p-4 text-center">
-              <div class="font-display font-extrabold text-[18px] md:text-[22px] leading-none">4.8<span class="opacity-40 text-[12px] md:text-[14px]">/5</span></div>
-              <div class="mt-1 font-mono text-[11px] tracking-[0.18em] uppercase text-ink/55">84 opiniones Google</div>
+              <div class="font-display font-extrabold text-[18px] md:text-[22px] leading-none">4.7<span class="opacity-40 text-[12px] md:text-[14px]">/5</span></div>
+              <div class="mt-1 font-mono text-[11px] tracking-[0.18em] uppercase text-ink/55">96 opiniones Google</div>
             </div>
             <div class="bg-paper p-3 md:p-4 text-center">
               <div class="font-display font-extrabold text-[18px] md:text-[22px] leading-none">02</div>

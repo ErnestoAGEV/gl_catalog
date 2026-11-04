@@ -12,20 +12,18 @@ import { BRAND } from '../../utils/config.js'
 import { applySeo } from '../../core/seo.js'
 import { getSeoForRoute } from '../../core/routeSeo.js'
 
+// Solo datos que salen del catalogo real (marcas, cortes, tallas). Nada de
+// telas o procesos que no podamos sostener: "costura japonesa", "algodon pima"
+// y "50 y 100ml" eran inventados.
 const TYPE_DESCRIPTIONS = {
-  'Camisas': 'Oxford, lino y franela. Cortes slim y regular fit, en hueso, marino y negro.',
-  'Pantalones': 'Denim crudo, slim y straight. Marcas premium con costura japonesa.',
-  'Jeans': 'Denim crudo, slim y straight. Marcas premium con costura japonesa.',
-  'Polos': 'Polos en algod\u00F3n pima \u2014 manga corta, semestre largo. Esenciales del cl\u00F3set.',
-  'Chinos': 'Algod\u00F3n peinado, corte slim. Beige, oliva y carb\u00F3n.',
-  'Knits': 'Su\u00E9teres en punto de algod\u00F3n. Cuello redondo y half-zip para entretiempos.',
-  'Su\u00E9teres': 'Su\u00E9teres en punto de algod\u00F3n. Cuello redondo y half-zip para entretiempos.',
-  'Perfumes': 'Eau de parfum amaderado y c\u00EDtrico. Pour Homme, 50 y 100ml.',
-  'Playeras': 'Algod\u00F3n premium, corte regular y slim. B\u00E1sicos de temporada.',
-  'Shorts': 'Shorts en algod\u00F3n y lino. Perfectos para el verano.',
-  'Sudaderas': 'French terry y fleece. Para los d\u00EDas frescos en Colima.',
-  'Chamarras': 'Chamarras ligeras y versátiles para entretiempos.',
-  'Abrigos': 'Abrigos de corte cl\u00E1sico para el invierno.',
+  'Camisas': 'Camisas de manga larga y corta de Soul&Blues, Wrangler y Oaktree.',
+  'Pantalones': 'Mezclilla y gabardina de Oggi, Paddocks, Collor’s y White Peak, en cortes slim, straight y relaxed.',
+  'Jeans': 'Mezclilla en cortes slim, straight y relaxed.',
+  'Polos': 'Polos de White Peak, Soul&Blues y Oaktree, de la S a la XXXXL.',
+  'Suéteres': 'Suéteres, cazadoras y chamarras de Collor’s, Giovanni Gali y Soul&Blues.',
+  'Perfumes': 'Fragancias para hombre en varias presentaciones. Pregunta por WhatsApp si buscas una en especial.',
+  'Playeras': 'Playeras de Sherman Morgan, de la S a la XL.',
+  'Shorts': 'Shorts y bermudas de American Fly y Collor’s para el calor de Colima.',
 }
 
 const PRODUCTS_PER_PAGE = 20

@@ -13,7 +13,7 @@ export function heroLeftHtml(heroSlides) {
       <${i === 0 ? 'h1' : 'h2'} class="font-heading font-[800] text-[clamp(52px,18.5vw,72px)] md:text-[clamp(72px,11vw,184px)] leading-[0.86] tracking-[-0.04em] text-ink mb-6">${s.headline}</${i === 0 ? 'h1' : 'h2'}>
       ${s.couponBody ? `
         <p class="text-[17px] text-ink/70 max-w-[460px] leading-relaxed">
-          Aplica <span class="bg-fog font-mono rounded-md px-2 py-1 text-[15px]">WELCOME10</span> en checkout. Válido para clientes nuevos en cualquier categoría.
+          Aplica <span class="bg-fog font-mono rounded-md px-2 py-1 text-[15px]">WELCOME10</span> en tu bolsa. Válido para clientes nuevos en cualquier categoría.
         </p>
       ` : `<p class="text-[17px] text-ink/70 max-w-[460px] leading-relaxed">${s.body}</p>`}
       <div class="flex items-center gap-6 mt-8">
@@ -112,7 +112,7 @@ export function categoriesHtml(categoryTiles, countByType) {
 export function statsHtml(stats, catalogCount) {
   return stats.map(s => {
     const caption = s.reviewsLink
-      ? `<a href="${stores[0].mapUrl}" target="_blank" rel="noopener" class="ul-link hover:opacity-100">${s.caption}</a>`
+      ? `<a href="#opiniones" class="ul-link hover:opacity-100">${s.caption}</a>`
       : s.caption
     return `
     <div class="text-left">
@@ -136,7 +136,7 @@ export const slideCountHtml = (n) => String(n).padStart(2, '0')
 export function reviewsHtml(reviews) {
   const storeOf = (slug) => stores.find(s => s.slug === slug)
   return `
-      <section class="py-24 lg:py-32 reveal">
+      <section id="opiniones" class="py-24 lg:py-32 reveal scroll-mt-24">
         <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
           <div class="grid grid-cols-1 md:grid-cols-12 md:items-end gap-8 mb-12">
             <div class="md:col-span-7">

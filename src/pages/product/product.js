@@ -9,7 +9,7 @@ import { handleQuickAdd } from '../catalog/catalogQuickAdd.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 import { escapeHtml } from '../../utils/sanitize.js'
 import { splitGalleryImages } from '../../utils/productImages.js'
-import { relatedProducts } from '../../utils/related.js'
+import { relatedProducts, isLookPairing } from '../../utils/related.js'
 import { flyToCart, lockScroll, unlockScroll } from '../../utils/dom.js'
 import { pageNotFound } from '../notFound/notFound.js'
 import { findSizeGuide, measuresFor, guideLabel } from '../../utils/sizeGuides.js'
@@ -487,9 +487,8 @@ export function pageProduct(initialState) {
         <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
           <div class="flex items-end justify-between mb-8 lg:mb-10 reveal">
             <div>
-              <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 block mb-4">§ — Combina con</span>
               <h2 class="font-display font-extrabold text-[clamp(28px,6vw,80px)] leading-[0.88] tracking-[-0.04em]">
-                Va perfecta<br/>con <span class="text-brand">esto</span>.
+                ${isLookPairing(product) ? 'Completa<br/>tu <span class="text-brand">look</span>.' : 'También te<br/>puede <span class="text-brand">gustar</span>.'}
               </h2>
             </div>
             <a href="/catalog" class="hidden md:inline-flex ul-link text-[13px] font-semibold pb-2">Ver catálogo →</a>
