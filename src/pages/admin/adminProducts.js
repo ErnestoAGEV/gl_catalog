@@ -1,4 +1,5 @@
-import { adminLogout, addProduct, updateProduct, deleteProduct, uploadProductImage, getCategoryNames, subscribe } from '../../store/index.js'
+import { adminLogout, addProduct, updateProduct, deleteProduct, uploadProductImage, getCategoryNames, subscribe, getSizeGuides } from '../../store/index.js'
+import { findSizeGuide, guideLabel } from '../../utils/sizeGuides.js'
 import { navigate } from '../../core/router.js'
 import { isInfiniteStock } from '../../utils/stock.js'
 import { rankProducts } from '../../store/searchRank.js'
@@ -300,6 +301,24 @@ export function pageAdminProducts(state) {
         })
       }
 
+      // ── Guia de tallas detectada ──
+      // Mismo nombre que se guarda (marca + " - " + modelo), asi el dueño ve
+      // que guia le toca a un producto nuevo antes de guardarlo.
+      const paintDetectedGuide = () => {
+        const el = root.querySelector('#detected-size-guide')
+        if (!el) return
+        const type = typeSelect?.value
+        el.hidden = isPerfumeCategory(type)
+        if (el.hidden) return
+        const brand = qs(root, 'input[name="brand"]').value.trim()
+        const model = qs(root, 'input[name="name"]').value.trim()
+        const name = brand && model ? `${brand} - ${model}` : model || brand
+        const guide = findSizeGuide({ name, type }, getSizeGuides())
+        el.textContent = guide ? `Guía de tallas: ${guideLabel(guide)}` : 'Sin guía de tallas'
+      }
+      qs(root, 'input[name="brand"]').addEventListener('input', paintDetectedGuide)
+      qs(root, 'input[name="name"]').addEventListener('input', paintDetectedGuide)
+
       // ── Type Change Handler ──
       const handleTypeChange = () => {
         const isPerfume = isPerfumeCategory(typeSelect?.value)
@@ -323,6 +342,7 @@ export function pageAdminProducts(state) {
         if (colorsHelp) {
           colorsHelp.textContent = isPerfume ? 'Para perfumes el color no aplica.' : 'Puedes seleccionar de arriba o escribir nuevos.'
         }
+        paintDetectedGuide()
       }
 
       // ── Image Compression Helper ──
@@ -541,6 +561,7 @@ export function pageAdminProducts(state) {
         const freshSubmitText = qs(root, '#submit-text')
         if (freshSubmitText) freshSubmitText.textContent = editing ? 'Guardar cambios' : 'Guardar'
         setError('')
+        paintDetectedGuide()
       }
 
       const hideForm = (resetPage = false) => {

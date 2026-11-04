@@ -188,6 +188,7 @@ export function productFormHTML(allColors, dynamicCategories, allBrands = []) {
                   `).join('')}
                 </div>
               </div>
+              <p id="detected-size-guide" class="text-[12px] text-faint mt-2" aria-live="polite"></p>
             </div>
 
             <!-- ── Colors ── -->
