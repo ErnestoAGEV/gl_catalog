@@ -685,7 +685,8 @@ export async function startApp(mountEl) {
   // Catalog and Admin products manage their own updates via their own subscribe, so we skip full-page rebuilds here.
   const routeRelevantKeys = {
     '/':              (s) => `${s.products.length}|${s.isLoading}|${s.products.filter(p => p.badge !== 'Borrador').length}|${s.siteContentRev}`,
-    '/producto':      (s) => `${s.products.length}|${s.isLoading}`,
+    // Las guias de tallas llegan despues de los productos: sin ellas en la firma la ficha no las mostraba
+    '/producto':      (s) => `${s.products.length}|${s.isLoading}|${s.sizeGuides.length}`,
     // La página del carrito se repinta sola en cada +/-; incluir el carrito
     // aquí forzaba además un rebuild completo que se veía como una recarga.
     '/cart':          (s) => `${s.products.length}|${s.isLoading}`,

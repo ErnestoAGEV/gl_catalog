@@ -50,5 +50,5 @@ insert into public.size_guides (brand, type, cut, columns, rows, note) values (
   'White Peak', 'Polos', '',
   '["Largo","Ancho"]'::jsonb,
   '[{"size":"S","values":["67","50"]},{"size":"M","values":["68","55"]},{"size":"L","values":["72","58"]},{"size":"XL","values":["75","60"]},{"size":"XXL","values":["77","64"]},{"size":"XXXL","values":["80","65"]},{"size":"XXXXL","values":["82","67"]}]'::jsonb,
-  'Todas las medidas están en centímetros.'
+  null -- la ficha ya dice "Medidas en centímetros."
 ) on conflict do nothing;

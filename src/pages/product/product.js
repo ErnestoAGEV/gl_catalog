@@ -12,6 +12,7 @@ import { splitGalleryImages } from '../../utils/productImages.js'
 import { relatedProducts } from '../../utils/related.js'
 import { flyToCart, lockScroll, unlockScroll } from '../../utils/dom.js'
 import { pageNotFound } from '../notFound/notFound.js'
+import { findSizeGuide, measuresFor, guideLabel } from '../../utils/sizeGuides.js'
 
 /* ── Color name → hex map ── */
 const COLOR_HEX = {
@@ -85,6 +86,44 @@ function recommendedCard(p, i) {
 /* ══════════════════════════════════════════════
    PDP — Bold Editorial v2
    ══════════════════════════════════════════════ */
+/* ── Guia de tallas en tabla ── */
+// Pares de la talla elegida, encima del boton Agregar. Vacio si la talla no esta en la guia.
+function measuresHtml(guide, size) {
+  const list = measuresFor(guide, size)
+  if (!list.length) return ''
+  return `<div class="flex flex-wrap gap-x-6 gap-y-2 rounded-2xl bg-brand/10 px-4 py-3">
+    ${list.map(m => `<div>
+      <span class="block font-mono text-[11px] tracking-[0.2em] uppercase text-ink/65">${escapeHtml(m.label)}</span>
+      <span class="block font-display font-bold text-[17px] text-ink tabular-nums">${escapeHtml(m.value)} cm</span>
+    </div>`).join('')}
+  </div>`
+}
+
+function guideTableHtml(guide, selectedSize, productName) {
+  const wa = `https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent('Hola, tengo una duda de talla del ' + productName)}`
+  return `
+    <h2 class="font-display font-extrabold text-[20px] tracking-[-0.02em] text-ink mb-3">${escapeHtml(guideLabel(guide))} — medidas de la prenda</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-[14px] tabular-nums">
+        <thead><tr>
+          <th scope="col" class="text-left font-mono text-[11px] tracking-[0.18em] uppercase text-ink/65 py-2 pr-3 border-b border-ink/15">Talla</th>
+          ${guide.columns.map(c => `<th scope="col" class="text-left font-mono text-[11px] tracking-[0.18em] uppercase text-ink/65 py-2 pr-3 border-b border-ink/15">${escapeHtml(c)}</th>`).join('')}
+        </tr></thead>
+        <tbody>
+          ${guide.rows.map(r => {
+            const on = selectedSize && String(r.size) === String(selectedSize)
+            return `<tr class="${on ? 'bg-brand/10 font-semibold' : ''}"${on ? ' aria-current="true"' : ''}>
+              <th scope="row" class="text-left py-2 pr-3 border-b border-ink/10">${escapeHtml(r.size)}</th>
+              ${guide.columns.map((_, i) => `<td class="py-2 pr-3 border-b border-ink/10">${escapeHtml(String(r.values?.[i] ?? '').trim()) || '—'}</td>`).join('')}
+            </tr>`
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    <p class="text-[13px] text-ink/70 mt-3">Medidas en centímetros.${guide.note ? ' ' + escapeHtml(guide.note) : ''}</p>
+    <a href="${wa}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 text-[13px] font-semibold text-ink underline underline-offset-4">¿Dudas? Pregúntanos por WhatsApp</a>`
+}
+
 export function pageProduct(initialState) {
   const state = initialState
   const path = normalizePath(window.location.pathname)
@@ -164,6 +203,8 @@ export function pageProduct(initialState) {
     : ['https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&h=750&fit=crop']
   const { gallery: images, sizeGuide: sizeGuideImage } = splitGalleryImages(allImages)
   const isPerfume = isPerfumeCategory(product.type)
+  // Guia en tabla (por marca + tipo + corte). Si existe, gana sobre la foto de guia.
+  const sizeGuide = isPerfume ? null : findSizeGuide(product, state.sizeGuides)
   const discount = product.originalPrice ? Math.round((1 - product.price / product.originalPrice) * 100) : 0
   const sizes = sortSizes(product.sizes)
   const hasSizes = sizes.length > 0
@@ -339,14 +380,16 @@ export function pageProduct(initialState) {
                 <div class="mb-5">
                   <div class="flex items-center justify-between mb-2">
                     <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/65">${sizeWord} · <span class="text-ink" id="pdp-size-name">${initialSize ? escapeHtml(initialSize) : 'Selecciona'}</span></span>
-                    ${sizeGuideImage ? `
+                    ${sizeGuide || sizeGuideImage ? `
                     <button type="button" id="pdp-size-guide" class="font-mono text-[11px] tracking-[0.22em] uppercase text-ink/65 hover:text-ink hover:underline underline-offset-4 inline-flex items-center gap-1.5 min-h-11 -my-3.5">
                       <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/></svg>
-                      Guía de tallas
+                      ${sizeGuide ? 'Ver tabla completa' : 'Guía de tallas'}
                     </button>` : ''}
                   </div>
                   <div class="flex items-center gap-2 flex-wrap" id="pdp-sizes">${sizePillsHtml}</div>
                 </div>` : ''}
+
+                ${sizeGuide ? `<div id="pdp-size-measures" aria-live="polite" class="mb-5"${measuresFor(sizeGuide, initialSize).length ? '' : ' hidden'}>${measuresHtml(sizeGuide, initialSize)}</div>` : ''}
 
                 <!-- CTAs -->
                 <div class="space-y-2 mb-6">
@@ -598,7 +641,7 @@ export function pageProduct(initialState) {
       // Vive en document.body para que no lo recorte ningún contenedor del
       // layout; startApp lo borra al navegar, junto al resto de overlays.
       const sizeGuideBtn = root.querySelector('#pdp-size-guide')
-      if (sizeGuideBtn && sizeGuideImage) {
+      if (sizeGuideBtn && (sizeGuide || sizeGuideImage)) {
         sizeGuideBtn.addEventListener('click', () => {
           const prevFocus = document.activeElement
           const modal = document.createElement('div')
@@ -615,7 +658,9 @@ export function pageProduct(initialState) {
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>
                 </button>
               </div>
-              <img src="${escapeHtml(sizeGuideImage)}" alt="Guía de tallas de ${safeName}" class="w-full h-auto rounded"/>
+              ${sizeGuide
+                ? guideTableHtml(sizeGuide, selectedSize, product.name)
+                : `<img src="${escapeHtml(sizeGuideImage)}" alt="Guía de tallas de ${safeName}" class="w-full h-auto rounded"/>`}
             </div>`
           const close = () => {
             modal.remove()
@@ -625,10 +670,13 @@ export function pageProduct(initialState) {
           }
           const onEsc = (e) => {
             if (e.key === 'Escape') return close()
-            // Trampa de foco: el unico control es Cerrar, asi que Tab no sale del dialogo
+            // Trampa de foco: Tab da vuelta entre los controles del dialogo (Cerrar y, con tabla, WhatsApp)
             if (e.key === 'Tab') {
               e.preventDefault()
-              modal.querySelector('[data-close]')?.focus()
+              const items = [...modal.querySelectorAll('button, a[href]')]
+              const at = items.indexOf(document.activeElement)
+              const next = (at + (e.shiftKey ? -1 : 1) + items.length) % items.length
+              items[next]?.focus()
             }
           }
           modal.addEventListener('click', (e) => {
@@ -702,6 +750,14 @@ export function pageProduct(initialState) {
         setTimeout(() => { statusEl.textContent = msg }, 60)
       }
 
+      const measuresEl = root.querySelector('#pdp-size-measures')
+      function paintMeasures() {
+        if (!measuresEl) return
+        const html = measuresHtml(sizeGuide, selectedSize)
+        measuresEl.hidden = !html
+        measuresEl.innerHTML = html
+      }
+
       if (sizesEl) {
         sizesEl.addEventListener('click', (e) => {
           const btn = e.target.closest('.size-pill')
@@ -714,6 +770,7 @@ export function pageProduct(initialState) {
           btn.setAttribute('aria-pressed', 'true')
           selectedSize = btn.dataset.size
           if (sizeNameEl) sizeNameEl.textContent = selectedSize
+          paintMeasures()
           clearTimeout(addedTimer)
           paintCta()
         })
