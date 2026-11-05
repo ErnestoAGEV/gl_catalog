@@ -82,3 +82,36 @@ async function updateAdminOrder(orderId, fields) {
     return { error: err.message }
   }
 }
+
+/**
+ * Correos del equipo que reciben el aviso de cada pedido nuevo o cancelado.
+ * Ver supabase/order-staff-notify.sql
+ */
+export async function getOrderNotifyEmails() {
+  const access = await ensureAdminAccess()
+  if (!access.ok) return { emails: [], error: access.error.message }
+  const { data, error } = await supabase.from('order_notify_emails').select('email').order('created_at')
+  return { emails: (data || []).map(r => r.email), error }
+}
+
+export async function addOrderNotifyEmail(email) {
+  const access = await ensureAdminAccess()
+  if (!access.ok) return { error: access.error.message }
+  const { error } = await supabase.from('order_notify_emails').insert({ email })
+  return { error }
+}
+
+export async function removeOrderNotifyEmail(email) {
+  const access = await ensureAdminAccess()
+  if (!access.ok) return { error: access.error.message }
+  const { error } = await supabase.from('order_notify_emails').delete().eq('email', email)
+  return { error }
+}
+
+/** Manda el ultimo pedido, marcado [Prueba], a la lista: 'sent', 'no_emails', 'no_orders' o 'error' */
+export async function sendOrderStaffTest() {
+  const access = await ensureAdminAccess()
+  if (!access.ok) return { error: access.error.message }
+  const { data, error } = await supabase.rpc('send_order_staff_test')
+  return { result: data, error }
+}

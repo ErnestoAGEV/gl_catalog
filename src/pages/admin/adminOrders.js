@@ -1,4 +1,4 @@
-import { getAdminOrders, updateAdminOrderStatus, updateAdminOrderShipping, sendOrderConfirmation, getProductById, getState } from '../../store/index.js'
+import { getAdminOrders, updateAdminOrderStatus, updateAdminOrderShipping, sendOrderConfirmation, getOrderNotifyEmails, addOrderNotifyEmail, removeOrderNotifyEmail, sendOrderStaffTest, getProductById, getState } from '../../store/index.js'
 import { orderConfirmationEmail } from './orderEmail.js'
 import { BRAND } from '../../utils/config.js'
 import { splitGalleryImages } from '../../utils/productImages.js'
@@ -7,7 +7,7 @@ import { formatMoney } from '../../utils/format.js'
 import { lockScroll, unlockScroll } from '../../utils/dom.js'
 import { supabase } from '../../core/supabase.js'
 import { showToast } from '../../utils/toast.js'
-import { escapeHtml as esc } from '../../utils/sanitize.js'
+import { escapeHtml as esc, sanitizeEmail } from '../../utils/sanitize.js'
 import { ICON, statusPill, statCard } from './adminIcons.js'
 
 function getPaymentMeta(paymentMethod) {
@@ -245,6 +245,18 @@ export function pageAdminOrders(state) {
           <!-- Footer -->
           <div id="orders-footer" class="px-5 py-3 border-t border-line text-[12.5px] text-muted tnum"></div>
         </div>
+
+        <!-- Avisos al equipo -->
+        <section id="staff-notify" class="bg-paper rounded-3xl border border-line shadow-card p-5">
+          <h2 class="font-display font-bold text-ink text-[16px]">Avisos de pedidos por correo</h2>
+          <p class="text-[13px] text-muted mt-1">Estos correos reciben la hoja para despachar cada pedido nuevo, y un aviso si se cancela.</p>
+          <ul data-list class="mt-4 flex flex-wrap gap-2"></ul>
+          <form data-add class="mt-4 flex flex-col sm:flex-row gap-2">
+            <input name="email" type="email" required placeholder="correo@ejemplo.com" aria-label="Correo que recibe los avisos" class="adm-fld sm:w-72" />
+            <button type="submit" class="adm-btn adm-btn-primary">${ICON.plus('w-4 h-4')} Agregar</button>
+            <button type="button" data-test class="adm-btn adm-btn-ghost">Mandar prueba</button>
+          </form>
+        </section>
       </div>
     `,
 
@@ -658,6 +670,46 @@ export function pageAdminOrders(state) {
         } catch (err) { if (import.meta.env.DEV) console.warn('checkForNewOrders failed', err) }
         finally { isCheckingOrders = false }
       }
+
+      // ── Avisos al equipo ──
+      const notifyBox = root.querySelector('#staff-notify')
+      const notifyList = notifyBox.querySelector('[data-list]')
+      const renderNotifyEmails = async () => {
+        const { emails, error } = await getOrderNotifyEmails()
+        if (isUnmounted) return
+        if (error) { notifyList.innerHTML = '<li class="text-[13px] text-bad">No se pudo cargar la lista.</li>'; return }
+        notifyList.innerHTML = emails.length
+          ? emails.map(e => `<li class="inline-flex items-center gap-1 pl-3 pr-1 h-8 rounded-full bg-line/60 text-[13px] text-ink">${esc(e)}<button type="button" data-remove="${esc(e)}" aria-label="Quitar ${esc(e)}" class="w-6 h-6 rounded-full flex items-center justify-center text-muted hover:text-bad">${ICON.close('w-3.5 h-3.5')}</button></li>`).join('')
+          : '<li class="text-[13px] text-muted">Todavía no hay correos: nadie recibe los avisos.</li>'
+      }
+      notifyBox.querySelector('[data-add]').addEventListener('submit', async (e) => {
+        e.preventDefault()
+        const input = e.target.elements.email
+        const { value, valid } = sanitizeEmail(input.value)
+        if (!valid) { showToast('Ese correo no parece válido', 'error'); return }
+        const { error } = await addOrderNotifyEmail(value)
+        if (error) { showToast(error.code === '23505' ? 'Ese correo ya está en la lista' : 'No se pudo agregar', 'error'); return }
+        input.value = ''
+        showToast('Correo agregado', 'success')
+        renderNotifyEmails()
+      })
+      notifyList.addEventListener('click', async (e) => {
+        const btn = e.target.closest('[data-remove]')
+        if (!btn) return
+        const { error } = await removeOrderNotifyEmail(btn.dataset.remove)
+        if (error) { showToast('No se pudo quitar', 'error'); return }
+        showToast('Correo quitado', 'success')
+        renderNotifyEmails()
+      })
+      notifyBox.querySelector('[data-test]').addEventListener('click', async (e) => {
+        const btn = e.currentTarget
+        btn.disabled = true
+        const { result, error } = await sendOrderStaffTest()
+        btn.disabled = false
+        const msg = { sent: ['Prueba enviada con el último pedido', 'success'], no_emails: ['Agrega al menos un correo', 'error'], no_orders: ['Aún no hay pedidos para la prueba', 'error'] }[result]
+        showToast(...(error || !msg ? ['No se pudo mandar la prueba', 'error'] : msg))
+      })
+      renderNotifyEmails()
 
       ;(async () => {
         await loadAndRender()

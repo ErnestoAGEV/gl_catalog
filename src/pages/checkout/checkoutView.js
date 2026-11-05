@@ -215,7 +215,7 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
           </form>
 
           <!-- RIGHT: Order Summary -->
-          <aside class="lg:col-span-5 order-first lg:order-none">
+          <aside class="lg:col-span-5 order-first lg:order-none lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto hide-scrollbar">
             <details id="co-summary" class="group/sum" open>
               <summary class="lg:hidden flex items-center justify-between gap-3 bg-fog rounded-lg px-5 min-h-14 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                 <span id="co-summary-count" class="font-mono text-[11px] tracking-[0.2em] uppercase text-ink/70">Tu pedido &middot; ${itemCount} ${itemCount === 1 ? 'pieza' : 'piezas'}</span>
@@ -240,7 +240,7 @@ export function checkoutSummaryHTML({ subtotal, discount, total, freeShipping, i
   const items = cartItemsHTML()
 
   return `
-    <div class="lg:sticky lg:top-[24px] space-y-4">
+    <div class="space-y-4">
 
       <!-- Items card -->
       <div class="bg-fog rounded-lg p-6">
