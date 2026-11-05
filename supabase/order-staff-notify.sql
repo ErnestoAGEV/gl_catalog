@@ -56,6 +56,7 @@ declare
   v_pieces int;
   v_rows   text := '';
   v_item   jsonb;
+  v_img    text;
   v_phone  text;
   v_wa     text;
   v_ship   boolean := coalesce(o.delivery_method, '') ilike '%domicilio%';
@@ -68,8 +69,17 @@ begin
     from jsonb_array_elements(coalesce(o.cart_items, '[]'::jsonb)) i;
 
   for v_item in select * from jsonb_array_elements(coalesce(o.cart_items, '[]'::jsonb)) loop
+    -- productId viene nulo en stock infinito: ahí se busca por nombre
+    select p.image_url into v_img
+      from public.products p
+     where p.id::text = v_item->>'productId' or p.name = v_item->>'name'
+     order by (p.id::text = coalesce(v_item->>'productId', '')) desc
+     limit 1;
     v_rows := v_rows || '<tr>'
       || '<td style="padding:10px 8px;border-bottom:1px solid #eee;font-size:20px;width:28px;vertical-align:top">&#9744;</td>'
+      || '<td style="padding:10px 0;border-bottom:1px solid #eee;width:72px;vertical-align:top">'
+      || case when v_img ~ '^https://' then '<img src="' || html_esc(v_img) || '" width="72" height="90" alt="" style="display:block;width:72px;height:90px;object-fit:cover;border-radius:6px;background:#f2f2f2">' else '' end
+      || '</td>'
       || '<td style="padding:10px 8px;border-bottom:1px solid #eee;vertical-align:top"><b>' || html_esc(v_item->>'name') || '</b><br>'
       || '<span style="color:#555">Talla: <b>' || coalesce(nullif(html_esc(v_item->>'size'), ''), '—') || '</b>'
       || ' · Color: <b>' || coalesce(nullif(html_esc(v_item->>'color'), ''), '—') || '</b></span></td>'
