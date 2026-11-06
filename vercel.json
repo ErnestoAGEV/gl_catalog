@@ -83,6 +83,61 @@
       "permanent": true
     },
     {
+      "source": "/categoria/camisas",
+      "destination": "/categoria/Camisas",
+      "permanent": true
+    },
+    {
+      "source": "/categoria/pantalones",
+      "destination": "/categoria/Pantalones",
+      "permanent": true
+    },
+    {
+      "source": "/categoria/jeans",
+      "destination": "/categoria/Pantalones",
+      "permanent": true
+    },
+    {
+      "source": "/categoria/polos",
+      "destination": "/categoria/Polos",
+      "permanent": true
+    },
+    {
+      "source": "/categoria/playeras",
+      "destination": "/categoria/Playeras",
+      "permanent": true
+    },
+    {
+      "source": "/categoria/shorts",
+      "destination": "/categoria/Shorts",
+      "permanent": true
+    },
+    {
+      "source": "/categoria/sueteres",
+      "destination": "/categoria/Su%C3%A9teres",
+      "permanent": true
+    },
+    {
+      "source": "/categoria/Sueteres",
+      "destination": "/categoria/Su%C3%A9teres",
+      "permanent": true
+    },
+    {
+      "source": "/categoria/zapatos",
+      "destination": "/categoria/Zapatos",
+      "permanent": true
+    },
+    {
+      "source": "/categoria/perfumes",
+      "destination": "/categoria/Perfumes",
+      "permanent": true
+    },
+    {
+      "source": "/categoria/perfumes-dama",
+      "destination": "/categoria/Perfumes%20Dama",
+      "permanent": true
+    },
+    {
       "source": "/producto/ff60bff1-eaca-4eeb-a3ef-edfc3598bbc2",
       "destination": "/producto/oggi-chinos-900-gris-ff60bff1",
       "permanent": true

@@ -985,6 +985,7 @@ for (const [path, page] of Object.entries(infoPages)) {
         ? [
             {
               '@context': 'https://schema.org',
+              '@type': 'ClothingStore',
               '@id': `${BASE_URL}/#${stores.find((st) => st.slug === page.store).schemaId}`,
               mainEntityOfPage: absolute(path),
             },
@@ -1135,19 +1136,21 @@ writeFileSync(
 const today = new Date().toISOString().slice(0, 10)
 // La fecha que le importa a un crawler es la del ultimo cambio, no la del alta.
 const lastmodOf = (p) => (p.updated_at || p.created_at || '').slice(0, 10) || today
+// Una categoria o marca cambia cuando cambia alguno de sus productos (fechas ISO: se comparan como texto)
+const latestOf = (items) => items.map(lastmodOf).sort().pop() || today
 
 const urls = [
   { loc: `${BASE_URL}/`, lastmod: today, changefreq: 'daily', priority: '1.0' },
   { loc: `${BASE_URL}/catalog`, lastmod: today, changefreq: 'daily', priority: '0.9' },
   ...categories.map((c) => ({
     loc: `${BASE_URL}/categoria/${encodeURIComponent(c)}`,
-    lastmod: today,
+    lastmod: latestOf(products.filter((p) => p.type === c)),
     changefreq: 'weekly',
     priority: '0.8',
   })),
   ...brands.map((b) => ({
     loc: `${BASE_URL}/marca/${b.slug}`,
-    lastmod: today,
+    lastmod: latestOf(b.items),
     changefreq: 'weekly',
     priority: '0.7',
   })),
@@ -1207,6 +1210,10 @@ const llms = `# G&L — Boutique de ropa para hombre, desde 1995
 ## Categorías
 
 ${categories.map((c) => `- [${c}](${absolute(`/categoria/${encodeURIComponent(c)}`)})`).join('\n')}
+
+## Marcas
+
+${brands.map((b) => `- [${b.name}](${absolute(`/marca/${b.slug}`)})`).join('\n')}
 
 ## Sucursales
 
