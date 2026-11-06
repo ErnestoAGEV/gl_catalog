@@ -9,7 +9,7 @@
  * definición a propósito: cuando la selección vive en dos sitios, tarde o
  * temprano un crawler y un comprador acaban viendo cosas distintas.
  */
-import { productBrand, sizeSummary } from './productCopy.js'
+import { productBrand, sizeSummary, sortSizes } from './productCopy.js'
 import { safeDecode } from './sanitize.js'
 import { isPerfumeCategory } from '../pages/admin/adminProductsData.js'
 
@@ -58,29 +58,55 @@ export function findBrandBySlug(products, slug, min = MIN_PRODUCTOS_POR_MARCA) {
 }
 
 /**
+ * Texto propio de las dos marcas que la tienda maneja desde 2005, indexado por
+ * brandSlug. Sale de las notas de mostrador de FAMILIES (productCopy.js) y de
+ * los hechos que confirmó el dueño (nov 2026). Ninguna otra marca lleva años
+ * ni "distribuidor oficial": no hay con qué respaldarlo.
+ */
+export const BRAND_COPY = {
+  wrangler:
+    'Wrangler la manejamos desde 2005 y G&L aparece en la lista de puntos de venta de la marca. ' +
+    'Todo es original. En jeans tenemos el Slim Fit, que es el Wrangler que más se vende, el Regular, ' +
+    'más suelto de pierna, y la línea Silver Edition. Toda la mezclilla Wrangler que manejamos es ' +
+    'rígida y de tejido cruzado: en esta marca no hay stretch. Por esa tela cuesta más que otros ' +
+    'jeans; aguanta mucho más y está pensada para montar y para el campo.',
+  oggi:
+    'G&L es Punto Oggi, punto de venta oficial de la marca, y la manejamos desde 2005. Todo es ' +
+    'original. El Vaxter es el pantalón que más sale de la tienda: corte recto slim, tiro largo, ' +
+    'cintura media y pierna amplia, en mezclilla con stretch, mezclilla rígida y gabardina. El Power ' +
+    'es el corte clásico, todo recto y de tiro alto; el Iron, el más entallado y de tiro corto. ' +
+    'También hay Leader, Rebel y chinos, que son la línea de vestir, en corte normal y Slim.',
+}
+
+// Como se nombra cada tipo en el parrafo: "pantalones" solo no dice "jeans",
+// que es como se busca.
+const typeLabel = (type) => (type === 'Pantalones' ? 'jeans y pantalones' : type.toLowerCase())
+
+/**
  * Párrafo de apertura, armado con los datos reales igual que el de categoría:
  * cuántas piezas, de qué tipo, en qué tallas y a qué precio. Texto plano —
  * quien lo pinte se encarga de escaparlo.
  */
 export function brandIntro(brand, items) {
   const tipos = [...new Set(items.map((p) => p.type).filter(Boolean))]
-  const tallas = sizeSummary(
-    [...new Set(items.flatMap((p) => p.sizes || []))].sort(
-      (a, b) => (parseFloat(a) || 0) - (parseFloat(b) || 0)
-    )
-  )
+  // Una frase por tipo: juntas, la 30 de cintura y la M de camisa se leian como una sola escala.
+  const tallas = tipos
+    .map((t) => [t, sizeSummary(sortSizes(items.filter((p) => p.type === t).flatMap((p) => p.sizes || [])))])
+    .filter(([, resumen]) => resumen)
+    .map(([t, resumen]) => (tipos.length === 1 ? `de la ${resumen}` : `${typeLabel(t)} de la ${resumen}`))
   const precios = items.map((p) => Number(p.price)).filter(Number.isFinite)
 
   const frases = [
     `${items.length} ${items.length === 1 ? 'pieza' : 'piezas'} de ${brand} en G&L, ` +
       `con envío a todo México en 3 a 4 días hábiles.`,
+    BRAND_COPY[brandSlug(brand)] || 'Todo es original.',
   ]
-  if (tipos.length === 1) frases.push(`Todo en ${tipos[0].toLowerCase()}.`)
+  if (tipos.length === 1) frases.push(`Todo en ${typeLabel(tipos[0])}.`)
   else if (tipos.length > 1) {
-    const lista = tipos.slice(0, 4).map((t) => t.toLowerCase())
+    const lista = tipos.slice(0, 4).map(typeLabel)
     frases.push(`Hay ${lista.join(', ')}${tipos.length > 4 ? ` y ${tipos.length - 4} categorías más` : ''}.`)
   }
-  if (tallas) frases.push(`Tallas de la ${tallas}.`)
+  if (tallas.length) frases.push(tipos.length === 1 ? `Tallas ${tallas[0]}.` : `Tallas: ${tallas.join('; ')}.`)
   if (precios.length) {
     const min = Math.min(...precios)
     const max = Math.max(...precios)
