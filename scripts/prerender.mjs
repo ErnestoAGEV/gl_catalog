@@ -29,7 +29,7 @@ import {
   socialImage,
 } from '../src/utils/productCopy.js'
 import { isInStock } from '../src/utils/stock.js'
-import { relatedProducts } from '../src/utils/related.js'
+import { relatedProducts, relatedTitle } from '../src/utils/related.js'
 import { brandIndex, brandIntro } from '../src/utils/brands.js'
 import { isPerfumeCategory } from '../src/pages/admin/adminProductsData.js'
 import { CATEGORY_ORDER_FALLBACK, sortByCategoryOrder } from '../src/utils/categoryOrder.js'
@@ -771,7 +771,7 @@ function brandLink(product) {
 function relatedSection(product) {
   const items = relatedProducts(product, products, 6)
   if (items.length === 0) return ''
-  const titulo = product.type ? `Mas ${product.type.toLowerCase()} de G&L` : 'Mas de la tienda'
+  const titulo = relatedTitle(product, items)
   return `
             <section class="mt-12">
               <h2 class="font-heading font-[700] text-[22px] mb-4">${escapeHtml(titulo)}</h2>

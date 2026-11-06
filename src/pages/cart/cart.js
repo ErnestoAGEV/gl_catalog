@@ -8,7 +8,7 @@ import { navigate } from '../../core/router.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 import { escapeHtml } from '../../utils/sanitize.js'
 import { colorHex } from '../../utils/colors.js'
-import { relatedProducts, isLookPairing, groupOf } from '../../utils/related.js'
+import { lookProducts, isLookPairing, groupOf } from '../../utils/related.js'
 
 
 function lineRow(item, idx) {
@@ -88,11 +88,11 @@ export function pageCart(state) {
     const anchor = lookAnchor()
     const pool = upsellPool.filter(p => !inCart.has(p.id))
     // Mismo orden que la ficha: primero lo que combina con lo de la bolsa
-    const eligible = anchor ? relatedProducts(anchor, pool, pool.length) : pool
+    const eligible = anchor ? lookProducts(anchor, pool, pool.length) : pool
     // Si falta para el envio gratis, primero lo mas barato que cierra la diferencia
     const gap = BRAND.freeShippingMin - cartTotal()
     // Con ropa en la bolsa, el que cierra la diferencia tiene que combinar: si no, siempre salia un perfume
-    const pairs = anchor && isLookPairing(anchor) ? relatedProducts(anchor, pool, pool.length).filter(p => groupOf(p.type) !== 'perfume' && groupOf(p.type) !== groupOf(anchor.type)) : eligible
+    const pairs = anchor && isLookPairing(anchor) ? lookProducts(anchor, pool, pool.length).filter(p => groupOf(p.type) !== 'perfume' && groupOf(p.type) !== groupOf(anchor.type)) : eligible
     const closers = gap > 0 ? pairs.filter(p => Number(p.price) >= gap).sort((a, b) => a.price - b.price) : []
     const rest = eligible.filter(p => !closers.includes(p))
     return [...closers, ...rest].slice(0, 3)

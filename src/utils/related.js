@@ -42,7 +42,49 @@ function interleaveByType(list) {
   return out
 }
 
+// Misma prenda en otro color: la base no tiene grupos, el nombre repetido es lo
+// unico que los une (la misma clave que variantGroups en el prerender).
+const sameName = (a, b) => {
+  const name = String(a?.name || '').trim()
+  return name !== '' && name === String(b?.name || '').trim()
+}
+// Local y no productBrand(): productCopy.js importa de aqui y seria un ciclo.
+// Sin " - " en el nombre no hay marca.
+const brandOf = (name) => {
+  const text = String(name || '')
+  return /\s*-\s*/.test(text) ? text.split(/\s*-\s*/)[0].trim() : ''
+}
+const sameBrandType = (a, b) => {
+  const brand = brandOf(a?.name)
+  return brand !== '' && brand === brandOf(b?.name) && a.type === b.type
+}
+
+/**
+ * Relacionados de la ficha: (1) la misma prenda en otro color, (2) la misma
+ * marca y tipo, y despues el orden de lookProducts. Antes 88 pantalones
+ * recibian casi los mismos 6 enlaces.
+ */
 export function relatedProducts(currentProduct, allProducts, limit = 4) {
+  const candidates = allProducts.filter(p => p.id !== currentProduct.id && p.badge !== 'Borrador')
+  const colors = candidates.filter(p => sameName(p, currentProduct))
+  const brand = candidates.filter(p => !sameName(p, currentProduct) && sameBrandType(p, currentProduct))
+  const used = new Set([...colors, ...brand])
+  const rest = lookProducts(currentProduct, candidates.filter(p => !used.has(p)), limit)
+  return [...colors, ...brand, ...rest].slice(0, limit)
+}
+
+/** Titulo de la seccion segun lo que de verdad lista. */
+export function relatedTitle(currentProduct, items) {
+  const half = items.length / 2
+  if (items.length && items.filter(p => sameName(p, currentProduct)).length >= half) return 'Otros colores'
+  if (items.length && items.filter(p => sameName(p, currentProduct) || sameBrandType(p, currentProduct)).length >= half) {
+    return `Más ${brandOf(currentProduct.name)}`
+  }
+  return isLookPairing(currentProduct) ? 'Completa tu look' : 'Más de la tienda'
+}
+
+/** "Completa tu look" puro: lo que combina, su categoria y el resto. Lo usa la bolsa. */
+export function lookProducts(currentProduct, allProducts, limit = 4) {
   const candidates = allProducts.filter(p => p.id !== currentProduct.id && p.badge !== 'Borrador')
   const wanted = COMPLEMENTS[groupOf(currentProduct.type)] || []
   const pairs = interleaveByType(candidates.filter(p => wanted.includes(groupOf(p.type))))

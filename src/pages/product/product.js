@@ -9,7 +9,7 @@ import { handleQuickAdd } from '../catalog/catalogQuickAdd.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 import { escapeHtml } from '../../utils/sanitize.js'
 import { splitGalleryImages } from '../../utils/productImages.js'
-import { relatedProducts, isLookPairing } from '../../utils/related.js'
+import { relatedProducts, relatedTitle } from '../../utils/related.js'
 import { flyToCart, lockScroll, unlockScroll } from '../../utils/dom.js'
 import { pageNotFound } from '../notFound/notFound.js'
 import { findSizeGuide, measuresFor, guideLabel, rowsForProduct } from '../../utils/sizeGuides.js'
@@ -216,6 +216,7 @@ export function pageProduct(initialState) {
 
   const publicProducts = state.products.filter(p => p.badge !== 'Borrador')
   const recommended = relatedProducts(product, publicProducts, 4)
+  const recommendedTitle = relatedTitle(product, recommended)
 
   /* ── Badges ── */
   const badges = []
@@ -470,7 +471,7 @@ export function pageProduct(initialState) {
           <div class="flex items-end justify-between mb-8 lg:mb-10 reveal">
             <div>
               <h2 class="font-display font-extrabold text-[clamp(28px,6vw,80px)] leading-[0.88] tracking-[-0.04em]">
-                ${isLookPairing(product) ? 'Completa<br/>tu <span class="text-brand">look</span>.' : 'También te<br/>puede <span class="text-brand">gustar</span>.'}
+                ${recommendedTitle === 'Completa tu look' ? 'Completa<br/>tu <span class="text-brand">look</span>.' : `${escapeHtml(recommendedTitle)}.`}
               </h2>
             </div>
             <a href="/catalog" class="hidden md:inline-flex ul-link text-[13px] font-semibold pb-2">Ver catálogo →</a>

@@ -5,7 +5,7 @@
 // "Completa tu look": a una prenda de arriba le tocan pantalones y zapatos, a un
 // pantalon camisas y polos. Un perfume recomienda perfumes.
 import assert from 'node:assert/strict'
-import { relatedProducts, isLookPairing } from '../src/utils/related.js'
+import { relatedProducts, relatedTitle, isLookPairing } from '../src/utils/related.js'
 
 const catalogo = [
   { id: 1, name: 'Camisa A', type: 'Camisas' },
@@ -52,5 +52,40 @@ assert.deepEqual(relatedProducts(camisa, [camisa], 6), [])
 assert.equal(isLookPairing(camisa), true)
 assert.equal(isLookPairing(pantalon), true)
 assert.equal(isLookPairing(catalogo[7]), false)
+
+// Misma prenda en otro color primero, luego la misma marca y tipo, y el titulo
+// dice lo que lista.
+const wr = (id, name, type = 'Pantalones') => ({ id, name, type })
+const jean = wr('j0', 'Wrangler - Slim Fit')
+const tienda = [
+  jean,
+  wr('c1', 'Camisa X', 'Camisas'),
+  wr('c2', 'Camisa Y', 'Camisas'),
+  wr('b1', 'Wrangler - Regular Fit'),
+  wr('b2', 'Wrangler - Silver Edition'),
+  wr('b3', 'Wrangler - Retro'),
+  wr('j1', 'Wrangler - Slim Fit '),
+  wr('j2', 'Wrangler - Slim Fit'),
+  wr('o1', 'Oggi - Vaxter'),
+  wr('o2', 'Oggi - Power'),
+  wr('wc', 'Wrangler - Camisa Logo', 'Camisas'),
+]
+const conHermanos = relatedProducts(jean, tienda, 4)
+assert.deepEqual(ids(conHermanos).slice(0, 2), ['j1', 'j2'], 'primero los otros colores')
+assert.ok(!conHermanos.includes(jean))
+assert.equal(relatedTitle(jean, conHermanos), 'Otros colores')
+
+const sinHermanos = tienda.filter((p) => !['j1', 'j2'].includes(p.id))
+const deMarca = relatedProducts(jean, sinHermanos, 4)
+assert.deepEqual(ids(deMarca).slice(0, 3), ['b1', 'b2', 'b3'], 'luego la misma marca y tipo')
+assert.equal(relatedTitle(jean, deMarca), 'Más Wrangler')
+
+// Sin marca en el nombre no hay grupo de marca: queda "Completa tu look"
+const sinMarca = relatedProducts(catalogo[2], catalogo, 4)
+assert.equal(relatedTitle(catalogo[2], sinMarca), 'Completa tu look')
+assert.equal(relatedTitle(catalogo[7], relatedProducts(catalogo[7], catalogo, 4)), 'Más de la tienda')
+
+// Dos pantalones de marcas distintas ya no reciben la misma lista
+assert.notDeepEqual(ids(relatedProducts(jean, sinHermanos, 6)), ids(relatedProducts(tienda[8], sinHermanos, 6)))
 
 console.log('ok — related')
