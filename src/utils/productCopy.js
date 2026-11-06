@@ -152,7 +152,7 @@ export function colorPhrase(colors) {
 // (Gabarina, Chinos Slim) van antes que las generales.
 const FAMILIES = [
   {
-    test: /oggi\s*-\s*vaxter\s+gabarina/i,
+    test: /oggi\s*-\s*vaxter.*gabar?d?ina/i,
     corta: 'corte Vaxter recto slim, en gabardina',
     larga:
       'Es el mismo corte Vaxter —recto slim, tiro largo, cintura media y pierna amplia— ' +
@@ -160,6 +160,7 @@ const FAMILIES = [
   },
   {
     test: /oggi\s*-\s*vaxter/i,
+    denim: true,
     corta: 'corte recto slim, tiro largo, cintura media y pierna amplia',
     larga:
       'El Vaxter es el pantalón que más sale de la tienda. Corte recto slim: entalla sin apretar, ' +
@@ -168,6 +169,7 @@ const FAMILIES = [
   },
   {
     test: /oggi\s*-\s*power/i,
+    denim: true,
     corta: 'corte clásico todo recto, tiro alto y cintura alta',
     larga:
       'El Power es el corte clásico de Oggi: todo recto, de tiro alto y cintura alta. Es el que busca ' +
@@ -176,6 +178,7 @@ const FAMILIES = [
   },
   {
     test: /oggi\s*-\s*iron/i,
+    denim: true,
     corta: 'slim, cintura media y tiro corto',
     larga:
       'El Iron es el más entallado de la línea: corte slim, cintura media y tiro corto. Si te gusta el ' +
@@ -199,6 +202,7 @@ const FAMILIES = [
   },
   {
     test: /wrangler\s*-\s*wrangler\s+slim/i,
+    denim: true,
     corta: 'vaquero slim en mezclilla rígida de tejido cruzado',
     larga:
       'Es el Wrangler que más se vende. Sigue siendo corte vaquero, en Slim. Toda la mezclilla Wrangler ' +
@@ -208,6 +212,7 @@ const FAMILIES = [
   },
   {
     test: /wrangler\s*-\s*wrangler\s+regular/i,
+    denim: true,
     corta: 'vaquero regular en mezclilla rígida de tejido cruzado',
     larga:
       'Corte vaquero regular: más suelto de pierna que el Slim, que es el que más se vende. La mezclilla ' +
@@ -253,16 +258,19 @@ const FAMILIES = [
   },
   {
     test: /lee\s*-\s*slim\s*fit/i,
+    denim: true,
     corta: 'pierna slim y cintura alta',
     larga: 'Corte Lee de pierna slim y cintura alta.',
   },
   {
     test: /lee\s*-\s*regular\s*fit/i,
+    denim: true,
     corta: 'pierna amplia, cintura alta, mezclilla rígida',
     larga: 'Corte Lee de pierna amplia y cintura alta, en mezclilla rígida.',
   },
   {
     test: /paddocks\s*-\s*san\s*francisco/i,
+    denim: true,
     corta: 'el corte Buffalo en tallas extra',
     larga:
       'Es el mismo corte Buffalo —clásico, pierna amplia, tiro alto y cintura alta— pero en ' +
@@ -270,6 +278,7 @@ const FAMILIES = [
   },
   {
     test: /paddocks\s*-\s*buffalo/i,
+    denim: true,
     corta: 'corte clásico, pierna amplia, tiro alto y cintura alta',
     larga:
       'El Buffalo es el corte clásico de Paddocks: pierna amplia, tiro alto y cintura alta. ' +
@@ -277,6 +286,7 @@ const FAMILIES = [
   },
   {
     test: /paddocks\s*-\s*relaxed/i,
+    denim: true,
     corta: 'recto slim de pierna relajada y cintura media',
     larga:
       'El Relaxed es un recto slim con la pierna relajada y cintura media: ni tan amplio como el ' +
@@ -284,6 +294,7 @@ const FAMILIES = [
   },
   {
     test: /paddocks\s*-\s*rocker/i,
+    denim: true,
     corta: 'slim de cintura baja',
     larga:
       'El Rocker es el más pegado de Paddocks: corte slim y cintura baja. Si lo quieres más ' +
@@ -394,7 +405,8 @@ const MAX_TITLE = 60
  * nunca el nombre.
  */
 export function productTitle(product) {
-  const singular = typeSingular(product?.type)
+  // "Jeans" es como se busca la mezclilla; un chino o una gabardina siguen siendo "Pantalón"
+  const singular = familyFor(product)?.denim ? 'Jeans' : typeSingular(product?.type)
   const dama = product?.type === 'Perfumes Dama'
   const color = colorPhrase(product?.colors)
   // "White Peak - Amarillo en Amarillo": si el nombre ya dice el color, no se repite

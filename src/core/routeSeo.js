@@ -1,15 +1,27 @@
 // Metadatos SEO por ruta. Modulo puro (sin DOM): lo usan tanto el runtime
 // (views.js) como el prerender de build (scripts/prerender.mjs).
 
-import { findProductByPath, productDescription, productPath, productTitle } from '../utils/productCopy.js'
+import { colorPhrase, findProductByPath, productBrand, productDescription, productPath, productTitle } from '../utils/productCopy.js'
 import { findBrandBySlug } from '../utils/brands.js'
 import { safeDecode } from '../utils/sanitize.js'
+import { isPerfumeCategory } from '../pages/admin/adminProductsData.js'
 
 // "Camisas para hombre", no "Camisas en Colima": la tienda vende a todo Mexico
 // (decision del dueno, oct-2026). Colima vive solo en las paginas de sucursal.
+// Pantalones se nombra "Jeans": es como se busca la mezclilla.
 export function categoryLabel(category) {
-  const label = category.replace(/,/g, ' y ')
+  const label = category === 'Pantalones' ? 'Jeans y pantalones' : category.replace(/,/g, ' y ')
   return /dama/i.test(label) ? label : `${label} para hombre`
+}
+
+/** "De $420 a $945 MXN." con los precios de estos productos, o '' si no hay. */
+function priceRange(items) {
+  const precios = items.map((p) => Number(p.price)).filter(Number.isFinite)
+  if (!precios.length) return ''
+  const fmt = (n) => `$${n.toLocaleString('es-MX')}`
+  const min = Math.min(...precios)
+  const max = Math.max(...precios)
+  return min === max ? `${fmt(min)} MXN.` : `De ${fmt(min)} a ${fmt(max)} MXN.`
 }
 
 export function getSeoForRoute(path, basePath, state) {
@@ -47,9 +59,25 @@ export function getSeoForRoute(path, basePath, state) {
         robots: 'noindex,follow',
       }
     }
+    const label = categoryLabel(category)
+    const cats = category.split(',').map((c) => c.trim())
+    const items = publicos.filter((p) => cats.includes(p.type))
+    let description = `${label} de las mejores marcas. Envío a todo México, gratis desde $1,499, y atención por WhatsApp.`
+    if (items.length) {
+      // Perfumes sin nombres de casas: ver brandIndex en brands.js
+      const cuenta = {}
+      if (!cats.some(isPerfumeCategory)) {
+        for (const p of items) {
+          const m = productBrand(p.name)
+          if (m !== 'G&L') cuenta[m] = (cuenta[m] || 0) + 1
+        }
+      }
+      const marcas = Object.keys(cuenta).sort((a, b) => cuenta[b] - cuenta[a]).slice(0, 3)
+      description = `${label}${marcas.length ? `: ${colorPhrase(marcas)}` : ''}. ${priceRange(items)} Envío a todo México, gratis desde $1,499.`
+    }
     return {
-      title: `${categoryLabel(category)} | G&L`,
-      description: `${categoryLabel(category)} de las mejores marcas. Envío a todo México, gratis desde $1,499, y atención por WhatsApp.`,
+      title: `${label} | G&L`,
+      description,
       canonicalPath: basePath,
       robots: 'index,follow',
     }
@@ -61,14 +89,18 @@ export function getSeoForRoute(path, basePath, state) {
       // La gente busca "pantalones paddocks", "oaktree camisas": el tipo va en el title.
       const cuenta = {}
       for (const p of marca.items) if (p.type) cuenta[p.type] = (cuenta[p.type] || 0) + 1
-      const tipos = Object.keys(cuenta).sort((a, b) => cuenta[b] - cuenta[a]).slice(0, 2)
-      const prefijo = tipos.map((t, i) => (i ? t.toLowerCase() : t)).join(' y ')
+      const orden = Object.keys(cuenta).sort((a, b) => cuenta[b] - cuenta[a])
+      const nombre = (t) => (t === 'Pantalones' ? 'jeans' : t.toLowerCase())
+      const prefijo = orden.slice(0, 2).map((t, i) => (i ? nombre(t) : nombre(t).replace(/^./, (c) => c.toUpperCase()))).join(' y ')
+      const largo = `${prefijo ? `${prefijo} ${marca.name}` : marca.name} para hombre | G&L`
+      const rango = priceRange(marca.items).replace(/ MXN\.$/, ' MXN')
       return {
-        title: `${prefijo ? `${prefijo} ${marca.name}` : marca.name} para hombre | G&L`,
+        title: largo.length <= 60 ? largo : `${marca.name} para hombre | G&L`,
         description:
-          `${marca.items.length} piezas de ${marca.name} para hombre. ` +
-          `Precios, tallas y envío a todo México; compra en línea o por WhatsApp.`,
-        canonicalPath: basePath,
+          `${marca.items.length} piezas originales de ${marca.name}: ${colorPhrase(orden.map(nombre))}. ` +
+          `${rango}, envío a todo México.`,
+        // El slug, no el path pedido: /marca/Oggi hidrataba con canonical propio
+        canonicalPath: `/marca/${marca.slug}`,
         robots: 'index,follow',
       }
     }

@@ -243,3 +243,9 @@ assert.deepEqual(sizeGroups([{ type: 'Shorts', sizes: ['M', '30'] }, { type: 'Po
 // Una sola clase de prenda: un solo grupo
 assert.deepEqual(sizeGroups([{ type: 'Pantalones', sizes: ['30'] }]), [{ label: 'Cintura', sizes: ['30'] }])
 assert.deepEqual(sizeGroups([]), [])
+
+// ── "Jeans" en el title de las familias de mezclilla ──
+assert.ok(productTitle({ name: 'Wrangler - Wrangler Slim Fit WBK', type: 'Pantalones' }).includes('Jeans'))
+assert.ok(productTitle({ name: 'Oggi - Vaxter Spring Stone', type: 'Pantalones' }).includes('Jeans'))
+assert.ok(!productTitle({ name: 'Oggi - Chinos 900', type: 'Pantalones', colors: ['Gris'] }).includes('Jeans'), 'un chino no es jean')
+assert.ok(!productTitle({ name: 'Oggi - Vaxter Gabardina Khaki', type: 'Pantalones' }).includes('Jeans'), 'el Vaxter de gabardina no es jean')
