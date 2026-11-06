@@ -424,6 +424,32 @@ export function productTitle(product) {
   return candidatos.find((t) => t.length <= MAX_TITLE) || candidatos[candidatos.length - 1]
 }
 
+// ── Merchant Center ─────────────────────────────────────────────────────────
+
+/** Publico del producto para el schema: Merchant pide genero y edad en ropa. */
+export function productAudience(product) {
+  return {
+    '@type': 'PeopleAudience',
+    suggestedGender: product?.type === 'Perfumes Dama' ? 'female' : 'male',
+    suggestedMinAge: 13,
+  }
+}
+
+/**
+ * Precio tachado como ListPrice, solo si de verdad es mayor que el de venta:
+ * un precio de lista igual o menor Google lo marca como error.
+ */
+export function listPriceSpec(product) {
+  const list = Number(product?.original_price)
+  if (!(list > Number(product?.price))) return undefined
+  return {
+    '@type': 'UnitPriceSpecification',
+    price: list,
+    priceCurrency: 'MXN',
+    priceType: 'https://schema.org/ListPrice',
+  }
+}
+
 // ── URL del producto ────────────────────────────────────────────────────────
 //
 // El uuid crudo no dice nada al que ve el link en WhatsApp ni a Google. El

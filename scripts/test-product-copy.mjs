@@ -14,6 +14,8 @@ import {
   socialImage,
   sortSizes,
   sizeGroups,
+  productAudience,
+  listPriceSpec,
 } from '../src/utils/productCopy.js'
 
 // ── marca ──
@@ -249,3 +251,13 @@ assert.ok(productTitle({ name: 'Wrangler - Wrangler Slim Fit WBK', type: 'Pantal
 assert.ok(productTitle({ name: 'Oggi - Vaxter Spring Stone', type: 'Pantalones' }).includes('Jeans'))
 assert.ok(!productTitle({ name: 'Oggi - Chinos 900', type: 'Pantalones', colors: ['Gris'] }).includes('Jeans'), 'un chino no es jean')
 assert.ok(!productTitle({ name: 'Oggi - Vaxter Gabardina Khaki', type: 'Pantalones' }).includes('Jeans'), 'el Vaxter de gabardina no es jean')
+
+// ── Merchant: genero/edad y precio de lista ──
+assert.equal(productAudience({ type: 'Perfumes Dama' }).suggestedGender, 'female')
+assert.equal(productAudience({ type: 'Camisas' }).suggestedGender, 'male')
+assert.equal(productAudience({ type: 'Camisas' }).suggestedMinAge, 13)
+assert.equal(listPriceSpec({ price: 800, original_price: 1000 }).price, 1000)
+assert.equal(listPriceSpec({ price: 800, original_price: 1000 }).priceType, 'https://schema.org/ListPrice')
+assert.equal(listPriceSpec({ price: 800, original_price: 800 }), undefined, 'sin rebaja no hay precio de lista')
+assert.equal(listPriceSpec({ price: 800 }), undefined)
+assert.equal(listPriceSpec({ price: 800, original_price: '1000' }).price, 1000, 'la base puede mandar texto')

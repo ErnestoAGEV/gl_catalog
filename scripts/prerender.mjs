@@ -22,6 +22,8 @@ import {
   productBrand,
   productDescription,
   fitNote,
+  listPriceSpec,
+  productAudience,
   productPath,
   sizeSummary,
   socialImage,
@@ -840,6 +842,7 @@ for (const product of products) {
         // diferencia una variante de la siguiente.
         color: product.colors?.length ? colorPhrase(product.colors) : undefined,
         size: product.sizes?.length ? product.sizes : undefined,
+        audience: productAudience(product),
         ...(group
           ? {
               inProductGroupWithID: groupKey(product.name),
@@ -852,6 +855,7 @@ for (const product of products) {
           price: Number(product.price),
           priceCurrency: 'MXN',
           priceValidUntil: PRICE_VALID_UNTIL,
+          priceSpecification: listPriceSpec(product),
           availability: `https://schema.org/${inStock ? 'InStock' : 'OutOfStock'}`,
           itemCondition: 'https://schema.org/NewCondition',
           seller: { '@id': `${BASE_URL}/#marca` },
@@ -897,14 +901,17 @@ for (const product of products) {
                   sku: String(variant.id),
                   color: variant.colors?.length ? colorPhrase(variant.colors) : undefined,
                   size: variant.sizes?.length ? variant.sizes : undefined,
+                  audience: productAudience(variant),
                   offers: {
                     '@type': 'Offer',
                     url: absolute(variantPath),
                     price: Number(variant.price),
                     priceCurrency: 'MXN',
                     priceValidUntil: PRICE_VALID_UNTIL,
+                    priceSpecification: listPriceSpec(variant),
                     availability: `https://schema.org/${isInStock(variant) ? 'InStock' : 'OutOfStock'}`,
                     itemCondition: 'https://schema.org/NewCondition',
+                    seller: { '@id': `${BASE_URL}/#marca` },
                     shippingDetails,
                     hasMerchantReturnPolicy: returnPolicy,
                   },
