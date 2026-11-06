@@ -254,13 +254,33 @@ function writeRoute(path, html) {
  * pinta el JS: un crawler sin JS no encontraba ni un telefono en todo el sitio,
  * que en un negocio con dos tiendas fisicas es la senal local mas barata.
  */
+/**
+ * Menu completo en el HTML servido. Sin esto, una categoria o marca solo se
+ * enlazaba desde /catalog: el resto del sitio no le pasaba ni un enlace.
+ */
+const HELP_LINKS = [
+  ['Sucursales', '/sucursales'], ['Envíos y pagos', '/envios'], ['Cambios', '/cambios'],
+  ['Contacto', '/contacto'], ['Nosotros', '/nosotros'],
+]
+
+function siteLinks() {
+  const list = (title, links) => `
+                <div>
+                  <p class="mb-2 uppercase text-ink/45">${title}</p>
+                  <ul class="space-y-1">${links.map(([label, href]) => `<li><a class="ul-link hover:text-ink" href="${href}">${escapeHtml(label)}</a></li>`).join('')}</ul>
+                </div>`
+  return `
+              <nav aria-label="Secciones" class="grid grid-cols-2 md:grid-cols-3 gap-6 mb-8">${list('Categorías', categories.map((c) => [c, `/categoria/${encodeURIComponent(c)}`]))}${list('Marcas', brands.map((b) => [b.name, `/marca/${b.slug}`]))}${list('Ayuda', HELP_LINKS)}
+              </nav>`
+}
+
 function contactFooter() {
   const tel = STORE_PHONE.replace(/[^+\d]/g, '')
   const sucursales = stores
     .map((store) => `<p>${escapeHtml(store.name)} — ${escapeHtml(store.address)}</p>`)
     .join('\n              ')
   return `
-            <footer class="mt-16 pt-8 border-t border-ink/10 font-mono text-[12px] tracking-[0.06em] text-ink/60">
+            <footer class="mt-16 pt-8 border-t border-ink/10 font-mono text-[12px] tracking-[0.06em] text-ink/60">${siteLinks()}
               <p class="mb-2">
                 <a class="ul-link hover:text-ink" href="tel:${tel}">${escapeHtml(STORE_PHONE)}</a>
                 <span class="mx-2 text-ink/30">/</span>
@@ -1049,6 +1069,11 @@ for (const route of routes) {
     keepHeroPreload: route.path === '/',
     extraLd,
   })
+
+  // Todas las rutas pasan por contactFooter(): si alguna sale sin el menu, se
+  // perdieron los enlaces internos de golpe.
+  const navHrefs = [...brands.map((b) => `href="/marca/${b.slug}"`), 'href="/envios"']
+  if (!navHrefs.every((href) => route.shell.includes(href))) throw new Error(route.path + ': falta nav')
 
   writeRoute(route.path, (route.patchHead ? route.patchHead(head) : head) + route.shell + tail)
 }

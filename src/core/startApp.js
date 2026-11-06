@@ -1,7 +1,7 @@
 import { getRoute, onRouteChange, startRouter, navigate, scrollPositions } from './router.js'
 import { bindHeaderSearch } from '../components/headerSearch.js'
 import { closeMiniCart } from '../components/miniCart.js'
-import { marqueeHtml } from '../components/layout.js'
+import { marqueeHtml, footerBrandsHtml } from '../components/layout.js'
 import { getState, isAdminAuthed, loadProducts, loadCategories, loadSizeGuides, loadSiteContent, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession, getAdminOrders } from '../store/index.js'
 import { renderRoute } from './views.js'
 import { showToast } from '../utils/toast.js'
@@ -696,6 +696,7 @@ export async function startApp(mountEl) {
 
   let prevSignatures = {}
   let prevSiteContentRev = getState().siteContentRev
+  let prevProductCount = getState().products.length
   let prevAdminAuthed = isAdminAuthed()
 
   const unsub = subscribe((state) => {
@@ -732,6 +733,14 @@ export async function startApp(mountEl) {
       prevSiteContentRev = state.siteContentRev
       const marquee = `${marqueeHtml(state.siteContent).trimEnd()}&nbsp;&nbsp;`
       document.querySelectorAll('[data-marquee]').forEach(el => { if (el.innerHTML !== marquee) el.innerHTML = marquee })
+    }
+
+    // Marcas del pie: /catalog, /categoria, /marca e info se pintan antes de que
+    // lleguen los productos y no se repintan, asi que la lista se rellena aqui.
+    if (state.products.length !== prevProductCount) {
+      prevProductCount = state.products.length
+      const brands = footerBrandsHtml(state.products)
+      document.querySelectorAll('[data-footer-brands]').forEach(el => { if (el.innerHTML !== brands) el.innerHTML = brands })
     }
 
     // 3. Selective page re-render

@@ -5,10 +5,13 @@ import { normalizePath } from '../core/router.js'
 import { getSearchQuery } from '../store/index.js'
 import { headerSearchButtons, headerSearchForm, headerSearchPanel } from './headerSearch.js'
 import { lockScroll, unlockScroll } from '../utils/dom.js'
+import { brandIndex } from '../utils/brands.js'
+import { escapeHtml } from '../utils/sanitize.js'
 
 const CATEGORY_LINKS = [
   ['Camisas', 'Camisas'], ['Polos', 'Polos'], ['Jeans', 'Pantalones'], ['Perfumes', 'Perfumes'],
   ['Zapatos', 'Zapatos'], ['Shorts', 'Shorts'], ['Playeras', 'Playeras'], ['Perfumes Dama', 'Perfumes Dama'],
+  ['Suéteres', 'Suéteres'],
 ].map(([label, cat]) => [label, `/categoria/${encodeURIComponent(cat)}`])
 
 const HELP_LINKS = [
@@ -109,6 +112,13 @@ function container(children, theme = 'dark') {
 
 const MARQUEE_DEFAULT = `★ Envío gratis +$${BRAND.freeShippingMin} MXN — Nueva temporada 2026 — Cierre por WhatsApp en minutos — 2 tiendas físicas en Colima — Usa WELCOME10 · 10% off 1ª compra — `
 
+/** <li> de las marcas con pagina propia, para el pie. Vacio hasta que llegan los productos. */
+export function footerBrandsHtml(products) {
+  return brandIndex(products || [])
+    .map((b) => `<li><a href="/marca/${b.slug}" class="ul-link opacity-80 hover:opacity-100">${escapeHtml(b.name)}</a></li>`)
+    .join('')
+}
+
 /** Texto (HTML ya escapado) de la barra de anuncios: admin → Contenido, o el de siempre. */
 export function marqueeHtml(rows) {
   return resolveHomeContent(rows, { marqueeDefault: MARQUEE_DEFAULT }).marquee
@@ -190,7 +200,7 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
       <!-- Footer Content -->
       <div class="max-w-[1440px] mx-auto px-6 lg:px-10 pt-12 md:pt-16 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pb-12">
         <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
-          <div class="md:col-span-6">
+          <div class="md:col-span-4">
             <p class="font-mono text-[12px] tracking-[0.24em] uppercase opacity-60 mb-4">Tu fit, perfecto. Desde 1995.</p>
             <p class="text-[15px] text-paper/70 max-w-md leading-relaxed">Boutique de ropa para hombre desde 1995. Las mejores marcas, elegidas a mano, al mejor precio. Envío a todo México, atención por WhatsApp y dos tiendas en Colima.</p>
           </div>
@@ -209,6 +219,10 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
               <li><a href="/contacto" class="ul-link opacity-80 hover:opacity-100">Contacto</a></li>
               <li><a href="/nosotros" class="ul-link opacity-80 hover:opacity-100">Nosotros</a></li>
             </ul>
+          </div>
+          <div class="md:col-span-2">
+            <h4 class="font-mono text-[11px] tracking-[0.24em] uppercase opacity-60 mb-4">Marcas</h4>
+            <ul data-footer-brands class="md:space-y-1 text-[14px] [&_a]:inline-block [&_a]:py-3 md:[&_a]:py-1.5">${footerBrandsHtml(state.products)}</ul>
           </div>
           <div class="md:col-span-2">
             <h4 class="font-mono text-[11px] tracking-[0.24em] uppercase opacity-60 mb-4">Síguenos</h4>
