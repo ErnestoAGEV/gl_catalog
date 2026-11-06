@@ -219,7 +219,7 @@ const FAMILIES = [
     tipo: 'Polos',
     corta: 'polo de algodón, fresca',
     larga:
-      'Las White Peak son de algodón. Es una tela fresca, que aquí en Colima es lo que importa. Si ' +
+      'Las White Peak son de algodón. Es una tela fresca, que en tierra caliente es lo que importa. Si ' +
       'prefieres una tela deportiva que transpire más, checa las Soul&Blues.',
   },
   {
@@ -372,7 +372,7 @@ export function productDescription(product) {
     if (text.length + clause.length <= MAX_LENGTH) text += clause
   }
 
-  const tail = ' Envío a todo México desde Colima.'
+  const tail = ' Envío a todo México.'
   if (text.length + tail.length <= MAX_LENGTH) text += tail
 
   return text

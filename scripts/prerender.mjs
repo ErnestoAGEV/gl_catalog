@@ -357,10 +357,10 @@ function categoryIntro(category, items) {
   const esPerfume = isPerfumeCategory(category)
   const frases = [
     esPerfume
-      ? `${items.length} ${items.length === 1 ? 'fragancia' : 'fragancias'} en G&amp;L Colima, ` +
-        `disponibles en las dos tiendas.`
+      ? `${items.length} ${items.length === 1 ? 'fragancia' : 'fragancias'} en G&amp;L, ` +
+        `con envío a todo México en 3 a 4 días hábiles.`
       : `${items.length} ${items.length === 1 ? 'pieza' : 'piezas'} de ${category.toLowerCase()} ` +
-        `en G&amp;L Colima, con ${items.length === 1 ? 'existencia' : 'existencias'} en las dos tiendas.`,
+        `en G&amp;L, con envío a todo México en 3 a 4 días hábiles.`,
   ]
   if (marcas.length === 1) frases.push(`Todo de ${escapeHtml(marcas[0])}.`)
   else if (marcas.length > 1) {

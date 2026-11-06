@@ -23,7 +23,7 @@ const TYPE_DESCRIPTIONS = {
   'Suéteres': 'Suéteres, cazadoras y chamarras de Collor’s, Giovanni Gali y Soul&Blues.',
   'Perfumes': 'Fragancias para hombre en varias presentaciones. Pregunta por WhatsApp si buscas una en especial.',
   'Playeras': 'Playeras de Sherman Morgan, de la S a la XL.',
-  'Shorts': 'Shorts y bermudas de American Fly y Collor’s para el calor de Colima.',
+  'Shorts': 'Shorts y bermudas de American Fly y Collor’s para los días de calor.',
 }
 
 const PRODUCTS_PER_PAGE = 20
@@ -67,15 +67,15 @@ export function pageCatalog(initialState) {
     : `Todo el <span class="text-brand">cat\u00E1logo</span>.`
   let heroDesc = initialType
     ? (TYPE_DESCRIPTIONS[initialType] || `Explora nuestra selecci\u00F3n de ${safeInitialType.toLowerCase()}.`)
-    : 'Camisas, pantalones, polos, zapatos y perfumes. Elegidos a mano en Colima \u2014 al mejor precio.'
+    : 'Camisas, pantalones, polos, zapatos y perfumes. Elegidos a mano, al mejor precio, con env\u00edo a todo M\u00e9xico.'
 
   // La marca manda sobre la categoria: /marca/wrangler no es una categoria.
   const safeBrandName = escapeHtml(brandName)
   if (urlBrand) {
     heroH1 = `Solo <span class="text-brand">${safeBrandName}</span>.`
     heroDesc = brandItems.length
-      ? brandIntro(brandName, brandItems)
-      : `Piezas de ${brandName} en G&L Colima.`
+      ? escapeHtml(brandIntro(brandName, brandItems))
+      : `Piezas de ${safeBrandName} en G&amp;L, con envío a todo México.`
   }
 
   // Build category chips from actual data, ordered by the DB category order
@@ -811,7 +811,7 @@ export function pageCatalog(initialState) {
         const desc = root.querySelector('#hero-desc')
         const safeVal = escapeHtml(val)
         if (h1) h1.innerHTML = val ? `Solo <span class="text-brand">${safeVal}</span>.` : `Todo el <span class="text-brand">cat\u00E1logo</span>.`
-        if (desc) desc.textContent = val ? (TYPE_DESCRIPTIONS[val] || `Explora nuestra selecci\u00F3n de ${val.toLowerCase()}.`) : 'Camisas, pantalones, polos, zapatos y perfumes. Elegidos a mano en Colima \u2014 al mejor precio.'
+        if (desc) desc.textContent = val ? (TYPE_DESCRIPTIONS[val] || `Explora nuestra selecci\u00F3n de ${val.toLowerCase()}.`) : 'Camisas, pantalones, polos, zapatos y perfumes. Elegidos a mano, al mejor precio, con env\u00edo a todo M\u00e9xico.'
 
         renderGrid({ resetPage: true })
         animateCategoryChange()
@@ -921,7 +921,7 @@ export function pageCatalog(initialState) {
         const h1 = root.querySelector('#hero-h1')
         const desc = root.querySelector('#hero-desc')
         if (h1) h1.innerHTML = `Todo el <span class="text-brand">catálogo</span>.`
-        if (desc) desc.textContent = 'Camisas, pantalones, polos, zapatos y perfumes. Elegidos a mano en Colima — al mejor precio.'
+        if (desc) desc.textContent = 'Camisas, pantalones, polos, zapatos y perfumes. Elegidos a mano, al mejor precio, con envío a todo México.'
         window.history.replaceState(null, '', withQuery('/catalog'))
         seoSettled = false   // title y canonical siguen a la url nueva
         renderGrid({ resetPage: true })

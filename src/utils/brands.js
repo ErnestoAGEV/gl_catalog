@@ -72,8 +72,8 @@ export function brandIntro(brand, items) {
   const precios = items.map((p) => Number(p.price)).filter(Number.isFinite)
 
   const frases = [
-    `${items.length} ${items.length === 1 ? 'pieza' : 'piezas'} de ${brand} en G&L Colima, ` +
-      `con existencias en las dos tiendas.`,
+    `${items.length} ${items.length === 1 ? 'pieza' : 'piezas'} de ${brand} en G&L, ` +
+      `con envío a todo México en 3 a 4 días hábiles.`,
   ]
   if (tipos.length === 1) frases.push(`Todo en ${tipos[0].toLowerCase()}.`)
   else if (tipos.length > 1) {
