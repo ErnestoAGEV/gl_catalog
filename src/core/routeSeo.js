@@ -159,6 +159,14 @@ export function getSeoForRoute(path, basePath, state) {
       title: 'Cambios y garantía | G&L',
       description: 'Cambia tu prenda dentro de los 8 días siguientes a la entrega. Si el error fue nuestro, el envío corre por nuestra cuenta.',
     },
+    '/privacidad': {
+      title: 'Aviso de privacidad | G&L',
+      description: 'Qué datos guarda G&L cuando compras, para qué los usa, con quién los comparte y cómo ejercer tus derechos ARCO.',
+    },
+    '/terminos': {
+      title: 'Términos y condiciones de compra | G&L',
+      description: 'Precios en MXN con IVA, pedido y pago por WhatsApp, envío a todo México, cambios en 8 días y productos originales.',
+    },
     '/contacto': {
       title: 'Contacto y sucursales en Colima | G&L',
       description: 'Escríbenos por WhatsApp o visítanos en Colima Centro y Villa de Álvarez. Horarios, direcciones y cómo llegar.',

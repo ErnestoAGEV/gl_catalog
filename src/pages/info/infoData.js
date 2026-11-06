@@ -1,4 +1,8 @@
-import { stores } from '../home/homeData.js'
+import { stores, STORE_PHONE } from '../home/homeData.js'
+
+const LEGAL_ADDRESS = 'Calle Ignacio Zaragoza #140, Col. Centro, C.P. 28000, Colima, Colima'
+const PRIVACY_EMAIL = 'glboutiquecolima@gmail.com'
+const LEGAL_UPDATED = '6 de noviembre de 2026'
 
 // Contenido de las paginas de confianza (/nosotros, /envios, /cambios,
 // /contacto). Van aparte del renderer para que editar el copy no obligue a
@@ -118,6 +122,16 @@ export const infoPages = {
           'Link de pago a distancia, si cierras el pedido por WhatsApp.',
         ],
       },
+      {
+        h: '¿Cómo se paga un pedido hecho en el sitio?',
+        list: [
+          'Armas tu pedido y lo envías: queda registrado con tus datos y lo que escogiste.',
+          'Un asesor te escribe por WhatsApp en horario de tienda para confirmar tallas, el total y el envío.',
+          'Si pagas por transferencia, ahí mismo te pasa los datos para pagar. Si recoges en tienda, pagas al recoger, en efectivo o con tarjeta.',
+          'Con el pago confirmado sale tu pedido y te mandamos la guía por WhatsApp.',
+          'El sitio no cobra en línea ni te pide datos de tarjeta.',
+        ],
+      },
     ],
     cta: { label: 'Preguntar por WhatsApp', whatsapp: 'Hola, tengo una duda sobre envíos' },
   },
@@ -164,5 +178,104 @@ export const infoPages = {
     ],
     showStores: true,
     cta: { label: 'Escribir por WhatsApp', whatsapp: 'Hola, tengo una pregunta' },
+  },
+
+  // Ley Federal de Protección de Datos Personales en Posesión de los
+  // Particulares (2025). Responsable y domicilio confirmados por el dueño
+  // (nov 2026). RFC y CURP no se publican.
+  '/privacidad': {
+    eyebrow: 'Aviso de privacidad',
+    heading: 'Aviso de<br/><span class="text-brand">privacidad</span>.',
+    lead: 'Qué datos tuyos guardamos cuando compras en G&amp;L, para qué los usamos y cómo nos pides que los corrijamos o los borremos.',
+    sections: [
+      {
+        h: 'Quién es responsable de tus datos',
+        body: `Ernesto Vega Vega, persona física con actividad empresarial que opera la marca comercial G&amp;L, con domicilio en ${LEGAL_ADDRESS}, es el responsable del uso y la protección de tus datos personales.`,
+      },
+      {
+        h: 'Qué datos recabamos',
+        body: 'Solo los que nos das al hacer un pedido o al suscribirte al boletín. No pedimos datos sensibles ni datos de tarjeta: el sitio no cobra en línea.',
+        list: [
+          'Nombre y número de WhatsApp.',
+          'Correo electrónico, si lo escribes.',
+          'Dirección de envío (calle, número, colonia, ciudad, código postal, estado y referencias), si pides envío a domicilio.',
+          'Lo que pediste, la forma de pago y la forma de entrega.',
+          'Correo del boletín, si te suscribes.',
+        ],
+      },
+      {
+        h: 'Para qué los usamos',
+        body: 'Para lo necesario de tu compra, sin lo cual no podríamos atenderte:',
+        list: [
+          'Registrar y confirmar tu pedido.',
+          'Escribirte por WhatsApp para el pago y el seguimiento.',
+          'Mandarte el paquete y el aviso de envío.',
+          'Atender cambios, aclaraciones y dudas.',
+        ],
+      },
+      {
+        h: 'Usos secundarios',
+        body: 'Si te suscribes al boletín, usamos tu correo para mandarte novedades y promociones. Puedes negarte en cualquier momento con el enlace para darte de baja que viene en cada correo, o escribiéndonos. Negarte no afecta tus compras.',
+      },
+      {
+        h: 'Con quién compartimos tus datos',
+        body: 'No vendemos ni rentamos tus datos. Solo los compartimos con quien nos ayuda a atenderte, y solo para eso:',
+        list: [
+          'La paquetería que entrega tu pedido: nombre, teléfono y dirección.',
+          'Los proveedores que alojan el sitio y la base de datos y que envían los correos.',
+          'Una autoridad, únicamente cuando la ley nos lo exija.',
+        ],
+      },
+      {
+        h: 'Tus derechos ARCO',
+        body: `Puedes pedir acceso a tus datos, que los rectifiquemos, que los cancelemos o oponerte a su uso, y también retirar tu consentimiento. Escríbenos a <a class="ul-link" href="mailto:${PRIVACY_EMAIL}">${PRIVACY_EMAIL}</a> o por WhatsApp al ${STORE_PHONE} con tu nombre, qué datos y qué pides, y una identificación que muestre que eres el titular. Te respondemos dentro del plazo que marca la ley.`,
+      },
+      {
+        h: 'Lo que se guarda en tu navegador',
+        body: 'El sitio no usa cookies de publicidad ni de rastreo. Tu bolsa y una copia del catálogo se guardan en tu propio navegador para que la página cargue rápido; puedes borrarlas limpiando los datos del sitio.',
+      },
+      {
+        h: 'Cambios a este aviso',
+        body: `Si cambia este aviso, lo publicamos en esta misma página con la fecha nueva. Última actualización: ${LEGAL_UPDATED}.`,
+      },
+    ],
+    cta: { label: 'Preguntar por WhatsApp', whatsapp: 'Hola, tengo una pregunta sobre mis datos' },
+  },
+
+  '/terminos': {
+    eyebrow: 'Términos',
+    heading: 'Términos<br/>de <span class="text-brand">compra</span>.',
+    lead: 'Las reglas de comprar en G&amp;L, en corto. Lo mismo que te diría alguien en el mostrador.',
+    sections: [
+      {
+        h: 'Quién te vende',
+        body: `G&amp;L es la marca comercial que opera Ernesto Vega Vega, con domicilio en ${LEGAL_ADDRESS}. Para cualquier duda, escríbenos por WhatsApp al ${STORE_PHONE}.`,
+      },
+      {
+        h: 'Precios y disponibilidad',
+        body: 'Los precios están en pesos mexicanos (MXN) e incluyen IVA. El inventario es el mismo de las dos tiendas físicas: si algo se agota antes de confirmar tu pedido, te avisamos por WhatsApp antes de cobrarte.',
+      },
+      {
+        h: 'Cómo se hace un pedido',
+        body: 'Armas tu pedido en el sitio y lo envías; queda registrado. Un asesor te escribe por WhatsApp para confirmar tallas, el total y el pago. El sitio no cobra en línea: el pedido queda firme cuando se confirma el pago, o cuando pagas en tienda si vas a recoger. <a class="ul-link" href="/envios">Así se paga</a>.',
+      },
+      {
+        h: 'Envíos',
+        body: `El envío cuesta $${SHIPPING.cost} MXN a todo México y es gratis desde $${SHIPPING.freeFrom.toLocaleString('es-MX')} MXN. Llega en ${SHIPPING.daysMin} a ${SHIPPING.daysMax} días hábiles desde que se confirma el pedido. Recoger en tienda no cuesta. Detalles en <a class="ul-link" href="/envios">envíos y pagos</a>.`,
+      },
+      {
+        h: 'Cambios',
+        body: `No hay reembolso de dinero: cambiamos la prenda dentro de los ${SHIPPING.exchangeDays} días siguientes a la entrega, sin usar y con etiquetas. Si el error fue nuestro, el envío del cambio lo pagamos nosotros. Todo el detalle en <a class="ul-link" href="/cambios">cambios</a>.`,
+      },
+      {
+        h: 'Productos originales',
+        body: 'Todo lo que vendemos es original.',
+      },
+      {
+        h: 'Tus datos',
+        body: 'Lo que hacemos con los datos de tu pedido está en el <a class="ul-link" href="/privacidad">aviso de privacidad</a>.',
+      },
+    ],
+    cta: { label: 'Preguntar por WhatsApp', whatsapp: 'Hola, tengo una duda sobre una compra' },
   },
 }

@@ -263,6 +263,7 @@ function writeRoute(path, html) {
 const HELP_LINKS = [
   ['Sucursales', '/sucursales'], ['Envíos y pagos', '/envios'], ['Cambios', '/cambios'],
   ['Contacto', '/contacto'], ['Nosotros', '/nosotros'],
+  ['Aviso de privacidad', '/privacidad'], ['Términos', '/terminos'],
 ]
 
 function siteLinks() {
@@ -927,6 +928,8 @@ for (const product of products) {
 
 // Paginas de confianza: el copy vive en infoData.js, aqui se vuelca a HTML
 // plano para el crawler que no ejecuta JS.
+// Un dato legal sin llenar no puede salir publicado.
+if (JSON.stringify(infoPages).includes('[[')) throw new Error('infoPages: quedan marcadores [[ sin llenar')
 for (const [path, page] of Object.entries(infoPages)) {
   const trail = [
     { name: 'Inicio', path: '/' },
@@ -1206,6 +1209,7 @@ const llms = `# G&L — Boutique de ropa para hombre, desde 1995
 - [Envíos y formas de pago](${absolute('/envios')}): costos, tiempos y métodos de pago
 - [Cambios](${absolute('/cambios')}): política de cambios — sin reembolso en efectivo, 8 días
 - [Contacto](${absolute('/contacto')}): WhatsApp, Instagram y Facebook
+- [Aviso de privacidad](${absolute('/privacidad')}) y [Términos de compra](${absolute('/terminos')})
 
 ## Categorías
 
@@ -1237,7 +1241,8 @@ Facebook: ${FACEBOOK_URL}
 - No hay reembolso en efectivo: solo cambio de prenda, dentro de 8 días desde
   la entrega y con etiquetas. Si el error fue de la tienda, el envío lo paga
   la tienda.
-- La venta se cierra por WhatsApp con una persona. No hay atención por email.
+- La venta se cierra por WhatsApp con una persona. No hay atención de pedidos por email;
+  el correo glboutiquecolima@gmail.com es solo para temas de privacidad.
 - Los precios y la disponibilidad cambian: tomar siempre el precio del schema
   Product de la página del producto, nunca un valor cacheado.
 

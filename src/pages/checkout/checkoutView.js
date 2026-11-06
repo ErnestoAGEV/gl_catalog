@@ -211,6 +211,9 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
               <p class="mt-4 font-mono text-[11px] tracking-[0.2em] uppercase text-ink/60 text-center leading-relaxed">
                 Sin pago en l&iacute;nea &middot; todo se confirma por WhatsApp &middot; consulta <a href="/cambios" class="underline underline-offset-2 hover:text-ink">cambios</a> y <a href="/envios" class="underline underline-offset-2 hover:text-ink">env&iacute;os</a>
               </p>
+              <p class="mt-3 text-[13px] text-ink/60 text-center leading-relaxed">
+                Al enviar tu pedido aceptas los <a href="/terminos" class="underline underline-offset-2 hover:text-ink">T&eacute;rminos</a> y el <a href="/privacidad" class="underline underline-offset-2 hover:text-ink">Aviso de privacidad</a>.
+              </p>
             </section>
           </form>
 
@@ -328,6 +331,12 @@ export function checkoutSuccessHTML({ name, waUrl }) {
         <p class="text-[15px] text-ink/70 max-w-sm mx-auto mb-8 leading-relaxed">
           Gracias <strong>${safeName}</strong>, registramos tu pedido con &eacute;xito. Te escribimos por WhatsApp en los pr&oacute;ximos minutos.
         </p>
+
+        <ol class="text-left text-[14px] text-ink/70 leading-relaxed space-y-2 max-w-sm mx-auto mb-8 list-decimal pl-5">
+          <li>Un asesor te escribe por WhatsApp en horario de tienda para confirmar tallas, el total y el env&iacute;o.</li>
+          <li>Si pagas por transferencia, ah&iacute; mismo te pasa los datos para pagar. Si recoges en tienda, pagas al recoger.</li>
+          <li>Con el pago confirmado sale tu pedido y te mandamos la gu&iacute;a por WhatsApp.</li>
+        </ol>
 
         <a
           href="${safeWaUrl}"

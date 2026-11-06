@@ -218,6 +218,8 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
               <li><a href="/sucursales" class="ul-link opacity-80 hover:opacity-100">Sucursales</a></li>
               <li><a href="/contacto" class="ul-link opacity-80 hover:opacity-100">Contacto</a></li>
               <li><a href="/nosotros" class="ul-link opacity-80 hover:opacity-100">Nosotros</a></li>
+              <li><a href="/privacidad" class="ul-link opacity-80 hover:opacity-100">Aviso de privacidad</a></li>
+              <li><a href="/terminos" class="ul-link opacity-80 hover:opacity-100">Términos</a></li>
             </ul>
           </div>
           <div class="md:col-span-2">
