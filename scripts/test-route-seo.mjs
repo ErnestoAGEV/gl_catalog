@@ -55,4 +55,12 @@ assert.ok(wr.description.length <= 160, wr.description)
 // Un solo canonical por marca: /marca/Wrangler hidrata con el de /marca/wrangler
 assert.equal(seo('/marca/Wrangler').canonicalPath, '/marca/wrangler')
 
+// "jeans" solo para mezclilla: Oggi con Vaxter y chinos, White Peak sin mezclilla
+const mezcla = (nombres) => ({ products: nombres.map((n, i) => ({ id: `x${i}`, name: n, type: 'Pantalones', price: 500 })), isLoading: false })
+const og = getSeoForRoute('/marca/oggi', '/marca/oggi', mezcla(['Oggi - Vaxter Azul', 'Oggi - Vaxter Negro', 'Oggi - Chinos 900', 'Oggi - Chinos Slim']))
+assert.equal(og.title, 'Jeans y pantalones Oggi para hombre | G&L')
+assert.ok(og.description.includes('jeans y pantalones'), og.description)
+const wp = getSeoForRoute('/marca/white-peak', '/marca/white-peak', mezcla(['White Peak - Pantalon A', 'White Peak - Pantalon B', 'White Peak - Pantalon C', 'White Peak - Pantalon D']))
+assert.ok(!/jeans/i.test(wp.title + wp.description), wp.title)
+
 console.log('ok — route seo')

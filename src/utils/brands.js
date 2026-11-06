@@ -75,7 +75,7 @@ export const BRAND_COPY = {
     'original. El Vaxter es el pantalón que más sale de la tienda: corte recto slim, tiro largo, ' +
     'cintura media y pierna amplia, en mezclilla con stretch, mezclilla rígida y gabardina. El Power ' +
     'es el corte clásico, todo recto y de tiro alto; el Iron, el más entallado y de tiro corto. ' +
-    'También hay Leader, Rebel y chinos, que son la línea de vestir, en corte normal y Slim.',
+    'También hay Leader y los chinos, que son la línea de vestir, en corte normal y Slim.',
 }
 
 // Como se nombra cada tipo en el parrafo: "pantalones" solo no dice "jeans",

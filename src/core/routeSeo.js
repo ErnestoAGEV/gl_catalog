@@ -1,7 +1,7 @@
 // Metadatos SEO por ruta. Modulo puro (sin DOM): lo usan tanto el runtime
 // (views.js) como el prerender de build (scripts/prerender.mjs).
 
-import { colorPhrase, findProductByPath, productBrand, productDescription, productPath, productTitle } from '../utils/productCopy.js'
+import { colorPhrase, findProductByPath, isDenim, productBrand, productDescription, productPath, productTitle } from '../utils/productCopy.js'
 import { findBrandBySlug } from '../utils/brands.js'
 import { safeDecode } from '../utils/sanitize.js'
 import { isPerfumeCategory } from '../pages/admin/adminProductsData.js'
@@ -90,14 +90,23 @@ export function getSeoForRoute(path, basePath, state) {
       const cuenta = {}
       for (const p of marca.items) if (p.type) cuenta[p.type] = (cuenta[p.type] || 0) + 1
       const orden = Object.keys(cuenta).sort((a, b) => cuenta[b] - cuenta[a])
-      const nombre = (t) => (t === 'Pantalones' ? 'jeans' : t.toLowerCase())
-      const prefijo = orden.slice(0, 2).map((t, i) => (i ? nombre(t) : nombre(t).replace(/^./, (c) => c.toUpperCase()))).join(' y ')
+      // "jeans" solo si de verdad son de mezclilla: los chinos de Oggi o los
+      // pantalones White Peak no lo son.
+      const pantalones = marca.items.filter((p) => p.type === 'Pantalones')
+      const denim = pantalones.filter(isDenim).length
+      // Title: una palabra, la de la mayoria. Meta: las dos si hay de ambas.
+      const enMeta = denim === 0 ? 'pantalones' : denim === pantalones.length ? 'jeans' : 'jeans y pantalones'
+      // Si el title solo nombra pantalones cabe "jeans y pantalones"; con otro tipo
+      // al lado ("... y camisas") se queda una palabra.
+      const enTitle = orden.length === 1 ? enMeta : denim * 2 >= pantalones.length ? 'jeans' : 'pantalones'
+      const nombre = (t, label) => (t === 'Pantalones' ? label : t.toLowerCase())
+      const prefijo = orden.slice(0, 2).map((t, i) => (i ? nombre(t, enTitle) : nombre(t, enTitle).replace(/^./, (c) => c.toUpperCase()))).join(' y ')
       const largo = `${prefijo ? `${prefijo} ${marca.name}` : marca.name} para hombre | G&L`
       const rango = priceRange(marca.items).replace(/ MXN\.$/, ' MXN')
       return {
         title: largo.length <= 60 ? largo : `${marca.name} para hombre | G&L`,
         description:
-          `${marca.items.length} piezas originales de ${marca.name}: ${colorPhrase(orden.map(nombre))}. ` +
+          `${marca.items.length} piezas originales de ${marca.name}: ${colorPhrase(orden.slice(0, 4).map((t) => nombre(t, enMeta)))}. ` +
           `${rango}, envío a todo México.`,
         // El slug, no el path pedido: /marca/Oggi hidrataba con canonical propio
         canonicalPath: `/marca/${marca.slug}`,

@@ -43,7 +43,8 @@ const normalizeApostrophes = (text) => text.replace(/[`´‘’]/g, "'")
 /** "Oggi - Chinos 900" -> "Oggi". */
 export function productBrand(name) {
   const brand = String(name || '').split(BRAND_SEPARATOR)[0].trim()
-  return normalizeApostrophes(brand) || 'G&L'
+  // En la base hay "VerdeTabaco" y "Verde Tabaco": es la misma marca
+  return normalizeApostrophes(brand).replace(/^VerdeTabaco$/i, 'Verde Tabaco') || 'G&L'
 }
 
 /** "Oggi - Chinos 900" -> "Chinos 900". Lo que queda al quitar la marca. */
@@ -332,6 +333,9 @@ function familyFor(product) {
   const type = String(product?.type || '')
   return FAMILIES.find((f) => f.test.test(name) && (!f.tipo || f.tipo === type))
 }
+
+/** true si la prenda es de una familia de mezclilla (se busca como "jeans"). */
+export const isDenim = (product) => Boolean(familyFor(product)?.denim)
 
 /**
  * El parrafo de la tienda para este producto, o cadena vacia si su familia
