@@ -77,8 +77,8 @@
   <body class="bg-black overflow-x-clip">
     <div id="app" class="overflow-x-clip">
       <!-- prerender-shell:start — static snapshot of the home page so the first paint
-           does not wait for JS. Regenerate with: npm run build && npx vite preview --port 4173
-           + node scripts/prerender-snapshot.mjs whenever the home layout changes. -->
+           does not wait for JS. It is edited by hand: keep it in sync with home.js / homeData.js
+           whenever the home layout or copy changes. -->
       <!-- OJO: este snapshot es una copia de lo que pinta home.js, y no se
            regenera en el build. Cualquier cambio en src/pages/home/ que deba
            verse SIN JS —textos, enlaces, encabezados— hay que reflejarlo aqui
@@ -87,8 +87,8 @@
            Google entro en home.js y no aparecia en produccion. -->
       <div id="prerender-shell">
       <!-- prerender-shell:start — static snapshot of the home page so the first paint
-           does not wait for JS. Regenerate with: npm run build && npx vite preview --port 4173
-           + node scripts/prerender-snapshot.mjs whenever the home layout changes. -->
+           does not wait for JS. It is edited by hand: keep it in sync with home.js / homeData.js
+           whenever the home layout or copy changes. -->
       
       
       <!-- prerender-shell:end -->
