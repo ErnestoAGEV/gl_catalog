@@ -95,10 +95,6 @@ export function getDiscountAmount(couponOverride = null) {
   return applicableSubtotal * discountRate
 }
 
-export function getDiscountedTotal() {
-  return cartTotal() - getDiscountAmount()
-}
-
 export async function getAdminCoupons() {
   if (!supabase || !state.isAdminAuthed) return []
 

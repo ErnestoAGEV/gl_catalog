@@ -19,7 +19,6 @@ export const state = {
   isLoading: true,
   cart: readJson(STORAGE_KEYS.cart, []),
   isAdminAuthed: false,
-  wishlist: readJson(STORAGE_KEYS.wishlist, []),
   theme: getInitialTheme(),
   coupon: readJson(STORAGE_KEYS.coupon, null),
   newsletter: readJson(STORAGE_KEYS.newsletter, null),
@@ -41,7 +40,6 @@ export function getState() {
   return {
     ...state,
     cart: [...state.cart],
-    wishlist: [...state.wishlist],
     products: state.products,
     categories: state.categories,
   }

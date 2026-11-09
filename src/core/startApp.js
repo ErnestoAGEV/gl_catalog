@@ -690,7 +690,6 @@ export async function startApp(mountEl) {
     // La página del carrito se repinta sola en cada +/-; incluir el carrito
     // aquí forzaba además un rebuild completo que se veía como una recarga.
     '/cart':          (s) => `${s.products.length}|${s.isLoading}`,
-    '/wishlist':      (s) => JSON.stringify(s.wishlist),
     '/checkout':      (s) => `${JSON.stringify(s.cart)}|${JSON.stringify(s.coupon)}|${s.products.length}`,
   }
 

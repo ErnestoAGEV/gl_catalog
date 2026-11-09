@@ -59,23 +59,6 @@ export async function getSiteContent() {
   }
 }
 
-export async function getSiteContentBySection(section) {
-  if (!supabase) return []
-
-  try {
-    const { data, error } = await supabase
-      .from('site_content')
-      .select('*')
-      .eq('section', section)
-      .order('display_order', { ascending: true })
-    if (error) throw error
-    return data || []
-  } catch (err) {
-    if (import.meta.env.DEV) console.error(`Error fetching site content for section "${section}":`, err)
-    return []
-  }
-}
-
 export async function addSiteContent(payload) {
   if (!supabase) return { data: null, error: 'No hay conexion con la base de datos.' }
 

@@ -11,7 +11,6 @@ export const STORE_WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '52
 export const STORAGE_KEYS = {
   products: 'gl_products',
   cart: 'gl_cart',
-  wishlist: 'gl_wishlist',
   theme: 'gl_theme',
   coupon: 'gl_coupon',
   newsletter: 'gl_newsletter',
