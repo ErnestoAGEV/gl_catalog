@@ -164,7 +164,7 @@ const FAMILIES = [
     denim: true,
     corta: 'corte recto slim, tiro largo, cintura media y pierna amplia',
     larga:
-      'El Vaxter es el pantalón que más sale de la tienda. Corte recto slim: entalla sin apretar, ' +
+      'El corte Vaxter es el favorito de nuestros clientes. Corte recto slim: entalla sin apretar, ' +
       'con tiro largo, cintura media y pierna amplia. No es un skinny. Lo manejamos en mezclilla ' +
       'con stretch y en mezclilla rígida: pregunta por WhatsApp cuál buscas antes de que te lo mandemos.',
   },
@@ -184,6 +184,14 @@ const FAMILIES = [
     larga:
       'El Iron es el más entallado de la línea: corte slim, cintura media y tiro corto. Si te gusta el ' +
       'pantalón pegado y bajo de cintura, es este. Si lo prefieres de tiro largo, mejor el Vaxter.',
+  },
+  {
+    test: /oggi\s*-\s*leader/i,
+    denim: true,
+    corta: 'jean de mezclilla en corte loose',
+    larga:
+      'El Leader es de mezclilla, en corte loose: más holgado que el Vaxter, para quien lo busca ' +
+      'cómodo y con espacio en la pierna.',
   },
   {
     test: /oggi\s*-\s*chinos?\s+slim/i,

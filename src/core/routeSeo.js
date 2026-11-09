@@ -106,7 +106,7 @@ export function getSeoForRoute(path, basePath, state) {
       return {
         title: largo.length <= 60 ? largo : `${marca.name} para hombre | G&L`,
         description:
-          `${marca.items.length} piezas originales de ${marca.name}: ${colorPhrase(orden.slice(0, 4).map((t) => nombre(t, enMeta)))}. ` +
+          `${marca.items.length} piezas de ${marca.name}: ${colorPhrase(orden.slice(0, 4).map((t) => nombre(t, enMeta)))}. ` +
           `${rango}, envío a todo México.`,
         // El slug, no el path pedido: /marca/Oggi hidrataba con canonical propio
         canonicalPath: `/marca/${marca.slug}`,

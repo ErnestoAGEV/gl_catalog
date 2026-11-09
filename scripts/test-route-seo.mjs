@@ -48,7 +48,7 @@ const wr = seo('/marca/wrangler')
 assert.equal(wr.title, 'Jeans y camisas Wrangler para hombre | G&L')
 assert.ok(wr.title.startsWith('Jeans'))
 assert.ok(wr.title.length <= 60)
-assert.ok(wr.description.startsWith('4 piezas originales de Wrangler'), wr.description)
+assert.ok(wr.description.startsWith('4 piezas de Wrangler'), wr.description)
 assert.ok(wr.description.includes('$650') && wr.description.includes('$945') && wr.description.includes('todo México'), wr.description)
 assert.ok(wr.description.length <= 160, wr.description)
 

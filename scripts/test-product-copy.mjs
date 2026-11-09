@@ -133,7 +133,8 @@ assert.equal(
 
 // Si el nombre ya dice el color, no se repite ("Amarillo en Amarillo")
 assert.equal(productTitle({ name: 'White Peak - Amarillo', type: 'Polos', colors: ['Amarillo'] }), 'White Peak - Amarillo | Polo para hombre | G&L')
-assert.equal(productTitle({ name: 'Oggi - Leader Negro', type: 'Pantalones', colors: ['negro'] }), 'Oggi - Leader Negro | Pantalón para hombre | G&L')
+// El Leader es mezclilla (corte loose), confirmado por el dueño
+assert.equal(productTitle({ name: 'Oggi - Leader Negro', type: 'Pantalones', colors: ['negro'] }), 'Oggi - Leader Negro | Jeans para hombre | G&L')
 
 // Las 4 variantes de color del mismo chino no pueden compartir title: son
 // paginas distintas compitiendo por la misma consulta.

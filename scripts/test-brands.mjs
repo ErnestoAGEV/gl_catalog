@@ -44,14 +44,14 @@ assert.ok(intro.includes('5 piezas'), intro)
 assert.ok(intro.includes('Wrangler'), intro)
 assert.ok(intro.includes('$500'), intro)
 
-// Hechos confirmados por el dueño: Wrangler y Oggi desde 2005, Punto Oggi, todo original.
+// Hechos confirmados por el dueño: Wrangler y Oggi desde 2005, y nada de "original" (el dueño lo quito, nov 2026).
 const wr = brandIntro('Wrangler', idx[0].items)
-assert.ok(wr.includes('desde 2005') && wr.includes('original'), wr)
+assert.ok(wr.includes('desde 2005') && !wr.includes('original'), wr)
 const og = brandIntro('Oggi', [p('Oggi - Vaxter Stone', 'Pantalones')])
-assert.ok(og.includes('desde 2005') && og.includes('original'), og)
+assert.ok(og.includes('desde 2005') && !og.includes('original'), og)
 const lee = brandIntro('Lee', [p('Lee - Slim Fit', 'Pantalones')])
 assert.ok(!lee.includes('2005') && !lee.includes('Punto'), 'a otras marcas no se les inventan datos: ' + lee)
-assert.ok(lee.includes('original'), lee)
+assert.ok(!lee.includes('original'), lee)
 
 // Tallas agrupadas por tipo: el 30 es de cintura y la M de camisa, no una sola lista.
 const mixto = brandIntro('Lee', [

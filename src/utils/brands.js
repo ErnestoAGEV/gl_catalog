@@ -65,15 +65,15 @@ export function findBrandBySlug(products, slug, min = MIN_PRODUCTOS_POR_MARCA) {
  */
 export const BRAND_COPY = {
   wrangler:
-    'Vendemos Wrangler desde 2005, y todo es original. En jeans tenemos el Slim Fit, que es el Wrangler que más se vende, el Regular, ' +
+    'Vendemos Wrangler desde 2005. En jeans tenemos el Slim Fit, que es el Wrangler que más se vende, el Regular, ' +
     'más suelto de pierna, y la línea Silver Edition. Toda la mezclilla Wrangler que manejamos es ' +
     'rígida y de tejido cruzado: en esta marca no hay stretch. Por esa tela cuesta más que otros ' +
     'jeans; aguanta mucho más y está pensada para montar y para el campo.',
   oggi:
-    'Vendemos Oggi desde 2005, y todo es original. El corte Vaxter es el favorito de nuestros clientes por su mezclilla ' +
+    'Vendemos Oggi desde 2005. El corte Vaxter es el favorito de nuestros clientes por su mezclilla ' +
     'con y sin stretch, pierna recta y la variedad de modelos. El Power ' +
     'es el corte clásico, todo recto y de tiro alto; el Iron, el más entallado y de tiro corto. ' +
-    'También hay Leader y los chinos, que son la línea de vestir, en corte normal y Slim.',
+    'El Leader también es de mezclilla, en corte loose. Y los chinos son la línea de vestir, en corte normal y Slim.',
 }
 
 // Como se nombra cada tipo en el parrafo: "pantalones" solo no dice "jeans",
@@ -97,8 +97,8 @@ export function brandIntro(brand, items) {
   const frases = [
     `${items.length} ${items.length === 1 ? 'pieza' : 'piezas'} de ${brand} en G&L, ` +
       `con envío a todo México en 3 a 4 días hábiles.`,
-    BRAND_COPY[brandSlug(brand)] || 'Todo es original.',
   ]
+  if (BRAND_COPY[brandSlug(brand)]) frases.push(BRAND_COPY[brandSlug(brand)])
   if (tipos.length === 1) frases.push(`Todo en ${typeLabel(tipos[0])}.`)
   else if (tipos.length > 1) {
     const lista = tipos.slice(0, 4).map(typeLabel)
