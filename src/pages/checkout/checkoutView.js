@@ -69,12 +69,12 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-end">
           <div class="lg:col-span-9">
             <h1 class="font-display font-extrabold text-[clamp(48px,11vw,184px)] leading-[0.86] tracking-[-0.04em]">
-              Cierra tu<br/><span class="text-brand">pedido</span>.
+              Completa tu<br/><span class="text-brand">pedido</span>.
             </h1>
           </div>
           <div class="lg:col-span-3 lg:text-right">
             <p class="text-[15px] text-ink/70 max-w-[340px] lg:ml-auto leading-relaxed">
-              Llenas tus datos en <strong>3 pasos</strong>. Te contactamos por WhatsApp para confirmar pago &mdash; <strong>cero pago online</strong>.
+              Completa tus datos en <strong>3 pasos</strong>. Te contactaremos por WhatsApp para confirmar el pago; <strong>no realizamos cobros en l&iacute;nea</strong>.
             </p>
           </div>
         </div>
@@ -133,7 +133,7 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
                   <span class="dot after:!hidden">${checkIcon}</span>
                   <div class="flex-1">
                     <div class="font-display font-bold text-[18px] leading-none tracking-[-0.02em]">Transferencia</div>
-                    <div class="meta mt-2 font-mono text-[11px] text-ink/55">SPEI &middot; BBVA &middot; Te pasamos los datos por WhatsApp</div>
+                    <div class="meta mt-2 font-mono text-[11px] text-ink/55">SPEI &middot; BBVA &middot; Te compartimos los datos por WhatsApp</div>
                   </div>
                 </button>
                 <button type="button" class="choice group" data-val="recoger" role="radio" aria-checked="false" tabindex="-1">
@@ -298,9 +298,9 @@ export function checkoutSummaryHTML({ subtotal, discount, total, freeShipping, i
       <!-- Manifesto micro -->
       <div class="border border-ink/10 rounded-lg p-5">
         <div class="font-display font-medium text-[15px] leading-snug tracking-[-0.01em]">
-          &ldquo;Confirmamos cada pedido por WhatsApp con un humano &mdash;no un bot&mdash; para asegurar que <strong>todo te llegue bien</strong>.&rdquo;
+          &ldquo;Confirmamos cada pedido por WhatsApp con una persona de nuestro equipo, para asegurarnos de que <strong>todo llegue en orden</strong>.&rdquo;
         </div>
-        <div class="mt-3 font-mono text-[11px] tracking-[0.24em] uppercase text-ink/55">&mdash; Equipo G&amp;L &middot; Colima</div>
+        <div class="mt-3 font-mono text-[11px] tracking-[0.24em] uppercase text-ink/55">&mdash; Equipo G&amp;L</div>
       </div>
 
     </div>`
@@ -327,15 +327,15 @@ export function checkoutSuccessHTML({ name, waUrl }) {
           </svg>
         </div>
 
-        <h2 class="font-display font-extrabold text-[clamp(36px,6vw,64px)] tracking-[-0.04em] leading-none mb-4">&iexcl;Pedido recibido!</h2>
+        <h2 class="font-display font-extrabold text-[clamp(36px,6vw,64px)] tracking-[-0.04em] leading-none mb-4">Pedido recibido</h2>
         <p class="text-[15px] text-ink/70 max-w-sm mx-auto mb-8 leading-relaxed">
-          Gracias <strong>${safeName}</strong>, registramos tu pedido con &eacute;xito. Te escribimos por WhatsApp en los pr&oacute;ximos minutos.
+          Gracias, <strong>${safeName}</strong>. Registramos tu pedido con &eacute;xito y te contactaremos por WhatsApp en los pr&oacute;ximos minutos.
         </p>
 
         <ol class="text-left text-[14px] text-ink/70 leading-relaxed space-y-2 max-w-sm mx-auto mb-8 list-decimal pl-5">
-          <li>Un asesor te escribe por WhatsApp en horario de tienda para confirmar tallas, el total y el env&iacute;o.</li>
-          <li>Si pagas por transferencia, ah&iacute; mismo te pasa los datos para pagar. Si recoges en tienda, pagas al recoger.</li>
-          <li>Con el pago confirmado sale tu pedido y te mandamos la gu&iacute;a por WhatsApp.</li>
+          <li>Un asesor te contacta por WhatsApp en horario de tienda para confirmar tallas, total y env&iacute;o.</li>
+          <li>Si pagas por transferencia, en esa misma conversaci&oacute;n te comparte los datos bancarios. Si recoges en tienda, pagas al recoger.</li>
+          <li>Una vez confirmado el pago, enviamos tu pedido y te compartimos la gu&iacute;a por WhatsApp.</li>
         </ol>
 
         <a

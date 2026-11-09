@@ -158,7 +158,7 @@ export function pageCart(state) {
               <!-- Empty state -->
               <div id="cart-empty" class="hidden py-16 md:py-20 text-center">
                 <div class="font-display font-extrabold text-[48px] md:text-[80px] outline-text leading-none">Bolsa vac\u00EDa</div>
-                <p class="mt-4 text-ink/60">A\u00FAn no has agregado nada.</p>
+                <p class="mt-4 text-ink/60">A\u00FAn no has agregado productos a tu bolsa.</p>
                 <a href="/catalog" class="mt-6 inline-flex items-center gap-3 bg-ink text-paper px-7 h-12 md:h-14 rounded-full text-[13px] md:text-[14px] font-semibold hover:bg-brand transition-colors">
                   Explorar cat\u00E1logo
                   <span class="arrow-walk inline-block">\u2192</span>
@@ -311,7 +311,7 @@ export function pageCart(state) {
           <div class="grid grid-cols-3 gap-px bg-ink/10 rounded-lg overflow-hidden">
             <div class="bg-paper p-3 md:p-4 text-center">
               <div class="font-display font-extrabold text-[18px] md:text-[22px] leading-none">31<span class="text-brand">.</span></div>
-              <div class="mt-1 font-mono text-[11px] tracking-[0.18em] uppercase text-ink/55">A\u00F1os en Colima</div>
+              <div class="mt-1 font-mono text-[11px] tracking-[0.18em] uppercase text-ink/55">A\u00F1os de experiencia</div>
             </div>
             <div class="bg-paper p-3 md:p-4 text-center">
               <div class="font-display font-extrabold text-[18px] md:text-[22px] leading-none">4.7<span class="opacity-40 text-[12px] md:text-[14px]">/5</span></div>
@@ -335,12 +335,12 @@ export function pageCart(state) {
           : ''
 
         const statusHtml = active
-          ? `<span class="text-brand">\u00A1Activo!</span>`
-          : `<span class="text-ink/60">Faltan ${formatMoney(BRAND.freeShippingMin - subtotal)}</span>`
+          ? `<span class="text-brand">Activo</span>`
+          : `<span class="text-ink/60">Te faltan ${formatMoney(BRAND.freeShippingMin - subtotal)}</span>`
 
         shippingProgress.innerHTML = `
           <div class="flex items-baseline justify-between mb-2 md:mb-3">
-            <div class="font-mono text-[11px] tracking-[0.24em] uppercase text-ink/55">Env\u00EDo gratis a ${formatMoney(BRAND.freeShippingMin)}</div>
+            <div class="font-mono text-[11px] tracking-[0.24em] uppercase text-ink/55">Env\u00EDo gratis desde ${formatMoney(BRAND.freeShippingMin)}</div>
             <div class="font-mono text-[11px] md:text-[12px] digit-tabular">${formatMoney(subtotal)} / ${formatMoney(BRAND.freeShippingMin)} \u00B7 ${statusHtml}</div>
           </div>
           <div class="h-[6px] w-full bg-fog rounded-full overflow-hidden relative">

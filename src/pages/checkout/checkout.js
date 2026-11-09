@@ -56,13 +56,13 @@ function nameError(value) {
 
 function emailError(value) {
   if (!String(value || '').trim()) return 'Ingresa tu correo.'
-  if (!sanitizeEmail(value).valid) return 'El correo no parece válido. Ej: tucorreo@gmail.com'
+  if (!sanitizeEmail(value).valid) return 'El correo no es válido. Ejemplo: tucorreo@gmail.com'
   return ''
 }
 
 function whatsappError(value) {
   if (!String(value || '').trim()) return 'Ingresa tu número de WhatsApp.'
-  if (!isValidWhatsapp(value)) return 'Escribe tu WhatsApp con lada. Ej: 312 123 4567 o +1 619 555 1234.'
+  if (!isValidWhatsapp(value)) return 'Ingresa tu WhatsApp con lada. Ejemplo: 312 123 4567 o +1 619 555 1234.'
   return ''
 }
 
@@ -373,7 +373,7 @@ export function pageCheckout(state) {
 
       // WELCOME10 es de primera compra: si ese WhatsApp ya lo uso, se quita el
       // cupon antes de enviar y se explica, en vez de rechazar el pedido al final
-      const firstPurchaseMsg = (code) => `${code} es solo para la primera compra y este WhatsApp o correo ya lo usó. Quitamos el cupón y tu total se actualizó.`
+      const firstPurchaseMsg = (code) => `${code} es válido solo en la primera compra y este WhatsApp o correo ya lo utilizó. Retiramos el cupón y actualizamos tu total.`
       const dropFirstPurchaseCoupon = (code, opts) => {
         // Silencioso, como el boton de quitar: un emit repintaria la vista y el aviso se perderia
         removeCoupon(true)

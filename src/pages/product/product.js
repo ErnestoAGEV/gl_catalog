@@ -82,7 +82,7 @@ function measuresHtml(guide, size) {
 }
 
 function guideTableHtml(guide, selectedSize, productName, productSizes) {
-  const wa = `https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent('Hola, tengo una duda de talla del ' + productName)}`
+  const wa = `https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent('Hola, tengo una duda sobre la talla del ' + productName)}`
   return `
     <h2 class="font-display font-extrabold text-[20px] tracking-[-0.02em] text-ink mb-3">${escapeHtml(guideLabel(guide))} — medidas de la prenda</h2>
     <div class="overflow-x-auto">
@@ -103,7 +103,7 @@ function guideTableHtml(guide, selectedSize, productName, productSizes) {
       </table>
     </div>
     <p class="text-[13px] text-ink/70 mt-3">Medidas en centímetros.${guide.note ? ' ' + escapeHtml(guide.note) : ''}</p>
-    <a href="${wa}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 text-[13px] font-semibold text-ink underline underline-offset-4">¿Dudas? Pregúntanos por WhatsApp</a>`
+    <a href="${wa}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 text-[13px] font-semibold text-ink underline underline-offset-4">¿Tienes dudas? Con gusto te asesoramos por WhatsApp</a>`
 }
 
 export function pageProduct(initialState) {
@@ -175,7 +175,7 @@ export function pageProduct(initialState) {
     return pageNotFound(state, {
       title: 'Producto no encontrado | G&L',
       heading: 'Este producto<br/>ya no <span class="text-brand">está</span>.',
-      body: 'Puede que se haya agotado o que el enlace esté incompleto. Mira lo que hay ahora en la tienda.',
+      body: 'Es posible que se haya agotado o que el enlace esté incompleto. Te invitamos a conocer lo que tenemos en la tienda.',
     })
   }
 
@@ -205,7 +205,7 @@ export function pageProduct(initialState) {
     return 'Agregar a la bolsa'
   }
   const ctaHint = !inStock
-    ? 'Esta pieza se agotó. Pregúntanos por WhatsApp si vuelve.'
+    ? 'Esta pieza está agotada. Consúltanos por WhatsApp si volverá a estar disponible.'
     : `Elige ${isPerfume ? 'una presentación' : 'una talla'} arriba para agregarla a la bolsa.`
   const categoryHref = product.type ? `/categoria/${encodeURIComponent(product.type)}` : '/catalog'
   const safeName = escapeHtml(product.name)
@@ -370,7 +370,7 @@ export function pageProduct(initialState) {
                     </button>` : ''}
                   </div>
                   <div class="flex items-center gap-2 flex-wrap" id="pdp-sizes">${sizePillsHtml}</div>
-                  ${!isPerfume ? `<a id="pdp-other-size" href="https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(`Hola, busco el ${product.name} en talla ___. ¿La tienen en alguna de las dos tiendas o me avisan cuando llegue?`)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center min-h-11 mt-1 text-[13px] text-ink/70 hover:text-ink underline underline-offset-4">¿No ves tu talla? Pregúntanos por WhatsApp</a>` : ''}
+                  ${!isPerfume ? `<a id="pdp-other-size" href="https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(`Hola, busco el ${product.name} en talla ___. ¿Está disponible en alguna de sus sucursales o pueden avisarme cuando llegue?`)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center min-h-11 mt-1 text-[13px] text-ink/70 hover:text-ink underline underline-offset-4">¿No encuentras tu talla? Consúltanos por WhatsApp</a>` : ''}
                 </div>` : ''}
 
                 ${sizeGuide ? `<div id="pdp-size-measures" aria-live="polite" class="mb-5"${measuresFor(sizeGuide, initialSize).length ? '' : ' hidden'}>${measuresHtml(sizeGuide, initialSize)}</div>` : ''}
@@ -390,9 +390,9 @@ export function pageProduct(initialState) {
                     </span>
                   </button>
                   <p id="pdp-cta-hint" class="text-[13px] text-ink/70 text-center" hidden>${ctaHint}</p>
-                  <a href="https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(inStock ? 'Hola, me interesa ' + product.name : `Hola, vi que el ${product.name} está agotado. ¿Me avisan cuando llegue?`)}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 w-full bg-paper text-ink border border-ink/15 hover:border-ink h-12 rounded-full text-[14px] font-semibold transition-colors">
+                  <a href="https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(inStock ? 'Hola, me interesa ' + product.name : `Hola, vi que el ${product.name} está agotado. ¿Podrían avisarme cuando vuelva a estar disponible?`)}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 w-full bg-paper text-ink border border-ink/15 hover:border-ink h-12 rounded-full text-[14px] font-semibold transition-colors">
                     <svg class="w-5 h-5 text-[#25D366]" fill="currentColor" viewBox="0 0 24 24"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.2s-.8 1-.9 1.2-.3.2-.6.1-1.3-.5-2.4-1.5c-.9-.8-1.5-1.8-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5s0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4s-1 1-1 2.5 1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4s.2-1.3.2-1.4-.3-.2-.6-.4M12 21.8a9.9 9.9 0 01-5-1.4l-.4-.2-3.7 1 1-3.7-.2-.4a9.9 9.9 0 01-1.5-5.3c0-5.5 4.4-9.9 9.9-9.9 2.6 0 5.1 1 7 2.9a9.8 9.8 0 012.9 7c0 5.5-4.4 9.9-9.9 9.9m8.4-18.3A11.8 11.8 0 0012 0C5.5 0 .2 5.3.2 11.9c0 2.1.5 4.1 1.6 6L0 24l6.3-1.7a11.9 11.9 0 005.7 1.5c6.6 0 11.9-5.3 11.9-11.9a11.8 11.8 0 00-3.5-8.4z"/></svg>
-                    Pregunta por WhatsApp
+                    Consultar por WhatsApp
                   </a>
                   <p id="pdp-cta-status" class="sr-only" aria-live="polite"></p>
                 </div>
@@ -402,7 +402,7 @@ export function pageProduct(initialState) {
                 <div class="grid grid-cols-3 gap-px bg-ink/10 rounded-lg overflow-hidden mb-7">
                   <div class="bg-paper p-3 sm:p-4 text-center">
                     <svg class="w-5 h-5 mx-auto mb-1.5 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9l2-4h14l2 4M3 9v11a1 1 0 001 1h16a1 1 0 001-1V9M3 9h18M16 13a4 4 0 11-8 0"/></svg>
-                    <div class="font-mono text-[11px] tracking-[0.12em] uppercase leading-snug">Envío 3-4 días</div>
+                    <div class="font-mono text-[11px] tracking-[0.12em] uppercase leading-snug">Envío en 3 a 4 días</div>
                   </div>
                   <div class="bg-paper p-3 sm:p-4 text-center">
                     <svg class="w-5 h-5 mx-auto mb-1.5 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M5 6h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2zM8 14h.01M12 14h4"/></svg>
@@ -435,7 +435,7 @@ export function pageProduct(initialState) {
                     <svg class="chev w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
                   </summary>
                   <div class="body">
-                    Mandamos a todo México: gratis en compras de ${formatMoney(BRAND.freeShippingMin)} o más. Llega en 3 a 4 días hábiles desde que confirmamos el pago, y la guía te la pasamos por WhatsApp. Recoger en tienda no cuesta: lo apartas por WhatsApp y pasas por él a Colima Centro o Villa de Álvarez.
+                    Enviamos a todo México, sin costo en compras de ${formatMoney(BRAND.freeShippingMin)} o más. Tu pedido llega en 3 a 4 días hábiles a partir de la confirmación del pago, y te compartimos la guía por WhatsApp. Recoger en tienda no tiene costo: apartas por WhatsApp y pasas por tu pedido a nuestra sucursal del Centro o de Villa de Álvarez.
                   </div>
                 </details>
 
@@ -445,7 +445,7 @@ export function pageProduct(initialState) {
                     <svg class="chev w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
                   </summary>
                   <div class="body">
-                    Tienes 8 días desde que lo recibes para cambiarlo, sin usar y con etiquetas. No hacemos reembolsos, pero sí cambios. Si escogiste otra talla, el envío del cambio corre por tu cuenta; si el error fue nuestro, lo pagamos nosotros. Escríbenos por WhatsApp.
+                    Tienes 8 días a partir de que recibes tu prenda para cambiarla, sin usar y con etiquetas. No realizamos reembolsos, pero sí cambios. Si elegiste otra talla, el envío del cambio corre por tu cuenta; si el error fue nuestro, nosotros lo cubrimos. Escríbenos por WhatsApp para solicitarlo.
                   </div>
                 </details>
 
@@ -675,7 +675,7 @@ export function pageProduct(initialState) {
       root.querySelector('#pdp-share')?.addEventListener('click', () => {
         const shareUrl = `${window.location.origin}${productPath(product)}`
         if (navigator.share) {
-          navigator.share({ title: product.name, text: '¡Mira este producto en G&L!', url: shareUrl }).catch(() => {})
+          navigator.share({ title: product.name, text: 'Te comparto este producto de G&L', url: shareUrl }).catch(() => {})
         } else {
           navigator.clipboard.writeText(shareUrl)
           showToast('Enlace copiado al portapapeles')
@@ -771,7 +771,7 @@ export function pageProduct(initialState) {
         lastAddAt = Date.now()
         addToCart({ productId: product.id, size: selectedSize || '', color: selectedColor, qty: 1 })
         flyToCart(root.querySelector('#pdp-stage-img'))
-        showToast('¡Producto agregado a la bolsa!')
+        showToast('Producto agregado a la bolsa.')
         const detail = selectedSize ? ` · ${isPerfume ? '' : 'talla '}${selectedSize}` : ''
         announce(`${product.name}${detail} agregado a la bolsa.`)
 
@@ -779,7 +779,7 @@ export function pageProduct(initialState) {
         // talla sigue marcada por si quiere otra pieza igual
         if (addLabel) addLabel.innerHTML = `
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-          ¡Agregado a la bolsa!
+          Agregado a la bolsa
         `
         clearTimeout(addedTimer)
         addedTimer = setTimeout(paintCta, 1800)

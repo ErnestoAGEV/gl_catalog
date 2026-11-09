@@ -17,7 +17,7 @@ export function buildOrderMessage({ customer, cartLines, subtotal, discount, cou
   
   if (customer.address) {
     lines.push('')
-    lines.push('*DIRECCION DE ENVIO*')
+    lines.push('*DIRECCIÓN DE ENVÍO*')
     lines.push(customer.address)
   }
   
@@ -50,7 +50,7 @@ export function buildOrderMessage({ customer, cartLines, subtotal, discount, cou
   }
   
   if (couponCode && discount > 0) {
-    lines.push(`Cupon ${couponCode}: -${formatMoney(discount)}`)
+    lines.push(`Cupón ${couponCode}: -${formatMoney(discount)}`)
   }
   
   lines.push(`*TOTAL: ${formatMoney(total)}*`)
