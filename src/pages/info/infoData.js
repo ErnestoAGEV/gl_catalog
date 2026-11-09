@@ -41,11 +41,11 @@ const storePages = Object.fromEntries(
           h: 'Qué encuentras aquí',
           // Propio de cada tienda: el mismo parrafo en las dos paginas era
           // contenido duplicado.
-          body: `${store.pageCopy.surtido} Si buscas algo puntual, mándanos mensaje antes de venir y te confirmamos si está en tu talla.`,
+          body: `${store.pageCopy.surtido} Si buscas una prenda en particular, escríbenos antes de tu visita y te confirmamos si está disponible en tu talla.`,
         },
       ],
       store: store.slug,
-      cta: { label: 'Preguntar por WhatsApp', whatsapp: `Hola, quiero preguntar por la sucursal ${store.name}` },
+      cta: { label: 'Preguntar por WhatsApp', whatsapp: `Hola, me gustaría información sobre la sucursal ${store.name}` },
     },
   ])
 )
@@ -54,15 +54,15 @@ export const infoPages = {
   '/sucursales': {
     eyebrow: 'Sucursales',
     heading: 'Dos tiendas<br/>en <span class="text-brand">Colima</span>.',
-    lead: 'Una en el Centro de Colima, en la esquina de Zaragoza y Álvaro Obregón, y otra en Villa de Álvarez con horario corrido. El surtido es el mismo en las dos; la del Centro es más grande.',
+    lead: 'Una en el Centro de Colima, en la esquina de Zaragoza y Álvaro Obregón, y otra en Villa de Álvarez, con horario corrido. Ambas tienen el mismo surtido; la del Centro es más amplia.',
     sections: [
       {
         h: 'Antes de venir',
-        body: 'Si buscas una prenda o una talla en concreto, escríbenos por WhatsApp y te confirmamos si está disponible en la sucursal que te queda más cerca. Te ahorra el viaje.',
+        body: 'Si buscas una prenda o una talla en particular, escríbenos por WhatsApp y te confirmamos si está disponible en la sucursal más cercana. Así te ahorras el viaje.',
       },
       {
         h: 'También puedes recoger aquí',
-        body: 'Si compras en línea, puedes elegir recoger en tienda sin costo de envío. Apartamos la prenda y pasas por ella cuando te acomode.',
+        body: 'Si compras en línea, puedes elegir recoger en tienda sin costo de envío. Apartamos tu prenda y puedes pasar por ella cuando te resulte conveniente.',
       },
     ],
     showStores: true,
@@ -74,19 +74,19 @@ export const infoPages = {
   '/nosotros': {
     eyebrow: 'Nosotros',
     heading: 'Desde 1995<br/>vistiendo <span class="text-brand">hombres</span>.',
-    lead: 'Treinta años detrás del mostrador dan para conocer a la gente. Sabemos qué camisa aguanta el calor de mayo, qué jean se ve bien el viernes y también el lunes, y qué busca cada cliente que cruza la puerta.',
+    lead: 'Llevamos treinta años atendiendo a nuestros clientes en tienda. Sabemos qué camisa es adecuada para el calor de mayo, qué jean funciona igual de bien el viernes que el lunes y qué busca cada cliente que nos visita.',
     sections: [
       {
         h: 'Lo que hacemos',
-        body: 'G&L es una boutique de ropa para hombre que nació en Colima. No inventamos ropa: la escogemos. Cada temporada revisamos marca por marca y nos quedamos con lo que de verdad aguanta — telas que no se deforman al tercer lavado, cortes que le quedan a un hombre real y precios que no insultan a nadie.',
+        body: 'G&L es una boutique de ropa para hombre que nació en Colima. No fabricamos ropa: la seleccionamos. Cada temporada revisamos marca por marca y elegimos prendas con telas que no se deforman al tercer lavado, cortes que favorecen a cualquier complexión y precios justos.',
       },
       {
-        h: 'Dos tiendas, la misma gente',
-        body: 'Una en el Centro de Colima, en la esquina de Zaragoza y Álvaro Obregón. Otra en Villa de Álvarez, sobre la avenida María Ahumada de Gómez. El surtido es el mismo; la del Centro es más grande. En las dos te atiende alguien que conoce el inventario de memoria y te orienta con la talla: cómo viene cada marca, si encoge, si conviene subir o bajar. La idea es que te lleves la correcta a la primera.',
+        h: 'Dos tiendas, el mismo equipo',
+        body: 'Una en el Centro de Colima, en la esquina de Zaragoza y Álvaro Obregón, y otra en Villa de Álvarez, sobre la avenida María Ahumada de Gómez. Ambas tienen el mismo surtido; la del Centro es más amplia. En las dos te atiende personal que conoce el inventario y te orienta con la talla: cómo viene cada marca, si encoge y si conviene elegir una talla más o una menos. Nuestro objetivo es que aciertes desde la primera compra.',
       },
       {
-        h: 'Y por WhatsApp, igual',
-        body: 'La tienda en línea es una extensión del mostrador, no un reemplazo. Escoges aquí, cierras por WhatsApp y platicas con una persona. Si tienes duda de la talla, pregunta antes de comprar: para eso estamos. Y si no estás en Colima, te lo mandamos a cualquier parte de México.',
+        h: 'También por WhatsApp',
+        body: 'La tienda en línea es una extensión de la atención en sucursal, no un reemplazo. Eliges aquí, confirmas tu pedido por WhatsApp y te atiende una persona. Si tienes dudas sobre la talla, con gusto te asesoramos antes de tu compra. Y si no estás en Colima, enviamos a cualquier parte de México.',
       },
     ],
     cta: { label: 'Ver el catálogo', href: '/catalog' },
@@ -99,19 +99,19 @@ export const infoPages = {
     faq: true,
     eyebrow: 'Envíos y pagos',
     heading: 'Te llega en<br/>3 o 4 <span class="text-brand">días</span>.',
-    lead: 'Mandamos guías a todo México. El pedido sale en cuanto se confirma el pago y llega en 3 a 4 días hábiles.',
+    lead: 'Enviamos a todo México. Tu pedido sale en cuanto se confirma el pago y llega en 3 a 4 días hábiles.',
     sections: [
       {
         h: '¿Cuánto cuesta el envío?',
         list: [
-          '$150 MXN de guía a cualquier parte de la República.',
+          '$150 MXN a cualquier parte de la República.',
           'Gratis en compras de $1,499 MXN o más.',
-          'Recoger en tienda no cuesta nada: apartas por WhatsApp y pasas por él.',
+          'Recoger en tienda no tiene costo: apartas por WhatsApp y pasas por tu pedido.',
         ],
       },
       {
         h: '¿En cuánto tiempo llega mi pedido?',
-        body: 'De 3 a 4 días hábiles contados desde que completas el pedido, no desde que lo pones en el carrito. Los fines de semana y días festivos no cuentan. En cuanto sale, te pasamos el número de guía por WhatsApp para que lo rastrees.',
+        body: 'De 3 a 4 días hábiles, contados desde que completas tu pedido y no desde que agregas productos al carrito. Los fines de semana y días festivos no cuentan. Cuando tu pedido sale, te compartimos el número de guía por WhatsApp para que puedas rastrearlo.',
       },
       {
         h: '¿Cómo puedo pagar?',
@@ -119,16 +119,16 @@ export const infoPages = {
           'Efectivo en cualquiera de las dos sucursales.',
           'Transferencia bancaria (SPEI).',
           'Tarjeta de débito o crédito con terminal en tienda.',
-          'Link de pago a distancia, si cierras el pedido por WhatsApp.',
+          'Link de pago a distancia, si confirmas tu pedido por WhatsApp.',
         ],
       },
       {
         h: '¿Cómo se paga un pedido hecho en el sitio?',
         list: [
-          'Armas tu pedido y lo envías: queda registrado con tus datos y lo que escogiste.',
-          'Un asesor te escribe por WhatsApp en horario de tienda para confirmar tallas, el total y el envío.',
-          'Si pagas por transferencia, ahí mismo te pasa los datos para pagar. Si recoges en tienda, pagas al recoger, en efectivo o con tarjeta.',
-          'Con el pago confirmado sale tu pedido y te mandamos la guía por WhatsApp.',
+          'Armas tu pedido y lo envías; queda registrado con tus datos y los productos que elegiste.',
+          'Un asesor te contacta por WhatsApp en horario de tienda para confirmar tallas, total y envío.',
+          'Si pagas por transferencia, en esa misma conversación te comparte los datos bancarios. Si recoges en tienda, pagas al recoger, en efectivo o con tarjeta.',
+          'Una vez confirmado el pago, enviamos tu pedido y te compartimos la guía por WhatsApp.',
           'El sitio no cobra en línea ni te pide datos de tarjeta.',
         ],
       },
@@ -140,40 +140,40 @@ export const infoPages = {
     faq: true,
     eyebrow: 'Cambios',
     heading: 'Si no te queda,<br/>lo <span class="text-brand">cambiamos</span>.',
-    lead: 'No manejamos devoluciones con reembolso de dinero. Lo que sí hacemos, y sin problema, es cambiarte la prenda.',
+    lead: 'No realizamos devoluciones con reembolso de dinero, pero con gusto te cambiamos la prenda.',
     sections: [
       {
         h: '¿Cómo hago un cambio?',
         list: [
-          'Tienes 8 días desde que recibes el paquete para pedir el cambio.',
-          'La prenda tiene que venir sin usar, con sus etiquetas.',
-          'Nos escribes por WhatsApp y te decimos cómo mandarla.',
+          'Tienes 8 días a partir de que recibes tu paquete para solicitar el cambio.',
+          'La prenda debe estar sin usar y con sus etiquetas.',
+          'Escríbenos por WhatsApp y te indicamos cómo enviarla.',
         ],
       },
       {
         h: '¿Quién paga el envío de un cambio?',
-        body: 'Si el cambio es porque escogiste otra talla o cambiaste de opinión, el envío corre por tu cuenta. Si el error fue nuestro — te mandamos una talla distinta a la que pediste, o la prenda venía con un defecto — lo pagamos nosotros y no tienes que discutirlo con nadie.',
+        body: 'Si el cambio se debe a que elegiste otra talla o cambiaste de opinión, el envío corre por tu cuenta. Si el error fue nuestro —te enviamos una talla distinta a la que pediste o la prenda tenía un defecto—, nosotros cubrimos el envío.',
       },
       {
         h: '¿Cómo evito tener que cambiar la prenda?',
-        body: 'Antes de comprar, pregúntanos la talla por WhatsApp. Tenemos la prenda enfrente y te decimos cómo viene: si encoge, si es holgada, si conviene subir una talla. Es más rápido que un cambio.',
+        body: 'Antes de comprar, consúltanos la talla por WhatsApp. Revisamos la prenda y te decimos cómo viene: si encoge, si es holgada o si conviene elegir una talla más. Es más rápido que hacer un cambio.',
       },
     ],
-    cta: { label: 'Solicitar un cambio', whatsapp: 'Hola, quiero hacer un cambio' },
+    cta: { label: 'Solicitar un cambio', whatsapp: 'Hola, me gustaría solicitar un cambio' },
   },
 
   '/contacto': {
     eyebrow: 'Contacto',
     heading: 'Aquí <span class="text-brand">estamos</span>.',
-    lead: 'Lo más rápido es WhatsApp: contestamos en minutos durante el horario de tienda. Y si andas por el rumbo, pásale.',
+    lead: 'La forma más rápida de contactarnos es WhatsApp: respondemos en minutos durante el horario de tienda. Si estás cerca, también puedes visitarnos.',
     sections: [
       {
         h: 'WhatsApp',
-        body: 'Es nuestro canal principal. Por ahí resolvemos dudas de tallas, apartamos prendas, cerramos pedidos y damos seguimiento a los envíos.',
+        body: 'Es nuestro canal principal. Por ahí resolvemos dudas de tallas, apartamos prendas, confirmamos pedidos y damos seguimiento a los envíos.',
       },
       {
         h: 'Instagram y Facebook',
-        body: 'Publicamos lo que va llegando en Instagram (@glboutiquecol) y en nuestra página de Facebook. Si viste algo ahí y lo quieres, mándanos la foto por WhatsApp y te decimos si hay tallas.',
+        body: 'Publicamos las novedades en Instagram (@glboutiquecol) y en nuestra página de Facebook. Si viste una prenda que te interesa, envíanos la foto por WhatsApp y te confirmamos las tallas disponibles.',
       },
     ],
     showStores: true,
@@ -186,7 +186,7 @@ export const infoPages = {
   '/privacidad': {
     eyebrow: 'Aviso de privacidad',
     heading: 'Aviso de<br/><span class="text-brand">privacidad</span>.',
-    lead: 'Qué datos tuyos guardamos cuando compras en G&amp;L, para qué los usamos y cómo nos pides que los corrijamos o los borremos.',
+    lead: 'Qué datos tuyos guardamos cuando compras en G&amp;L, para qué los usamos y cómo puedes pedirnos que los corrijamos o los eliminemos.',
     sections: [
       {
         h: 'Quién es responsable de tus datos',
@@ -209,7 +209,7 @@ export const infoPages = {
         list: [
           'Registrar y confirmar tu pedido.',
           'Escribirte por WhatsApp para el pago y el seguimiento.',
-          'Mandarte el paquete y el aviso de envío.',
+          'Enviarte el paquete y el aviso de envío.',
           'Atender cambios, aclaraciones y dudas.',
         ],
       },
@@ -245,7 +245,7 @@ export const infoPages = {
   '/terminos': {
     eyebrow: 'Términos',
     heading: 'Términos<br/>de <span class="text-brand">compra</span>.',
-    lead: 'Las reglas de comprar en G&amp;L, en corto. Lo mismo que te diría alguien en el mostrador.',
+    lead: 'Las condiciones para comprar en G&amp;L, explicadas de forma breve y clara.',
     sections: [
       {
         h: 'Quién te vende',

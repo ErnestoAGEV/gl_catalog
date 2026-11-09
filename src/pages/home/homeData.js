@@ -3,7 +3,7 @@
 export const heroSlides = [
   {
     headline: 'Tu fit,<br/><span class="text-brand">perfecto.</span>',
-    body: 'Para el hombre que sabe lo que se pone. Las mejores marcas en camisas, denim y fragancias — escogidas minuciosamente, al mejor precio.',
+    body: 'Camisas, denim y fragancias de marca para el hombre que cuida su imagen, seleccionadas con criterio y a precios justos.',
     cta: { label: 'Comprar colección', href: '/catalog' },
     image: '/img/hero-1-1080.webp?v=2',
     w: 1080,
@@ -14,7 +14,7 @@ export const heroSlides = [
   },
   {
     headline: 'Denim<br/><span class="outline-text">honesto.</span>',
-    body: 'Jeans crudos y lavados que se mejoran con el uso. Denims premium para todo tipo de ocasiones — cortes slim, straight y relaxed.',
+    body: 'Jeans en mezclilla cruda y lavada que mejoran con el uso. Cortes slim, straight y relaxed para cualquier ocasión.',
     cta: { label: 'Ver denim', href: '/categoria/Pantalones' },
     image: '/img/hero-2-1080.webp',
     w: 1080,
@@ -95,14 +95,14 @@ export const categoryTiles = [
 
 // Texto del bloque azul (§7). El admin lo puede sobreescribir desde Contenido.
 export const manifesto = {
-  text: 'No llenamos el clóset por llenarlo. Cada temporada elegimos a mano las mejores marcas — la camisa que se pone una y otra vez, los jeans que solo se ven mejor con el tiempo, la fragancia que la gente te pregunta.',
-  tail: 'Marcas seleccionadas, al mejor precio. En Colima desde 1995.',
+  text: 'No llenamos el clóset por llenarlo. Cada temporada seleccionamos las marcas con criterio: la camisa que usas una y otra vez, los jeans que mejoran con el tiempo y la fragancia que no pasa desapercibida.',
+  tail: 'Marcas seleccionadas, a precios justos. Desde 1995.',
   ctaLabel: 'Descubre nuestras marcas →',
   ctaHref: '/catalog',
 }
 
 export const stats = [
-  { number: '31<span class="text-brand">.</span>', caption: 'Años vistiendo a Colima<span class="hidden md:inline"> · desde 1995</span>' },
+  { number: '31<span class="text-brand">.</span>', caption: 'Años de experiencia<span class="hidden md:inline"> · desde 1995</span>' },
   // Antes decia "2.4k clientes activos", un numero sin fuente. El de piezas sale del catalogo real.
   { catalogCount: true, caption: 'Piezas en catálogo' },
   // La valoracion es la de Google de las dos tiendas, ponderada por opiniones:
@@ -112,7 +112,7 @@ export const stats = [
   // declarada por el propio negocio no da rich results y puede costar una
   // accion manual. reviewsLink lo resuelve home.js con el mapUrl de la tienda.
   { number: '4.7<span class="text-[0.56em] opacity-40">/5</span>', caption: '96 opiniones en Google', reviewsLink: true },
-  { number: '02', caption: 'Tiendas en Colima' },
+  { number: '02', caption: 'Sucursales físicas' },
 ]
 
 // Opiniones copiadas a mano de las fichas de Maps el 24-oct-2026; solo se
@@ -145,13 +145,13 @@ export const stores = [
     pageCopy: {
       // Referencias dadas por el dueno (27-oct-2026). La de "media cuadra del
       // Jardin Libertad" era falsa: no reintroducirla.
-      lead: 'En pleno Centro, en la esquina de Zaragoza y Álvaro Obregón. Es la más grande de las dos.',
+      lead: 'En el Centro, en la esquina de Zaragoza y Álvaro Obregón. Es la más amplia de nuestras dos sucursales.',
       llegar:
-        'Zaragoza 140, esquina con Álvaro Obregón, una cuadra arriba de la calle Madero. Queda a un lado del estacionamiento Zaragoza: si vienes en coche, ahí lo dejas.',
+        'Zaragoza 140, esquina con Álvaro Obregón, una cuadra arriba de la calle Madero. Está a un lado del estacionamiento Zaragoza, donde puedes dejar tu auto.',
       horario:
-        'Ojo con el mediodía: esta tienda cierra de 14:00 a 16:30 y vuelve a abrir por la tarde. Los domingos abrimos solo la mañana. Si te queda justo, la de Villa de Álvarez tiene horario corrido.',
+        'Toma en cuenta que esta sucursal cierra de 14:00 a 16:30 y vuelve a abrir por la tarde. Los domingos abrimos solo por la mañana. Si necesitas venir a mediodía, la sucursal de Villa de Álvarez tiene horario corrido.',
       surtido:
-        'Es la más grande: secciones completas de Wrangler y Lee, la mesa de jeans Oggi y un pasillo entero de camisas de vestir. Además Branigans, Soul&Blues, Sherman Morgan, Oaktree y Bazzoto, pantalones de vestir de gabardina, zapatos Lobo Solo y Verde Tabaco, y perfumes.',
+        'Es nuestra sucursal más amplia: secciones completas de Wrangler y Lee, la mesa de jeans Oggi y un pasillo entero de camisas de vestir. Además Branigans, Soul&Blues, Sherman Morgan, Oaktree y Bazzoto, pantalones de vestir de gabardina, zapatos Lobo Solo y Verde Tabaco, y perfumes.',
     },
     coords: '19.2424 N · 103.7254 W',
     address: 'Zaragoza #140, esq. Álvaro Obregón, Col. Centro, Colima. A un lado del estacionamiento Zaragoza.',
@@ -190,13 +190,13 @@ export const stores = [
     headingPlace: '<span class="text-brand">Villa de Álvarez</span>',
     schemaId: 'tienda-villa',
     pageCopy: {
-      lead: 'Sobre la avenida María Ahumada de Gómez, con horario corrido. Es la que conviene si andas con prisa o solo puedes pasar a mediodía.',
+      lead: 'Sobre la avenida María Ahumada de Gómez, con horario corrido. Es la opción más conveniente si tienes poco tiempo o solo puedes venir a mediodía.',
       llegar:
         'María Ahumada de Gómez 30, local 6, a una cuadra del Little Caesars de la misma avenida.',
       horario:
-        'Horario corrido de lunes a sábado, de 9:00 a 20:00 sin cerrar a mediodía — es la diferencia con la del Centro, que sí cierra. Los domingos abrimos solo la mañana.',
+        'Horario corrido de lunes a sábado, de 9:00 a 20:00, sin cierre a mediodía, a diferencia de la sucursal del Centro. Los domingos abrimos solo por la mañana.',
       surtido:
-        'El mismo surtido que la del Centro, en menos espacio: Wrangler, Lee, Oggi, Branigans, Soul&Blues, Sherman Morgan, Oaktree y Bazzoto, camisas y pantalones de vestir, zapatos Lobo Solo y Verde Tabaco, perfumes, gorras y mochilas.',
+        'Cuenta con el mismo surtido que la sucursal del Centro, en un espacio más reducido: Wrangler, Lee, Oggi, Branigans, Soul&Blues, Sherman Morgan, Oaktree y Bazzoto, camisas y pantalones de vestir, zapatos Lobo Solo y Verde Tabaco, perfumes, gorras y mochilas.',
     },
     coords: '19.2713 N · 103.7332 W',
     address: 'María Ahumada de Gómez #30, Local #6, Villa de Álvarez. A una cuadra del Little Caesars.',

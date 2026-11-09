@@ -53,7 +53,7 @@ export function pageHome() {
       `).join('')
 
   // Stores HTML
-  const waHref = `https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent('Hola, vengo de la página de G&L')}`
+  const waHref = `https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent('Hola, los contacto desde la página de G&L')}`
   const storesHtml = stores.map(s => `
     <div class="group bg-fog hover:bg-ink hover:text-paper p-6 md:p-10 rounded-md md:min-h-[340px] flex flex-col justify-between transition-[background-color,color] duration-[350ms]">
       <div>
@@ -88,7 +88,7 @@ export function pageHome() {
       <section class="max-w-[1440px] mx-auto px-6 lg:px-10 pt-6 md:pt-10 lg:pt-14 pb-16 lg:pb-20" id="hero-section">
         <!-- Eyebrow -->
         <div class="flex items-center gap-4 mb-5 md:mb-8">
-          <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 whitespace-nowrap"><span class="hidden sm:inline">Colima · </span>Desde 1995</span>
+          <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 whitespace-nowrap"><span class="hidden sm:inline">Boutique para hombre · </span>Desde 1995</span>
           <span class="h-px flex-1 bg-ink/15"></span>
           <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/60 whitespace-nowrap">Envíos a todo México</span>
         </div>
@@ -170,10 +170,10 @@ export function pageHome() {
           <!-- Header -->
           <div class="grid grid-cols-1 md:grid-cols-12 md:items-end gap-6 mb-12">
             <div class="md:col-span-7">
-              <h2 class="font-heading font-[800] text-[clamp(56px,8vw,128px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.88] tracking-[-0.045em]">Lo que más se <span class="text-brand italic">llevan</span>.</h2>
+              <h2 class="font-heading font-[800] text-[clamp(56px,8vw,128px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.88] tracking-[-0.045em]">Los <span class="text-brand italic">favoritos</span>.</h2>
             </div>
             <div class="md:col-span-5 md:text-right">
-              <p class="text-[15px] text-ink/60 leading-relaxed">Productos elegidos por nuestros clientes esta temporada.<span class="hidden md:inline"> Pasa el cursor sobre cada uno.</span></p>
+              <p class="text-[15px] text-ink/60 leading-relaxed">Los productos que más eligen nuestros clientes esta temporada.<span class="hidden md:inline"> Pasa el cursor sobre cada uno para verlo.</span></p>
             </div>
           </div>
 
@@ -215,14 +215,14 @@ export function pageHome() {
               </h2>
             </div>
             <div class="md:col-span-5">
-              <p class="text-[15px] text-paper/70 leading-relaxed mb-6">Novedades antes que nadie. Rebajas privadas. Cero spam. Pausar o cancelar con un click — siempre.</p>
+              <p class="text-[15px] text-paper/70 leading-relaxed mb-6">Recibe las novedades antes que nadie y promociones exclusivas para suscriptores. Sin correos innecesarios; puedes cancelar tu suscripción en cualquier momento.</p>
 
               ${isSubscribed ? `
                 <div class="py-8 text-center">
                   <div class="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg class="w-7 h-7 text-paper" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                   </div>
-                  <p class="font-heading font-bold text-[18px]">¡Ya estás dentro!</p>
+                  <p class="font-heading font-bold text-[18px]">Tu suscripción está activa.</p>
                   <p class="text-paper/60 text-[14px] mt-1">Gracias por unirte al Club G&L.</p>
                 </div>
               ` : `
@@ -246,7 +246,7 @@ export function pageHome() {
       <section class="py-24 lg:py-32 reveal scroll-mt-[72px]" id="sucursales">
         <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
           <div class="mb-14">
-            <h2 class="font-heading font-[800] text-[clamp(56px,7vw,112px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.88] tracking-[-0.045em]">Y si andas<br/>por <span class="text-brand">Colima</span>.</h2>
+            <h2 class="font-heading font-[800] text-[clamp(56px,7vw,112px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.88] tracking-[-0.045em]">Visítanos<br/>en <span class="text-brand">tienda</span>.</h2>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             ${storesHtml}
@@ -386,7 +386,7 @@ export function pageHome() {
           // Sin clipboard (http, webviews viejos) al menos se ve el codigo para escribirlo
           if (!navigator.clipboard) return flash('Tu código: WELCOME10', '·')
           navigator.clipboard.writeText('WELCOME10')
-            .then(() => flash('¡Copiado!', '✓'), () => flash('Tu código: WELCOME10', '·'))
+            .then(() => flash('Código copiado', '✓'), () => flash('Tu código: WELCOME10', '·'))
         })
       }
 
@@ -439,7 +439,7 @@ export function pageHome() {
                 <div class="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg class="w-7 h-7 text-paper" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                 </div>
-                <p class="font-heading font-bold text-[18px]">¡Suscripción exitosa!</p>
+                <p class="font-heading font-bold text-[18px]">Suscripción confirmada.</p>
                 <p class="text-paper/60 text-[14px] mt-1">Gracias por unirte al Club G&L.</p>
               </div>
             `
@@ -448,7 +448,7 @@ export function pageHome() {
             submitBtn.innerHTML = originalHTML
             const errEl = document.createElement('p')
             errEl.className = 'newsletter-error text-[12px] text-red-400 mt-2'
-            errEl.textContent = result.error || 'Ocurrió un error. Intenta de nuevo.'
+            errEl.textContent = result.error || 'Ocurrió un error. Por favor, intenta de nuevo.'
             form.after(errEl)
           }
         })

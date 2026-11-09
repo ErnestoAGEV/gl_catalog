@@ -110,7 +110,7 @@ function container(children, theme = 'dark') {
   </div>`
 }
 
-const MARQUEE_DEFAULT = `★ Envío gratis +$${BRAND.freeShippingMin} MXN — Nueva temporada 2026 — Cierre por WhatsApp en minutos — 2 tiendas físicas en Colima — Usa WELCOME10 · 10% off 1ª compra — `
+const MARQUEE_DEFAULT = `★ Envío gratis desde $${BRAND.freeShippingMin} MXN — Nueva temporada 2026 — Atención personalizada por WhatsApp — 2 sucursales físicas — Usa WELCOME10 · 10% de descuento en tu primera compra — `
 
 /** <li> de las marcas con pagina propia, para el pie. Vacio hasta que llegan los productos. */
 export function footerBrandsHtml(products) {
@@ -202,7 +202,7 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
         <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
           <div class="md:col-span-4">
             <p class="font-mono text-[12px] tracking-[0.24em] uppercase opacity-60 mb-4">Tu fit, perfecto. Desde 1995.</p>
-            <p class="text-[15px] text-paper/70 max-w-md leading-relaxed">Boutique de ropa para hombre desde 1995. Las mejores marcas, elegidas a mano, al mejor precio. Envío a todo México, atención por WhatsApp y dos tiendas en Colima.</p>
+            <p class="text-[15px] text-paper/70 max-w-md leading-relaxed">Boutique de ropa para hombre desde 1995. Marcas seleccionadas con criterio y a precios justos. Enviamos a todo México, con atención por WhatsApp y dos sucursales en Colima.</p>
           </div>
           <div class="md:col-span-2">
             <h4 class="font-mono text-[11px] tracking-[0.24em] uppercase opacity-60 mb-4">Tienda</h4>
@@ -255,7 +255,7 @@ export function layoutPublic({ contentHtml, state, showSearch = false, noPadding
     <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-paper/90 backdrop-blur-xl border-t border-ink/10 pb-safe">
       <div class="flex items-center justify-around h-16">
         <!-- La venta se cierra por WhatsApp: va en el lugar de Inicio (el logo ya lleva al inicio) -->
-        <a href="https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent('Hola, vengo de la página de G&L')}" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center justify-center w-full h-full text-[11px] font-medium text-ink/70 hover:text-ink transition-colors">
+        <a href="https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent('Hola, los contacto desde la página de G&L')}" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center justify-center w-full h-full text-[11px] font-medium text-ink/70 hover:text-ink transition-colors">
           <svg class="w-6 h-6 mb-1 text-[#1FA855]" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592z"/></svg>
           WhatsApp
         </a>
