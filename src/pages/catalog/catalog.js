@@ -21,7 +21,7 @@ const TYPE_DESCRIPTIONS = {
   'Jeans': 'Jeans de mezclilla en cortes slim, straight y relaxed.',
   'Polos': 'Polos de White Peak, Soul&Blues y Oaktree, en tallas de la S a la XXXXL.',
   'Suéteres': 'Suéteres, cazadoras y chamarras de Collor’s, Giovanni Gali y Soul&Blues.',
-  'Perfumes': 'Fragancias para hombre en varias presentaciones. Si buscas una en particular, con gusto te asesoramos por WhatsApp.',
+  'Perfumes': 'Fragancias para hombre en varias presentaciones. Si buscas una en particular, pregúntanos por WhatsApp.',
   'Playeras': 'Playeras de Sherman Morgan, en tallas de la S a la XL.',
   'Shorts': 'Shorts y bermudas de American Fly y Collor’s para los días de calor.',
 }

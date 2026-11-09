@@ -95,7 +95,7 @@ export function brandIntro(brand, items) {
   const precios = items.map((p) => Number(p.price)).filter(Number.isFinite)
 
   const frases = BRAND_COPY[brandSlug(brand)] ? [BRAND_COPY[brandSlug(brand)]] : []
-  frases.push(`Actualmente hay ${items.length} ${items.length === 1 ? 'pieza disponible' : 'piezas disponibles'} de ${brand}.`)
+  frases.push(`Nuestro catálogo incluye ${items.length} ${items.length === 1 ? 'pieza' : 'piezas'} de ${brand}.`)
   if (tipos.length === 1) frases.push(`Toda la selección es de ${typeLabel(tipos[0])}.`)
   else if (tipos.length > 1) {
     const lista = tipos.slice(0, 4).map(typeLabel)

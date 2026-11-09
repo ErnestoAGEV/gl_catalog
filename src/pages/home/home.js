@@ -246,7 +246,7 @@ export function pageHome() {
       <section class="py-24 lg:py-32 reveal scroll-mt-[72px]" id="sucursales">
         <div class="max-w-[1440px] mx-auto px-6 lg:px-10">
           <div class="mb-14">
-            <h2 class="font-heading font-[800] text-[clamp(56px,7vw,112px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.88] tracking-[-0.045em]">Visítanos<br/>en <span class="text-brand">tienda</span>.</h2>
+            <h2 class="font-heading font-[800] text-[clamp(56px,7vw,112px)] max-md:text-[clamp(44px,14.4vw,56px)] leading-[0.88] tracking-[-0.045em]">Visítanos<br/>en <span class="text-brand">Colima</span>.</h2>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             ${storesHtml}

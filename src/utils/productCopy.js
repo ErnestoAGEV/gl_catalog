@@ -175,7 +175,7 @@ const FAMILIES = [
     larga:
       'El Power es el corte clásico de Oggi: recto de principio a fin, con tiro alto y cintura alta. ' +
       'Es una buena opción si prefieres evitar los tiros bajos. Está disponible en mezclilla rígida y ' +
-      'en mezclilla con stretch; con gusto te asesoramos por WhatsApp para elegir la que más te convenga.',
+      'en mezclilla con stretch; consúltanos por WhatsApp para elegir la que más te convenga.',
   },
   {
     test: /oggi\s*-\s*iron/i,
@@ -225,8 +225,7 @@ const FAMILIES = [
     larga:
       'El Regular conserva el corte vaquero, con la pierna más holgada que el Slim Fit. Como todos ' +
       'nuestros Wrangler, está confeccionado en mezclilla rígida de tejido cruzado, sin stretch: una tela ' +
-      'más resistente que la mezclilla convencional, pensada para el campo y la monta, y por eso su ' +
-      'precio es mayor que el de un Oggi.',
+      'más resistente que la mezclilla convencional, pensada para el campo y la monta.',
   },
   {
     test: /white\s*peak/i,

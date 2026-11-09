@@ -24,6 +24,16 @@ function priceRange(items) {
   return min === max ? `${fmt(min)} MXN.` : `De ${fmt(min)} a ${fmt(max)} MXN.`
 }
 
+// La descripcion propia de un producto (la escribe el admin) puede pasar de
+// 900 caracteres: en el SERP se corta a ~160, mejor cortarla en una frase.
+// El schema y la ficha siguen usando el texto completo.
+export function clipMeta(text, max = 160) {
+  if (text.length <= max) return text
+  const cut = text.slice(0, max)
+  const end = cut.lastIndexOf('. ')
+  return end > 80 ? cut.slice(0, end + 1) : `${cut.slice(0, cut.lastIndexOf(' '))}…`
+}
+
 export function getSeoForRoute(path, basePath, state) {
   if (basePath === '/') {
     return {
@@ -54,7 +64,7 @@ export function getSeoForRoute(path, basePath, state) {
     if (publicos.length && !state.isLoading && !category.split(',').some((c) => tipos.has(c.trim()))) {
       return {
         title: 'Categoría no encontrada | G&L',
-        description: 'Esa categoría no está disponible en el catálogo. Te invitamos a conocer lo que tenemos en la tienda.',
+        description: 'Esa categoría no está disponible en el catálogo. Revisa lo que tenemos disponible en la tienda.',
         canonicalPath: '/catalog',
         robots: 'noindex,follow',
       }
@@ -117,7 +127,7 @@ export function getSeoForRoute(path, basePath, state) {
     // ni declarar un canonical inventado: mismo criterio que el shell de la SPA.
     return {
       title: 'Marca no encontrada | G&L',
-      description: 'Esa marca no está disponible en el catálogo. Te invitamos a conocer lo que tenemos en la tienda.',
+      description: 'Esa marca no está disponible en el catálogo. Revisa lo que tenemos disponible en la tienda.',
       canonicalPath: '/catalog',
       robots: 'noindex,follow',
     }
@@ -129,7 +139,7 @@ export function getSeoForRoute(path, basePath, state) {
     if (product) {
       return {
         title: productTitle(product),
-        description: productDescription(product),
+        description: clipMeta(productDescription(product)),
         canonicalPath: productPath(product),
         robots: 'index,follow',
       }

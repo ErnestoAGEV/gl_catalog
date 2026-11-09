@@ -2,7 +2,7 @@
 // compitan en busquedas nacionales: "jeans" en el title, marcas y rango de
 // precio en la meta, y un solo canonical por marca.
 import assert from 'node:assert/strict'
-import { categoryLabel, getSeoForRoute } from '../src/core/routeSeo.js'
+import { categoryLabel, clipMeta, getSeoForRoute } from '../src/core/routeSeo.js'
 
 const p = (name, type, price, extra = {}) => ({ id: name, name, type, price, sizes: ['32'], ...extra })
 const state = {
@@ -62,5 +62,11 @@ assert.equal(og.title, 'Jeans y pantalones Oggi para hombre | G&L')
 assert.ok(og.description.includes('jeans y pantalones'), og.description)
 const wp = getSeoForRoute('/marca/white-peak', '/marca/white-peak', mezcla(['White Peak - Pantalon A', 'White Peak - Pantalon B', 'White Peak - Pantalon C', 'White Peak - Pantalon D']))
 assert.ok(!/jeans/i.test(wp.title + wp.description), wp.title)
+
+// Descripcion propia larga: se corta en una frase, nunca pasa de 160
+const larga = 'Primera frase del producto con detalle. ' + 'Texto que sigue y sigue sin parar. '.repeat(30)
+const corta = clipMeta(larga)
+assert.ok(corta.length <= 160 && corta.endsWith('.'), corta)
+assert.equal(clipMeta('Corta.'), 'Corta.')
 
 console.log('ok — route seo')

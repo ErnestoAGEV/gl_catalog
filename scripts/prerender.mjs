@@ -401,14 +401,14 @@ function categoryIntro(category, items) {
     detalles.push(min === max ? `precio de $${min} MXN` : `precios de $${min} a $${max} MXN`)
   }
   const frases = [
-    `Contamos con ${items.length} ${nombre}${deMarcas}` +
+    `Nuestro catálogo incluye ${items.length} ${nombre}${deMarcas}` +
       (detalles.length ? `, ${detalles.join(esPerfume ? ', y ' : ' y ')}.` : '.'),
     `Enviamos a todo México en 3 a 4 días hábiles. El envío cuesta $${SHIPPING_COST} y es gratis ` +
       `desde $${FREE_SHIPPING_MIN.toLocaleString('es-MX')}.`,
     esPerfume
       ? 'Si no sabes cuál elegir, con gusto te asesoramos por WhatsApp sobre el aroma de cada fragancia.'
       : 'Si la prenda no te queda, la cambiamos dentro de 8 días. Si tienes dudas sobre la talla, ' +
-        'con gusto te asesoramos por WhatsApp antes de tu compra.',
+        'escríbenos por WhatsApp antes de tu compra.',
   ]
   return frases.join(' ')
 }

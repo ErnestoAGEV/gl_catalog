@@ -110,7 +110,7 @@ function container(children, theme = 'dark') {
   </div>`
 }
 
-const MARQUEE_DEFAULT = `★ Envío gratis desde $${BRAND.freeShippingMin} MXN — Nueva temporada 2026 — Atención personalizada por WhatsApp — 2 sucursales físicas — Usa WELCOME10 · 10% de descuento en tu primera compra — `
+const MARQUEE_DEFAULT = `★ Envío gratis desde $${BRAND.freeShippingMin} MXN — Nueva temporada 2026 — Atención personalizada por WhatsApp — 2 sucursales en Colima — Usa WELCOME10 · 10% de descuento en tu primera compra — `
 
 /** <li> de las marcas con pagina propia, para el pie. Vacio hasta que llegan los productos. */
 export function footerBrandsHtml(products) {
