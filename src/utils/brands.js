@@ -65,14 +65,12 @@ export function findBrandBySlug(products, slug, min = MIN_PRODUCTOS_POR_MARCA) {
  */
 export const BRAND_COPY = {
   wrangler:
-    'Wrangler la manejamos desde 2005 y G&L aparece en la lista de puntos de venta de la marca. ' +
-    'Todo es original. En jeans tenemos el Slim Fit, que es el Wrangler que más se vende, el Regular, ' +
+    'Vendemos Wrangler desde 2005, y todo es original. En jeans tenemos el Slim Fit, que es el Wrangler que más se vende, el Regular, ' +
     'más suelto de pierna, y la línea Silver Edition. Toda la mezclilla Wrangler que manejamos es ' +
     'rígida y de tejido cruzado: en esta marca no hay stretch. Por esa tela cuesta más que otros ' +
     'jeans; aguanta mucho más y está pensada para montar y para el campo.',
   oggi:
-    'G&L es Punto Oggi, punto de venta oficial de la marca, y la manejamos desde 2005. Todo es ' +
-    'original. El Vaxter es el pantalón que más sale de la tienda: corte recto slim, tiro largo, ' +
+    'Vendemos Oggi desde 2005, y todo es original. El Vaxter es el pantalón que más sale de la tienda: corte recto slim, tiro largo, ' +
     'cintura media y pierna amplia, en mezclilla con stretch, mezclilla rígida y gabardina. El Power ' +
     'es el corte clásico, todo recto y de tiro alto; el Iron, el más entallado y de tiro corto. ' +
     'También hay Leader y los chinos, que son la línea de vestir, en corte normal y Slim.',
