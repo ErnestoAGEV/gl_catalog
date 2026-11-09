@@ -70,8 +70,8 @@ export const BRAND_COPY = {
     'rígida y de tejido cruzado: en esta marca no hay stretch. Por esa tela cuesta más que otros ' +
     'jeans; aguanta mucho más y está pensada para montar y para el campo.',
   oggi:
-    'Vendemos Oggi desde 2005, y todo es original. El Vaxter es el pantalón que más sale de la tienda: corte recto slim, tiro largo, ' +
-    'cintura media y pierna amplia, en mezclilla con stretch, mezclilla rígida y gabardina. El Power ' +
+    'Vendemos Oggi desde 2005, y todo es original. El corte Vaxter es el favorito de nuestros clientes por su mezclilla ' +
+    'con y sin stretch, pierna recta y la variedad de modelos. El Power ' +
     'es el corte clásico, todo recto y de tiro alto; el Iron, el más entallado y de tiro corto. ' +
     'También hay Leader y los chinos, que son la línea de vestir, en corte normal y Slim.',
 }
