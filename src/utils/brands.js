@@ -65,15 +65,14 @@ export function findBrandBySlug(products, slug, min = MIN_PRODUCTOS_POR_MARCA) {
  */
 export const BRAND_COPY = {
   wrangler:
-    'Vendemos Wrangler desde 2005. En jeans tenemos el Slim Fit, que es el Wrangler que más se vende, el Regular, ' +
-    'más suelto de pierna, y la línea Silver Edition. Toda la mezclilla Wrangler que manejamos es ' +
-    'rígida y de tejido cruzado: en esta marca no hay stretch. Por esa tela cuesta más que otros ' +
-    'jeans; aguanta mucho más y está pensada para montar y para el campo.',
+    'Ofrecemos Wrangler desde 2005. Contamos con los cortes Slim Fit y Regular, y con la línea ' +
+    'Silver Edition, todos en mezclilla rígida de tejido cruzado: una tela resistente, pensada para ' +
+    'el campo y la monta.',
   oggi:
-    'Vendemos Oggi desde 2005. El corte Vaxter es el favorito de nuestros clientes por su mezclilla ' +
-    'con y sin stretch, pierna recta y la variedad de modelos. El Power ' +
-    'es el corte clásico, todo recto y de tiro alto; el Iron, el más entallado y de tiro corto. ' +
-    'El Leader también es de mezclilla, en corte loose. Y los chinos son la línea de vestir, en corte normal y Slim.',
+    'Ofrecemos Oggi desde 2005. El Vaxter es el corte favorito de nuestros clientes: un recto slim ' +
+    'disponible en mezclilla con stretch y en mezclilla rígida. El Power es el corte clásico, recto y ' +
+    'de tiro alto; el Iron, el más entallado, de tiro corto. El Leader es de mezclilla, en corte loose, ' +
+    'y los chinos forman la línea de vestir, en corte regular y Slim.',
 }
 
 // Como se nombra cada tipo en el parrafo: "pantalones" solo no dice "jeans",
@@ -91,18 +90,16 @@ export function brandIntro(brand, items) {
   const tallas = tipos
     .map((t) => [t, sizeSummary(sortSizes(items.filter((p) => p.type === t).flatMap((p) => p.sizes || [])))])
     .filter(([, resumen]) => resumen)
+    .map(([t, resumen]) => [t, resumen.replace(' a ', ' a la ')])
     .map(([t, resumen]) => (tipos.length === 1 ? `de la ${resumen}` : `${typeLabel(t)} de la ${resumen}`))
   const precios = items.map((p) => Number(p.price)).filter(Number.isFinite)
 
-  const frases = [
-    `${items.length} ${items.length === 1 ? 'pieza' : 'piezas'} de ${brand} en G&L, ` +
-      `con envío a todo México en 3 a 4 días hábiles.`,
-  ]
-  if (BRAND_COPY[brandSlug(brand)]) frases.push(BRAND_COPY[brandSlug(brand)])
-  if (tipos.length === 1) frases.push(`Todo en ${typeLabel(tipos[0])}.`)
+  const frases = BRAND_COPY[brandSlug(brand)] ? [BRAND_COPY[brandSlug(brand)]] : []
+  frases.push(`Actualmente hay ${items.length} ${items.length === 1 ? 'pieza disponible' : 'piezas disponibles'} de ${brand}.`)
+  if (tipos.length === 1) frases.push(`Toda la selección es de ${typeLabel(tipos[0])}.`)
   else if (tipos.length > 1) {
     const lista = tipos.slice(0, 4).map(typeLabel)
-    frases.push(`Hay ${lista.join(', ')}${tipos.length > 4 ? ` y ${tipos.length - 4} categorías más` : ''}.`)
+    frases.push(`Incluye ${lista.join(', ')}${tipos.length > 4 ? ` y ${tipos.length - 4} categorías más` : ''}.`)
   }
   if (tallas.length) frases.push(tipos.length === 1 ? `Tallas ${tallas[0]}.` : `Tallas: ${tallas.join('; ')}.`)
   if (precios.length) {
@@ -110,6 +107,7 @@ export function brandIntro(brand, items) {
     const max = Math.max(...precios)
     frases.push(min === max ? `Precio: $${min} MXN.` : `Precios de $${min} a $${max} MXN.`)
   }
-  frases.push('Pregunta por WhatsApp y te decimos qué hay en cada tienda.')
+  frases.push('Enviamos a todo México en 3 a 4 días hábiles.')
+  frases.push('Con gusto te confirmamos por WhatsApp la disponibilidad en cada sucursal.')
   return frases.join(' ')
 }

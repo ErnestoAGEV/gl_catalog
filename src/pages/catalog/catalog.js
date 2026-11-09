@@ -16,13 +16,13 @@ import { getSeoForRoute } from '../../core/routeSeo.js'
 // telas o procesos que no podamos sostener: "costura japonesa", "algodon pima"
 // y "50 y 100ml" eran inventados.
 const TYPE_DESCRIPTIONS = {
-  'Camisas': 'Camisas de manga larga y corta de Soul&Blues, Wrangler y Oaktree.',
-  'Pantalones': 'Mezclilla y gabardina de Oggi, Paddocks, Collor’s y White Peak, en cortes slim, straight y relaxed.',
-  'Jeans': 'Mezclilla en cortes slim, straight y relaxed.',
-  'Polos': 'Polos de White Peak, Soul&Blues y Oaktree, de la S a la XXXXL.',
+  'Camisas': 'Camisas de manga larga y manga corta de Soul&Blues, Wrangler y Oaktree.',
+  'Pantalones': 'Jeans y pantalones de mezclilla y gabardina de Oggi, Paddocks, Collor’s y White Peak, en cortes slim, straight y relaxed.',
+  'Jeans': 'Jeans de mezclilla en cortes slim, straight y relaxed.',
+  'Polos': 'Polos de White Peak, Soul&Blues y Oaktree, en tallas de la S a la XXXXL.',
   'Suéteres': 'Suéteres, cazadoras y chamarras de Collor’s, Giovanni Gali y Soul&Blues.',
-  'Perfumes': 'Fragancias para hombre en varias presentaciones. Pregunta por WhatsApp si buscas una en especial.',
-  'Playeras': 'Playeras de Sherman Morgan, de la S a la XL.',
+  'Perfumes': 'Fragancias para hombre en varias presentaciones. Si buscas una en particular, con gusto te asesoramos por WhatsApp.',
+  'Playeras': 'Playeras de Sherman Morgan, en tallas de la S a la XL.',
   'Shorts': 'Shorts y bermudas de American Fly y Collor’s para los días de calor.',
 }
 
@@ -67,7 +67,7 @@ export function pageCatalog(initialState) {
     : `Todo el <span class="text-brand">cat\u00E1logo</span>.`
   let heroDesc = initialType
     ? (TYPE_DESCRIPTIONS[initialType] || `Explora nuestra selecci\u00F3n de ${safeInitialType.toLowerCase()}.`)
-    : 'Camisas, pantalones, polos, zapatos y perfumes. Elegidos a mano, al mejor precio, con env\u00edo a todo M\u00e9xico.'
+    : 'Camisas, pantalones, polos, zapatos y perfumes de marca, seleccionados por nuestro equipo. Enviamos a todo M\u00e9xico en 3 a 4 d\u00edas h\u00e1biles.'
 
   // La marca manda sobre la categoria: /marca/wrangler no es una categoria.
   const safeBrandName = escapeHtml(brandName)
@@ -75,7 +75,7 @@ export function pageCatalog(initialState) {
     heroH1 = `Solo <span class="text-brand">${safeBrandName}</span>.`
     heroDesc = brandItems.length
       ? escapeHtml(brandIntro(brandName, brandItems))
-      : `Piezas de ${safeBrandName} en G&amp;L, con envío a todo México.`
+      : `Contamos con piezas de ${safeBrandName}. Enviamos a todo México en 3 a 4 días hábiles.`
   }
 
   // Build category chips from actual data, ordered by the DB category order
@@ -291,7 +291,7 @@ export function pageCatalog(initialState) {
             </div>
             <div class="col-span-12 md:col-span-9">
               <p class="font-display font-medium text-[22px] md:text-[clamp(28px,3.4vw,48px)] leading-[1.2] md:leading-[1.1] tracking-[-0.02em] md:tracking-[-0.03em]">
-                \u00BFNo est\u00E1s seguro de la talla? <span class="opacity-70">M\u00E1ndanos un WhatsApp con tu medida de pecho y cintura \u2014 te decimos en minutos qu\u00E9 te queda.</span>
+                \u00BFTienes dudas sobre tu talla? <span class="opacity-70">Env\u00EDanos por WhatsApp tus medidas de pecho y cintura y con gusto te asesoramos.</span>
               </p>
               <a href="https://wa.me/${BRAND.whatsapp}" target="_blank" rel="noopener noreferrer" class="mt-5 md:mt-8 inline-flex items-center gap-3 text-[13px] md:text-[14px] font-semibold ul-link">
                 Hablar por WhatsApp
@@ -604,12 +604,12 @@ export function pageCatalog(initialState) {
           const h1 = root.querySelector('#hero-h1')
           const desc = root.querySelector('#hero-desc')
           if (h1) h1.innerHTML = `No encontramos <span class="text-brand">«${escapeHtml(missingLabel)}»</span>`
-          if (desc) desc.textContent = activeBrand ? 'Esa marca no está en el catálogo ahora.' : 'Esa categoría no está en el catálogo ahora.'
+          if (desc) desc.textContent = activeBrand ? 'Por ahora esa marca no está disponible en el catálogo.' : 'Por ahora esa categoría no está disponible en el catálogo.'
           grid.innerHTML = ''
           grid.classList.add('hidden')
           loadMoreContainer.classList.add('hidden')
           emptyState.classList.remove('hidden')
-          emptyMsg.textContent = 'Mira lo que sí tenemos:'
+          emptyMsg.textContent = 'Te invitamos a explorar estas categorías:'
           clearSearchBtn.classList.add('hidden')
           seeAllBtn.classList.remove('hidden')
           emptyLinks.innerHTML = orderTypes(currentTypes)
@@ -811,7 +811,7 @@ export function pageCatalog(initialState) {
         const desc = root.querySelector('#hero-desc')
         const safeVal = escapeHtml(val)
         if (h1) h1.innerHTML = val ? `Solo <span class="text-brand">${safeVal}</span>.` : `Todo el <span class="text-brand">cat\u00E1logo</span>.`
-        if (desc) desc.textContent = val ? (TYPE_DESCRIPTIONS[val] || `Explora nuestra selecci\u00F3n de ${val.toLowerCase()}.`) : 'Camisas, pantalones, polos, zapatos y perfumes. Elegidos a mano, al mejor precio, con env\u00edo a todo M\u00e9xico.'
+        if (desc) desc.textContent = val ? (TYPE_DESCRIPTIONS[val] || `Explora nuestra selecci\u00F3n de ${val.toLowerCase()}.`) : 'Camisas, pantalones, polos, zapatos y perfumes de marca, seleccionados por nuestro equipo. Enviamos a todo M\u00e9xico en 3 a 4 d\u00edas h\u00e1biles.'
 
         renderGrid({ resetPage: true })
         animateCategoryChange()
@@ -921,7 +921,7 @@ export function pageCatalog(initialState) {
         const h1 = root.querySelector('#hero-h1')
         const desc = root.querySelector('#hero-desc')
         if (h1) h1.innerHTML = `Todo el <span class="text-brand">catálogo</span>.`
-        if (desc) desc.textContent = 'Camisas, pantalones, polos, zapatos y perfumes. Elegidos a mano, al mejor precio, con envío a todo México.'
+        if (desc) desc.textContent = 'Camisas, pantalones, polos, zapatos y perfumes de marca, seleccionados por nuestro equipo. Enviamos a todo México en 3 a 4 días hábiles.'
         window.history.replaceState(null, '', withQuery('/catalog'))
         seoSettled = false   // title y canonical siguen a la url nueva
         renderGrid({ resetPage: true })

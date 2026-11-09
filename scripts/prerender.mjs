@@ -378,42 +378,38 @@ function categoryIntro(category, items) {
   // Un perfume no tiene tallas ni es una "pieza de perfumes": la misma
   // distincion que ya hace la ficha de producto.
   const esPerfume = isPerfumeCategory(category)
-  const frases = [
-    esPerfume
-      ? `${items.length} ${items.length === 1 ? 'fragancia' : 'fragancias'} en G&amp;L, ` +
-        `con envío a todo México en 3 a 4 días hábiles.`
-      : `${items.length} ${items.length === 1 ? 'pieza' : 'piezas'} de ${category.toLowerCase()} ` +
-        `en G&amp;L, con envío a todo México en 3 a 4 días hábiles.`,
-  ]
-  if (marcas.length === 1) frases.push(`Todo de ${escapeHtml(marcas[0])}.`)
-  else if (marcas.length > 1) {
-    const lista = marcas.slice(0, 5).map(escapeHtml)
-    frases.push(
-      `Marcas: ${lista.join(', ')}${marcas.length > 5 ? ` y ${marcas.length - 5} más` : ''}.`
-    )
-  }
+  const nombre = esPerfume
+    ? (items.length === 1 ? 'fragancia' : 'fragancias')
+    : category === 'Pantalones' ? 'jeans y pantalones' : category.toLowerCase()
+  const lista = marcas.slice(0, 5).map(escapeHtml)
+  const deMarcas = !marcas.length
+    ? ''
+    : marcas.length > 5
+      ? ` de ${lista.join(', ')} y más marcas`
+      : ` de ${lista.length > 1 ? `${lista.slice(0, -1).join(', ')} y ${lista[lista.length - 1]}` : lista[0]}`
+  const detalles = []
   if (tallas) {
-    frases.push(
+    detalles.push(
       esPerfume
-        ? `Presentaciones de ${escapeHtml(tallas)}.`
-        : `Tallas de la ${escapeHtml(tallas)}.`
+        ? `en presentaciones de ${escapeHtml(tallas.replace(/, ([^,]*)$/, ' y $1'))}`
+        : tallas.includes(' a ')
+          ? `en tallas de la ${escapeHtml(tallas.replace(' a ', ' a la '))}`
+          : `en tallas ${escapeHtml(tallas)}`
     )
   }
   if (precios.length) {
-    frases.push(
-      min === max
-        ? `Precio: $${min} MXN.`
-        : `Precios de $${min} a $${max} MXN.`
-    )
+    detalles.push(min === max ? `precio de $${min} MXN` : `precios de $${min} a $${max} MXN`)
   }
-  frases.push(
-    `Envío a todo México por $${SHIPPING_COST} y gratis desde ` +
-      `$${FREE_SHIPPING_MIN.toLocaleString('es-MX')}. ` +
-      (esPerfume
-        ? `¿No sabes cuál escoger? Pregúntanos por WhatsApp: te decimos a qué huele cada uno.`
-        : `Si no te queda, lo cambiamos dentro de 8 días. ¿Dudas de talla? Pregúntanos por ` +
-          `WhatsApp antes de comprar: tenemos la prenda enfrente.`)
-  )
+  const frases = [
+    `Contamos con ${items.length} ${nombre}${deMarcas}` +
+      (detalles.length ? `, ${detalles.join(esPerfume ? ', y ' : ' y ')}.` : '.'),
+    `Enviamos a todo México en 3 a 4 días hábiles. El envío cuesta $${SHIPPING_COST} y es gratis ` +
+      `desde $${FREE_SHIPPING_MIN.toLocaleString('es-MX')}.`,
+    esPerfume
+      ? 'Si no sabes cuál elegir, con gusto te asesoramos por WhatsApp sobre el aroma de cada fragancia.'
+      : 'Si la prenda no te queda, la cambiamos dentro de 8 días. Si tienes dudas sobre la talla, ' +
+        'con gusto te asesoramos por WhatsApp antes de tu compra.',
+  ]
   return frases.join(' ')
 }
 
@@ -625,7 +621,7 @@ routes.push({
   shell: contentShell(`
             ${breadcrumbNav([{ name: 'Inicio', path: '/' }, { name: 'Tienda', path: '/catalog' }])}
             <h1 class="font-heading font-[800] text-[clamp(40px,7vw,88px)] leading-[0.9] tracking-[-0.03em] mb-6">Tienda</h1>
-            <p class="text-[17px] text-ink/70 max-w-[560px] leading-relaxed mb-10">${products.length} piezas de ropa de marca para hombre: camisas, polos, jeans, playeras, zapatos y perfumes. Envío a todo México.</p>
+            <p class="text-[17px] text-ink/70 max-w-[560px] leading-relaxed mb-10">Contamos con ${products.length} piezas de ropa de marca para hombre: camisas, polos, jeans, playeras, zapatos y perfumes. Enviamos a todo México en 3 a 4 días hábiles.</p>
             <ul class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
               ${categories.map((c) => `<li><a class="ul-link text-[15px] font-medium" href="/categoria/${encodeURIComponent(c)}">${escapeHtml(c)}</a></li>`).join('\n              ')}
             </ul>
@@ -821,7 +817,7 @@ for (const product of products) {
                 <p class="text-[16px] text-ink/70 leading-relaxed mb-6">${escapeHtml(fitNote(product) || productDescription(product))}</p>
                 ${product.sizes?.length ? `<p class="text-[14px] text-ink/60 mb-2">Tallas: ${escapeHtml(product.sizes.join(', '))}</p>` : ''}
                 ${product.colors?.length ? `<p class="text-[14px] text-ink/60 mb-6">Colores: ${escapeHtml(product.colors.join(', '))}</p>` : ''}
-                <p class="text-[14px] text-ink/60">${inStock ? 'Disponible' : 'Agotado'} · Envío $${SHIPPING_COST} MXN a todo México, gratis en compras +$${FREE_SHIPPING_MIN.toLocaleString('es-MX')} · Entrega en 3-4 días hábiles · Cambios dentro de 8 días · 2 tiendas físicas en Colima</p>
+                <p class="text-[14px] text-ink/60">${inStock ? 'Disponible' : 'Agotado'} · Envío a todo México por $${SHIPPING_COST} MXN, gratis desde $${FREE_SHIPPING_MIN.toLocaleString('es-MX')} · Entrega en 3 a 4 días hábiles · Cambios dentro de 8 días · 2 sucursales físicas</p>
               </div>
             </div>
             ${brandLink(product)}
@@ -1196,15 +1192,15 @@ ${urls
 
 const llms = `# G&L — Boutique de ropa para hombre, desde 1995
 
-> Tienda de ropa de marca para hombre con envío a todo México, venta en línea
-> que se cierra por WhatsApp y dos sucursales físicas en Colima (Centro y
-> Villa de Álvarez). Desde 1995.
+> Boutique de ropa de marca para hombre desde 1995. Vende en línea con envío a
+> todo México, confirma cada pedido por WhatsApp y atiende en dos sucursales
+> físicas en Colima (Centro y Villa de Álvarez).
 > ${products.length} prendas publicadas: ${categories.join(', ')}.
 
 ## Páginas principales
 
 - [Catálogo completo](${absolute('/catalog')}): las ${products.length} prendas disponibles
-- [Nosotros](${absolute('/nosotros')}): qué es la tienda y cómo escoge lo que vende, desde 1995
+- [Nosotros](${absolute('/nosotros')}): historia de la tienda desde 1995 y cómo selecciona sus prendas
 - [Sucursales](${absolute('/sucursales')}): las dos tiendas físicas, con direcciones y horarios
 - [Envíos y formas de pago](${absolute('/envios')}): costos, tiempos y métodos de pago
 - [Cambios](${absolute('/cambios')}): política de cambios — sin reembolso en efectivo, 8 días
@@ -1241,7 +1237,7 @@ Facebook: ${FACEBOOK_URL}
 - No hay reembolso en efectivo: solo cambio de prenda, dentro de 8 días desde
   la entrega y con etiquetas. Si el error fue de la tienda, el envío lo paga
   la tienda.
-- La venta se cierra por WhatsApp con una persona. No hay atención de pedidos por email;
+- Cada pedido se confirma por WhatsApp con una persona. No hay atención de pedidos por email;
   el correo glboutiquecolima@gmail.com es solo para temas de privacidad.
 - Los precios y la disponibilidad cambian: tomar siempre el precio del schema
   Product de la página del producto, nunca un valor cacheado.

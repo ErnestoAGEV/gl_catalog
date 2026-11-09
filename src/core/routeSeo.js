@@ -39,7 +39,7 @@ export function getSeoForRoute(path, basePath, state) {
   if (basePath === '/catalog') {
     return {
       title: 'Catálogo de ropa para hombre | G&L',
-      description: 'Camisas, polos, jeans, zapatos y perfumes de marca para hombre. Envío a todo México; compra en línea o por WhatsApp.',
+      description: 'Camisas, polos, jeans, zapatos y perfumes de marca para hombre. Enviamos a todo México; compra en línea o con asesoría por WhatsApp.',
       canonicalPath: '/catalog',
       robots: 'index,follow',
     }
@@ -54,7 +54,7 @@ export function getSeoForRoute(path, basePath, state) {
     if (publicos.length && !state.isLoading && !category.split(',').some((c) => tipos.has(c.trim()))) {
       return {
         title: 'Categoría no encontrada | G&L',
-        description: 'Esa categoría no está en el catálogo. Mira lo que hay ahora en la tienda.',
+        description: 'Esa categoría no está disponible en el catálogo. Te invitamos a conocer lo que tenemos en la tienda.',
         canonicalPath: '/catalog',
         robots: 'noindex,follow',
       }
@@ -62,7 +62,7 @@ export function getSeoForRoute(path, basePath, state) {
     const label = categoryLabel(category)
     const cats = category.split(',').map((c) => c.trim())
     const items = publicos.filter((p) => cats.includes(p.type))
-    let description = `${label} de las mejores marcas. Envío a todo México, gratis desde $1,499, y atención por WhatsApp.`
+    let description = `${label} de marca. Enviamos a todo México, gratis desde $1,499, con atención por WhatsApp.`
     if (items.length) {
       // Perfumes sin nombres de casas: ver brandIndex en brands.js
       const cuenta = {}
@@ -73,7 +73,7 @@ export function getSeoForRoute(path, basePath, state) {
         }
       }
       const marcas = Object.keys(cuenta).sort((a, b) => cuenta[b] - cuenta[a]).slice(0, 3)
-      description = `${label}${marcas.length ? `: ${colorPhrase(marcas)}` : ''}. ${priceRange(items)} Envío a todo México, gratis desde $1,499.`
+      description = `${label}${marcas.length ? `: ${colorPhrase(marcas)}` : ''}. ${priceRange(items)} Enviamos a todo México, gratis desde $1,499.`
     }
     return {
       title: `${label} | G&L`,
@@ -107,7 +107,7 @@ export function getSeoForRoute(path, basePath, state) {
         title: largo.length <= 60 ? largo : `${marca.name} para hombre | G&L`,
         description:
           `${marca.items.length} piezas de ${marca.name}: ${colorPhrase(orden.slice(0, 4).map((t) => nombre(t, enMeta)))}. ` +
-          `${rango}, envío a todo México.`,
+          `${rango}, con envío a todo México.`,
         // El slug, no el path pedido: /marca/Oggi hidrataba con canonical propio
         canonicalPath: `/marca/${marca.slug}`,
         robots: 'index,follow',
@@ -117,7 +117,7 @@ export function getSeoForRoute(path, basePath, state) {
     // ni declarar un canonical inventado: mismo criterio que el shell de la SPA.
     return {
       title: 'Marca no encontrada | G&L',
-      description: 'Esa marca no está en el catálogo. Mira lo que hay ahora en la tienda.',
+      description: 'Esa marca no está disponible en el catálogo. Te invitamos a conocer lo que tenemos en la tienda.',
       canonicalPath: '/catalog',
       robots: 'noindex,follow',
     }
@@ -146,7 +146,7 @@ export function getSeoForRoute(path, basePath, state) {
   const infoSeo = {
     '/sucursales': {
       title: 'Tiendas de ropa para hombre en Colima y Villa de Álvarez | G&L',
-      description: 'Visítanos en el Centro de Colima o en Villa de Álvarez: el mismo surtido en las dos. Direcciones, horarios y cómo llegar.',
+      description: 'Visítanos en el Centro de Colima o en Villa de Álvarez; ambas sucursales tienen el mismo surtido. Direcciones, horarios y cómo llegar.',
     },
     '/sucursales/colima-centro': {
       title: 'Tienda de ropa para hombre en el Centro de Colima | G&L',
@@ -158,15 +158,15 @@ export function getSeoForRoute(path, basePath, state) {
     },
     '/nosotros': {
       title: 'Nosotros | Boutique de ropa para hombre desde 1995 | G&L',
-      description: 'G&L viste hombres desde 1995. Empezamos en Colima y hoy enviamos a todo México: marcas escogidas a mano y atención personal por WhatsApp.',
+      description: 'G&L viste a hombres desde 1995. Comenzamos en Colima y hoy enviamos a todo México, con marcas seleccionadas y atención personal por WhatsApp.',
     },
     '/envios': {
       title: 'Envíos y formas de pago | G&L',
-      description: 'Envío $150 MXN a todo México, gratis desde $1,499. Entrega en 3 a 4 días hábiles. Efectivo, transferencia, tarjeta y link de pago.',
+      description: 'Envío a todo México por $150 MXN, gratis desde $1,499. Entrega en 3 a 4 días hábiles. Pago en efectivo, transferencia, tarjeta o link de pago.',
     },
     '/cambios': {
       title: 'Cambios y garantía | G&L',
-      description: 'Cambia tu prenda dentro de los 8 días siguientes a la entrega. Si el error fue nuestro, el envío corre por nuestra cuenta.',
+      description: 'Puedes cambiar tu prenda dentro de los 8 días siguientes a la entrega. Si el error fue nuestro, nosotros cubrimos el envío.',
     },
     '/privacidad': {
       title: 'Aviso de privacidad | G&L',
@@ -174,11 +174,11 @@ export function getSeoForRoute(path, basePath, state) {
     },
     '/terminos': {
       title: 'Términos y condiciones de compra | G&L',
-      description: 'Precios en MXN con IVA, pedido y pago por WhatsApp, envío a todo México, cambios en 8 días y productos originales.',
+      description: 'Condiciones de compra en G&L: precios en MXN con IVA, pedido y pago por WhatsApp, envío a todo México y cambios en 8 días.',
     },
     '/contacto': {
       title: 'Contacto y sucursales en Colima | G&L',
-      description: 'Escríbenos por WhatsApp o visítanos en Colima Centro y Villa de Álvarez. Horarios, direcciones y cómo llegar.',
+      description: 'Escríbenos por WhatsApp o visítanos en Colima Centro y Villa de Álvarez. Consulta horarios, direcciones y cómo llegar.',
     },
   }
 
@@ -189,7 +189,7 @@ export function getSeoForRoute(path, basePath, state) {
   if (basePath === '/cart') {
     return {
       title: 'Tu bolsa | G&L',
-      description: 'Revisa los productos de tu bolsa de G&L antes de cerrar tu pedido por WhatsApp.',
+      description: 'Revisa los productos de tu bolsa de G&L antes de confirmar tu pedido por WhatsApp.',
       canonicalPath: '/cart',
       robots: 'noindex,follow',
     }
@@ -198,7 +198,7 @@ export function getSeoForRoute(path, basePath, state) {
   if (basePath === '/checkout') {
     return {
       title: 'Checkout | G&L',
-      description: 'Finaliza tu pedido en G&L de forma segura y confirma tu compra por WhatsApp.',
+      description: 'Finaliza tu pedido en G&L de forma segura y confírmalo por WhatsApp.',
       canonicalPath: '/checkout',
       robots: 'noindex,follow',
     }
@@ -215,8 +215,8 @@ export function getSeoForRoute(path, basePath, state) {
 
   if (basePath === '/checkout/success') {
     return {
-      title: 'Pedido Confirmado | G&L',
-      description: 'Tu pedido fue registrado correctamente en G&L. Gracias por tu compra.',
+      title: 'Pedido confirmado | G&L',
+      description: 'Registramos tu pedido en G&L. Gracias por tu compra.',
       canonicalPath: '/checkout/success',
       robots: 'noindex,nofollow',
     }
@@ -235,7 +235,7 @@ export function getSeoForRoute(path, basePath, state) {
   // cada URL rota se indexaba como copia de la home.
   return {
     title: 'Página no encontrada | G&L',
-    description: 'La página que buscas no existe. Explora el catálogo de G&L.',
+    description: 'La página que buscas no existe. Te invitamos a explorar el catálogo de G&L.',
     canonicalPath: basePath,
     robots: 'noindex,follow',
   }

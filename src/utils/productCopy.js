@@ -156,114 +156,114 @@ const FAMILIES = [
     test: /oggi\s*-\s*vaxter.*gabar?d?ina/i,
     corta: 'corte Vaxter recto slim, en gabardina',
     larga:
-      'Es el mismo corte Vaxter —recto slim, tiro largo, cintura media y pierna amplia— ' +
-      'pero en gabardina en lugar de mezclilla. Se ve más de vestir y va con camisa sin problema.',
+      'Es el corte Vaxter —recto slim, tiro largo, cintura media y pierna amplia— confeccionado ' +
+      'en gabardina en lugar de mezclilla. Tiene una apariencia más formal y combina bien con camisa.',
   },
   {
     test: /oggi\s*-\s*vaxter/i,
     denim: true,
     corta: 'corte recto slim, tiro largo, cintura media y pierna amplia',
     larga:
-      'El corte Vaxter es el favorito de nuestros clientes. Corte recto slim: entalla sin apretar, ' +
-      'con tiro largo, cintura media y pierna amplia. No es un skinny. Lo manejamos en mezclilla ' +
-      'con stretch y en mezclilla rígida: pregunta por WhatsApp cuál buscas antes de que te lo mandemos.',
+      'El Vaxter es el corte favorito de nuestros clientes. Es un recto slim que se ajusta sin apretar, ' +
+      'con tiro largo, cintura media y pierna amplia. Está disponible en mezclilla con stretch y en ' +
+      'mezclilla rígida; si tienes dudas sobre cuál elegir, con gusto te asesoramos por WhatsApp.',
   },
   {
     test: /oggi\s*-\s*power/i,
     denim: true,
     corta: 'corte clásico todo recto, tiro alto y cintura alta',
     larga:
-      'El Power es el corte clásico de Oggi: todo recto, de tiro alto y cintura alta. Es el que busca ' +
-      'quien no se acomoda con los tiros bajos. Va en mezclilla rígida y en mezclilla con stretch: ' +
-      'pregúntanos por WhatsApp cuál te conviene.',
+      'El Power es el corte clásico de Oggi: recto de principio a fin, con tiro alto y cintura alta. ' +
+      'Es una buena opción si prefieres evitar los tiros bajos. Está disponible en mezclilla rígida y ' +
+      'en mezclilla con stretch; con gusto te asesoramos por WhatsApp para elegir la que más te convenga.',
   },
   {
     test: /oggi\s*-\s*iron/i,
     denim: true,
     corta: 'slim, cintura media y tiro corto',
     larga:
-      'El Iron es el más entallado de la línea: corte slim, cintura media y tiro corto. Si te gusta el ' +
-      'pantalón pegado y bajo de cintura, es este. Si lo prefieres de tiro largo, mejor el Vaxter.',
+      'El Iron es el corte más entallado de la línea: slim, con cintura media y tiro corto. Es la opción ' +
+      'indicada si prefieres un pantalón ajustado; si lo buscas de tiro largo, te recomendamos el Vaxter.',
   },
   {
     test: /oggi\s*-\s*leader/i,
     denim: true,
     corta: 'jean de mezclilla en corte loose',
     larga:
-      'El Leader es de mezclilla, en corte loose: más holgado que el Vaxter, para quien lo busca ' +
-      'cómodo y con espacio en la pierna.',
+      'El Leader está confeccionado en mezclilla, en corte loose: más holgado que el Vaxter, con más ' +
+      'amplitud en la pierna para mayor comodidad.',
   },
   {
     test: /oggi\s*-\s*chinos?\s+slim/i,
     corta: 'chino de vestir, pierna un poco ajustada',
     larga:
-      'Los chinos son la línea de vestir de Oggi. Este es el Slim: la pierna va un poco más ajustada ' +
-      'que el chino normal, pero no llega a skinny. Sirve igual con camisa y zapato para algo formal ' +
-      'que con tenis para el diario.',
+      'Los chinos forman la línea de vestir de Oggi. Este es el modelo Slim: la pierna es un poco más ' +
+      'ajustada que la del chino regular, sin llegar a ser skinny. Funciona tanto con camisa y zapato ' +
+      'para una ocasión formal como con tenis para el día a día.',
   },
   {
     test: /oggi\s*-\s*chinos?/i,
     corta: 'chino de vestir, pierna amplia',
     larga:
-      'Los chinos son la línea de vestir de Oggi. Este es el corte normal, de pierna amplia. Es el ' +
-      'pantalón versátil de verdad: aguanta camisa y zapato para algo formal, y al día siguiente sale ' +
-      'con tenis.',
+      'Los chinos forman la línea de vestir de Oggi. Este es el corte regular, de pierna amplia, y es un ' +
+      'pantalón muy versátil: combina con camisa y zapato para una ocasión formal, y con tenis para el ' +
+      'día a día.',
   },
   {
     test: /wrangler\s*-\s*wrangler\s+slim/i,
     denim: true,
     corta: 'vaquero slim en mezclilla rígida de tejido cruzado',
     larga:
-      'Es el Wrangler que más se vende. Sigue siendo corte vaquero, en Slim. Toda la mezclilla Wrangler ' +
-      'que manejamos es rígida: en esta marca no hay stretch. Cuesta más que un Oggi por la tela, que es ' +
-      'mezclilla de tejido cruzado, bastante más resistente y pensada para montar. Es la que se lleva ' +
-      'la gente que anda en el campo y a caballo.',
+      'El Slim Fit es el modelo más solicitado de Wrangler: conserva el corte vaquero con un ajuste más ' +
+      'estilizado. Está confeccionado en mezclilla rígida de tejido cruzado, más resistente que la ' +
+      'mezclilla convencional y pensada para el trabajo de campo y la monta.',
   },
   {
     test: /wrangler\s*-\s*wrangler\s+regular/i,
     denim: true,
     corta: 'vaquero regular en mezclilla rígida de tejido cruzado',
     larga:
-      'Corte vaquero regular: más suelto de pierna que el Slim, que es el que más se vende. La mezclilla ' +
-      'es la misma, rígida y de tejido cruzado, porque en Wrangler no manejamos stretch. Esa tela es la ' +
-      'razón de que cueste más que un Oggi: aguanta mucho más y está pensada para montar y para el campo.',
+      'El Regular conserva el corte vaquero, con la pierna más holgada que el Slim Fit. Como todos ' +
+      'nuestros Wrangler, está confeccionado en mezclilla rígida de tejido cruzado, sin stretch: una tela ' +
+      'más resistente que la mezclilla convencional, pensada para el campo y la monta, y por eso su ' +
+      'precio es mayor que el de un Oggi.',
   },
   {
     test: /white\s*peak/i,
     tipo: 'Polos',
-    corta: 'polo de algodón, fresca',
+    corta: 'polo de algodón, tela fresca',
     larga:
-      'Las White Peak son de algodón. Es una tela fresca, que en tierra caliente es lo que importa. Si ' +
-      'prefieres una tela deportiva que transpire más, checa las Soul&Blues.',
+      'Las White Peak están confeccionadas en algodón, una tela fresca, adecuada para climas cálidos. ' +
+      'Si prefieres una tela deportiva con mayor transpiración, te sugerimos las Soul&Blues.',
   },
   {
     test: /soul\s*&\s*blues/i,
     tipo: 'Polos',
     corta: 'polo en tela tipo dry fit, transpirable',
     larga:
-      'Las Soul&Blues vienen en tela tipo dry fit: transpiran, así que son las que piden para el calor ' +
-      'o para andar todo el día fuera. Si prefieres algodón, las White Peak son igual de frescas.',
+      'Las Soul&Blues están confeccionadas en tela tipo dry fit, que transpira y resulta cómoda para el ' +
+      'calor o para pasar todo el día fuera. Si prefieres algodón, las White Peak son igualmente frescas.',
   },
   {
     test: /odyssey\s+mandarin\s+sky/i,
     corta: 'fragancia dulce, versátil de día y de noche',
     larga:
-      'Es un perfume dulce y de los más versátiles que tenemos: funciona igual de día que de noche. ' +
-      'Lo recomendamos sobre todo para la temporada de invierno.',
+      'Es una fragancia dulce y versátil, adecuada tanto para el día como para la noche. La ' +
+      'recomendamos especialmente para la temporada de invierno.',
   },
   {
     test: /rusty\s*-\s*bermuda\s+slim/i,
     corta: 'bermuda slim, tiro medio, arriba de la rodilla',
     larga:
-      'Bermuda de corte slim y tiro medio. Queda arriba de la rodilla, que es lo que la ' +
-      'diferencia de un short largo.',
+      'Bermuda de corte slim y tiro medio. Su largo queda arriba de la rodilla, lo que la distingue ' +
+      'de un short largo.',
   },
   {
     test: /sherman\s*morgan\s*-\s*playeras?\s+oversize/i,
     corta: 'playera oversize de 250 g',
     larga:
-      'Playera de 250 gramos: es tela de peso, no de las que transparentan ni se deforman al ' +
-      'primer lavado. Corte oversize, holgada de hombro y cuerpo.',
+      'Playera de 250 gramos: una tela con cuerpo, que no transparenta ni se deforma al primer ' +
+      'lavado. Corte oversize, holgado en hombros y cuerpo.',
   },
   {
     test: /lee\s*-\s*slim\s*fit/i,
@@ -282,8 +282,8 @@ const FAMILIES = [
     denim: true,
     corta: 'el corte Buffalo en tallas extra',
     larga:
-      'Es el mismo corte Buffalo —clásico, pierna amplia, tiro alto y cintura alta— pero en ' +
-      'tallas extra. Es al que mandamos a quien no encuentra su talla en el resto de la tienda.',
+      'Es el corte Buffalo —clásico, de pierna amplia, tiro alto y cintura alta— en tallas extra. ' +
+      'Es el modelo que recomendamos si no encuentras tu talla en el resto de la tienda.',
   },
   {
     test: /paddocks\s*-\s*buffalo/i,
@@ -291,44 +291,44 @@ const FAMILIES = [
     corta: 'corte clásico, pierna amplia, tiro alto y cintura alta',
     larga:
       'El Buffalo es el corte clásico de Paddocks: pierna amplia, tiro alto y cintura alta. ' +
-      'Si buscas la misma horma en talla extra, pregunta por el San Francisco.',
+      'Si buscas la misma horma en talla extra, te recomendamos el San Francisco.',
   },
   {
     test: /paddocks\s*-\s*relaxed/i,
     denim: true,
     corta: 'recto slim de pierna relajada y cintura media',
     larga:
-      'El Relaxed es un recto slim con la pierna relajada y cintura media: ni tan amplio como el ' +
-      'Buffalo ni tan pegado como el Rocker.',
+      'El Relaxed es un recto slim con pierna relajada y cintura media: más ajustado que el Buffalo ' +
+      'y más holgado que el Rocker.',
   },
   {
     test: /paddocks\s*-\s*rocker/i,
     denim: true,
     corta: 'slim de cintura baja',
     larga:
-      'El Rocker es el más pegado de Paddocks: corte slim y cintura baja. Si lo quieres más ' +
-      'suelto, el Relaxed; si lo quieres de cintura alta, el Buffalo.',
+      'El Rocker es el corte más ajustado de Paddocks: slim y de cintura baja. Si lo prefieres más ' +
+      'holgado, te recomendamos el Relaxed; si lo buscas de cintura alta, el Buffalo.',
   },
   {
     test: /oaktree\s*-\s*polo/i,
     corta: 'polo de algodón pima, hecho en México',
     larga:
-      'Polo de algodón pima, hecho en México. Lo manejamos en talla extra, que es justo lo que ' +
-      'cuesta encontrar en polos.',
+      'Polo de algodón pima, hecho en México. Está disponible en talla extra, una medida difícil de ' +
+      'encontrar en polos.',
   },
   {
     test: /oaktree\s*-/i,
     corta: 'hecho en México',
-    larga: 'Oaktree es marca mexicana: sus camisas y playeras están hechas en México.',
+    larga: 'Oaktree es una marca mexicana: sus camisas y playeras se fabrican en México.',
   },
   {
     // El apostrofo de la marca esta tecleado de tres formas distintas, y en
     // estas siete el separador va sin espacio: el patron no depende de ninguno.
     test: /collor.{0,2}s\s*-?\s*bermuda\s+gabardina/i,
-    corta: 'bermuda de gabardina; queda justa, pide una talla más',
+    corta: 'bermuda de gabardina de horma justa; sugerimos una talla más',
     larga:
-      'Bermuda de gabardina. Es la única prenda de la tienda que queda algo justa: si estás ' +
-      'entre dos tallas, o si te gusta holgado, pide una talla más de la que usas normalmente.',
+      'Bermuda de gabardina. Es la única prenda de la tienda con horma algo justa: si estás entre ' +
+      'dos tallas o prefieres un ajuste holgado, te recomendamos pedir una talla más de la que usas.',
   },
 ]
 
