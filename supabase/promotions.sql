@@ -41,4 +41,39 @@ create policy promotions_public_read on public.promotions
     and starts_at < now() + make_interval(days => greatest(countdown_lead_days, 1))
   );
 
+-- ── 2. Regla de precio ──────────────────────────────────────────────────
+-- Misma regla que promoFor()/discounted() en src/utils/promotions.js:
+-- vigente [starts_at, ends_at), toda la tienda o p.type en categories, los ya
+-- rebajados solo con include_on_sale, desempate pct desc / starts_at / id, y
+-- sin promo si el redondeo no baja el precio. Precios enteros: el medio peso
+-- redondea igual que Math.round.
+create or replace function public.promo_info(p public.products)
+returns table (price numeric, promo_id uuid, promo_name text, promo_pct int)
+language sql
+stable
+set search_path = public, pg_temp
+as $fn$
+  with winner as (
+    select pr.*
+      from public.promotions pr
+     where pr.active
+       and now() >= pr.starts_at and now() < pr.ends_at
+       and (cardinality(pr.categories) = 0 or p.type = any(pr.categories))
+       and (pr.include_on_sale or p.original_price is null or p.original_price <= p.price)
+     order by pr.discount_pct desc, pr.starts_at asc, pr.id::text asc
+     limit 1
+  )
+  select round(p.price * (100 - w.discount_pct) / 100), w.id, w.name, w.discount_pct
+    from winner w
+   where round(p.price * (100 - w.discount_pct) / 100) < p.price
+  union all
+  select p.price, null, null, null
+   where not exists (
+     select 1 from winner w where round(p.price * (100 - w.discount_pct) / 100) < p.price
+   )
+$fn$;
+
+-- Solo la usa place_order (security definer); nadie la llama por REST.
+revoke all on function public.promo_info(public.products) from public, anon, authenticated;
+
 commit;
