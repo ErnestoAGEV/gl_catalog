@@ -1,0 +1,6 @@
+frames/
+stills/
+out/
+audio/
+*.mp4
+timeline.json
