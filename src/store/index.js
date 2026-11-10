@@ -9,4 +9,5 @@ export { subscribeNewsletter, isSubscribedNewsletter, getAdminSubscribers, getEm
 export { saveOrder, getAdminOrders, updateAdminOrderStatus, updateAdminOrderShipping, sendOrderConfirmation, getOrderNotifyEmails, addOrderNotifyEmail, removeOrderNotifyEmail, sendOrderStaffTest } from './orders.js'
 export { loadSizeGuides, getSizeGuides, addSizeGuide, updateSizeGuide, deleteSizeGuide } from './sizeGuides.js'
 export { loadCategories, getCategories, getActiveCategories, getCategoryNames, addCategory, updateCategory, deleteCategory, reorderCategories } from './categories.js'
+export { loadPromotions, refreshPromotions, reapplyPromotions, getPromotions, getAdminPromotions, createPromotion, updatePromotion, deletePromotion } from './promotions.js'
 export { loadSiteContent, refreshSiteContent, getSiteContent, addSiteContent, addSiteContentRows, updateSiteContent, deleteSiteContent, reorderSiteContent, uploadSiteImage } from './siteContent.js'

@@ -1,6 +1,7 @@
 import { state, emit, createStoreError } from './state.js'
 import { supabase } from '../core/supabase.js'
 import { ensureAdminAccess } from './auth.js'
+import { renamePromotionCategory } from './promotions.js'
 
 export async function loadCategories() {
   if (!supabase) return
@@ -97,6 +98,8 @@ export async function updateCategory(id, updates) {
       return { error: productsError }
     }
     state.products.forEach(p => { if (p.type === oldName) p.type = updates.name })
+    // Las promos tambien nombran categorias: sin esto la promo dejaba de aplicar en silencio
+    await renamePromotionCategory(oldName, updates.name)
   }
 
   const idx = state.categories.findIndex(c => c.id === id)

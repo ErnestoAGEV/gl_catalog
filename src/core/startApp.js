@@ -2,7 +2,7 @@ import { getRoute, onRouteChange, startRouter, navigate, scrollPositions } from 
 import { bindHeaderSearch } from '../components/headerSearch.js'
 import { closeMiniCart } from '../components/miniCart.js'
 import { marqueeHtml, footerBrandsHtml } from '../components/layout.js'
-import { getState, isAdminAuthed, loadProducts, loadCategories, loadSizeGuides, loadSiteContent, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession, getAdminOrders } from '../store/index.js'
+import { getState, isAdminAuthed, loadProducts, loadPromotions, loadCategories, loadSizeGuides, loadSiteContent, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession, getAdminOrders } from '../store/index.js'
 import { renderRoute } from './views.js'
 import { showToast } from '../utils/toast.js'
 import { supabase } from './supabase.js'
@@ -96,6 +96,7 @@ export async function startApp(mountEl) {
   })
 
   loadProducts()
+  loadPromotions()
   loadCategories()
   loadSizeGuides()
   loadSiteContent()

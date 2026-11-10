@@ -23,6 +23,8 @@ export const state = {
   coupon: readJson(STORAGE_KEYS.coupon, null),
   newsletter: readJson(STORAGE_KEYS.newsletter, null),
   searchQuery: '',
+  // Promociones de temporada visibles (src/store/promotions.js); del cache para el primer pintado
+  promotions: readJson('gl_promotions_cache', []),
 }
 
 const subscribers = new Set()
