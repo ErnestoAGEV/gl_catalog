@@ -1,0 +1,20 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Prendas — hoja de muestra</title>
+<style>
+  body { margin: 0; font-family: sans-serif; }
+  .row { display: flex; gap: 40px; padding: 40px; align-items: flex-end; }
+  .blue { background: #214fc7; color: #fff; --accent: #214fc7; }
+  .white { background: #fff; color: #214fc7; --accent: #fff; }
+  .row > div { width: 300px; height: 300px; display: flex; align-items: center; justify-content: center; }
+  .row svg { max-width: 100%; max-height: 100%; }
+</style>
+<div class="row blue" id="b"></div>
+<div class="row white" id="w"></div>
+<script src="garments.js"></script>
+<script>
+  for (const id of ['b', 'w']) {
+    const row = document.getElementById(id)
+    for (const svg of [...Object.values(GARMENTS), WHATSAPP_GLYPH]) row.insertAdjacentHTML('beforeend', `<div>${svg}</div>`)
+  }
+</script>
