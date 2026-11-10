@@ -331,7 +331,7 @@ export function pageCart(state) {
         const pct = Math.min(100, (subtotal / BRAND.freeShippingMin) * 100)
         const active = subtotal >= BRAND.freeShippingMin
         const sheenHtml = active
-          ? `<div class="absolute inset-0" style="background:linear-gradient(90deg,transparent,rgba(33,79,199,.55),transparent);animation:scroll-x 2.4s linear infinite;"></div>`
+          ? `<div class="absolute inset-0" style="background:linear-gradient(90deg,transparent,color-mix(in srgb, var(--color-brand) 55%, transparent),transparent);animation:scroll-x 2.4s linear infinite;"></div>`
           : ''
 
         const statusHtml = active

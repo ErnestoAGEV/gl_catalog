@@ -220,7 +220,7 @@ export function pageProduct(initialState) {
 
   /* ── Badges ── */
   const badges = []
-  if (discount > 0) badges.push(`<span class="font-mono text-[11px] tracking-[0.18em] uppercase bg-brand text-paper px-2.5 py-1 rounded-full">\u2212${discount}%</span>`)
+  if (discount > 0) badges.push(`<span class="font-mono text-[11px] tracking-[0.18em] uppercase bg-brand text-paper px-2.5 py-1 rounded-full">${product.promo ? `${escapeHtml(product.promo.name)} ` : ''}\u2212${discount}%</span>`)
   else if (product.badge === 'Oferta') badges.push(`<span class="font-mono text-[11px] tracking-[0.18em] uppercase bg-brand text-paper px-2.5 py-1 rounded-full">Oferta</span>`)
   if (product.badge === 'Nuevo') badges.push(`<span class="font-mono text-[11px] tracking-[0.18em] uppercase bg-paper text-ink px-2.5 py-1 rounded-full">Nuevo</span>`)
   if (product.badge === 'Más vendido' || product.badge === 'Popular') badges.push(`<span class="font-mono text-[11px] tracking-[0.18em] uppercase bg-ink text-paper px-2.5 py-1 rounded-full">Top</span>`)
