@@ -1,4 +1,5 @@
-import { getAdminOrders } from '../../store/index.js'
+import { getAdminOrders, getAdminPromotions } from '../../store/index.js'
+import { promoReport } from '../../utils/promotions.js'
 import { formatMoney } from '../../utils/format.js'
 import { escapeHtml as esc } from '../../utils/sanitize.js'
 import { ICON, statCard } from './adminIcons.js'
@@ -33,7 +34,9 @@ export function pageAdminReportes(state) {
       const repRoot = root.querySelector('#adm-rep-root')
       if (!repRoot) return
 
-      const orders = await getAdminOrders()
+      const [orders, promotions] = await Promise.all([getAdminOrders(), getAdminPromotions()])
+      // Promos que ya empezaron: cada una contra los mismos dias justo antes
+      const promoHtml = promoSection(orders, promotions.filter(p => Date.parse(p.starts_at) <= Date.now()))
 
       let currentRange = '30d'
 
@@ -281,6 +284,11 @@ export function pageAdminReportes(state) {
       }
 
       function render() {
+        renderMain()
+        repRoot.firstElementChild?.firstElementChild?.insertAdjacentHTML('afterend', promoHtml)
+      }
+
+      function renderMain() {
         const d = compute(currentRange)
         const rangeLabel = currentRange === 'Todo' ? 'todo el historial' : `los últimos ${currentRange.replace('d', ' días')}`
 
@@ -369,4 +377,46 @@ export function pageAdminReportes(state) {
       render()
     }
   }
+}
+
+const DAY_FMT = new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short' })
+
+function delta(now, before) {
+  if (!before) return now ? '<span class="text-ok">nuevo</span>' : '—'
+  const pct = Math.round(((now - before) / before) * 100)
+  return `<span class="${pct >= 0 ? 'text-ok' : 'text-bad'}">${pct >= 0 ? '+' : ''}${pct}%</span>`
+}
+
+function promoSection(orders, promos) {
+  if (!promos.length) return ''
+  const cards = promos.map(p => {
+    const r = promoReport(orders, p)
+    const running = Date.parse(p.ends_at) > Date.now()
+    const row = (label, now, before, money) => `
+      <div class="bg-canvas rounded-xl2 p-3">
+        <p class="eyebrow text-faint">${label}</p>
+        <p class="font-display font-bold text-ink text-[18px] tnum mt-1">${money ? formatMoney(now) : now}</p>
+        <p class="text-[11.5px] text-muted tnum mt-0.5">antes ${money ? formatMoney(before) : before} · ${delta(now, before)}</p>
+      </div>`
+    return `
+      <div class="bg-paper rounded-3xl border border-line shadow-card p-5 space-y-3">
+        <div class="flex items-baseline justify-between gap-2">
+          <p class="font-display font-bold text-ink text-[16px]">${esc(p.name)} <span class="text-brand tnum">−${p.discount_pct}%</span></p>
+          <p class="text-[12px] text-muted tnum">${DAY_FMT.format(new Date(p.starts_at))} – ${DAY_FMT.format(new Date(p.ends_at))}${running ? ' · en curso' : ''}</p>
+        </div>
+        <div class="grid grid-cols-3 gap-2.5">
+          ${row('Pedidos', r.orders, r.prev.orders, false)}
+          ${row('Ventas', r.sales, r.prev.sales, true)}
+          ${row('Ticket prom.', r.avg, r.prev.avg, true)}
+        </div>
+      </div>`
+  }).join('')
+  return `
+    <section aria-labelledby="rep-promos" class="space-y-3">
+      <div>
+        <h3 id="rep-promos" class="font-display font-bold text-ink text-[18px]">Promociones</h3>
+        <p class="text-[12.5px] text-muted">Pedidos no cancelados durante cada promoción, comparados con el mismo número de días justo antes.</p>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">${cards}</div>
+    </section>`
 }
