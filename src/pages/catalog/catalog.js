@@ -538,6 +538,7 @@ export function pageCatalog(initialState) {
           const url = new URL(window.location.href)
           url.searchParams.delete('promo')
           window.history.replaceState(null, '', url.pathname + url.search)
+          lastPromoParam = null
           renderGrid({ resetPage: true })
         })
         grid.parentElement.insertBefore(chip, grid)
@@ -889,6 +890,16 @@ export function pageCatalog(initialState) {
         sheetTrigger = null
         scrollAfterSheet = false
       })
+      // La vista vive en cache: /catalog -> /catalog?promo=1 (boton de la franja)
+      // no la vuelve a montar, asi que el cambio de ?promo se repinta aqui.
+      let lastPromoParam = new URLSearchParams(window.location.search).get('promo')
+      const offPromoRoute = onRouteChange(() => {
+        if (!CATALOG_PATH.test(window.location.pathname)) return
+        const promoParam = new URLSearchParams(window.location.search).get('promo')
+        if (promoParam === lastPromoParam) return
+        lastPromoParam = promoParam
+        renderGrid({ resetPage: true })
+      })
       mobilePanel?.addEventListener('keydown', (e) => {
         // En escritorio el panel es una columna mas: Tab tiene que poder salir
         if (!mobilePanel.classList.contains('open')) return
@@ -1149,6 +1160,7 @@ export function pageCatalog(initialState) {
         headerObserver.disconnect()
         unsubscribe()
         offRoute()
+        offPromoRoute()
         clearTimeout(priceTimer)
       }
     },
