@@ -807,8 +807,11 @@ export function pageAdminProducts(state) {
         qs(root, 'textarea[name="description"]').value = product.description || ''
         qs(root, 'select[name="type"]').value = product.type
         handleTypeChange()
-        qs(root, 'input[name="price"]').value = product.price
-        if (product.originalPrice) qs(root, 'input[name="originalPrice"]').value = product.originalPrice
+        // Precios base: con una promo en curso price/originalPrice son los de la promo
+        // y guardarlos convertiria el descuento temporal en precio permanente
+        qs(root, 'input[name="price"]').value = product.basePrice ?? product.price
+        const baseOriginal = product.baseOriginalPrice !== undefined ? product.baseOriginalPrice : product.originalPrice
+        if (baseOriginal) qs(root, 'input[name="originalPrice"]').value = baseOriginal
         if (product.stock) qs(root, 'input[name="stock"]').value = product.stock
         if (product.badge) qs(root, 'select[name="badge"]').value = product.badge
 

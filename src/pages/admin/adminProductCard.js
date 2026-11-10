@@ -2,6 +2,10 @@ import { formatMoney } from '../../utils/format.js'
 import { isInfiniteStock } from '../../utils/stock.js'
 import { ICON } from './adminIcons.js'
 
+// El admin muestra el precio de la base; el de promo va aparte (src/utils/promotions.js)
+const basePrice = (p) => p.basePrice ?? p.price
+const baseOriginal = (p) => (p.baseOriginalPrice !== undefined ? p.baseOriginalPrice : p.originalPrice)
+
 function stockBadge(p) {
   const isInfinite = isInfiniteStock(p.stock)
   if (isInfinite) return `<span class="inline-flex items-center gap-1.5 px-2 h-[22px] rounded-md text-[11.5px] font-semibold bg-brand-tint text-brand tnum">∞ Ilimitado</span>`
@@ -48,8 +52,9 @@ export function productCard(p) {
         <span class="inline-flex items-center px-2 h-[24px] rounded-md bg-canvas border border-line text-[12px] font-medium text-body">${p.type || 'Sin categoría'}</span>
       </td>
       <td class="px-5 py-3 text-right">
-        <p class="text-[14px] font-bold text-ink tnum">${formatMoney(p.price)}</p>
-        ${p.originalPrice ? `<p class="text-[11.5px] text-faint line-through tnum">${formatMoney(p.originalPrice)}</p>` : ''}
+        <p class="text-[14px] font-bold text-ink tnum">${formatMoney(basePrice(p))}</p>
+        ${baseOriginal(p) ? `<p class="text-[11.5px] text-faint line-through tnum">${formatMoney(baseOriginal(p))}</p>` : ''}
+        ${p.promo ? `<p class="text-[11.5px] text-brand font-semibold tnum">Promo ${formatMoney(p.price)}</p>` : ''}
       </td>
       <td class="px-5 py-3">${stockBadge(p)}</td>
       <td class="px-5 py-3">
@@ -94,7 +99,7 @@ export function productCardMobile(p) {
         <div class="grid grid-cols-3 gap-3">
           <div>
             <p class="eyebrow text-faint">Precio</p>
-            <p class="font-bold text-ink tnum mt-0.5">${formatMoney(p.price)}</p>
+            <p class="font-bold text-ink tnum mt-0.5">${formatMoney(basePrice(p))}${p.promo ? ` <span class="text-brand text-[12px]">promo ${formatMoney(p.price)}</span>` : ''}</p>
           </div>
           <div>
             <p class="eyebrow text-faint">Stock</p>
