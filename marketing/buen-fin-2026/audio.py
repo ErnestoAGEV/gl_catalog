@@ -6,7 +6,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 os.chdir(HERE)
-T = json.loads(subprocess.check_output(['node', '-p', "JSON.stringify(require('./timeline.js'))"], text=True))
+T = json.loads(subprocess.check_output(['node', '-p', "JSON.stringify(require('./timeline.js'))"], text=True, encoding='utf-8'))
 
 SR, DUR, BPM = 48000, float(T['duration']), T['bpm']
 BEAT = 60 / BPM

@@ -1,4 +1,4 @@
-// node retime.js <dirWavs>  — ajusta timeline.js a la duración real de s1.wav…s6.wav y escribe timeline.json.
+// node retime.js <dirWavs>  — ajusta timeline.js a la duración real de s1.wav…s6.wav.
 const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process')
 
 const MIN = { envios: 3.0 }, MIN_DEFAULT = 2.5, LEAD = 0.2, TAIL = 0.4, MAX = 25
@@ -26,7 +26,6 @@ function write(T, file) {
   }).replace(/duration: [\d.]+/, `duration: ${T.duration}`)
   if (i !== T.scenes.length) throw new Error('timeline.js no tiene el formato esperado')
   fs.writeFileSync(file, out)
-  fs.writeFileSync(path.join(path.dirname(file), 'timeline.json'), JSON.stringify(T, null, 2))
 }
 
 module.exports = { retime, dur }

@@ -24,7 +24,7 @@
   .h1 { font-weight: 800; font-size: 170px; letter-spacing: -0.03em; }
   .h2 { font-weight: 800; font-size: 112px; letter-spacing: -0.03em; line-height: 1.02; }
   .sub { font-weight: 700; font-size: 72px; letter-spacing: -0.01em; line-height: 1.1; }
-  .mono { font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 40px; letter-spacing: 0.04em; }
+  .mono { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 46px; letter-spacing: 0.04em; }
   .label { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 46px; letter-spacing: 0.06em; text-transform: uppercase; }
   .ring { width: 900px; height: 900px; border-radius: 50%; border: 10px solid currentColor; opacity: 0; }
   .g { color: inherit; }
@@ -51,7 +51,6 @@
     <div class="p g" id="i-playera" style="width:240px"></div>
     <div class="p g" id="i-chamarra" style="width:260px"></div>
     <div class="p g" id="i-perfume" style="width:150px"></div>
-    <span class="p label" id="intro-kicker">13 — 16 nov</span>
     <span class="p h1" data-copy="Buen Fin" id="intro-title">Buen Fin</span>
     <img class="p logo" id="intro-logo" src="assets/icon-512.png" alt="">
   </section>
@@ -91,14 +90,14 @@ de noviembre</span>
   <section class="scene bg-white" id="envios">
     <div class="texture"></div>
     <svg class="p" id="route" width="1080" height="600" viewBox="0 0 1080 600" style="color:var(--blue)">
-      <path id="route-path" d="M-40 470 C 220 120, 560 600, 1120 200" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-dasharray="1 26"/>
+      <path id="route-path" d="M-260 520 C 220 120, 560 600, 1340 160" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-dasharray="1 26"/>
     </svg>
     <div class="p g" id="e-chamarra" style="width:210px"></div>
     <div class="p g" id="e-pantalon" style="width:150px"></div>
     <div class="p g" id="e-perfume" style="width:120px"></div>
     <span class="p h2 pre" data-copy="Envíos a todo México" id="envios-title">Envíos a
 todo México</span>
-    <span class="p label" data-copy="Wrangler, Oggi y más" id="envios-brands" style="color:var(--ink);text-transform:none;font-size:54px">Wrangler, Oggi y más</span>
+    <span class="p sub" data-copy="Wrangler, Oggi y más" id="envios-brands" style="color:var(--ink);font-size:60px">Wrangler, Oggi y más</span>
     <div class="p g" id="e-camisa" style="width:230px"></div>
     <div class="p g" id="e-playera" style="width:220px"></div>
   </section>
@@ -156,7 +155,7 @@ function ring(el, x, y, t, at) {
 // Prenda que entra volando desde (fx,fy) hasta (x,y) girando y luego flota.
 function fly(el, x, y, t, at, { fx, fy, r0 = -40, r1 = 0, d = 0.55, bob = 10 } = {}) {
   const k = ease.outBack(prog(t, at, d))
-  const float = t > at + d ? Math.sin((t - at) * 2.2) * bob : 0
+  const float = t > at + d ? Math.sin((t - at - d) * 2.2) * bob : 0
   place(el, lerp(fx, x, k), lerp(fy, y, k) + float, { r: lerp(r0, r1, k), o: t >= at ? 1 : 0 })
 }
 
@@ -167,7 +166,7 @@ function wipe(el, t, at) {
   el.style.clipPath = k >= 1 ? 'none' : `polygon(${a}px 0, ${W}px 0, ${W}px ${H}px, ${a - 500}px ${H}px)`
 }
 
-function texture(scene, t) { scene.querySelector('.texture').style.transform = `translate(${(t * 40) % 26.9}px, 0)` }
+function texture(scene, t) { scene.querySelector('.texture').style.transform = `translate(${(t * 40) % (22 / Math.sin(35 * Math.PI / 180))}px, 0)` }
 
 const G = window.GARMENTS
 for (const el of document.querySelectorAll('.g')) el.innerHTML = G[el.id.split('-')[1]]
@@ -196,7 +195,6 @@ function render(t) {
       const bob = Math.sin(t * 1.8 + j) * 8
       place($(id), lerp(540, x, k), lerp(900, y, k) + bob * k, { s: lerp(0.2, 1, k), r: r * k, o: clamp((t - at) / 0.1) })
     })
-    rise($('intro-kicker'), 540, 640, t, s.start + 0.2)
     slam($('intro-title'), 540, 820, t, h1, { from: 1.25 })
     ring($('intro-ring'), 540, 820, t, h1)
     slam($('intro-logo'), 540, 1140, t, h2, { from: 1.6 })
@@ -260,11 +258,11 @@ function render(t) {
     })
     // la ruta se dibuja
     const kd = ease.outCubic(prog(t, s.start + 0.1, 0.8))
-    path.style.clipPath = `inset(0 ${(1 - kd) * 100}% 0 0)`
+    path.style.clipPath = kd >= 1 ? 'none' : `inset(0 ${(1 - kd) * 100}% 0 0)`
     rise($('envios-title'), 540, 1050, t, s.start + 0.25)
     rise($('envios-brands'), 540, 1340, t, s.start + 0.9, { dy: 40 })
-    fly($('e-camisa'), 270, 1600, t, cue('envios', 2) + 0.2, { fx: -300, fy: 1900, r0: -40, r1: -8 })
-    fly($('e-playera'), 810, 1600, t, cue('envios', 3) + 0.2, { fx: 1400, fy: 1900, r0: 40, r1: 8 })
+    fly($('e-camisa'), 270, 1600, t, cue('envios', 4), { fx: -300, fy: 1900, r0: -40, r1: -8 })
+    fly($('e-playera'), 810, 1600, t, cue('envios', 5), { fx: 1400, fy: 1900, r0: 40, r1: 8 })
   }
 
   // ---- cierre ----
@@ -273,8 +271,8 @@ function render(t) {
     slam($('cierre-logo'), 540, 480, t, h1, { from: 1.5 })
     ring($('cierre-ring'), 540, 480, t, h1)
     rise($('cierre-cta'), 540, 780, t, h1 + 0.4)
-    slam($('cierre-wa'), 170, 950, t, h2, { from: 2 })
-    rise($('cierre-phone'), 600, 950, t, h2 + 0.1, { dy: 40 })
+    slam($('cierre-wa'), 201, 950, t, h2, { from: 2 })
+    rise($('cierre-phone'), 631, 950, t, h2 + 0.1, { dy: 40 })
     rise($('cierre-url'), 540, 1180, t, h2 + 0.5)
     slam($('cierre-slogan'), 540, 1450, t, h2 + 0.9, { from: 1.15 })
   }

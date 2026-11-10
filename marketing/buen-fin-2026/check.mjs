@@ -43,7 +43,7 @@ export async function openVideo(browser) {
   return page
 }
 
-const SAFE = { top: 269, bottom: 1651, left: 0, right: 1080 }
+const SAFE = { top: 269, bottom: 1651, left: 48, right: 1032 }
 
 async function safe() {
   const { chromium } = await import('playwright')
@@ -53,8 +53,12 @@ async function safe() {
     const errs = await page.evaluate(({ T, SAFE }) => {
       const out = []
       const op = (el) => { let o = 1; for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden') return 0; o *= +cs.opacity } return o }
-      const rects = (el) => { const r = document.createRange(); r.selectNodeContents(el); return [...r.getClientRects()].filter(b => b.width && b.height) }
+      // texto real (Range) + recuadro del elemento (cubre fondos y bordes de píldoras)
+      const rects = (el) => { const r = document.createRange(); r.selectNodeContents(el); return [...r.getClientRects(), el.getBoundingClientRect()].filter(b => b.width && b.height) }
       const norm = (s) => s.replace(/\s+/g, ' ').trim()
+      // todo texto visible del escenario debe estar dentro de un [data-copy] (si no, ninguna verificación lo ve)
+      const walker = document.createTreeWalker(document.getElementById('stage'), NodeFilter.SHOW_TEXT)
+      for (let n; (n = walker.nextNode());) if (n.textContent.trim() && !n.parentElement.closest('[data-copy]')) out.push(`texto sin data-copy: "${n.textContent.trim()}"`)
       const N = Math.round(T.duration * T.fps)
       for (let f = 0; f < N; f++) {
         const t = f / T.fps
@@ -80,6 +84,13 @@ async function safe() {
           if (op(el) < 0.95) out.push(`${s.id}: "${c}" opacidad ${op(el).toFixed(2)} a mitad de escena`)
           const bb = el.getBoundingClientRect(), sc = el.offsetWidth ? bb.width / el.offsetWidth : 0
           if (sc < 0.98 || sc > 1.02) out.push(`${s.id}: "${c}" escala ${sc.toFixed(3)} a mitad de escena`)
+          // hijos que se animan por su cuenta (píldoras): cada uno visible y a escala 1
+          for (const ch of el.children) {
+            if (getComputedStyle(ch).display === 'none') continue
+            if (op(ch) < 0.95) out.push(`${s.id}: parte "${norm(ch.textContent)}" opacidad ${op(ch).toFixed(2)}`)
+            const cb = ch.getBoundingClientRect(), cs = ch.offsetWidth ? cb.width / ch.offsetWidth : 0
+            if (cs < 0.98 || cs > 1.02) out.push(`${s.id}: parte "${norm(ch.textContent)}" escala ${cs.toFixed(3)}`)
+          }
           const hit = document.elementFromPoint(bb.left + bb.width / 2, bb.top + bb.height / 2)
           if (!hit || !(el === hit || el.contains(hit))) out.push(`${s.id}: "${c}" tapado por ${hit && (hit.id || hit.className || hit.tagName)}`)
         }
@@ -141,7 +152,20 @@ function audio() {
   })
 }
 
-const modes = { copy, safe, determinism, timing, audio }
+function final() {
+  const T = load(), f = path.join(DIR, 'out/gl-buen-fin-2026.mp4')
+  const j = JSON.parse(execFileSync('ffprobe', ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', f]).toString())
+  const v = j.streams.find(s => s.codec_type === 'video'), a = j.streams.find(s => s.codec_type === 'audio')
+  assert.equal(v.codec_name, 'h264'); assert.equal(v.width, 1080); assert.equal(v.height, 1920)
+  assert.equal(v.pix_fmt, 'yuv420p'); assert.equal(v.r_frame_rate, '30/1')
+  assert.equal(v.color_space, 'bt709', 'matriz de color ≠ bt709')
+  assert.equal(a?.codec_name, 'aac', 'falta audio AAC')
+  assert.ok(Math.abs(+j.format.duration - T.duration) <= 0.1, `duración ${j.format.duration} ≠ ${T.duration}`)
+  const { max } = vd(f)
+  assert.ok(max <= -1.0 + 1e-6, `pico del MP4 ${max} dB > -1 dB`)
+}
+
+const modes = { copy, safe, determinism, timing, audio, final }
 const mode = process.argv[2]
 if (!modes[mode]) { console.error('modos: ' + Object.keys(modes).join(', ')); process.exit(2) }
 try { await modes[mode](); console.log(`check ${mode}: OK`) }
