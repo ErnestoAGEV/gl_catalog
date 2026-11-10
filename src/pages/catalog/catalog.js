@@ -526,6 +526,23 @@ export function pageCatalog(initialState) {
         }
       }
 
+      const renderPromoChip = (show) => {
+        let chip = root.querySelector('#promo-chip')
+        if (!show) { chip?.remove(); return }
+        if (chip) return
+        chip = document.createElement('div')
+        chip.id = 'promo-chip'
+        chip.className = 'mb-4'
+        chip.innerHTML = `<button type="button" class="chip !text-[11px] bg-brand text-paper" aria-label="Quitar filtro: en promoción">En promoción <span aria-hidden="true">&times;</span></button>`
+        chip.querySelector('button').addEventListener('click', () => {
+          const url = new URL(window.location.href)
+          url.searchParams.delete('promo')
+          window.history.replaceState(null, '', url.pathname + url.search)
+          renderGrid({ resetPage: true })
+        })
+        grid.parentElement.insertBefore(chip, grid)
+      }
+
       const renderGrid = (options = {}) => {
         const filters = getFilterState(root)
         const searchQuery = getSearchQuery()
@@ -654,6 +671,12 @@ export function pageCatalog(initialState) {
         // La marca acota antes que nada: /marca/wrangler es el universo de la
         // pagina, y dentro de el siguen valiendo categoria, talla y color.
         if (activeBrand) baseProducts = baseProducts.filter((p) => isBrandOf(p, activeBrand))
+        // ?promo=1 (boton de la franja): solo lo que esta en promocion. Sin promo en
+        // curso se ignora y se ve todo, en vez de una parrilla vacia.
+        const promoOnly = new URLSearchParams(window.location.search).get('promo') === '1'
+          && publicProducts.some(p => p.promo)
+        if (promoOnly) baseProducts = baseProducts.filter(p => p.promo)
+        renderPromoChip(promoOnly)
         const multiTypeFilter = grid.dataset.multiTypeFilter
         if (multiTypeFilter) {
           const allowedTypes = multiTypeFilter.split(',')

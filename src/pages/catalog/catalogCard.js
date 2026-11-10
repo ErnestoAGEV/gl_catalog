@@ -48,7 +48,8 @@ export function productCard(p, idx) {
   const badges = []
   if (p.originalPrice && p.originalPrice > p.price) {
     const pct = Math.round((1 - p.price / p.originalPrice) * 100)
-    badges.push(`<span class="badge-dot bg-brand text-paper">\u2212${pct}%</span>`)
+    const label = p.promo ? `${escapeHtml(p.promo.name)} \u2212${pct}%` : `\u2212${pct}%`
+    badges.push(`<span class="badge-dot bg-brand text-paper">${label}</span>`)
   } else if (p.badge === 'Oferta') {
     badges.push(`<span class="badge-dot bg-brand text-paper">Oferta</span>`)
   }

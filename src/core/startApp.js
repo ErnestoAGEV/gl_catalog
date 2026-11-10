@@ -2,8 +2,9 @@ import { getRoute, onRouteChange, startRouter, navigate, scrollPositions } from 
 import { bindHeaderSearch } from '../components/headerSearch.js'
 import { closeMiniCart } from '../components/miniCart.js'
 import { marqueeHtml, footerBrandsHtml } from '../components/layout.js'
-import { getState, isAdminAuthed, loadProducts, loadPromotions, loadCategories, loadSizeGuides, loadSiteContent, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession, getAdminOrders } from '../store/index.js'
+import { getState, isAdminAuthed, loadProducts, loadPromotions, reapplyPromotions, loadCategories, loadSizeGuides, loadSiteContent, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession, getAdminOrders } from '../store/index.js'
 import { renderRoute } from './views.js'
+import { mountPromoBar } from '../components/promoBar.js'
 import { showToast } from '../utils/toast.js'
 import { supabase } from './supabase.js'
 import { formatMoney } from '../utils/format.js'
@@ -97,6 +98,7 @@ export async function startApp(mountEl) {
 
   loadProducts()
   loadPromotions()
+  mountPromoBar({ getState, subscribe, onBoundary: reapplyPromotions, navigate })
   loadCategories()
   loadSizeGuides()
   loadSiteContent()
