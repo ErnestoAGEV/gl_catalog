@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="es-MX">
+<meta charset="utf-8">
+<title>G&L Buen Fin 2026</title>
+<style>
+  @font-face { font-family: Manrope; src: url(assets/manrope.woff2) format('woff2'); font-weight: 200 800; }
+  @font-face { font-family: Inter; src: url(assets/inter.woff2) format('woff2'); font-weight: 100 900; }
+  @font-face { font-family: 'JetBrains Mono'; src: url(assets/jetbrains-mono.woff2) format('woff2'); font-weight: 100 800; }
+  :root { --blue: #214fc7; --blue-dark: #003baf; --blue-light: #4169e1; --ink: #15171C; --tint: #EAEFFB; }
+  * { margin: 0; box-sizing: border-box; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; font-family: Manrope, sans-serif; }
+  .scene { position: absolute; inset: 0; display: none; overflow: hidden; }
+  .bg-blue { background: var(--blue); color: #fff; --accent: var(--blue); }
+  .bg-white { background: #fff; color: var(--blue); --accent: #fff; }
+  .bg-dark { background: var(--blue-dark); color: #fff; --accent: var(--blue-dark); }
+  .texture { position: absolute; inset: -200px; opacity: .07;
+    background: repeating-linear-gradient(-35deg, currentColor 0 3px, transparent 3px 22px); }
+  .bg-white .texture { opacity: .05; }
+  .p { position: absolute; left: 0; top: 0; will-change: transform, opacity; }
+  [data-copy] { display: inline-block; white-space: nowrap; text-align: center; line-height: 1; }
+  .pre { white-space: pre-line; }
+  .num { font-weight: 800; font-size: 480px; letter-spacing: -0.04em; }
+  .h1 { font-weight: 800; font-size: 170px; letter-spacing: -0.03em; }
+  .h2 { font-weight: 800; font-size: 112px; letter-spacing: -0.03em; line-height: 1.02; }
+  .sub { font-weight: 700; font-size: 72px; letter-spacing: -0.01em; line-height: 1.1; }
+  .mono { font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 40px; letter-spacing: 0.04em; }
+  .label { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 46px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .ring { width: 900px; height: 900px; border-radius: 50%; border: 10px solid currentColor; opacity: 0; }
+  .g { color: inherit; }
+  .g svg { width: 100%; height: auto; display: block; }
+  .pills { font-family: Inter, sans-serif; font-size: 52px; }
+  .pills i { display: none; }
+  .pill { display: block; font-family: Inter, sans-serif; font-weight: 600; font-size: 52px; font-style: normal;
+    border: 4px solid #fff; border-radius: 999px; padding: 22px 44px; margin: 0 auto 26px; width: max-content; }
+  .logo { width: 330px; height: 330px; border-radius: 56px; box-shadow: 0 0 0 10px #fff; }
+  .wa { width: 112px; height: 112px; }
+  .url { font-weight: 800; font-size: 76px; letter-spacing: -0.02em; background: #fff; color: var(--blue);
+    padding: 28px 48px; border-radius: 999px; }
+  .phone { font-weight: 800; font-size: 104px; letter-spacing: -0.02em; }
+  .slogan { font-weight: 800; font-size: 96px; letter-spacing: -0.03em; }
+  .bar { height: 8px; background: currentColor; border-radius: 4px; }
+</style>
+
+<div id="stage">
+  <section class="scene bg-blue" id="intro">
+    <div class="texture"></div>
+    <div class="p ring" id="intro-ring"></div>
+    <div class="p g" id="i-pantalon" style="width:230px"></div>
+    <div class="p g" id="i-camisa" style="width:260px"></div>
+    <div class="p g" id="i-playera" style="width:240px"></div>
+    <div class="p g" id="i-chamarra" style="width:260px"></div>
+    <div class="p g" id="i-perfume" style="width:150px"></div>
+    <span class="p label" id="intro-kicker">13 — 16 nov</span>
+    <span class="p h1" data-copy="Buen Fin" id="intro-title">Buen Fin</span>
+    <img class="p logo" id="intro-logo" src="assets/icon-512.png" alt="">
+  </section>
+
+  <section class="scene bg-white" id="diez">
+    <div class="texture"></div>
+    <div class="p ring" id="diez-ring"></div>
+    <span class="p num" data-copy="10%" data-bleed id="diez-num">10%</span>
+    <span class="p sub" data-copy="en toda la tienda" id="diez-sub" style="color:var(--ink)">en toda la tienda</span>
+    <div class="p g" id="d-camisa" style="width:250px"></div>
+    <div class="p g" id="d-playera" style="width:240px"></div>
+    <div class="p g" id="d-chamarra" style="width:260px"></div>
+  </section>
+
+  <section class="scene bg-blue" id="quince">
+    <div class="texture"></div>
+    <div class="p ring" id="quince-ring"></div>
+    <span class="p num" data-copy="15%" data-bleed id="quince-num">15%</span>
+    <span class="p sub pre" data-copy="en perfumes y pantalones seleccionados" id="quince-sub">en perfumes y
+pantalones seleccionados</span>
+    <div class="p g" id="q-pantalon" style="width:200px"></div>
+    <div class="p g" id="q-perfume" style="width:150px"></div>
+    <span class="p mono" data-copy="Descuentos no acumulables" id="quince-note">Descuentos no acumulables</span>
+  </section>
+
+  <section class="scene bg-dark" id="fechas">
+    <div class="texture"></div>
+    <div class="p ring" id="fechas-ring"></div>
+    <span class="p h2 pre" data-copy="Del 13 al 16 de noviembre" id="fechas-title">Del 13 al 16
+de noviembre</span>
+    <div class="p bar" id="fechas-bar" style="width:220px"></div>
+    <div class="p g" id="f-camisa" style="width:240px"></div>
+    <div class="p g" id="f-pantalon" style="width:170px"></div>
+    <span class="p pills" data-copy="Tiendas en Colima · En línea · WhatsApp" id="fechas-pills"><b class="pill" id="pill-1">Tiendas en Colima</b><i> · </i><b class="pill" id="pill-2">En línea</b><i> · </i><b class="pill" id="pill-3">WhatsApp</b></span>
+  </section>
+
+  <section class="scene bg-white" id="envios">
+    <div class="texture"></div>
+    <svg class="p" id="route" width="1080" height="600" viewBox="0 0 1080 600" style="color:var(--blue)">
+      <path id="route-path" d="M-40 470 C 220 120, 560 600, 1120 200" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-dasharray="1 26"/>
+    </svg>
+    <div class="p g" id="e-chamarra" style="width:210px"></div>
+    <div class="p g" id="e-pantalon" style="width:150px"></div>
+    <div class="p g" id="e-perfume" style="width:120px"></div>
+    <span class="p h2 pre" data-copy="Envíos a todo México" id="envios-title">Envíos a
+todo México</span>
+    <span class="p label" data-copy="Wrangler, Oggi y más" id="envios-brands" style="color:var(--ink);text-transform:none;font-size:54px">Wrangler, Oggi y más</span>
+    <div class="p g" id="e-camisa" style="width:230px"></div>
+    <div class="p g" id="e-playera" style="width:220px"></div>
+  </section>
+
+  <section class="scene bg-blue" id="cierre">
+    <div class="texture"></div>
+    <div class="p ring" id="cierre-ring"></div>
+    <img class="p logo" id="cierre-logo" src="assets/icon-512.png" alt="">
+    <span class="p sub" data-copy="Escríbenos por WhatsApp" id="cierre-cta" style="font-size:62px">Escríbenos por WhatsApp</span>
+    <div class="p wa" id="cierre-wa"></div>
+    <span class="p phone" data-copy="312 101 8263" id="cierre-phone">312 101 8263</span>
+    <span class="p url" data-copy="glboutique.com.mx" id="cierre-url">glboutique.com.mx</span>
+    <span class="p slogan" data-copy="Tu fit perfecto" id="cierre-slogan">Tu fit perfecto</span>
+  </section>
+</div>
+
+<script src="timeline.js"></script>
+<script src="garments.js"></script>
+<script>
+// render(t) es determinista: solo depende de t. Nada de Date, CSS animations, rAF ni Math.random.
+const W = 1080, H = 1920
+const $ = (id) => document.getElementById(id)
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x))
+const lerp = (a, b, k) => a + (b - a) * k
+const prog = (t, a, d) => clamp((t - a) / d)
+const ease = {
+  outCubic: k => 1 - (1 - k) ** 3,
+  inOutCubic: k => k < .5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2,
+  outBack: k => { const c = 1.70158, c3 = c + 1; return 1 + c3 * (k - 1) ** 3 + c * (k - 1) ** 2 },
+  outExpo: k => k === 1 ? 1 : 1 - 2 ** (-10 * k),
+}
+const S = Object.fromEntries(TIMELINE.scenes.map(s => [s.id, s]))
+const cue = (id, i) => S[id].start + S[id].cues[i].at
+
+// Coloca un elemento por su centro.
+function place(el, x, y, { s = 1, r = 0, o = 1 } = {}) {
+  el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%) rotate(${r}deg) scale(${s})`
+  el.style.opacity = o
+}
+// Entrada "golpe": escala grande → 1 con overshoot.
+function slam(el, x, y, t, at, { from = 2.4, d = 0.38 } = {}) {
+  const k = prog(t, at, d)
+  place(el, x, y, { s: lerp(from, 1, ease.outBack(k)), o: clamp((t - at) / 0.1) })
+}
+// Entrada desde abajo con desvanecido.
+function rise(el, x, y, t, at, { d = 0.45, dy = 70 } = {}) {
+  const k = ease.outCubic(prog(t, at, d))
+  place(el, x, y + (1 - k) * dy, { o: k })
+}
+// Anillo que se expande en un golpe.
+function ring(el, x, y, t, at) {
+  const k = prog(t, at, 0.7)
+  place(el, x, y, { s: lerp(0.2, 1.5, ease.outExpo(k)), o: k > 0 && k < 1 ? 0.35 * (1 - k) : 0 })
+}
+// Prenda que entra volando desde (fx,fy) hasta (x,y) girando y luego flota.
+function fly(el, x, y, t, at, { fx, fy, r0 = -40, r1 = 0, d = 0.55, bob = 10 } = {}) {
+  const k = ease.outBack(prog(t, at, d))
+  const float = t > at + d ? Math.sin((t - at) * 2.2) * bob : 0
+  place(el, lerp(fx, x, k), lerp(fy, y, k) + float, { r: lerp(r0, r1, k), o: t >= at ? 1 : 0 })
+}
+
+// Barrido diagonal de entrada de escena.
+function wipe(el, t, at) {
+  const k = ease.inOutCubic(prog(t, at, 0.4))
+  const a = 1580 * (1 - k)
+  el.style.clipPath = k >= 1 ? 'none' : `polygon(${a}px 0, ${W}px 0, ${W}px ${H}px, ${a - 500}px ${H}px)`
+}
+
+function texture(scene, t) { scene.querySelector('.texture').style.transform = `translate(${(t * 40) % 26.9}px, 0)` }
+
+const G = window.GARMENTS
+for (const el of document.querySelectorAll('.g')) el.innerHTML = G[el.id.split('-')[1]]
+$('cierre-wa').innerHTML = window.WHATSAPP_GLYPH
+
+const scenes = TIMELINE.scenes.map(s => $(s.id))
+
+function render(t) {
+  // visibilidad: cada escena se ve desde su inicio hasta que la siguiente termina de barrer.
+  TIMELINE.scenes.forEach((s, i) => {
+    const next = TIMELINE.scenes[i + 1]
+    const on = t >= s.start && (!next || t < next.start + 0.4)
+    scenes[i].style.display = on ? 'block' : 'none'
+    scenes[i].style.zIndex = i
+    if (i) wipe(scenes[i], t, s.start)
+    if (on) texture(scenes[i], t)
+  })
+
+  // ---- intro ----
+  {
+    const s = S.intro, h1 = cue('intro', 1), h2 = cue('intro', 2)
+    const burst = [['i-pantalon', 190, 470, -12], ['i-camisa', 890, 450, 10], ['i-playera', 180, 1460, 8], ['i-chamarra', 890, 1470, -9], ['i-perfume', 545, 1650, 0]]
+    burst.forEach(([id, x, y, r], j) => {
+      const at = s.start + 0.05 * j
+      const k = ease.outBack(prog(t, at, 0.6))
+      const bob = Math.sin(t * 1.8 + j) * 8
+      place($(id), lerp(540, x, k), lerp(900, y, k) + bob * k, { s: lerp(0.2, 1, k), r: r * k, o: clamp((t - at) / 0.1) })
+    })
+    rise($('intro-kicker'), 540, 640, t, s.start + 0.2)
+    slam($('intro-title'), 540, 820, t, h1, { from: 1.25 })
+    ring($('intro-ring'), 540, 820, t, h1)
+    slam($('intro-logo'), 540, 1140, t, h2, { from: 1.6 })
+  }
+
+  // ---- diez ----
+  {
+    const s = S.diez, hit = cue('diez', 1), num = $('diez-num')
+    num.dataset.bleed = hit
+    slam(num, 540, 760, t, hit)
+    ring($('diez-ring'), 540, 760, t, hit)
+    rise($('diez-sub'), 540, 1080, t, hit + 0.25)
+    fly($('d-camisa'), 230, 1390, t, cue('diez', 2), { fx: -300, fy: 1700, r0: -50, r1: -8 })
+    fly($('d-playera'), 540, 1420, t, cue('diez', 3), { fx: 540, fy: 2200, r0: 30, r1: 3 })
+    fly($('d-chamarra'), 850, 1390, t, cue('diez', 4), { fx: 1400, fy: 1700, r0: 50, r1: 8 })
+  }
+
+  // ---- quince ----
+  {
+    const s = S.quince, hit = cue('quince', 1), num = $('quince-num')
+    num.dataset.bleed = hit
+    slam(num, 540, 700, t, hit)
+    ring($('quince-ring'), 540, 700, t, hit)
+    rise($('quince-sub'), 540, 1050, t, hit + 0.3)
+    fly($('q-pantalon'), 330, 1380, t, cue('quince', 2), { fx: -300, fy: 1380, r0: -70, r1: -6 })
+    fly($('q-perfume'), 760, 1400, t, cue('quince', 3), { fx: 1400, fy: 1400, r0: 70, r1: 6 })
+    rise($('quince-note'), 540, 1580, t, hit + 0.9, { dy: 30 })
+  }
+
+  // ---- fechas ----
+  {
+    const s = S.fechas, hit = cue('fechas', 1)
+    slam($('fechas-title'), 540, 640, t, hit, { from: 1.3 })
+    ring($('fechas-ring'), 540, 640, t, hit)
+    const kb = ease.outCubic(prog(t, hit + 0.35, 0.5))
+    place($('fechas-bar'), 540, 840, { s: 1, o: kb })
+    $('fechas-bar').style.width = 40 + 180 * kb + 'px'
+    const pills = $('fechas-pills')
+    place(pills, 540, 1230, { o: t >= hit + 0.6 ? 1 : 0 })
+    ;['pill-1', 'pill-2', 'pill-3'].forEach((id, j) => {
+      const k = ease.outBack(prog(t, hit + 0.7 + 0.35 * j, 0.45))
+      const el = $(id)
+      el.style.transform = `translateY(${(1 - k) * 60}px) scale(${lerp(0.85, 1, k)})`
+      el.style.opacity = clamp(k * 1.4)
+    })
+    fly($('f-camisa'), 210, 1590, t, cue('fechas', 2), { fx: -300, fy: 1900, r0: -45, r1: -10 })
+    fly($('f-pantalon'), 880, 1600, t, cue('fechas', 3), { fx: 1400, fy: 1900, r0: 45, r1: 10 })
+  }
+
+  // ---- envios ----
+  {
+    const s = S.envios, path = $('route-path')
+    place($('route'), 540, 560, { o: 1 })
+    const L = path.getTotalLength()
+    // tres prendas recorren la ruta, una tras otra
+    ;['e-chamarra', 'e-pantalon', 'e-perfume'].forEach((id, j) => {
+      const at = cue('envios', 1 + j), k = ease.inOutCubic(prog(t, at, 1.5))
+      const pt = path.getPointAtLength(L * k), pt2 = path.getPointAtLength(Math.min(L, L * k + 4))
+      const ang = Math.atan2(pt2.y - pt.y, pt2.x - pt.x) * 180 / Math.PI
+      place($(id), pt.x, 560 - 300 + pt.y, { r: ang * 0.5, o: t >= at && k < 1 ? 1 : 0 })
+    })
+    // la ruta se dibuja
+    const kd = ease.outCubic(prog(t, s.start + 0.1, 0.8))
+    path.style.clipPath = `inset(0 ${(1 - kd) * 100}% 0 0)`
+    rise($('envios-title'), 540, 1050, t, s.start + 0.25)
+    rise($('envios-brands'), 540, 1340, t, s.start + 0.9, { dy: 40 })
+    fly($('e-camisa'), 270, 1600, t, cue('envios', 2) + 0.2, { fx: -300, fy: 1900, r0: -40, r1: -8 })
+    fly($('e-playera'), 810, 1600, t, cue('envios', 3) + 0.2, { fx: 1400, fy: 1900, r0: 40, r1: 8 })
+  }
+
+  // ---- cierre ----
+  {
+    const s = S.cierre, h1 = cue('cierre', 1), h2 = cue('cierre', 2)
+    slam($('cierre-logo'), 540, 480, t, h1, { from: 1.5 })
+    ring($('cierre-ring'), 540, 480, t, h1)
+    rise($('cierre-cta'), 540, 780, t, h1 + 0.4)
+    slam($('cierre-wa'), 170, 950, t, h2, { from: 2 })
+    rise($('cierre-phone'), 600, 950, t, h2 + 0.1, { dy: 40 })
+    rise($('cierre-url'), 540, 1180, t, h2 + 0.5)
+    slam($('cierre-slogan'), 540, 1450, t, h2 + 0.9, { from: 1.15 })
+  }
+}
+window.render = render
+render(0)
+</script>
+</html>
