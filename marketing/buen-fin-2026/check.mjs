@@ -149,7 +149,13 @@ function audio() {
     const d = probe(A(`vo/s${i + 1}.wav`))
     const v = vd(A('voice.wav'), s.voStart, d).mean, m = vd(A('music_ducked.wav'), s.voStart, d).mean
     assert.ok(v - m >= 9, `${s.id}: voz ${v} dB vs música ${m} dB (< 9 dB de diferencia)`)
+    assert.ok(v - m <= 16, `${s.id}: música enterrada (${(v - m).toFixed(1)} dB bajo la voz, máx. 16)`)
   })
+  // cada golpe se oye: los 150 ms después del cue suben ≥ 6 dB sobre los 150 ms anteriores en el bus de efectos
+  for (const s of T.scenes) for (const c of s.cues) if (c.type === 'hit') {
+    const at = s.start + c.at, a = vd(A('sfx.wav'), Math.max(0, at - 0.15), 0.15).mean, b = vd(A('sfx.wav'), at, 0.15).mean
+    assert.ok(b - (Number.isFinite(a) ? a : -91) >= 6 && b > -30, `golpe en ${at}s no se oye (${a} → ${b} dB)`)
+  }
 }
 
 function final() {
@@ -158,7 +164,12 @@ function final() {
   const v = j.streams.find(s => s.codec_type === 'video'), a = j.streams.find(s => s.codec_type === 'audio')
   assert.equal(v.codec_name, 'h264'); assert.equal(v.width, 1080); assert.equal(v.height, 1920)
   assert.equal(v.pix_fmt, 'yuv420p'); assert.equal(v.r_frame_rate, '30/1')
-  assert.equal(v.color_space, 'bt709', 'matriz de color ≠ bt709')
+  for (const k of ['color_space', 'color_primaries', 'color_transfer']) assert.equal(v[k], 'bt709', `${k} ≠ bt709`)
+  assert.equal(+v.nb_frames, Math.round(T.duration * T.fps), 'número de cuadros')
+  assert.ok(Math.abs(+v.duration - +a.duration) < 0.05, 'audio y video con distinta duración')
+  const r = spawnSync('ffmpeg', ['-hide_banner', '-nostats', '-i', f, '-af', 'ebur128', '-f', 'null', '-'], { encoding: 'utf8' })
+  const lufs = +[...r.stderr.matchAll(/I:\s+(-?[\d.]+) LUFS/g)].at(-1)?.[1] // el último es el resumen integrado
+  assert.ok(lufs >= -15.5 && lufs <= -12.5, `sonoridad ${lufs} LUFS fuera de -14 ± 1.5`)
   assert.equal(a?.codec_name, 'aac', 'falta audio AAC')
   assert.ok(Math.abs(+j.format.duration - T.duration) <= 0.1, `duración ${j.format.duration} ≠ ${T.duration}`)
   const { max } = vd(f)

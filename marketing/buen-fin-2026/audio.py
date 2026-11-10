@@ -83,7 +83,9 @@ def whoosh(dur=.45):
     y = np.zeros(n); a = np.exp(-2 * np.pi * (300 + 5000 * (t / dur) ** 2) / SR); acc = 0.0
     for i in range(n):
         acc = a[i] * acc + (1 - a[i]) * x[i]; y[i] = acc
-    return y * (t / dur) ** 2 * .9
+    out = y * (t / dur) ** 2 * .9
+    out[-int(.015 * SR):] *= np.linspace(1, 0, int(.015 * SR))  # sin corte seco en el pico
+    return out
 
 
 def boom():
@@ -118,18 +120,15 @@ for bar in range(NB):
     add(music, pad(ch, BAR), t0, .035)
 
 # ---------- efectos en los cues ----------
-def wav_dur(f):
-    with wave.open(f) as w: return w.getnframes() / w.getframerate()
-VO_DUR = {s['id']: wav_dur(f'audio/vo/s{i + 1}.wav') for i, s in enumerate(T['scenes'])}
+sfx = bus()  # golpes y whooshes: bus propio, casi no se bajan con la voz
 W = whoosh()
 for s in T['scenes']:
     for c in s['cues']:
         at = s['start'] + c['at']
         if c['type'] == 'hit':
-            under_voice = s['voStart'] <= at <= s['voStart'] + VO_DUR[s['id']]
-            add(music, boom(), at, .32 if under_voice else .5)
+            add(sfx, boom(), at, .5)
         else:
-            add(music, W, at - len(W) / SR, .14, rng.uniform(-.3, .3))  # el whoosh culmina en el cue
+            add(sfx, W, at + 0.2 - len(W) / SR, .14, rng.uniform(-.3, .3))  # culmina a media animación
 
 L, R = music
 for d, g in ((.023, .18), (.037, .14), (.061, .1)):
@@ -153,12 +152,13 @@ for i in range(0, N, step):
     v = lvl[i:i + step].max(); c = a if v > e else r; e = c ** step * e + (1 - c ** step) * v; envl[i:i + step] = e
 LOOK = int(.12 * SR)  # anticipación: la música baja un poco antes de que entre la voz
 envl = np.concatenate([envl[LOOK:], np.full(LOOK, envl[-1])])
-duck = 1 - .9 * np.clip(envl / .15, 0, 1)
+duck = 1 - .7 * np.clip(envl / .15, 0, 1)
 fade = np.minimum(1, (DUR - np.arange(N) / SR) / 1.0)[:, None]
 music_ducked = mus * (duck[:, None] * .55) * fade
 voice_st = np.repeat(voice[:, None], 2, 1)
+sfx_st = np.stack(sfx, 1) * (1 - .4 * np.clip(envl / .15, 0, 1))[:, None] * .55 * fade
 
-mix = np.tanh(music_ducked + voice_st)
+mix = music_ducked + sfx_st + voice_st  # suma lineal, sin saturar la voz
 peak = 10 ** (-2.1 / 20)
 g = peak / np.abs(mix).max()
 
@@ -172,5 +172,6 @@ def write(name, x):
 # voice.wav y music_ducked.wav llevan la misma ganancia que en la mezcla, para que check.mjs compare niveles reales
 write('voice.wav', voice_st * g)
 write('music_ducked.wav', music_ducked * g)
+write('sfx.wav', sfx_st * g)
 write('mix.wav', mix * g)
 print('ok', DUR, 's')
