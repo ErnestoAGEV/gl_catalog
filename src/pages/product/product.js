@@ -220,7 +220,7 @@ export function pageProduct(initialState) {
 
   /* ── Badges ── */
   const badges = []
-  if (discount > 0) badges.push(`<span class="font-mono text-[11px] tracking-[0.18em] uppercase bg-brand text-paper px-2.5 py-1 rounded-full">${product.promo ? `${escapeHtml(product.promo.name)} ` : ''}\u2212${discount}%</span>`)
+  if (discount > 0) badges.push(`<span class="font-mono text-[11px] tracking-[0.18em] uppercase ${product.promo ? 'promo-bg' : 'bg-brand'} text-paper px-2.5 py-1 rounded-full">${product.promo ? `${escapeHtml(product.promo.name)} ` : ''}\u2212${discount}%</span>`)
   else if (product.badge === 'Oferta') badges.push(`<span class="font-mono text-[11px] tracking-[0.18em] uppercase bg-brand text-paper px-2.5 py-1 rounded-full">Oferta</span>`)
   if (product.badge === 'Nuevo') badges.push(`<span class="font-mono text-[11px] tracking-[0.18em] uppercase bg-paper text-ink px-2.5 py-1 rounded-full">Nuevo</span>`)
   if (product.badge === 'Más vendido' || product.badge === 'Popular') badges.push(`<span class="font-mono text-[11px] tracking-[0.18em] uppercase bg-ink text-paper px-2.5 py-1 rounded-full">Top</span>`)
@@ -341,12 +341,12 @@ export function pageProduct(initialState) {
 
                 <!-- Price -->
                 <div class="flex items-baseline gap-4 mb-2">
-                  <span class="font-display font-extrabold text-[clamp(28px,2.4vw,40px)] leading-none tracking-[-0.04em] digit-tabular${discount > 0 ? ' text-brand' : ''}">${formatMoney(product.price)}</span>
+                  <span class="font-display font-extrabold text-[clamp(28px,2.4vw,40px)] leading-none tracking-[-0.04em] digit-tabular${product.promo ? ' promo-text' : discount > 0 ? ' text-brand' : ''}">${formatMoney(product.price)}</span>
                   ${(product.originalPrice && Number(product.originalPrice) > Number(product.price)) ? `<span class="font-mono text-[16px] text-ink/60 line-through digit-tabular">${formatMoney(product.originalPrice)}</span>` : ''}
                 </div>
                 ${discount > 0 ? `
                 <div class="flex items-center gap-3 mb-4">
-                  <span class="font-mono text-[11px] tracking-[0.22em] uppercase text-brand">Ahorras ${formatMoney(product.originalPrice - product.price)} · ${discount}%</span>
+                  <span class="font-mono text-[11px] tracking-[0.22em] uppercase ${product.promo ? 'promo-text' : 'text-brand'}">Ahorras ${formatMoney(product.originalPrice - product.price)} · ${discount}%</span>
                 </div>` : '<div class="mb-4"></div>'}
 
                 <!-- Colors -->
@@ -520,7 +520,7 @@ export function pageProduct(initialState) {
            Es un atajo visual; teclado y lector usan el boton principal. -->
       <div id="pdp-sticky" class="md:hidden fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] z-40 px-3 pb-2 pointer-events-none translate-y-[160%] transition-transform duration-300 ease-out motion-reduce:transition-none" aria-hidden="true">
         <div class="pointer-events-auto flex items-center gap-3 rounded-full bg-paper/95 backdrop-blur border border-ink/10 shadow-[0_12px_30px_-12px_rgba(0,0,0,0.35)] pl-4 pr-1.5 py-1.5">
-          <span class="font-display font-extrabold text-[17px] tabular-nums shrink-0${discount > 0 ? ' text-brand' : ''}">${formatMoney(product.price)}</span>
+          <span class="font-display font-extrabold text-[17px] tabular-nums shrink-0${product.promo ? ' promo-text' : discount > 0 ? ' text-brand' : ''}">${formatMoney(product.price)}</span>
           <button type="button" id="pdp-sticky-btn" tabindex="-1" class="flex-1 min-w-0 h-11 px-4 rounded-full bg-ink text-paper text-[14px] font-semibold truncate">${ctaText(initialSize)}</button>
         </div>
       </div>` : ''}

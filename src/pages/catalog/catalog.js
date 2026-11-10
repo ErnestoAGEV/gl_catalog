@@ -334,8 +334,13 @@ export function pageCatalog(initialState) {
       // recargar. replaceState: escribir no debe llenar el historial.
       const CATALOG_PATH = /^\/(catalog|categoria\/|marca\/)/
       const withQuery = (path) => {
+        const params = new URLSearchParams()
         const q = getSearchQuery()
-        return q ? `${path}?q=${encodeURIComponent(q)}` : path
+        if (q) params.set('q', q)
+        // "Ver promociones" sigue puesto al cambiar de categoria
+        if (new URLSearchParams(window.location.search).get('promo') === '1') params.set('promo', '1')
+        const qs = params.toString()
+        return qs ? `${path}?${qs}` : path
       }
       const syncQueryToUrl = () => {
         // La vista sigue suscrita aunque este en cache detras de otra pagina
@@ -526,6 +531,8 @@ export function pageCatalog(initialState) {
         }
       }
 
+      // ?promo de la ultima pintada: si la ruta cambia a otro valor, se repinta
+      let lastPromoParam = null
       const renderPromoChip = (show) => {
         let chip = root.querySelector('#promo-chip')
         if (!show) { chip?.remove(); return }
@@ -538,7 +545,6 @@ export function pageCatalog(initialState) {
           const url = new URL(window.location.href)
           url.searchParams.delete('promo')
           window.history.replaceState(null, '', url.pathname + url.search)
-          lastPromoParam = null
           renderGrid({ resetPage: true })
         })
         grid.parentElement.insertBefore(chip, grid)
@@ -674,8 +680,8 @@ export function pageCatalog(initialState) {
         if (activeBrand) baseProducts = baseProducts.filter((p) => isBrandOf(p, activeBrand))
         // ?promo=1 (boton de la franja): solo lo que esta en promocion. Sin promo en
         // curso se ignora y se ve todo, en vez de una parrilla vacia.
-        const promoOnly = new URLSearchParams(window.location.search).get('promo') === '1'
-          && publicProducts.some(p => p.promo)
+        lastPromoParam = new URLSearchParams(window.location.search).get('promo')
+        const promoOnly = lastPromoParam === '1' && publicProducts.some(p => p.promo)
         if (promoOnly) baseProducts = baseProducts.filter(p => p.promo)
         renderPromoChip(promoOnly)
         const multiTypeFilter = grid.dataset.multiTypeFilter
@@ -892,12 +898,10 @@ export function pageCatalog(initialState) {
       })
       // La vista vive en cache: /catalog -> /catalog?promo=1 (boton de la franja)
       // no la vuelve a montar, asi que el cambio de ?promo se repinta aqui.
-      let lastPromoParam = new URLSearchParams(window.location.search).get('promo')
       const offPromoRoute = onRouteChange(() => {
         if (!CATALOG_PATH.test(window.location.pathname)) return
         const promoParam = new URLSearchParams(window.location.search).get('promo')
         if (promoParam === lastPromoParam) return
-        lastPromoParam = promoParam
         renderGrid({ resetPage: true })
       })
       mobilePanel?.addEventListener('keydown', (e) => {

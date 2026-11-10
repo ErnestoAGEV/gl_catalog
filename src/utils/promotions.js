@@ -71,6 +71,11 @@ export function colorPromotion(promos, now) {
     .sort((a, b) => (ms(a.ends_at) - ms(b.ends_at)) || byPriority(a, b))[0] || null
 }
 
+/** Espera del temporizador: setTimeout no aguanta semanas, así que a lo más un día y se reprograma. */
+export function boundaryDelay(next, now) {
+  return next == null ? null : Math.min(next - now + 500, DAY)
+}
+
 /** Próximo instante en que algo cambia (inicio, fin o arranque del aviso). */
 export function nextBoundary(promos, now) {
   const times = (promos || []).filter(p => p.active).flatMap(p => [
@@ -110,10 +115,10 @@ export function couponBase(lines, categories) {
   }, 0)
 }
 
-/** Pedidos no cancelados durante la promo contra el mismo número de días justo antes. */
-export function promoReport(orders, promo) {
+/** Pedidos no cancelados durante la promo (hasta hoy si sigue en curso) contra los mismos días justo antes. */
+export function promoReport(orders, promo, now = Date.now()) {
   const start = ms(promo.starts_at)
-  const end = ms(promo.ends_at)
+  const end = Math.min(ms(promo.ends_at), Math.max(now, start))
   const sum = (from, to) => {
     const rows = (orders || []).filter(o => o.status !== 'cancelado')
       .filter(o => { const t = ms(o.created_at); return t >= from && t < to })

@@ -63,13 +63,13 @@ as $fn$
      order by pr.discount_pct desc, pr.starts_at asc, pr.id::text asc
      limit 1
   )
-  select round(p.price * (100 - w.discount_pct) / 100), w.id, w.name, w.discount_pct
+  select round(p.price::numeric * (100 - w.discount_pct) / 100), w.id, w.name, w.discount_pct
     from winner w
-   where round(p.price * (100 - w.discount_pct) / 100) < p.price
+   where round(p.price::numeric * (100 - w.discount_pct) / 100) < p.price
   union all
   select p.price, null, null, null
    where not exists (
-     select 1 from winner w where round(p.price * (100 - w.discount_pct) / 100) < p.price
+     select 1 from winner w where round(p.price::numeric * (100 - w.discount_pct) / 100) < p.price
    )
 $fn$;
 

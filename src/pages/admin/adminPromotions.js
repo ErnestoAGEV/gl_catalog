@@ -158,14 +158,14 @@ export function pageAdminPromotions() {
                 <p class="text-[10.5px] text-faint -mt-2">Hora de este equipo. El fin es exclusivo: "00:00 del martes" termina al acabar el lunes.</p>
 
                 <fieldset>
-                  <legend class="adm-lbl">Color de la tienda durante la promoción</legend>
+                  <legend class="adm-lbl">Color de la promoción</legend>
                   <div class="flex flex-wrap items-center gap-2">
                     <label class="chip cursor-pointer has-[:checked]:ring-2 has-[:checked]:ring-ink"><input type="radio" name="color_mode" value="" class="sr-only" ${!color ? 'checked' : ''}> Sin cambio</label>
                     <label class="chip cursor-pointer has-[:checked]:ring-2 has-[:checked]:ring-ink"><input type="radio" name="color_mode" value="red" class="sr-only" ${color.toUpperCase() === RED ? 'checked' : ''}> <span class="inline-block w-3 h-3 rounded-full" style="background:${RED}"></span> Rojo Buen Fin</label>
                     <label class="chip cursor-pointer has-[:checked]:ring-2 has-[:checked]:ring-ink"><input type="radio" name="color_mode" value="custom" class="sr-only" ${color && color.toUpperCase() !== RED ? 'checked' : ''}> Otro
                       <input type="color" name="custom_color" value="${color && color.toUpperCase() !== RED ? color : '#0F7A3D'}" class="w-6 h-6 rounded border-0 p-0 bg-transparent cursor-pointer" aria-label="Elegir color" /></label>
                   </div>
-                  <p class="text-[10.5px] text-faint mt-1">Solo en el modo claro de la tienda. Debe ser oscuro para que el texto blanco se lea.</p>
+                  <p class="text-[10.5px] text-faint mt-1">Pinta la franja, las etiquetas y los precios con descuento; el resto de la tienda no cambia. Debe ser oscuro para que el texto blanco se lea.</p>
                 </fieldset>
 
                 <div class="flex items-center justify-between bg-canvas rounded-xl2 px-4 py-3 gap-3">

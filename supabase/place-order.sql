@@ -217,7 +217,9 @@ begin
   -- La promo pudo empezar o terminar con la pagina abierta: mejor no guardar
   -- que guardar un total distinto al que el cliente acepto.
   if p_expected_total is not null and abs(v_total - p_expected_total) >= 0.5 then
-    raise exception 'Los precios cambiaron. Revisa tu bolsa.' using errcode = '22023';
+    -- detail lleva el total real: el checkout lo muestra si el reloj del equipo no cuadra
+    raise exception 'Los precios cambiaron. Revisa tu bolsa.'
+      using errcode = '22023', detail = v_total::text;
   end if;
 
   insert into public.orders (
@@ -233,7 +235,8 @@ begin
     v_lines,
     round(v_subtotal, 2),
     v_discount,
-    case when v_discount > 0 then v_coupon.code else null end,
+    -- El envio gratis tambien es usar el cupon, aunque el porcentaje de 0 (todo en promo)
+    case when v_discount > 0 or v_coupon.free_shipping then v_coupon.code else null end,
     v_total,
     'pendientedepago'
   )

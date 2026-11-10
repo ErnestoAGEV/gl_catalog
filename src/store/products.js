@@ -118,6 +118,11 @@ export async function loadProducts() {
   await loadProductsFromSupabase(false)
 }
 
+/** Relee de la base sin pasar por el cache (checkout cuando un precio no cuadra). */
+export function refreshProducts() {
+  return loadProductsFromSupabase(true)
+}
+
 async function loadProductsFromSupabase(isBackgroundUpdate = false) {
   if (!supabase) {
     if (import.meta.env.DEV) console.error('Supabase client not initialized')

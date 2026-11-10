@@ -115,12 +115,7 @@ Estas reemplazan lo que diga arriba cuando choquen.
 7. **Zona horaria:** al guardar, `new Date(datetimeLocal).toISOString()`; al editar, se convierte de vuelta a hora local.
 8. **Renombrar una categoría:** `renameCategory` (`src/store/categories.js`) también reemplaza el nombre en `promotions.categories`.
 9. **RLS:** la lectura pública solo ve `active and ends_at > now() and starts_at < now() + make_interval(days => greatest(countdown_lead_days, 1))`. Así una promoción programada no se puede leer antes de su aviso.
-10. **Color:**
-    - Solo se aplica en el tema claro; el modo oscuro conserva su azul.
-    - El admin ofrece "Sin cambio", Rojo `#D7262B` y un selector libre; se quita la muestra negra.
-    - Al guardar, el admin rechaza colores con contraste menor a 4.5:1 contra blanco y lo explica.
-    - Una promoción de una sola categoría con color también pinta toda la tienda, porque el color anuncia el evento.
-    - El azul fijo en `cart.js:334` se cambia a la variable.
+10. **Color (cambiado por el dueño el 2026-11-09: "no me gusta el rojo en toda la página"):** el color de la promo pinta solo lo que es de la promo: la franja, la etiqueta, el precio con descuento y "Ahorras" (`--color-promo`, clases `.promo-bg` y `.promo-text`). El resto de la tienda conserva su azul, en los dos modos. El admin ofrece "Sin cambio" (usa el azul), Rojo `#D7262B` y un selector libre, y rechaza colores con contraste menor a 4.5:1 contra blanco. El azul fijo de `cart.js:334` se cambia a la variable.
 11. **SEO prerender:** el HTML estático conserva el precio base. El JSON-LD del cliente ya muestra el precio de promoción. Se acepta este límite: reconstruir el sitio al inicio y al final de cada promoción queda para después.
 12. **Despliegue:** no se crea ni se activa ninguna promoción real hasta que el cliente nuevo esté en producción.
 

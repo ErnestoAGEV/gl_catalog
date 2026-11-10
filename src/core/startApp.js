@@ -2,7 +2,7 @@ import { getRoute, onRouteChange, startRouter, navigate, scrollPositions } from 
 import { bindHeaderSearch } from '../components/headerSearch.js'
 import { closeMiniCart } from '../components/miniCart.js'
 import { marqueeHtml, footerBrandsHtml } from '../components/layout.js'
-import { getState, isAdminAuthed, loadProducts, loadPromotions, reapplyPromotions, loadCategories, loadSizeGuides, loadSiteContent, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession, getAdminOrders } from '../store/index.js'
+import { getState, isAdminAuthed, loadProducts, loadPromotions, loadCategories, loadSizeGuides, loadSiteContent, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession, getAdminOrders } from '../store/index.js'
 import { renderRoute } from './views.js'
 import { mountPromoBar } from '../components/promoBar.js'
 import { showToast } from '../utils/toast.js'
@@ -98,7 +98,7 @@ export async function startApp(mountEl) {
 
   loadProducts()
   loadPromotions()
-  mountPromoBar({ getState, subscribe, onBoundary: reapplyPromotions, navigate })
+  mountPromoBar({ getState, subscribe, navigate })
   loadCategories()
   loadSizeGuides()
   loadSiteContent()
@@ -687,12 +687,12 @@ export async function startApp(mountEl) {
   // ─── Smart re-render: only re-render a page when its relevant state slice changes ───
   // Catalog and Admin products manage their own updates via their own subscribe, so we skip full-page rebuilds here.
   const routeRelevantKeys = {
-    '/':              (s) => `${s.products.length}|${s.isLoading}|${s.products.filter(p => p.badge !== 'Borrador').length}|${s.siteContentRev}`,
+    '/':              (s) => `${s.products.length}|${s.isLoading}|${s.products.filter(p => p.badge !== 'Borrador').length}|${s.siteContentRev}|${s.promoRev}`,
     // Las guias de tallas llegan despues de los productos: sin ellas en la firma la ficha no las mostraba
-    '/producto':      (s) => `${s.products.length}|${s.isLoading}|${s.sizeGuides.length}`,
+    '/producto':      (s) => `${s.products.length}|${s.isLoading}|${s.sizeGuides.length}|${s.promoRev}`,
     // La página del carrito se repinta sola en cada +/-; incluir el carrito
     // aquí forzaba además un rebuild completo que se veía como una recarga.
-    '/cart':          (s) => `${s.products.length}|${s.isLoading}`,
+    '/cart':          (s) => `${s.products.length}|${s.isLoading}|${s.promoRev}`,
     '/checkout':      (s) => `${JSON.stringify(s.cart)}|${JSON.stringify(s.coupon)}|${s.products.length}`,
   }
 

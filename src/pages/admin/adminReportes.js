@@ -36,7 +36,7 @@ export function pageAdminReportes(state) {
 
       const [orders, promotions] = await Promise.all([getAdminOrders(), getAdminPromotions()])
       // Promos que ya empezaron: cada una contra los mismos dias justo antes
-      const promoHtml = promoSection(orders, promotions.filter(p => Date.parse(p.starts_at) <= Date.now()))
+      const promoHtml = promoSection(orders, promotions.filter(p => Date.parse(p.starts_at) <= Date.now() && (p.active || Date.parse(p.ends_at) <= Date.now())))
 
       let currentRange = '30d'
 

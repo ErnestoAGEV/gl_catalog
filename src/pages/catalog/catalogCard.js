@@ -49,7 +49,7 @@ export function productCard(p, idx) {
   if (p.originalPrice && p.originalPrice > p.price) {
     const pct = Math.round((1 - p.price / p.originalPrice) * 100)
     const label = p.promo ? `${escapeHtml(p.promo.name)} \u2212${pct}%` : `\u2212${pct}%`
-    badges.push(`<span class="badge-dot bg-brand text-paper">${label}</span>`)
+    badges.push(`<span class="badge-dot ${p.promo ? 'promo-bg' : 'bg-brand'} text-paper">${label}</span>`)
   } else if (p.badge === 'Oferta') {
     badges.push(`<span class="badge-dot bg-brand text-paper">Oferta</span>`)
   }
@@ -77,7 +77,7 @@ export function productCard(p, idx) {
 
   // Price
   const hasDiscount = p.originalPrice && p.originalPrice > p.price
-  const priceClass = hasDiscount ? 'text-brand' : ''
+  const priceClass = p.promo ? 'promo-text' : hasDiscount ? 'text-brand' : ''
 
   return `
     <a href="${productPath(p)}" class="pcard group block" data-product-id="${p.id}" style="--i:${idx}">

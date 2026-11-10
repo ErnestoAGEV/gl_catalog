@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict'
 import {
   discounted, isRunning, promoFor, applyPromotions, featuredPromotion, nextBoundary,
-  contrastOnWhite, localInputToIso, isoToLocalInput, couponBase, promoReport,
+  contrastOnWhite, localInputToIso, isoToLocalInput, couponBase, promoReport, boundaryDelay,
 } from '../src/utils/promotions.js'
 
 const H = 3600e3
@@ -91,9 +91,20 @@ const orders = [
   { created_at: '2026-11-12T07:00:00Z', total: 200, status: 'pagado' },
   { created_at: '2026-11-10T07:00:00Z', total: 999, status: 'pagado' },
 ]
-assert.deepEqual(promoReport(orders, rp), {
+assert.deepEqual(promoReport(orders, rp, Date.parse('2026-12-01T00:00:00Z')), {
   orders: 2, sales: 800, avg: 400,
   prev: { orders: 1, sales: 200, avg: 200 },
 })
+
+// Temporizador: un cambio a 2 días se reprograma cada 24 h en vez de perderse
+assert.equal(boundaryDelay(now + 48 * H, now), 24 * H)
+assert.equal(boundaryDelay(now + H, now), H + 500)
+assert.equal(boundaryDelay(null, now), null)
+
+// Reporte de una promo en curso: solo los días transcurridos contra los mismos días previos
+const enCurso = promo({ starts_at: '2026-11-13T06:00:00Z', ends_at: '2026-11-17T06:00:00Z' })
+const rc = promoReport(orders, enCurso, Date.parse('2026-11-15T06:00:00Z'))
+assert.equal(rc.orders, 2)
+assert.deepEqual(rc.prev, { orders: 1, sales: 200, avg: 200 })
 
 console.log('test-promotions OK')

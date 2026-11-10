@@ -1,4 +1,4 @@
-import { getProductById, getState, cartTotal, getCoupon, getDiscountAmount, applyCoupon, removeCoupon, saveOrder, clearCart, addToCart, isFirstPurchaseCouponAvailable, refreshPromotions } from '../../store/index.js'
+import { getProductById, getState, cartTotal, getCoupon, getDiscountAmount, applyCoupon, removeCoupon, saveOrder, clearCart, addToCart, isFirstPurchaseCouponAvailable, refreshPromotions, refreshProducts, subscribe } from '../../store/index.js'
 import { isValidWhatsapp } from '../../utils/phone.js'
 import { BRAND } from '../../utils/config.js'
 import { buildOrderMessage, openWhatsAppWithMessage } from '../../utils/whatsapp.js'
@@ -116,6 +116,11 @@ export function pageCheckout(state) {
     forceLight: true,
     html: checkoutHTML({ subtotal, discount, total, freeShipping, itemCount, coupon, upsellProducts }),
     onMount(root) {
+      // Total que el cliente tiene a la vista: es el que se manda como expectedTotal.
+      // Si una promo cambia los precios con la pagina abierta, no se envia otro sin avisar.
+      let shownTotal = total
+      // Total de la base cuando aun asi no cuadra (p. ej. reloj del equipo desfasado)
+      let serverTotal = null
       // Reveal on scroll
       const io = new IntersectionObserver((entries) => {
         entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in') })
@@ -235,6 +240,8 @@ export function pageCheckout(state) {
         const currentCoupon = getCoupon()
         const currentDiscount = getDiscountAmount(currentCoupon)
         const currentTotal = currentSubtotal - currentDiscount
+        shownTotal = currentTotal
+        serverTotal = null
         const currentFreeShip = currentCoupon?.freeShipping || currentSubtotal >= BRAND.freeShippingMin
         const liveCart = getState().cart
         const currentItemCount = liveCart.reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
@@ -522,6 +529,11 @@ export function pageCheckout(state) {
         const appliedCoupon   = getCoupon()
         const currentDiscount = getDiscountAmount(appliedCoupon)
         const currentTotal    = currentSubtotal - currentDiscount
+        if (Math.abs(currentTotal - shownTotal) >= 0.005) {
+          refreshSummaryView()
+          setError('Los precios cambiaron. Revisa el total y confirma de nuevo.')
+          return
+        }
 
         const message = buildOrderMessage({
           customer: { name, whatsapp, paymentMethod, deliveryMethod, address: requireAddress ? fullAddress : '' },
@@ -529,7 +541,7 @@ export function pageCheckout(state) {
           subtotal: currentSubtotal,
           discount: currentDiscount,
           couponCode: appliedCoupon?.code || null,
-          total: currentTotal,
+          total: serverTotal ?? currentTotal,
         })
 
         // Solo QUE se compra; los precios y el total los calcula place_order en
@@ -543,7 +555,7 @@ export function pageCheckout(state) {
           deliveryMethod,
           address: requireAddress ? fullAddress : null,
           couponCode: appliedCoupon?.code || null,
-          expectedTotal: Math.round(currentTotal * 100) / 100,
+          expectedTotal: serverTotal ?? Math.round(shownTotal * 100) / 100,
           items: liveCart.map(i => ({
             productId: i.productId,
             size: i.size,
@@ -565,13 +577,24 @@ export function pageCheckout(state) {
               return
             }
             if (/precios cambiaron/i.test(error.message || '')) {
-              // Una promo empezo o termino con la pagina abierta: se recargan y se
-              // repinta el resumen para que el cliente vea el total real antes de reintentar
-              refreshPromotions().finally(() => {
-                refreshSummaryView()
-                setError(error.message)
-                setSubmitting(false)
-              })
+              // Promo que empezo/termino, precio editado o cupon desactivado con la
+              // pagina abierta: se recarga todo, se revalida el cupon y se repinta.
+              const dbTotal = Number(error.details)
+              const coupon = getCoupon()
+              Promise.all([refreshPromotions(), refreshProducts()])
+                .then(() => coupon ? applyCoupon(coupon.code, true).then(r => { if (!r.success) removeCoupon(true) }) : null)
+                .finally(() => {
+                  refreshSummaryView()
+                  // Si aun no cuadra (reloj del equipo desfasado) manda la base: se
+                  // muestra su total y es el que se confirma en el siguiente intento
+                  if (Number.isFinite(dbTotal) && Math.abs(dbTotal - shownTotal) >= 0.005) {
+                    serverTotal = dbTotal
+                    setError(`Los precios cambiaron. El total de tu pedido es ${formatMoney(dbTotal)}. Confirma de nuevo para enviarlo.`)
+                  } else {
+                    setError('Los precios cambiaron. Revisa el total y confirma de nuevo.')
+                  }
+                  setSubmitting(false)
+                })
               return
             }
             setError(error.message || 'No se pudo registrar tu pedido. Intenta de nuevo por favor.')
@@ -597,7 +620,17 @@ export function pageCheckout(state) {
         })
       })
 
+      // Una promo que empieza o termina con el checkout abierto repinta el resumen
+      let lastPromoRev = getState().promoRev
+      const unsubPromo = subscribe(() => {
+        const rev = getState().promoRev
+        if (rev === lastPromoRev) return
+        lastPromoRev = rev
+        refreshSummaryView()
+      })
+
       return () => {
+        unsubPromo()
         io.disconnect()
       }
     },

@@ -3,23 +3,26 @@ import { supabase } from '../core/supabase.js'
 import { ensureAdminAccess } from './auth.js'
 import { withTimeout } from '../utils/async.js'
 import { writeJson } from '../utils/storage.js'
-import { nextBoundary } from '../utils/promotions.js'
+import { nextBoundary, boundaryDelay } from '../utils/promotions.js'
 import { withPromotions } from './products.js'
 
 const CACHE_KEY = 'gl_promotions_cache'
-const DAY = 86400e3
 let boundaryTimer = null
 
 /** Recalcula precios con las promos de state y programa el próximo cambio (inicio/fin). */
 export function reapplyPromotions() {
+  const before = priceKey()
   state.products = withPromotions(state.products)
+  // Las vistas con firma (home, ficha, bolsa) solo se repintan si algo de la firma cambia
+  if (priceKey() !== before) state.promoRev = (state.promoRev || 0) + 1
   emit()
   clearTimeout(boundaryTimer)
-  const next = nextBoundary(state.promotions, Date.now())
-  // setTimeout no aguanta más de ~24 días; con 24 h basta (al recargar se vuelve a programar)
-  if (next && next - Date.now() < DAY) {
-    boundaryTimer = setTimeout(reapplyPromotions, next - Date.now() + 500)
-  }
+  const delay = boundaryDelay(nextBoundary(state.promotions, Date.now()), Date.now())
+  if (delay != null) boundaryTimer = setTimeout(reapplyPromotions, delay)
+}
+
+function priceKey() {
+  return state.products.map(p => `${p.price}:${p.promo?.id || ''}`).join()
 }
 
 /** La RLS solo devuelve las que corren o están dentro de su aviso. */
@@ -91,6 +94,8 @@ export async function renamePromotionCategory(oldName, newName) {
     supabase.from('promotions').select('id, categories').contains('categories', [oldName]))
   for (const row of data || []) {
     const categories = row.categories.map(c => (c === oldName ? newName : c))
-    await adminCall(() => supabase.from('promotions').update({ categories }).eq('id', row.id))
+    const { error } = await adminCall(() => supabase.from('promotions').update({ categories }).eq('id', row.id))
+    if (error && import.meta.env.DEV) console.error('Promo al renombrar categoría:', error)
   }
+  if (data?.length) await loadPromotions()
 }

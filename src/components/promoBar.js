@@ -1,17 +1,10 @@
-// Franja de cuenta regresiva y color de evento de las promociones de temporada.
+// Franja de cuenta regresiva y color de las promociones de temporada. El color
+// solo pinta lo que es de la promo (.promo-bg/.promo-text), no toda la tienda.
 // Vive fuera de #app (las vistas se cachean y repintan solas); se actualiza con
-// un solo intervalo de 1 s y con cada emit del store.
+// un solo intervalo de 1 s y con cada emit del store. Los precios los cambia
+// el temporizador de src/store/promotions.js en el mismo instante.
 import { featuredPromotion, colorPromotion } from '../utils/promotions.js'
 import { escapeHtml } from '../utils/sanitize.js'
-
-const BRAND_VARS = {
-  '--color-brand': (c) => c,
-  '--color-brand-light': (c) => `color-mix(in srgb, ${c} 80%, white)`,
-  '--color-brand-dark': (c) => `color-mix(in srgb, ${c} 82%, black)`,
-  '--color-brand-ink': (c) => `color-mix(in srgb, ${c} 72%, black)`,
-  '--color-brand-tint': (c) => `color-mix(in srgb, ${c} 10%, white)`,
-  '--color-brand-tint-2': (c) => `color-mix(in srgb, ${c} 5%, white)`,
-}
 
 const DATE_FMT = new Intl.DateTimeFormat('es-MX', { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' })
 
@@ -27,18 +20,15 @@ const isAdminPath = () => window.location.pathname.startsWith('/admin')
 
 function applyColor(getState) {
   const root = document.documentElement
-  const { promotions, theme } = getState()
-  const promo = !isAdminPath() && theme !== 'dark' ? colorPromotion(promotions, Date.now()) : null
-  const color = promo?.accent_color || null
-  if (root.dataset.promoColor === (color || '')) return
-  root.dataset.promoColor = color || ''
-  for (const [name, fn] of Object.entries(BRAND_VARS)) {
-    if (color) root.style.setProperty(name, fn(color))
-    else root.style.removeProperty(name)
-  }
+  const promo = isAdminPath() ? null : colorPromotion(getState().promotions, Date.now())
+  const color = promo?.accent_color || ''
+  if (root.dataset.promoColor === color) return
+  root.dataset.promoColor = color
+  if (color) root.style.setProperty('--color-promo', color)
+  else root.style.removeProperty('--color-promo')
 }
 
-export function mountPromoBar({ getState, subscribe, onBoundary, navigate }) {
+export function mountPromoBar({ getState, subscribe, navigate }) {
   const bar = document.createElement('div')
   bar.id = 'promo-bar'
   bar.hidden = true
@@ -64,14 +54,13 @@ export function mountPromoBar({ getState, subscribe, onBoundary, navigate }) {
     }
     const { promo, phase } = featured
     const target = Date.parse(phase === 'running' ? promo.ends_at : promo.starts_at)
-    if (target <= now) { onBoundary(); return }
     const key = `${promo.id}:${phase}`
     if (key !== shownKey) {
       shownKey = key
       endsAt = target
       const verb = phase === 'running' ? 'termina' : 'empieza'
       const when = DATE_FMT.format(new Date(target))
-      bar.className = 'bg-brand text-paper'
+      bar.className = 'promo-bg text-paper'
       bar.hidden = false
       bar.innerHTML = `
         <div class="mx-auto flex max-w-[1440px] flex-wrap items-center justify-center gap-x-4 gap-y-1 px-4 py-2 font-mono text-[11px] tracking-[0.18em] uppercase"

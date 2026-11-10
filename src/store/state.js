@@ -24,7 +24,9 @@ export const state = {
   newsletter: readJson(STORAGE_KEYS.newsletter, null),
   searchQuery: '',
   // Promociones de temporada visibles (src/store/promotions.js); del cache para el primer pintado
-  promotions: readJson('gl_promotions_cache', []),
+  promotions: (v => (Array.isArray(v) ? v : []))(readJson('gl_promotions_cache', [])),
+  // Sube cuando una promo cambia precios: va en las firmas de repintado (startApp)
+  promoRev: 0,
 }
 
 const subscribers = new Set()
