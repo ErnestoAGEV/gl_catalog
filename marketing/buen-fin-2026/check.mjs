@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { createRequire } from 'node:module'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import path from 'node:path'
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawnSync } from 'node:child_process'
 
 const require = createRequire(import.meta.url)
 const DIR = path.dirname(fileURLToPath(import.meta.url))
@@ -120,7 +120,28 @@ function timing() {
   })
 }
 
-const modes = { copy, safe, determinism, timing }
+// volumedetect con ffmpeg (escribe en stderr). Devuelve { max, mean } en dB.
+function vd(file, from, dur) {
+  const args = ['-hide_banner', '-nostats', ...(from !== undefined ? ['-ss', String(from), '-t', String(dur)] : []), '-i', file, '-af', 'volumedetect', '-f', 'null', '-']
+  const r = spawnSync('ffmpeg', args, { encoding: 'utf8' })
+  if (r.status !== 0) throw new Error(`ffmpeg falló con ${file}`)
+  const g = (k) => +(r.stderr.match(new RegExp(k + ': (-?[\\d.]+) dB')) || [])[1]
+  return { max: g('max_volume'), mean: g('mean_volume') }
+}
+
+function audio() {
+  const T = load(), A = (f) => path.join(DIR, 'audio', f)
+  const mix = vd(A('mix.wav'))
+  assert.ok(mix.max <= -2.0 + 1e-6, `pico de la mezcla ${mix.max} dB > -2 dB`)
+  assert.ok(Math.abs(probe(A('mix.wav')) - T.duration) <= 0.05, `duración de la mezcla ≠ ${T.duration}`)
+  T.scenes.forEach((s, i) => {
+    const d = probe(A(`vo/s${i + 1}.wav`))
+    const v = vd(A('voice.wav'), s.voStart, d).mean, m = vd(A('music_ducked.wav'), s.voStart, d).mean
+    assert.ok(v - m >= 9, `${s.id}: voz ${v} dB vs música ${m} dB (< 9 dB de diferencia)`)
+  })
+}
+
+const modes = { copy, safe, determinism, timing, audio }
 const mode = process.argv[2]
 if (!modes[mode]) { console.error('modos: ' + Object.keys(modes).join(', ')); process.exit(2) }
 try { await modes[mode](); console.log(`check ${mode}: OK`) }
