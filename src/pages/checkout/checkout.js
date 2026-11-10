@@ -1,4 +1,4 @@
-import { getProductById, getState, cartTotal, getCoupon, getDiscountAmount, applyCoupon, removeCoupon, saveOrder, clearCart, addToCart, isFirstPurchaseCouponAvailable } from '../../store/index.js'
+import { getProductById, getState, cartTotal, getCoupon, getDiscountAmount, applyCoupon, removeCoupon, saveOrder, clearCart, addToCart, isFirstPurchaseCouponAvailable, refreshPromotions } from '../../store/index.js'
 import { isValidWhatsapp } from '../../utils/phone.js'
 import { BRAND } from '../../utils/config.js'
 import { buildOrderMessage, openWhatsAppWithMessage } from '../../utils/whatsapp.js'
@@ -543,6 +543,7 @@ export function pageCheckout(state) {
           deliveryMethod,
           address: requireAddress ? fullAddress : null,
           couponCode: appliedCoupon?.code || null,
+          expectedTotal: Math.round(currentTotal * 100) / 100,
           items: liveCart.map(i => ({
             productId: i.productId,
             size: i.size,
@@ -561,6 +562,16 @@ export function pageCheckout(state) {
             if (usedCoupon && /primera compra/i.test(error.message || '')) {
               dropFirstPurchaseCoupon(usedCoupon.code)
               setSubmitting(false)
+              return
+            }
+            if (/precios cambiaron/i.test(error.message || '')) {
+              // Una promo empezo o termino con la pagina abierta: se recargan y se
+              // repinta el resumen para que el cliente vea el total real antes de reintentar
+              refreshPromotions().finally(() => {
+                refreshSummaryView()
+                setError(error.message)
+                setSubmitting(false)
+              })
               return
             }
             setError(error.message || 'No se pudo registrar tu pedido. Intenta de nuevo por favor.')

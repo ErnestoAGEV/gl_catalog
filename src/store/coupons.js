@@ -4,8 +4,8 @@ import { writeJson } from '../utils/storage.js'
 import { sanitizeCouponCode } from '../utils/sanitize.js'
 import { supabase } from '../core/supabase.js'
 import { getProductById } from './products.js'
-import { cartTotal } from './cart.js'
 import { ensureAdminAccess } from './auth.js'
+import { couponBase } from '../utils/promotions.js'
 
 export async function applyCoupon(code, silent = false) {
   const normalizedCode = sanitizeCouponCode(code)
@@ -26,6 +26,12 @@ export async function applyCoupon(code, silent = false) {
   }
 
   const couponCategories = coupon.categories || []
+
+  // El porcentaje no se suma a la promo; el envio gratis si sigue valiendo.
+  const anyPromo = state.cart.some(item => getProductById(item.productId)?.promo)
+  if (anyPromo && !coupon.free_shipping && couponBase(cartLines(), couponCategories) === 0) {
+    return { success: false, error: 'Los cupones no aplican a productos en promoción' }
+  }
 
   if (couponCategories.length > 0) {
     const hasApplicableItem = state.cart.some(item => {
@@ -78,21 +84,12 @@ export function getDiscountAmount(couponOverride = null) {
   const coupon = couponOverride || state.coupon
   if (!coupon) return 0
 
-  const discountRate = coupon.discount || 0
-  const applicableCategories = coupon.categories || []
+  // Misma base que place_order: sin lineas en promocion
+  return couponBase(cartLines(), coupon.categories || []) * (coupon.discount || 0)
+}
 
-  if (applicableCategories.length === 0) {
-    return cartTotal() * discountRate
-  }
-
-  const applicableSubtotal = state.cart.reduce((acc, i) => {
-    const product = getProductById(i.productId)
-    if (!product) return acc
-    if (!applicableCategories.includes(product.type)) return acc
-    return acc + (product.price * i.qty)
-  }, 0)
-
-  return applicableSubtotal * discountRate
+function cartLines() {
+  return state.cart.map(i => ({ product: getProductById(i.productId), qty: Number(i.qty) || 0 }))
 }
 
 export async function getAdminCoupons() {

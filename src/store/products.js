@@ -6,6 +6,7 @@ import { ensureAdminAccess } from './auth.js'
 import { changedColumns } from '../utils/changedColumns.js'
 import { withTimeout } from '../utils/async.js'
 import { resizeForUpload } from '../utils/resizeImage.js'
+import { applyPromotions } from '../utils/promotions.js'
 
 const CACHE_KEY = 'gl_products_cache'
 const CACHE_TIMESTAMP_KEY = 'gl_products_cache_timestamp'
@@ -18,6 +19,11 @@ function cacheProducts() {
   } catch (cacheError) {
     console.warn('Failed to cache products:', cacheError)
   }
+}
+
+/** Precios con la promo vigente; basePrice/baseOriginalPrice guardan los de la base. */
+export function withPromotions(list) {
+  return applyPromotions(list, state.promotions, Date.now())
 }
 
 /** Valida permisos de admin sin poder colgarse indefinidamente. */
@@ -97,7 +103,7 @@ export async function loadProducts() {
       const age = Date.now() - parseInt(cacheTimestamp, 10)
 
       if (age < CACHE_TTL) {
-        state.products = JSON.parse(cachedProducts)
+        state.products = withPromotions(JSON.parse(cachedProducts))
         state.isLoading = false
         emit()
 
@@ -141,7 +147,7 @@ async function loadProductsFromSupabase(isBackgroundUpdate = false) {
 
     if (data) {
       const cartSizeBeforeCleanup = state.cart.length
-      state.products = data.map(mapRowToProduct)
+      state.products = withPromotions(data.map(mapRowToProduct))
       state.isLoading = false
 
       cacheProducts()
@@ -220,7 +226,7 @@ export async function addProduct(product) {
     return { error }
   }
 
-  const newProduct = mapRowToProduct(data)
+  const [newProduct] = withPromotions([mapRowToProduct(data)])
   state.products.unshift(newProduct)
   cacheProducts()
   emit()
@@ -280,7 +286,11 @@ export async function updateProduct(id, updates) {
 
   const idx = state.products.findIndex(p => p.id === id)
   if (idx !== -1) {
-    state.products[idx] = { ...state.products[idx], ...updates }
+    // updates trae precios base (del formulario): van a base* y la promo se recalcula
+    const merged = { ...state.products[idx], ...updates }
+    if ('price' in updates) merged.basePrice = Number(updates.price)
+    if ('originalPrice' in updates) merged.baseOriginalPrice = updates.originalPrice ?? null
+    ;[state.products[idx]] = withPromotions([merged])
     cacheProducts()
     emit()
   }

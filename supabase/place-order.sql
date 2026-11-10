@@ -6,6 +6,7 @@
 -- Al final se quita la politica de insert publico: la unica puerta es esta.
 --
 -- Correr en el SQL Editor de Supabase ANTES de desplegar el cliente nuevo.
+-- Requiere supabase/promotions.sql (tabla promotions y promo_info).
 -- Es idempotente: se puede volver a correr entero cada vez que cambie.
 
 begin;
@@ -23,6 +24,8 @@ alter table public.orders add column if not exists shipping_cost numeric;
 -- La firma cambio (p_customer_email): la vieja se borra para que no queden
 -- dos versiones y PostgREST no sepa cual llamar.
 drop function if exists public.place_order(text, text, text, text, text, jsonb, text);
+-- p_expected_total (promociones): la firma de 8 argumentos se reemplaza.
+drop function if exists public.place_order(text, text, text, text, text, jsonb, text, text);
 drop function if exists public.coupon_first_purchase_ok(text, text);
 
 -- Clave para comparar telefonos: solo digitos, sin el 00 internacional, y los
@@ -51,7 +54,8 @@ create or replace function public.place_order(
   p_address           text,
   p_items             jsonb,          -- [{ "productId": ..., "size": ..., "color": ..., "qty": 1 }]
   p_coupon_code       text default null,
-  p_customer_email    text default null
+  p_customer_email    text default null,
+  p_expected_total    numeric default null  -- total que vio el cliente; si no cuadra, no se guarda
 )
 returns public.orders
 language plpgsql
@@ -65,6 +69,9 @@ declare
   v_cats       jsonb   := '[]'::jsonb;
   v_lines      jsonb   := '[]'::jsonb;
   v_qty        int;
+  v_price      numeric;        -- precio con promocion (promo_info)
+  v_promo_name text;
+  v_couponable numeric := 0;   -- subtotal de lineas sin promocion: los cupones no se suman
   v_unlimited  boolean;
   v_subtotal   numeric := 0;
   v_applicable numeric := 0;   -- subtotal solo de las categorias del cupon
@@ -168,14 +175,21 @@ begin
 
     v_unlimited := v_product.stock is null or btrim(v_product.stock::text) in ('', E'\u221E');
 
-    v_subtotal := v_subtotal + v_product.price * v_qty;
-    if v_cats ? v_product.type then
-      v_applicable := v_applicable + v_product.price * v_qty;
+    select i.price, i.promo_name into v_price, v_promo_name
+      from public.promo_info(v_product) i;
+
+    v_subtotal := v_subtotal + v_price * v_qty;
+    if v_promo_name is null then
+      v_couponable := v_couponable + v_price * v_qty;
+      if v_cats ? v_product.type then
+        v_applicable := v_applicable + v_price * v_qty;
+      end if;
     end if;
 
     -- Misma forma que armaba el navegador, incluido productId nulo cuando el
     -- stock es infinito: el trigger de stock depende de eso para no descontar.
-    v_lines := v_lines || jsonb_build_object(
+    -- Parentesis: sin ellos el || de la promo agrega un elemento suelto al arreglo
+    v_lines := v_lines || (jsonb_build_object(
       'productId',       case when v_unlimited then null else v_product.id end,
       'stock_unlimited', v_unlimited,
       'name',            v_product.name,
@@ -183,21 +197,28 @@ begin
       'size',            left(coalesce(v_item->>'size', ''), 40),
       'color',           left(coalesce(v_item->>'color', ''), 40),
       'qty',             v_qty,
-      'price',           v_product.price,
-      'subtotal',        round(v_product.price * v_qty, 2)
-    );
+      'price',           v_price,
+      'subtotal',        round(v_price * v_qty, 2)
+    ) || case when v_promo_name is null then '{}'::jsonb
+              else jsonb_build_object('promo', v_promo_name, 'list_price', v_product.price) end);
   end loop;
 
   -- ── Descuento ─────────────────────────────────────────────────────────
   if v_coupon.code is not null then
     if jsonb_array_length(v_cats) = 0 then
-      v_discount := v_subtotal * coalesce(v_coupon.discount, 0);
+      v_discount := v_couponable * coalesce(v_coupon.discount, 0);
     else
       v_discount := v_applicable * coalesce(v_coupon.discount, 0);
     end if;
   end if;
   v_discount := least(greatest(round(v_discount, 2), 0), round(v_subtotal, 2));
   v_total    := round(v_subtotal, 2) - v_discount;
+
+  -- La promo pudo empezar o terminar con la pagina abierta: mejor no guardar
+  -- que guardar un total distinto al que el cliente acepto.
+  if p_expected_total is not null and abs(v_total - p_expected_total) >= 0.5 then
+    raise exception 'Los precios cambiaron. Revisa tu bolsa.' using errcode = '22023';
+  end if;
 
   insert into public.orders (
     customer_name, customer_whatsapp, customer_email, payment_method, delivery_method,
@@ -223,8 +244,8 @@ end;
 $$;
 
 -- Solo se ejecuta desde el sitio; nadie mas hereda el permiso.
-revoke all on function public.place_order(text, text, text, text, text, jsonb, text, text) from public;
-grant execute on function public.place_order(text, text, text, text, text, jsonb, text, text) to anon, authenticated;
+revoke all on function public.place_order(text, text, text, text, text, jsonb, text, text, numeric) from public;
+grant execute on function public.place_order(text, text, text, text, text, jsonb, text, text, numeric) to anon, authenticated;
 
 -- Aviso temprano para el checkout: ¿este WhatsApp o correo todavia puede usar
 -- el cupon? Solo devuelve si/no; no expone pedidos ni datos del cliente.
