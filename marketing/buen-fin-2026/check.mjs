@@ -105,7 +105,22 @@ async function determinism() {
   } finally { await browser.close() }
 }
 
-const modes = { copy, safe, determinism }
+const probe = (f) => +execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f]).toString()
+
+function timing() {
+  const T = load()
+  T.scenes.forEach((s, i) => {
+    const d = probe(path.join(DIR, 'audio/vo', `s${i + 1}.wav`))
+    const min = s.id === 'envios' ? 3.0 : 2.5
+    assert.ok(s.start <= s.voStart, `${s.id}: la voz empieza antes de la escena`)
+    assert.ok(s.voStart + d <= s.end - 0.15 + 1e-6, `${s.id}: la voz (${d.toFixed(2)} s) no cabe antes de ${s.end - 0.15}`)
+    assert.ok(s.end - s.start >= min - 1e-6, `${s.id}: escena de ${s.end - s.start} s < ${min} s`)
+    const next = T.scenes[i + 1]
+    if (next) assert.ok(s.voStart + d <= next.voStart, `${s.id}: la voz se encima con la siguiente`)
+  })
+}
+
+const modes = { copy, safe, determinism, timing }
 const mode = process.argv[2]
 if (!modes[mode]) { console.error('modos: ' + Object.keys(modes).join(', ')); process.exit(2) }
 try { await modes[mode](); console.log(`check ${mode}: OK`) }
