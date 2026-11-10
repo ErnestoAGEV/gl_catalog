@@ -3,7 +3,7 @@
 // Vive fuera de #app (las vistas se cachean y repintan solas); se actualiza con
 // un solo intervalo de 1 s y con cada emit del store. Los precios los cambia
 // el temporizador de src/store/promotions.js en el mismo instante.
-import { featuredPromotion, colorPromotion } from '../utils/promotions.js'
+import { featuredPromotion, colorPromotion, promoStyle } from '../utils/promotions.js'
 import { escapeHtml } from '../utils/sanitize.js'
 
 const DATE_FMT = new Intl.DateTimeFormat('es-MX', { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' })
@@ -61,6 +61,10 @@ export function mountPromoBar({ getState, subscribe, navigate }) {
       const verb = phase === 'running' ? 'termina' : 'empieza'
       const when = DATE_FMT.format(new Date(target))
       bar.className = 'promo-bg text-paper'
+      // Su propio color también en "empieza en…" (el de la tienda solo se pone con la promo en curso)
+      const color = promoStyle({ color: promo.accent_color }).match(/--color-promo:(#[0-9a-f]{6})/i)?.[1]
+      if (color) bar.style.setProperty('--color-promo', color)
+      else bar.style.removeProperty('--color-promo')
       bar.hidden = false
       bar.innerHTML = `
         <div class="mx-auto flex max-w-[1440px] flex-wrap items-center justify-center gap-x-4 gap-y-1 px-4 py-2 font-mono text-[11px] tracking-[0.18em] uppercase"
