@@ -6,7 +6,7 @@ import { ICON } from './adminIcons.js'
 import { contrastOnWhite, localInputToIso, isoToLocalInput, isRunning } from '../../utils/promotions.js'
 
 const RED = '#D7262B'
-const DATE = new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
+const DATE = new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'America/Mexico_City' })
 const toggle = (name, checked) => `
   <label class="relative inline-flex items-center cursor-pointer">
     <input type="checkbox" name="${name}" class="sr-only peer" ${checked ? 'checked' : ''}>
@@ -103,8 +103,14 @@ export function pageAdminPromotions() {
         const types = [...new Set(getState().products.map(p => p.type).filter(Boolean))].sort()
         const cats = promo?.categories || []
         const color = promo?.accent_color || ''
-        const defStart = new Date(); defStart.setHours(0, 0, 0, 0); defStart.setDate(defStart.getDate() + 1)
-        const defEnd = new Date(defStart); defEnd.setDate(defEnd.getDate() + 4)
+        // Por defecto: mañana 00:00 a 4 días después, en hora de Colima
+        const mxDay = (days) => {
+          const d = new Date(`${isoToLocalInput(new Date().toISOString()).slice(0, 10)}T12:00:00Z`)
+          d.setUTCDate(d.getUTCDate() + days)
+          return localInputToIso(`${d.toISOString().slice(0, 10)}T00:00`)
+        }
+        const defStart = mxDay(1)
+        const defEnd = mxDay(5)
 
         const wrap = document.createElement('div')
         wrap.innerHTML = `
@@ -129,8 +135,8 @@ export function pageAdminPromotions() {
                 <fieldset>
                   <legend class="adm-lbl">Aplica a</legend>
                   <div class="flex gap-2 mb-2">
-                    <label class="chip cursor-pointer has-[:checked]:bg-brand has-[:checked]:text-paper"><input type="radio" name="scope" value="all" class="sr-only" ${cats.length ? '' : 'checked'}> Toda la tienda</label>
-                    <label class="chip cursor-pointer has-[:checked]:bg-brand has-[:checked]:text-paper"><input type="radio" name="scope" value="cats" class="sr-only" ${cats.length ? 'checked' : ''}> Categorías</label>
+                    <label class="chip cursor-pointer has-[:checked]:ring-2 has-[:checked]:ring-ink"><input type="radio" name="scope" value="all" class="sr-only" ${cats.length ? '' : 'checked'}> Toda la tienda</label>
+                    <label class="chip cursor-pointer has-[:checked]:ring-2 has-[:checked]:ring-ink"><input type="radio" name="scope" value="cats" class="sr-only" ${cats.length ? 'checked' : ''}> Categorías</label>
                   </div>
                   <div data-cats class="${cats.length ? '' : 'hidden'} grid grid-cols-2 gap-2 bg-canvas p-3 rounded-xl2 border border-line max-h-36 overflow-y-auto adm-scroll-thin">
                     ${types.map(t => `
@@ -148,14 +154,14 @@ export function pageAdminPromotions() {
                 <div class="grid grid-cols-2 gap-3">
                   <div>
                     <label class="adm-lbl" for="pr-start">Inicio *</label>
-                    <input id="pr-start" name="starts_at" type="datetime-local" required value="${isoToLocalInput(promo?.starts_at || defStart.toISOString())}" class="adm-fld tnum" />
+                    <input id="pr-start" name="starts_at" type="datetime-local" required value="${isoToLocalInput(promo?.starts_at || defStart)}" class="adm-fld tnum" />
                   </div>
                   <div>
                     <label class="adm-lbl" for="pr-end">Fin *</label>
-                    <input id="pr-end" name="ends_at" type="datetime-local" required value="${isoToLocalInput(promo?.ends_at || defEnd.toISOString())}" class="adm-fld tnum" />
+                    <input id="pr-end" name="ends_at" type="datetime-local" required value="${isoToLocalInput(promo?.ends_at || defEnd)}" class="adm-fld tnum" />
                   </div>
                 </div>
-                <p class="text-[10.5px] text-faint -mt-2">Hora de este equipo. El fin es exclusivo: "00:00 del martes" termina al acabar el lunes.</p>
+                <p class="text-[10.5px] text-faint -mt-2">Hora de Colima (centro de México), aunque este equipo tenga otra zona. El fin es exclusivo: "00:00 del martes" termina al acabar el lunes.</p>
 
                 <fieldset>
                   <legend class="adm-lbl">Color de la promoción</legend>
@@ -171,7 +177,7 @@ export function pageAdminPromotions() {
                 <div class="flex items-center justify-between bg-canvas rounded-xl2 px-4 py-3 gap-3">
                   <div><p class="text-[13.5px] font-semibold text-ink">Cuenta regresiva</p><p class="text-[11.5px] text-faint">Franja arriba de la tienda: "empieza en…" y "termina en…"</p></div>
                   <div class="flex items-center gap-2">
-                    <label class="text-[11.5px] text-faint" for="pr-lead">Aviso (días)</label>
+                    <label class="text-[11.5px] text-faint whitespace-nowrap" for="pr-lead">Aviso (días)</label>
                     <input id="pr-lead" name="lead" type="number" min="0" max="30" value="${promo?.countdown_lead_days ?? 3}" class="adm-fld tnum !w-16" onwheel="this.blur()" />
                     ${toggle('show_countdown', promo ? promo.show_countdown : true)}
                   </div>

@@ -379,7 +379,7 @@ export function pageAdminReportes(state) {
   }
 }
 
-const DAY_FMT = new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short' })
+const DAY_FMT = new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short', timeZone: 'America/Mexico_City' })
 
 function delta(now, before) {
   if (!before) return now ? '<span class="text-ok">nuevo</span>' : '—'

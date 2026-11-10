@@ -3,6 +3,7 @@ import { productBrand, productModel, productPath, sortSizes } from '../../utils/
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 import { escapeHtml } from '../../utils/sanitize.js'
 import { colorHex } from '../../utils/colors.js'
+import { promoStyle } from '../../utils/promotions.js'
 
 // La foto del hover se pedia con la tarjeta aunque en movil nunca se ve, y
 // cada foto cuenta contra el cached egress de Supabase. Se pide al pasar el raton.
@@ -49,7 +50,7 @@ export function productCard(p, idx) {
   if (p.originalPrice && p.originalPrice > p.price) {
     const pct = Math.round((1 - p.price / p.originalPrice) * 100)
     const label = p.promo ? `${escapeHtml(p.promo.name)} \u2212${pct}%` : `\u2212${pct}%`
-    badges.push(`<span class="badge-dot ${p.promo ? 'promo-bg' : 'bg-brand'} text-paper">${label}</span>`)
+    badges.push(`<span class="badge-dot ${p.promo ? 'promo-bg' : 'bg-brand'} text-paper"${promoStyle(p.promo)}>${label}</span>`)
   } else if (p.badge === 'Oferta') {
     badges.push(`<span class="badge-dot bg-brand text-paper">Oferta</span>`)
   }
@@ -101,7 +102,7 @@ export function productCard(p, idx) {
         </div>
         <div class="text-right whitespace-nowrap flex-shrink-0">
           ${hasDiscount ? `<div class="font-mono text-[11px] text-ink/60 line-through">${formatMoney(p.originalPrice)}</div>` : ''}
-          <div class="font-mono text-[13px] md:text-[14px] font-semibold ${priceClass}">${formatMoney(p.price)}</div>
+          <div class="font-mono text-[13px] md:text-[14px] font-semibold ${priceClass}"${promoStyle(p.promo)}>${formatMoney(p.price)}</div>
         </div>
       </div>
       <div class="mt-2 flex items-center gap-1.5">

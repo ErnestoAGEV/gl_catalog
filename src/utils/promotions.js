@@ -48,7 +48,7 @@ export function applyPromotions(products, promos, now) {
       baseOriginalPrice: base.originalPrice ?? null,
       price: promo ? discounted(base.price, promo.discount_pct) : base.price,
       originalPrice: promo ? base.price : (base.originalPrice ?? null),
-      promo: promo ? { id: promo.id, name: promo.name, pct: promo.discount_pct } : null,
+      promo: promo ? { id: promo.id, name: promo.name, pct: promo.discount_pct, color: promo.accent_color || null } : null,
     }
   })
 }
@@ -95,15 +95,29 @@ export function contrastOnWhite(hex) {
   return 1.05 / (luminance(hex) + 0.05)
 }
 
-/** <input type="datetime-local"> está en hora local; la base guarda instantes. */
+// Las promos se programan en hora de Colima, no en la del equipo (el de la
+// oficina puede estar en hora del Pacifico). Mexico quito el horario de verano en 2022.
+// shortcut: offset fijo UTC-6; si Mexico vuelve al horario de verano, usar Intl con America/Mexico_City.
+const MX_OFFSET = '-06:00'
+const MX_PARTS = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/Mexico_City', year: 'numeric', month: '2-digit', day: '2-digit',
+  hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+})
+
+/** Valor de <input type="datetime-local"> (hora de Colima) a instante ISO. */
 export function localInputToIso(value) {
-  return new Date(value).toISOString()
+  return new Date(`${value}:00${MX_OFFSET}`).toISOString()
 }
 
+/** Instante ISO a valor de <input type="datetime-local"> en hora de Colima. */
 export function isoToLocalInput(iso) {
-  const d = new Date(iso)
-  const pad = (n) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  const p = Object.fromEntries(MX_PARTS.formatToParts(new Date(iso)).map(x => [x.type, x.value]))
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`
+}
+
+/** style="" para que la etiqueta y el precio usen el color de SU promo (validado #rrggbb en la base). */
+export function promoStyle(promo) {
+  return promo?.color && /^#[0-9a-f]{6}$/i.test(promo.color) ? ` style="--color-promo:${promo.color}"` : ''
 }
 
 /** Base del porcentaje de un cupón: sin líneas en promoción (no se acumulan). */

@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict'
 import {
   discounted, isRunning, promoFor, applyPromotions, featuredPromotion, nextBoundary,
-  contrastOnWhite, localInputToIso, isoToLocalInput, couponBase, promoReport, boundaryDelay,
+  contrastOnWhite, localInputToIso, isoToLocalInput, couponBase, promoReport, boundaryDelay, promoStyle,
 } from '../src/utils/promotions.js'
 
 const H = 3600e3
@@ -51,7 +51,7 @@ const [a] = applyPromotions([prod()], [promo()], now)
 assert.equal(a.price, 800)
 assert.equal(a.originalPrice, 1000)
 assert.equal(a.basePrice, 1000)
-assert.deepEqual(a.promo, { id: 'a', name: 'Buen Fin', pct: 20 })
+assert.deepEqual(a.promo, { id: 'a', name: 'Buen Fin', pct: 20, color: null })
 const [b] = applyPromotions([a], [promo()], now)
 assert.equal(b.price, 800)
 const [c] = applyPromotions([a], [], now)
@@ -73,8 +73,11 @@ assert.equal(nextBoundary([futura], now), now + 48 * H)
 assert.ok(contrastOnWhite('#D7262B') >= 4.5)
 assert.ok(contrastOnWhite('#FFD400') < 4.5)
 
-// datetime-local ida y vuelta (hora local del navegador)
-assert.equal(isoToLocalInput(localInputToIso('2026-11-13T00:00')), '2026-11-13T00:00')
+// datetime-local en hora de Colima (centro de México, UTC-6 sin horario de verano),
+// sin importar la zona del equipo: este equipo esta en hora del Pacifico
+assert.equal(localInputToIso('2026-11-13T00:00'), '2026-11-13T06:00:00.000Z')
+assert.equal(isoToLocalInput('2026-11-13T06:00:00.000Z'), '2026-11-13T00:00')
+assert.equal(isoToLocalInput(localInputToIso('2026-07-01T23:30')), '2026-07-01T23:30')
 
 // Cupón: el porcentaje no cuenta líneas en promoción
 const lines = [{ product: a, qty: 1 }, { product: prod({ id: 2, type: 'Polos' }), qty: 2 }]
@@ -106,5 +109,10 @@ const enCurso = promo({ starts_at: '2026-11-13T06:00:00Z', ends_at: '2026-11-17T
 const rc = promoReport(orders, enCurso, Date.parse('2026-11-15T06:00:00Z'))
 assert.equal(rc.orders, 2)
 assert.deepEqual(rc.prev, { orders: 1, sales: 200, avg: 200 })
+
+// Cada etiqueta con el color de su promo; nada que no sea #rrggbb llega al HTML
+assert.equal(promoStyle({ color: '#0F7A3D' }), ' style="--color-promo:#0F7A3D"')
+assert.equal(promoStyle({ color: 'red;background:url(x)' }), '')
+assert.equal(promoStyle(null), '')
 
 console.log('test-promotions OK')
