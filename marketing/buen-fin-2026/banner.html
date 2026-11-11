@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><title>Banner Buen Fin home</title>
+<!-- Slide del carrusel de la home, 1080×1350 (4:5). En celular el carrusel lo recorta a cuadrado: todo el contenido vive en el cuadrado central. -->
+<style>
+@font-face{font-family:Manrope;src:url(assets/manrope.woff2) format('woff2');font-weight:200 800}
+@font-face{font-family:'JetBrains Mono';src:url(assets/jetbrains-mono.woff2) format('woff2');font-weight:100 800}
+*{box-sizing:border-box;margin:0}
+html,body{width:1080px;height:1350px;overflow:hidden}
+body{position:relative;background:#1A3E9E;color:#fff}
+.light{position:absolute;inset:0;background:radial-gradient(120% 80% at 85% 10%,rgba(65,105,225,.75) 0%,rgba(65,105,225,0) 60%)}
+.safe{position:absolute;left:0;top:135px;width:1080px;height:1080px;padding:97px;display:flex;flex-direction:column;justify-content:space-between}
+.top{display:flex;justify-content:space-between;align-items:center}
+.top img{width:270px}
+.date{font-family:'JetBrains Mono';font-size:41px;letter-spacing:.14em}
+.big{font-family:Manrope;font-weight:800;font-size:475px;letter-spacing:-.07em;line-height:.78;margin-left:-14px;margin-top:40px}
+.big span{color:#9DB4F0}
+.lead{font-family:Manrope;font-weight:800;font-size:82px;letter-spacing:-.03em;margin-top:32px}
+.rule{height:3px;background:rgba(255,255,255,.2);margin:48px 0 32px}
+.cats{font-family:'JetBrains Mono';font-size:34px;letter-spacing:.04em;white-space:nowrap}
+</style></head><body>
+<div class="light"></div>
+<div class="safe">
+  <div class="top"><img src="assets/logo-blanco.png" alt=""><span class="date">13—16.11.26</span></div>
+  <div>
+    <div class="big">10<span>%</span></div>
+    <div class="lead">en toda la tienda</div>
+    <div class="rule"></div>
+    <div class="cats">CAMISAS · DENIM · POLOS · FRAGANCIAS</div>
+  </div>
+</div>
+</body></html>
