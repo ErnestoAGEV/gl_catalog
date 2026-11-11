@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><title>Banner Buen Fin con foto</title>
+<!-- Lluvia de ropa (IA, Canva) + "10%" con la tipografía de la tienda. 1080×1350; el texto vive en el azul limpio del centro-izquierda y dentro del cuadrado que recorta el celular. -->
+<style>
+@font-face{font-family:Manrope;src:url(assets/manrope.woff2) format('woff2');font-weight:200 800}
+@font-face{font-family:'JetBrains Mono';src:url(assets/jetbrains-mono.woff2) format('woff2');font-weight:100 800}
+*{box-sizing:border-box;margin:0}
+html,body{width:1080px;height:1350px;overflow:hidden}
+body{position:relative;background:#0640AF;color:#fff}
+.foto{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.copy{position:absolute;left:72px;top:380px}
+.tag{display:inline-block;font-family:'JetBrains Mono';font-size:30px;letter-spacing:.16em;background:#fff;color:#1A3E9E;padding:12px 22px;border-radius:999px}
+.big{font-family:Manrope;font-weight:800;font-size:220px;letter-spacing:-.06em;line-height:.8;margin:34px 0 0 -8px}
+.lead{font-family:Manrope;font-weight:800;font-size:60px;letter-spacing:-.03em;line-height:1;margin-top:26px}
+</style></head><body>
+<img class="foto" src="assets/buen-fin-foto.png" alt="">
+<div class="copy">
+  <span class="tag">BUEN FIN · 13–16 NOV</span>
+  <div class="big">10%</div>
+  <div class="lead">en toda<br/>la tienda</div>
+</div>
+</body></html>
