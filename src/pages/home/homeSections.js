@@ -10,7 +10,7 @@ export const region = (name, html) => `<!--hc:${name}-->${html}<!--/hc:${name}--
 export function heroLeftHtml(heroSlides) {
   return heroSlides.map((s, i) => `
     <div class="hero-slide absolute inset-0 flex flex-col justify-start md:justify-center transition-opacity duration-[1200ms] ease ${i === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'}" data-slide="${i}">
-      <${i === 0 ? 'h1' : 'h2'} class="font-heading font-[800] text-[clamp(52px,18.5vw,72px)] md:text-[clamp(72px,11vw,184px)] leading-[0.86] tracking-[-0.04em] text-ink mb-6">${s.headline}</${i === 0 ? 'h1' : 'h2'}>
+      <${i === 0 ? 'h1' : 'h2'} class="font-heading font-[800] text-[clamp(52px,18.5vw,72px)] md:text-[clamp(72px,11vw,184px)] leading-[0.86] tracking-[-0.04em] text-ink mb-[max(24px,0.3em)]">${s.headline}</${i === 0 ? 'h1' : 'h2'}>
       ${s.couponBody ? `
         <p class="text-[17px] text-ink/70 max-w-[460px] leading-relaxed">
           Aplica <span class="bg-fog font-mono rounded-md px-2 py-1 text-[15px]">WELCOME10</span> en tu bolsa. Válido para clientes nuevos en cualquier categoría.
