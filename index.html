@@ -86,12 +86,6 @@
            distintas. Paso por aqui: el enlace de las opiniones de Google a la ficha de
            Google entro en home.js y no aparecia en produccion. -->
       <div id="prerender-shell">
-      <!-- prerender-shell:start — static snapshot of the home page so the first paint
-           does not wait for JS. It is edited by hand: keep it in sync with home.js / homeData.js
-           whenever the home layout or copy changes. -->
-      
-      
-      <!-- prerender-shell:end -->
     <div class="page-route-container"><div class="min-h-dvh overflow-x-clip bg-paper text-ink">
     
     <!-- Marquee Announcement Bar -->
@@ -675,14 +669,15 @@
       </div>
     </nav>
   
-  </div></div></div>
+  </div></div>
+      <!-- prerender-shell:end — dentro de #prerender-shell: prerender.mjs mete aquí el pie de contacto -->
+  </div>
       <script>
         // The shell is only valid for the home route — hide it before paint elsewhere
         if (window.location.pathname !== '/') {
           document.getElementById('prerender-shell').style.display = 'none';
         }
       </script>
-      <!-- prerender-shell:end -->
     </div>
 
     <!-- prerender:shell-end — no mover ni renombrar: scripts/prerender.mjs corta

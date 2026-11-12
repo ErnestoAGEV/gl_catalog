@@ -558,7 +558,7 @@ const routes = []
 // inyecta en el marcador y no se concatena al final—: la hidratacion elimina
 // ese nodo entero, y colgado por fuera se quedaria duplicado bajo el footer
 // real de la SPA.
-const HOME_SHELL_MARK = '<!-- prerender-shell:end -->'
+const HOME_SHELL_MARK = '<!-- prerender-shell:end'
 if (!homeShell.includes(HOME_SHELL_MARK)) {
   throw new Error(`No encuentro ${HOME_SHELL_MARK} en el shell de la home — revisa index.html`)
 }
