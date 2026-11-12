@@ -9,7 +9,7 @@
 //
 // Se ejecuta despues de `vite build`. Ver package.json.
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { categoryLabel, getSeoForRoute } from '../src/core/routeSeo.js'
 import { infoPages } from '../src/pages/info/infoData.js'
@@ -239,7 +239,38 @@ function buildHead({ title, description, robots, canonical, image, images, extra
   return head.replace('</head>', () => `    ${social}\n    ${extraLd || ''}\n  </head>`)
 }
 
+// Las páginas públicas (salvo la home) se cargan con import(): sin esto, quien entra
+// directo a /producto/... bajaría el bundle y DESPUÉS el código de la ficha.
+// modulepreload le dice al navegador que baje los dos a la vez.
+const manifestFile = join(DIST, '.vite', 'manifest.json')
+const manifest = existsSync(manifestFile) ? JSON.parse(readFileSync(manifestFile, 'utf8')) : {}
+rmSync(join(DIST, '.vite'), { recursive: true, force: true }) // no publicar el manifest
+function chunkFiles(src, acc = new Set()) {
+  const c = manifest[src]
+  if (!c || c.isEntry || acc.has(c.file)) return acc
+  acc.add(c.file)
+  ;(c.imports || []).forEach((i) => chunkFiles(i, acc))
+  return acc
+}
+function pageModule(path) {
+  if (path.startsWith('/producto/')) return 'src/pages/product/product.js'
+  if (path === '/catalog' || path.startsWith('/categoria/') || path.startsWith('/marca/')) return 'src/pages/catalog/catalog.js'
+  if (path === '/cart') return 'src/pages/cart/cart.js'
+  if (path === '/checkout' || path === '/checkout/success') return 'src/pages/checkout/checkout.js'
+  if (path === '/baja') return 'src/pages/unsubscribe/unsubscribe.js'
+  if (infoPages[path]) return 'src/pages/info/info.js'
+  return null
+}
+function modulePreloads(path, html) {
+  const src = pageModule(path)
+  if (src && !manifest[src]) throw new Error(`${path}: ${src} no está en el manifest de Vite (¿se renombró?)`)
+  return src ? [...chunkFiles(src)].filter((f) => !html.includes(`/${f}"`)).map((f) => `<link rel="modulepreload" crossorigin href="/${f}">`).join('') : ''
+}
+
 function writeRoute(path, html) {
+  const preloads = modulePreloads(path, html)
+  if (preloads) html = html.replace('</head>', () => `${preloads}
+</head>`)
   // El shell se concatena a mano dentro de un <div id="app"> ya abierto: si el
   // bloque no lo cierra, el HTML sale roto en las 240+ paginas de golpe.
   const open = (html.match(/<div\b/g) || []).length

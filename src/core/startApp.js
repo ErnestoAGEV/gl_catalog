@@ -3,7 +3,7 @@ import { bindHeaderSearch } from '../components/headerSearch.js'
 import { closeMiniCart } from '../components/miniCart.js'
 import { marqueeHtml, footerBrandsHtml } from '../components/layout.js'
 import { getState, isAdminAuthed, loadProducts, loadPromotions, loadCategories, loadSizeGuides, loadSiteContent, subscribe, toggleTheme, getTheme, setSearchQuery, initAdminSession, getAdminOrders } from '../store/index.js'
-import { renderRoute } from './views.js'
+import { renderRoute, preloadRoute, prefetchPublicPages } from './views.js'
 import { mountPromoBar } from '../components/promoBar.js'
 import { showToast } from '../utils/toast.js'
 import { supabase } from './supabase.js'
@@ -294,12 +294,19 @@ export async function startApp(mountEl) {
   }
 
   const render = async (path, options = {}) => {
+    // La página se descarga ANTES de tomar turno: con red lenta un import colgado no bloquea
+    // volver a una vista ya cacheada (atrás, logo). Si mientras tanto se navegó a otra ruta, este render sobra.
+    let preloadError = null
+    await preloadRoute(path).catch(err => { preloadError = err })
+    if (!options.forceRebuild && getRoute() !== path) return
+
     const currentPromise = renderPromise
     let resolveNext
     renderPromise = new Promise(r => { resolveNext = r })
     await currentPromise
 
     try {
+      if (preloadError) throw preloadError
       await withTransition(path, options, () => _render(path, options))
       try { sessionStorage.removeItem('gl_stale_chunk_reload') } catch { /* Safari puede bloquear storage */ }
     } catch (err) {
@@ -320,7 +327,8 @@ export async function startApp(mountEl) {
       alreadyReloaded = Boolean(sessionStorage.getItem('gl_stale_chunk_reload'))
       if (isStaleChunk && !alreadyReloaded) sessionStorage.setItem('gl_stale_chunk_reload', '1')
     } catch { /* Safari puede bloquear storage: sin flag, no recargamos */ }
-    if (isStaleChunk && !alreadyReloaded) {
+    // Sin conexión no es un chunk viejo: recargar solo llevaría a la pantalla offline del navegador
+    if (isStaleChunk && !alreadyReloaded && navigator.onLine !== false) {
       window.location.reload()
       return
     }
@@ -680,6 +688,8 @@ export async function startApp(mountEl) {
 
   const stopRouteListener = onRouteChange(render)
   const stopRouter = startRouter()
+  // Con la primera página ya pintada, baja en reposo catálogo, producto y bolsa
+  prefetchPublicPages()
 
   // startRouter() already calls notify() which triggers render via onRouteChange.
   // No extra render(getRoute()) needed — avoids double render on startup.

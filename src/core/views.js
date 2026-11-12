@@ -3,14 +3,6 @@ import { adminLogout, isAdminAuthed } from '../store/index.js'
 import { lockScroll, unlockScroll } from '../utils/dom.js'
 import { navigate } from './router.js'
 import { pageHome } from '../pages/home/home.js'
-import { pageCatalog } from '../pages/catalog/catalog.js'
-import { pageProduct } from '../pages/product/product.js'
-import { pageCart } from '../pages/cart/cart.js'
-import { pageCheckout, pageCheckoutSuccess } from '../pages/checkout/checkout.js'
-import { pageAdminLogin } from '../pages/admin/adminLogin.js'
-import { pageNotFound } from '../pages/notFound/notFound.js'
-import { pageUnsubscribe } from '../pages/unsubscribe/unsubscribe.js'
-import { pageInfo } from '../pages/info/info.js'
 import { infoPages } from '../pages/info/infoData.js'
 import { getSeoForRoute } from './routeSeo.js'
 
@@ -19,13 +11,35 @@ import { getSeoForRoute } from './routeSeo.js'
 // Las rutas salen de infoPages para no mantener la lista en dos sitios.
 const infoRoutes = new Set(Object.keys(infoPages))
 
+// Solo la home va en el bundle inicial: es la que llega primero y la que mide Google.
+// Las demás se descargan al visitarlas (y en reposo, ver prefetchPublicPages).
+const lazyPublic = {
+  catalog: () => import('../pages/catalog/catalog.js').then(m => m.pageCatalog),
+  product: () => import('../pages/product/product.js').then(m => m.pageProduct),
+  cart: () => import('../pages/cart/cart.js').then(m => m.pageCart),
+  checkout: () => import('../pages/checkout/checkout.js').then(m => m.pageCheckout),
+  checkoutSuccess: () => import('../pages/checkout/checkout.js').then(m => m.pageCheckoutSuccess),
+  unsubscribe: () => import('../pages/unsubscribe/unsubscribe.js').then(m => m.pageUnsubscribe),
+  info: () => import('../pages/info/info.js').then(m => m.pageInfo),
+  notFound: () => import('../pages/notFound/notFound.js').then(m => m.pageNotFound),
+  adminLogin: () => import('../pages/admin/adminLogin.js').then(m => m.pageAdminLogin),
+}
+
 const publicRoutes = {
-  '/': pageHome,
-  '/catalog': pageCatalog,
-  '/cart': pageCart,
-  '/checkout': pageCheckout,
-  '/checkout/success': pageCheckoutSuccess,
-  '/baja': pageUnsubscribe,
+  '/catalog': lazyPublic.catalog,
+  '/cart': lazyPublic.cart,
+  '/checkout': lazyPublic.checkout,
+  '/checkout/success': lazyPublic.checkoutSuccess,
+  '/baja': lazyPublic.unsubscribe,
+}
+
+/** Tras pintar la home, baja en reposo las páginas a las que se suele ir, para que navegar siga siendo instantáneo. */
+export function prefetchPublicPages() {
+  if (location.pathname.startsWith('/admin')) return
+  const run = () => ['catalog', 'product', 'cart', 'checkout'].forEach(k => lazyPublic[k]().catch(() => {}))
+  // Tras el load: no compite con la foto del hero por la red
+  const idle = () => ('requestIdleCallback' in window ? requestIdleCallback(run, { timeout: 4000 }) : setTimeout(run, 1500))
+  if (document.readyState === 'complete') idle(); else window.addEventListener('load', idle, { once: true })
 }
 
 // Lazy-loaded admin pages — solo se descargan cuando el usuario visita el panel
@@ -44,6 +58,24 @@ const lazyAdminRoutes = {
   '/admin/banners':    () => import('../pages/admin/adminBanners.js').then(m => m.pageAdminBanners),
 }
 
+async function publicPage(basePath) {
+  if (basePath === '/') return pageHome
+  if (basePath.startsWith('/producto/')) return lazyPublic.product()
+  if (basePath.startsWith('/categoria/') || basePath.startsWith('/marca/')) return lazyPublic.catalog()
+  if (infoRoutes.has(basePath)) {
+    const pageInfo = await lazyPublic.info()
+    return (st) => pageInfo(st, basePath)
+  }
+  return (publicRoutes[basePath] || lazyPublic.notFound)()
+}
+
+/** Descarga el módulo de una ruta pública antes de ocultar la vista actual: así no hay pantalla en blanco al navegar. */
+export function preloadRoute(path) {
+  const [basePath] = path.split('?')
+  if (basePath === '/admin/login') return lazyPublic.adminLogin()
+  return basePath.startsWith('/admin') ? Promise.resolve() : publicPage(basePath)
+}
+
 export async function renderRoute(path, state) {
   const [basePath] = path.split('?') // Ignore query params for routing
   const isAdmin = basePath.startsWith('/admin')
@@ -57,20 +89,14 @@ export async function renderRoute(path, state) {
   let page
   if (isAdmin) {
     if (basePath === '/admin/login') {
-      page = pageAdminLogin
+      page = await lazyPublic.adminLogin()
     } else {
       // Lazy load: solo descarga el módulo admin cuando se necesita
       const loader = lazyAdminRoutes[basePath] || lazyAdminRoutes['/admin']
       page = await loader()
     }
-  } else if (basePath.startsWith('/producto/')) {
-    page = pageProduct
-  } else if (basePath.startsWith('/categoria/') || basePath.startsWith('/marca/')) {
-    page = pageCatalog
-  } else if (infoRoutes.has(basePath)) {
-    page = (st) => pageInfo(st, basePath)
   } else {
-    page = publicRoutes[basePath] || pageNotFound
+    page = await publicPage(basePath)
   }
 
   const view = page(state)
