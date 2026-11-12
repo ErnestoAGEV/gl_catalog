@@ -578,7 +578,7 @@ const homeShellCounted = products.length
 let homeShellContent = homeShellCounted
 let patchHomeHead = (head) => head
 try {
-  const rows = SUPABASE_URL ? await supabaseSelect('site_content', 'select=*') : []
+  const rows = SUPABASE_URL ? await supabaseSelect('site_content', 'select=*&order=section.asc,display_order.asc') : []
   const c = resolveHomeContent(rows, { marqueeDefault: '', optimize: true })
   const countByType = (type) => products.filter((p) => p.type === type).length
   const put = (shell, name, html) => {
@@ -589,6 +589,10 @@ try {
     }
     return shell.replace(re, (_, open, close) => `${open}${html}${close}`)
   }
+  // Mismas filas que pide la tienda (mismo orden): en la primera visita home.js pinta con ellas
+  // y no con los defaults, que cambiaban la foto del hero dos veces y retrasaban el LCP.
+  if (rows.length) homeShellContent = `<script type="application/json" id="gl-site-content">${JSON.stringify(rows).replace(/</g, '\\' + 'u003c')}</script>
+${homeShellContent}`
   homeShellContent = put(homeShellContent, 'hero-left', heroLeftHtml(c.heroSlides))
   homeShellContent = put(homeShellContent, 'hero-right', heroRightHtml(c.heroSlides))
   homeShellContent = put(homeShellContent, 'hero-count', slideCountHtml(c.heroSlides.length))

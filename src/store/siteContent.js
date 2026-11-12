@@ -21,7 +21,8 @@ function setSiteContent(rows) {
 export async function loadSiteContent() {
   if (!supabase) return
   try {
-    const cached = localStorage.getItem(CACHE_KEY)
+    // Primera visita: sin cache, usa las filas que el build dejó en la home (mismo contenido que su HTML)
+    const cached = localStorage.getItem(CACHE_KEY) || document.getElementById('gl-site-content')?.textContent
     const ts = Number(localStorage.getItem(CACHE_TS_KEY))
     if (cached) setSiteContent(JSON.parse(cached))
     if (cached && Date.now() - ts < CACHE_TTL) return
