@@ -4,9 +4,10 @@
 // Se corre A MANO, no en cada build: Vercel lee vercel.json del repo, no de
 // dist/, asi que el archivo tiene que estar commiteado para que surta efecto.
 //
-// Y no hace falta correrlo cada vez que agregas un producto: los uuid que
-// alguien pudo haber compartido son los que ya existian en la migracion. Un
-// producto nuevo nace con slug y nunca tuvo una url vieja que redirigir.
+// No hace falta correrlo al agregar un producto (nace con slug y el deploy
+// automatico de Supabase lo publica). SI hay que correrlo despues de renombrar
+// o cambiar el color de un producto: su slug cambia y la url vieja necesita
+// redirigir. Los slugs viejos se conservan entre corridas.
 //
 //   node scripts/generate-redirects.mjs
 
@@ -36,14 +37,24 @@ const config = JSON.parse(readFileSync('vercel.json', 'utf8'))
 // correr esto sin acumular entradas viejas.
 const kept = (config.redirects || []).filter((r) => !r.source.startsWith('/producto/'))
 
-const productRedirects = products
-  .map((product) => ({
-    source: `/producto/${product.id}`,
-    destination: productPath(product),
-    permanent: true,
-  }))
+// Cada url que ya existio (el uuid, y cualquier slug viejo de un producto que
+// se renombro) apunta al slug actual. Sin esto, la url vieja cae en el shell
+// con noindex y Google la reporta como "Excluida por noindex".
+const byShortId = new Map(products.map((p) => [p.id.slice(0, 8), p]))
+const shortIdOf = (path) => path.match(/([0-9a-f]{8})(?:-[0-9a-f-]{27})?$/)?.[1]
+const known = [
+  ...products.map((p) => `/producto/${p.id}`),
+  ...(config.redirects || [])
+    .filter((r) => r.source.startsWith('/producto/'))
+    .flatMap((r) => [r.source, r.destination]),
+]
+const productRedirects = [...new Set(known)]
+  .map((source) => {
+    const product = byShortId.get(shortIdOf(source))
+    return product && { source, destination: productPath(product), permanent: true }
+  })
   // El slug ya contiene el id: si coincidieran, el redirect seria un bucle
-  .filter((r) => r.source !== r.destination)
+  .filter((r) => r && r.source !== r.destination)
 
 config.redirects = [...kept, ...productRedirects]
 
