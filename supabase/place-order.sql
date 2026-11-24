@@ -250,8 +250,9 @@ begin
       from (select e->>'productId' as pid, sum((e->>'qty')::int) as q
               from jsonb_array_elements(p_items) e
              group by 1) t;
-    -- Sin p_address_parts el zip es null y tambien cae aqui
-    if v_cart_key is distinct from v_quote.cart_key
+    -- Sin direccion o sin zip en la cotizacion no se puede comprobar el destino
+    if p_address_parts is null or v_quote.zip is null
+       or v_cart_key is distinct from v_quote.cart_key
        or v_quote.zip is distinct from (p_address_parts->>'zip') then
       raise exception 'Tu carrito cambio. Vuelve a cotizar el envio.' using errcode = '22023';
     end if;

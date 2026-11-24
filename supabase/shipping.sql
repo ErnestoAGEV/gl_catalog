@@ -26,7 +26,7 @@ values (
   jsonb_build_object(
     'name', 'G&L Boutique', 'phone', '',
     'street', 'Calle Ignacio Zaragoza', 'number', '140', 'district', 'Centro',
-    'city', 'Colima', 'state', 'CL', 'postalCode', '28000'
+    'city', 'Colima', 'state', 'COL', 'postalCode', '28000'
   ),
   '{"length": 35, "width": 25, "height": 5, "max_grams": 2000}',
   '{"length": 40, "width": 30, "height": 20, "max_grams": 10000}',
