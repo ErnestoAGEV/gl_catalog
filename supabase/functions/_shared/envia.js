@@ -71,7 +71,8 @@ export const buildLabelRequest = ({ origin, destination, pkg, carrier, serviceCo
 export function parseLabel(json) {
   const d = json?.data?.[0]
   if (!d?.trackingNumber) return null
-  return { trackingNumber: d.trackingNumber, trackUrl: d.trackUrl ?? null, labelUrl: d.label || null, cost: Number(d.totalPrice), carrier: d.carrier, service: d.service }
+  const cost = Number(d.totalPrice)
+  return { trackingNumber: String(d.trackingNumber), trackUrl: d.trackUrl ?? null, labelUrl: d.label || null, cost: Number.isFinite(cost) ? cost : null, carrier: d.carrier, service: d.service }
 }
 
 const errText = (json) => {

@@ -12,7 +12,7 @@ export function labelConfig(env) {
   if (!raw || !apiKey) return NOT_CONFIGURED
   let url
   try { url = new URL(raw) } catch { return NOT_CONFIGURED }
-  if (url.protocol !== 'https:' || !(url.host in LABEL_HOSTS)) return NOT_CONFIGURED
+  if (url.protocol !== 'https:' || !Object.hasOwn(LABEL_HOSTS, url.host)) return NOT_CONFIGURED
   return { baseUrl: url.origin, apiKey, sandbox: LABEL_HOSTS[url.host] }
 }
 
@@ -28,7 +28,7 @@ export function labelEligibility(order) {
   return null
 }
 
-const clean = (v) => String(v ?? '').replace(/[<>]/g, '').trim()
+const clean = (v) => (typeof v === 'string' || typeof v === 'number' ? String(v).replace(/[<>]/g, '').trim() : '')
 // [campo, mínimo, máximo, mensaje]
 const ADDRESS_RULES = [
   ['street', 1, 100, 'Revisa la calle.'],
@@ -65,20 +65,23 @@ export function receiverPhone(whatsapp) {
 
 export function senderError(origin) {
   if (!/^\d{10}$/.test(String(origin?.phone ?? ''))) return 'Falta el teléfono del remitente. Llénalo en Admin → Envíos.'
-  if (!origin.street || !origin.city || !origin.postalCode) return 'Completa la dirección del remitente en Admin → Envíos.'
+  if (!origin.name || !origin.street || !origin.city || !origin.state || !origin.postalCode) return 'Completa la dirección del remitente en Admin → Envíos.'
   return null
 }
 
 const TOO_HEAVY = 'Pesa más de lo que aguanta la caja. Genera esta guía en el panel de Envia.'
+const NO_WEIGHT = 'No se pudo calcular el peso del pedido. Genera esta guía en el panel de Envia.'
 
 export function packageFor(items, weights, settings, kind) {
   if (!kind) {
     const pkg = buildPackage(items, weights, settings)
+    if (pkg && !Number.isFinite(pkg.grams)) return { error: NO_WEIGHT }
     return pkg ? { pkg } : { error: TOO_HEAVY }
   }
   if (kind !== 'envelope' && kind !== 'box') return { error: 'Elige sobre o caja.' }
   // Mismos gramos que buildPackage: sin tope de caja nunca regresa null.
   const { grams } = buildPackage(items, weights, { ...settings, box: { ...settings.box, max_grams: Infinity } })
+  if (!Number.isFinite(grams)) return { error: NO_WEIGHT }
   const dims = settings[kind]
   if (kind === 'envelope' && grams > dims.max_grams) return { error: `Pesa ${grams} g: no cabe en sobre. Usa caja.` }
   if (grams > settings.box.max_grams) return { error: TOO_HEAVY }
@@ -95,10 +98,13 @@ export function defaultOption(options, { carrier, tier }) {
   return all.reduce((a, b) => (b.cost < a.cost ? b : a)).i
 }
 
-export function checkRequote(options, { serviceCode, expectedCost }, fmt) {
-  const option = options.find((o) => o.serviceCode === serviceCode)
+// Falla cerrado: lo que no sea número (undefined, '250', NaN) es error, nunca pasa.
+export function checkRequote(options, { carrier, serviceCode, expectedCost }, fmt) {
+  if (typeof expectedCost !== 'number' || !Number.isFinite(expectedCost)) return { error: 'Falta el precio de la opción. Vuelve a ver las opciones.' }
+  // Los códigos de servicio se repiten entre paqueterías
+  const option = options.find((o) => o.carrier === carrier && o.serviceCode === serviceCode && Number.isFinite(o.cost))
   if (!option) return { error: 'Esa opción ya no está disponible. Vuelve a ver las opciones.' }
-  if (option.cost > expectedCost + 1) return { error: `El precio cambió a ${fmt(option.cost)}. Vuelve a ver las opciones.` }
+  if (!(option.cost <= expectedCost + 1)) return { error: `El precio cambió a ${fmt(option.cost)}. Vuelve a ver las opciones.` }
   return { option }
 }
 

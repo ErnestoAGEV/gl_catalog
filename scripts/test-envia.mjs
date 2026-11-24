@@ -34,6 +34,8 @@ assert.equal(req.packages[0].type, 'envelope'); assert.equal(req.packages[0].wei
 const gen = { meta: 'generate', data: [{ carrier: 'dhl', service: 'express', shipmentId: 1, trackingNumber: '7700', trackUrl: 'https://t/7700', label: 'https://l/7700.pdf', additionalFiles: [], totalPrice: '210.50', currentBalance: 0, currency: 'MXN' }] }
 assert.deepEqual(parseLabel(gen), { trackingNumber: '7700', trackUrl: 'https://t/7700', labelUrl: 'https://l/7700.pdf', cost: 210.5, carrier: 'dhl', service: 'express' })
 assert.equal(classifyGenerate(200, gen).kind, 'ok')
+assert.deepEqual(parseLabel({ data: [{ trackingNumber: 7700, label: 'u', totalPrice: 'x' }] }).trackingNumber, '7700')
+assert.equal(parseLabel({ data: [{ trackingNumber: '1', label: 'u', totalPrice: 'x' }] }).cost, null)
 assert.deepEqual(classifyGenerate(200, { data: [{ trackingNumber: '7701' }] }), { kind: 'unknown', trackingNumber: '7701' })
 assert.equal(classifyGenerate(200, { meta: 'generate', data: [] }).kind, 'unknown')
 for (const s of [502, 408, 429]) assert.equal(classifyGenerate(s, null).kind, 'unknown')
@@ -48,6 +50,8 @@ assert.equal(rejectLog(400, err), 'status=400 meta=error code=1129 msg=Insuffici
 
 const args = { baseUrl: 'https://api-test.envia.com', apiKey: 'k', body: {} }
 assert.deepEqual(await generateLabel({ ...args, fetchFn: async () => { throw new TypeError('network') } }), { kind: 'unknown' })
-assert.deepEqual(await generateLabel({ ...args, timeoutMs: 10, fetchFn: (_u, { signal }) => new Promise((_, rej) => signal.addEventListener('abort', () => rej(new Error('abort')))) }), { kind: 'unknown' })
+let sig
+assert.deepEqual(await generateLabel({ ...args, timeoutMs: 10, fetchFn: (_u, { signal }) => (sig = signal, new Promise((_, rej) => signal.addEventListener('abort', () => rej(new Error('abort'))))) }), { kind: 'unknown' })
+assert.equal(sig.aborted, true)
 assert.equal((await generateLabel({ ...args, fetchFn: async () => new Response(JSON.stringify(gen), { status: 200 }) })).kind, 'ok')
 assert.equal((await generateLabel({ ...args, fetchFn: async () => new Response('<html>', { status: 200 }) })).kind, 'unknown')
