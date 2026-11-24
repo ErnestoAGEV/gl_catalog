@@ -15,9 +15,9 @@
 --   2. Crear uno: nombre "supabase-catalogo", rama "main"
 --   3. Copiar la URL que te da (queda como
 --      https://api.vercel.com/v1/integrations/deploy/prj_XXXX/YYYY)
---   4. Pegarla abajo, en las DOS lineas del paso 2 que dicen PEGA_AQUI_LA_URL
---      (solo en el paso 2: la funcion del paso 3 no la lleva escrita, la lee
---      de Vault)
+--   4. Pegarla abajo, en el paso 2, donde dice PEGA_AQUI_LA_URL (la funcion
+--      del paso 3 no la lleva escrita, la lee de Vault). Si la dejas sin
+--      pegar, la URL ya guardada se conserva.
 --
 -- Esa URL es una llave: quien la tenga puede lanzar despliegues. Por eso se
 -- guarda en Vault y no suelta dentro de la función.
@@ -28,32 +28,30 @@
 CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
 CREATE EXTENSION IF NOT EXISTS supabase_vault WITH SCHEMA vault;
 
--- 2. La URL, guardada en Vault. Idempotente: si ya existe, la actualiza en vez
---    de fallar por nombre duplicado, para que puedas correr esto las veces que
---    haga falta (por ejemplo si regeneras el hook en Vercel).
+-- 2. La URL, guardada en Vault. Se crea solo si no existe, y se actualiza solo
+--    si lo que pegaste es una URL de Vercel: re-correr el archivo con
+--    PEGA_AQUI_LA_URL ya no pisa la URL buena (por ejemplo al regenerar el
+--    hook en Vercel, pega la nueva y vuelve a correrlo).
 DO $vault$
 DECLARE
+  nueva text := 'PEGA_AQUI_LA_URL';
   id_existente uuid;
 BEGIN
   SELECT id INTO id_existente FROM vault.secrets WHERE name = 'vercel_deploy_hook';
   IF id_existente IS NULL THEN
-    PERFORM vault.create_secret(
-      'PEGA_AQUI_LA_URL',
-      'vercel_deploy_hook',
-      'Deploy Hook de Vercel para reconstruir el catalogo'
-    );
-  ELSE
-    PERFORM vault.update_secret(id_existente, 'PEGA_AQUI_LA_URL');
+    PERFORM vault.create_secret(nueva, 'vercel_deploy_hook', 'Deploy Hook de Vercel para reconstruir el catalogo');
+  ELSIF nueva LIKE 'https://api.vercel.com/%' THEN
+    PERFORM vault.update_secret(id_existente, nueva);
   END IF;
 END;
 $vault$;
 
--- 3. La función que dispara el despliegue.
-CREATE OR REPLACE FUNCTION public.trigger_rebuild()
-RETURNS trigger
+-- 3. La llamada a Vercel. Nadie la ejecuta por /rpc: solo los triggers de abajo.
+CREATE OR REPLACE FUNCTION public.request_rebuild()
+RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, extensions, vault
+SET search_path = public, extensions, vault, pg_temp
 AS $$
 DECLARE
   hook_url text;
@@ -63,14 +61,53 @@ BEGIN
   WHERE name = 'vercel_deploy_hook';
 
   IF hook_url IS NULL OR hook_url NOT LIKE 'https://api.vercel.com/%' THEN
-    RAISE WARNING 'trigger_rebuild: la URL del Deploy Hook falta o no es de Vercel (%)', hook_url;
-    RETURN NULL;
+    RAISE WARNING 'request_rebuild: la URL del Deploy Hook falta o no es de Vercel (%)', hook_url;
+    RETURN;
   END IF;
 
   PERFORM net.http_post(url := hook_url, body := '{}'::jsonb);
+END;
+$$;
+REVOKE ALL ON FUNCTION public.request_rebuild() FROM public, anon, authenticated;
+
+-- Trigger genérico (lo usa shipping_settings_rebuild de shipping.sql). Ese es
+-- FOR EACH ROW con WHEN (old.free_shipping_min IS DISTINCT FROM new...), y un
+-- trigger por fila nunca dispara con 0 filas: no necesita el filtro de abajo.
+-- DEFINER para poder llamar a request_rebuild(), que nadie más ejecuta.
+CREATE OR REPLACE FUNCTION public.trigger_rebuild()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  PERFORM public.request_rebuild();
   RETURN NULL;
 END;
 $$;
+REVOKE ALL ON FUNCTION public.trigger_rebuild() FROM public, anon, authenticated;
+
+-- Para products: un trigger por sentencia dispara aunque la sentencia no toque
+-- ninguna fila (un PATCH vacío por la API lanzaba un despliegue). Solo se
+-- despliega si la tabla de transición trae filas. Cada tabla de transición
+-- existe solo en su operación; plpgsql prepara cada sentencia al ejecutarla,
+-- así que la rama que no corre no falla.
+CREATE OR REPLACE FUNCTION public.products_rebuild()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  IF tg_op = 'DELETE' THEN
+    IF EXISTS (SELECT 1 FROM old_rows) THEN PERFORM public.request_rebuild(); END IF;
+  ELSE
+    IF EXISTS (SELECT 1 FROM new_rows) THEN PERFORM public.request_rebuild(); END IF;
+  END IF;
+  RETURN NULL;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.products_rebuild() FROM public, anon, authenticated;
 
 -- 4. Los triggers. A nivel de sentencia (FOR EACH STATEMENT), no de fila: así
 --    una edición de 40 productos de golpe lanza un despliegue, no cuarenta.
@@ -80,20 +117,24 @@ DROP TRIGGER IF EXISTS products_rebuild_delete ON public.products;
 
 CREATE TRIGGER products_rebuild_insert
 AFTER INSERT ON public.products
-FOR EACH STATEMENT EXECUTE FUNCTION public.trigger_rebuild();
+REFERENCING NEW TABLE AS new_rows
+FOR EACH STATEMENT EXECUTE FUNCTION public.products_rebuild();
 
 CREATE TRIGGER products_rebuild_update
 AFTER UPDATE ON public.products
-FOR EACH STATEMENT EXECUTE FUNCTION public.trigger_rebuild();
+REFERENCING NEW TABLE AS new_rows
+FOR EACH STATEMENT EXECUTE FUNCTION public.products_rebuild();
 
 CREATE TRIGGER products_rebuild_delete
 AFTER DELETE ON public.products
-FOR EACH STATEMENT EXECUTE FUNCTION public.trigger_rebuild();
+REFERENCING OLD TABLE AS old_rows
+FOR EACH STATEMENT EXECUTE FUNCTION public.products_rebuild();
 
--- ponytail: un despliegue por sentencia. Si algún día editas productos uno a
--- uno durante un rato, serán varios builds seguidos; ahí tocaría una tabla de
--- "pendiente de publicar" con un cron cada 15 minutos. Mientras el catálogo se
--- toque a ratos y no en continuo, esto sobra.
+-- ponytail: un despliegue por sentencia que toque al menos una fila (las de 0
+-- filas ya no despliegan). Si algún día editas productos uno a uno durante un
+-- rato, serán varios builds seguidos; ahí tocaría una tabla de "pendiente de
+-- publicar" con un cron cada 15 minutos. Mientras el catálogo se toque a ratos
+-- y no en continuo, esto sobra.
 
 -- 5. Comprobación: edita un producto desde el admin y mira Vercel →
 --    Deployments. Debería aparecer uno nuevo con origen "Deploy Hook" en menos

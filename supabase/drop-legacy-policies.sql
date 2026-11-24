@@ -31,12 +31,10 @@ drop policy if exists "Public Access to Upload" on storage.objects;
 drop policy if exists "Public Access to Read Images" on storage.objects; -- duplicada de products_bucket_public_read
 
 -- Funciones de trigger: nadie las llama por /rpc (los triggers siguen disparando)
-revoke execute on function public.deduct_stock_on_order() from public, anon, authenticated;
 revoke execute on function public.send_welcome_email() from public, anon, authenticated;
 revoke execute on function public.trigger_rebuild() from public, anon, authenticated;
 revoke execute on function public.set_updated_at() from public, anon, authenticated;
 
-alter function public.deduct_stock_on_order() set search_path = public, pg_temp;
 alter function public.set_updated_at() set search_path = public, pg_temp;
 alter function public.phone_key(text) set search_path = public, pg_temp;
 alter function public.newsletter_email_json(text, uuid, text, text) set search_path = public, pg_temp;

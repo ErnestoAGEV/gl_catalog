@@ -12,6 +12,10 @@
 
 begin;
 
+-- Los pedidos web no descuentan inventario: la tienda funciona como catalogo.
+drop trigger if exists tr_deduct_stock_on_order on public.orders;
+drop function if exists public.deduct_stock_on_order();
+
 -- ── Cupones de primera compra (WELCOME10) ───────────────────────────────
 -- Un numero de WhatsApp solo puede usarlos en un pedido no cancelado.
 alter table public.coupons add column if not exists first_purchase_only boolean not null default false;
@@ -201,7 +205,8 @@ begin
     end if;
 
     -- Misma forma que armaba el navegador, incluido productId nulo cuando el
-    -- stock es infinito: el trigger de stock depende de eso para no descontar.
+    -- stock es infinito: ya no hay descuento de stock, pero se conserva por
+    -- compatibilidad (pedidos viejos y la foto en order_staff_email).
     -- Parentesis: sin ellos el || de la promo agrega un elemento suelto al arreglo
     v_lines := v_lines || (jsonb_build_object(
       'productId',       case when v_unlimited then null else v_product.id end,
