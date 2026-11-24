@@ -28,7 +28,7 @@ Se quiere: que el cliente vea el costo del envío en el checkout al instante, y 
 
 5. Empaque: **sobre por defecto**; **caja** si el pedido trae una categoría marcada "caja" o si el peso total pasa el límite de sobre.
 6. **Envío gratis (ya existe en el sitio):** cuando aplica (`BRAND.freeShippingMin` = $1,499 o cupón con `free_shipping`, con la misma regla que hoy usa el carrito, evaluada en el servidor), **Estándar cuesta $0** y **Express cobra solo la diferencia** entre el precio redondeado de Express y el de Estándar. La guía la paga la tienda. Los textos de "Envío gratis desde $1,499" se quedan.
-7. **Paqueterías permitidas:** lista inicial **Estafeta, FedEx, DHL, Paquetexpress y UPS**; J&T Express y 99minutos disponibles pero apagadas; nunca Castores. Lista editable (prender/apagar) en Ajustes de envío; ambas funciones filtran por ella.
+7. **Paqueterías permitidas:** lista inicial **Estafeta, FedEx, DHL, Paquetexpress, UPS y J&T Express**; 99minutos disponible pero apagada; nunca Castores. Lista editable (prender/apagar) en Ajustes de envío; ambas funciones filtran por ella.
 
 ## Objetivos
 
