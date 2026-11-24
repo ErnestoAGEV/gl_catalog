@@ -117,7 +117,7 @@ export function pageAdminShipping() {
             <div class="space-y-1">
               <h2 class="font-display font-bold text-ink text-[16px]">Envío gratis</h2>
               <label class="text-[11px] text-faint" for="sh-free-min">Monto mínimo de compra (MXN)</label>
-              <input id="sh-free-min" name="free_shipping_min" type="number" min="0" max="100000" step="1" required value="${esc(s.free_shipping_min)}" class="adm-fld tnum w-36" onwheel="this.blur()" />
+              <input id="sh-free-min" name="free_shipping_min" type="number" min="1" max="100000" step="1" required value="${esc(s.free_shipping_min)}" class="adm-fld tnum w-36" onwheel="this.blur()" />
               <p class="text-[12px] text-faint">Al guardarlo, la tienda se vuelve a publicar con el nuevo monto en unos minutos.</p>
             </div>
 
@@ -178,11 +178,11 @@ export function pageAdminShipping() {
         if (!inRange(default_grams, 1, 30000)) return fail('El peso por defecto debe estar entre 1 y 30000 g.')
 
         const free_shipping_min = num('free_shipping_min')
-        if (!form.elements.free_shipping_min.value.trim() || !inRange(free_shipping_min, 0, 100000)) return fail('El envío gratis debe ser un monto entero entre 0 y 100000.')
+        if (!form.elements.free_shipping_min.value.trim() || !inRange(free_shipping_min, 1, 100000)) return fail('El envío gratis debe ser un monto entero entre 1 y 100000.')
 
         submitBtn.disabled = true
         let error
-        try { ({ error } = await saveShippingSettings({ carriers, envelope, box, origin, default_grams, free_shipping_min,default_needs_box: form.elements.default_needs_box.checked })) } catch (e) { error = e } finally { submitBtn.disabled = false }
+        try { ({ error } = await saveShippingSettings({ carriers, envelope, box, origin, default_grams, free_shipping_min, default_needs_box: form.elements.default_needs_box.checked })) } catch (e) { error = e } finally { submitBtn.disabled = false }
         if (error) return fail('No se pudieron guardar los ajustes.')
         showToast('Ajustes guardados', 'success')
       })

@@ -58,14 +58,15 @@ try {
     method: 'POST',
     headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
     body: '{}',
+    signal: AbortSignal.timeout(5000),
   })
-  const n = Number(await res.json())
-  if (!res.ok || !Number.isFinite(n)) throw new Error(`HTTP ${res.status}`)
-  FREE_SHIPPING_MIN = n
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  FREE_SHIPPING_MIN = parseFreeShippingMin(true, await res.json())
 } catch (err) {
   console.warn(`[prerender] No pude leer free_shipping_min (${err.message}); uso 1499`)
 }
 globalThis.__FREE_SHIPPING_MIN__ = FREE_SHIPPING_MIN
+const { parseFreeShippingMin } = await import('../src/utils/freeShipping.js')
 const { categoryLabel, getSeoForRoute } = await import('../src/core/routeSeo.js')
 const { infoPages } = await import('../src/pages/info/infoData.js')
 
@@ -96,7 +97,7 @@ const returnPolicy = {
   merchantReturnDays: 8,
   returnMethod: 'https://schema.org/ReturnByMail',
   refundType: 'https://schema.org/ExchangeRefund',
-  returnFees: 'https://schema.org/ReturnShippingFees',
+  returnFees: 'https://schema.org/ReturnFeesCustomerResponsibility',
 }
 
 // Google pide priceValidUntil en la oferta y avisa cuando falta. Un ano desde
@@ -584,6 +585,8 @@ try {
 } catch (err) {
   console.warn('[prerender] site_content no disponible; la home queda con el snapshot:', err.message)
 }
+// El marquee por defecto de index.html trae el monto fijo: siempre se actualiza
+homeShellContent = homeShellContent.replace(/\$1499\b/g, () => `$${FREE_SHIPPING_MIN.toLocaleString('es-MX')}`)
 
 routes.push({
   path: '/',
@@ -1205,7 +1208,6 @@ Facebook: ${FACEBOOK_URL}
 ## Datos que conviene citar bien
 
 - Envío: a todo México, costo según tu código postal; gratis desde $${FREE_SHIPPING_MIN.toLocaleString('es-MX')} MXN. Recíbelo en 2 a 6 días hábiles.
-- Entrega en ${3} a ${4} días hábiles contados desde que se confirma el pedido.
 - Recoger en tienda no cuesta nada.
 - No hay reembolso en efectivo: solo cambio de prenda, dentro de 8 días desde
   la entrega y con etiquetas. Si el error fue de la tienda, el envío lo paga

@@ -7,6 +7,7 @@ import { headerSearchButtons, headerSearchForm, headerSearchPanel } from './head
 import { lockScroll, unlockScroll } from '../utils/dom.js'
 import { brandIndex } from '../utils/brands.js'
 import { escapeHtml } from '../utils/sanitize.js'
+import { formatMoney } from '../utils/format.js'
 
 const CATEGORY_LINKS = [
   ['Camisas', 'Camisas'], ['Polos', 'Polos'], ['Jeans', 'Pantalones'], ['Perfumes', 'Perfumes'],
@@ -110,7 +111,7 @@ function container(children, theme = 'dark') {
   </div>`
 }
 
-const MARQUEE_DEFAULT = `★ Envío gratis desde $${BRAND.freeShippingMin} MXN — Nueva temporada 2026 — Atención personalizada por WhatsApp — 2 sucursales en Colima — Usa WELCOME10 · 10% de descuento en tu primera compra — `
+const MARQUEE_DEFAULT = `★ Envío gratis desde ${formatMoney(BRAND.freeShippingMin)} MXN — Nueva temporada 2026 — Atención personalizada por WhatsApp — 2 sucursales en Colima — Usa WELCOME10 · 10% de descuento en tu primera compra — `
 
 /** <li> de las marcas con pagina propia, para el pie. Vacio hasta que llegan los productos. */
 export function footerBrandsHtml(products) {

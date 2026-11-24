@@ -117,4 +117,8 @@ grant execute on function public.free_shipping_min() to anon, authenticated;
 -- Al cambiar el minimo, se republica la tienda (usa trigger_rebuild de deploy-hook.sql)
 drop trigger if exists shipping_settings_rebuild on public.shipping_settings;
 create trigger shipping_settings_rebuild after update of free_shipping_min on public.shipping_settings
-  for each statement execute function public.trigger_rebuild();
+  for each row when (old.free_shipping_min is distinct from new.free_shipping_min)
+  execute function public.trigger_rebuild();
+
+-- Los ajustes de envio los escriben admins (authenticated) y el service role; anon solo lee.
+revoke insert, update, delete, truncate on public.shipping_settings, public.shipping_category_weights, public.shipping_quotes from anon;
