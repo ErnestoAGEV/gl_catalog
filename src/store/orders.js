@@ -7,7 +7,7 @@ import { ensureAdminAccess } from './auth.js'
  * `products` y revalida el cupon antes de insertar. Aca solo se dice QUE se
  * quiere comprar. Ver supabase/place-order.sql
  */
-export async function saveOrder({ name, whatsapp, email, paymentMethod, deliveryMethod, address, items, couponCode, expectedTotal }) {
+export async function saveOrder({ name, whatsapp, email, paymentMethod, deliveryMethod, address, items, couponCode, expectedTotal, shippingQuoteId, shippingTier, addressParts }) {
   if (!supabase) return { error: 'No hay conexión a la base de datos' }
   const { error } = await supabase.rpc('place_order', {
     p_customer_name: name,
@@ -20,6 +20,9 @@ export async function saveOrder({ name, whatsapp, email, paymentMethod, delivery
     p_customer_email: email || null,
     // Si la promo cambio con la pagina abierta, la base rechaza en vez de cobrar otro total
     p_expected_total: expectedTotal ?? null,
+    p_shipping_quote_id: shippingQuoteId || null,
+    p_shipping_tier: shippingQuoteId ? shippingTier : null,
+    p_address_parts: addressParts || null,
   })
   return { error }
 }
