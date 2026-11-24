@@ -124,11 +124,11 @@ begin
     || '<p style="margin:0;font-size:15px;line-height:1.6">Subtotal: ' || money_mx(o.subtotal)
     || case when coalesce(o.discount, 0) > 0 then '<br>Descuento' || case when o.coupon_code is not null then ' (' || html_esc(o.coupon_code) || ')' else '' end || ': -' || money_mx(o.discount) else '' end
     || case when v_quoted then
-         '<br>Envío (' || case o.shipping_tier when 'express' then 'Express' else 'Estándar' end
-         || case when o.shipping_carrier is not null then ' · ' || html_esc(case o.shipping_carrier
+         '<br>Envío (' || case when o.shipping_carrier = 'local' then '' else case o.shipping_tier when 'express' then 'Express' else 'Estándar' end end
+         || case when o.shipping_carrier = 'local' then 'Entrega local' when o.shipping_carrier is not null then ' · ' || html_esc(case o.shipping_carrier
               when 'estafeta' then 'Estafeta' when 'fedex' then 'FedEx' when 'dhl' then 'DHL'
               when 'paquetexpress' then 'Paquetexpress' when 'ups' then 'UPS'
-              when 'jtexpress' then 'J&T Express' when '99minutos' then '99minutos'
+              when 'jtexpress' then 'J&T Express' when '99minutos' then '99minutos' when 'local' then 'Entrega local'
               else o.shipping_carrier end) else '' end
          || '): ' || case when o.shipping_cost = 0 then 'Gratis' else money_mx(o.shipping_cost) end
          || '<br><b>Total a cobrar: ' || money_mx(v_total) || '</b>'

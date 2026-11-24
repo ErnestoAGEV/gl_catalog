@@ -1,5 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { buildPackage, pickTiers, cartKey, isMxZip, MX_STATES } from '../_shared/shipping.js'
+import { buildPackage, pickTiers, localTiers, cartKey, isMxZip, MX_STATES } from '../_shared/shipping.js'
 import { rateCarrier } from '../_shared/envia.js'
 
 const ORIGINS = ['https://www.glboutique.com.mx', 'https://glboutique.com.mx', 'http://localhost:5173']
@@ -68,8 +68,12 @@ Deno.serve(async (req) => {
     const weights = Object.fromEntries(ws.data.map((w) => [w.category, w]))
 
     const pkg = buildPackage(items.map((i) => ({ type: typeOf[i.productId], qty: i.qty })), weights, settings)
-    if (!pkg) return json({ fallback: true })
+    // Entrega local: la hace la tienda, no importa si el paquete cabe en Envia.
+    const local = localTiers(settings, zip)
+    if (!pkg && !local) return json({ fallback: true })
 
+    let tiers = local
+    if (!tiers) {
     const baseUrl = Deno.env.get('ENVIA_BASE_URL'), apiKey = Deno.env.get('ENVIA_API_KEY')
     if (!baseUrl || !apiKey) return json({ fallback: true })
     // Envia exige estos campos en destino; solo conocemos CP/estado/ciudad (la etiqueta real se genera después con la dirección completa).
@@ -79,8 +83,9 @@ Deno.serve(async (req) => {
     results.forEach((r) => r.status === 'rejected' && console.error('envia', r.reason?.message))
     const rates = results.flatMap((r) => (r.status === 'fulfilled' ? r.value : []))
 
-    const tiers = pickTiers(rates)
+    tiers = pickTiers(rates)
     if (!tiers) return json({ fallback: true })
+    }
 
     const { error } = await db.from('shipping_quotes').update({ package: pkg, standard: tiers.standard, express: tiers.express }).eq('id', attempt.id)
     if (error) return json({ fallback: true })
