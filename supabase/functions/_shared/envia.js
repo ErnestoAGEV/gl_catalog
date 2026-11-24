@@ -116,7 +116,8 @@ export async function generateLabel({ baseUrl, apiKey, body, fetchFn = fetch, ti
     const text = await res.text()
     let json = null
     try { json = JSON.parse(text) } catch { /* cuerpo no-JSON */ }
-    return classifyGenerate(res.status, json)
+    // status/json para registrar el rechazo con rejectLog (nunca el cuerpo enviado)
+    return { ...classifyGenerate(res.status, json), status: res.status, json }
   } catch {
     return { kind: 'unknown' }
   } finally {

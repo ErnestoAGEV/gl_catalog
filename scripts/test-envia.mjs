@@ -55,3 +55,5 @@ assert.deepEqual(await generateLabel({ ...args, timeoutMs: 10, fetchFn: (_u, { s
 assert.equal(sig.aborted, true)
 assert.equal((await generateLabel({ ...args, fetchFn: async () => new Response(JSON.stringify(gen), { status: 200 }) })).kind, 'ok')
 assert.equal((await generateLabel({ ...args, fetchFn: async () => new Response('<html>', { status: 200 }) })).kind, 'unknown')
+const rej = await generateLabel({ ...args, fetchFn: async () => new Response(JSON.stringify(err), { status: 400 }) })
+assert.equal(rej.kind, 'rejected'); assert.equal(rejectLog(rej.status, rej.json), 'status=400 meta=error code=1129 msg=Insufficient balance')
