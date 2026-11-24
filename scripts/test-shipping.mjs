@@ -17,6 +17,9 @@ assert.equal(t.standard.carrier, 'estafeta'); assert.equal(t.standard.price, 190
 assert.equal(t.express.carrier, 'dhl'); assert.equal(t.express.price, 230)
 assert.equal(pickTiers([r('estafeta', 150, 3), r('fedex', 200, 3)]).express, null)      // no llega antes
 assert.equal(pickTiers([r('estafeta', 150, 2), r('fedex', 200, null)]).express, null)   // días desconocidos no son Express
+assert.equal(pickTiers([r('std', 100, 5), r('a', 150, 4), r('b', 200, 1)]).express.carrier, 'b')   // Express = la de menos días, no la más barata
+let t2 = pickTiers([r('a', 186, 4), r('b', 189, 2)])
+assert.equal(t2.standard.carrier, 'b'); assert.equal(t2.express, null)   // empate de precio redondeado -> menos días
 assert.equal(pickTiers([]), null)
 
 assert.equal(isFreeShipping(1499, null, 1499), true); assert.equal(isFreeShipping(1498.99, null, 1499), false); assert.equal(isFreeShipping(10, { freeShipping: true }, 1499), true)

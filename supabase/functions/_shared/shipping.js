@@ -23,10 +23,12 @@ export function buildPackage(items, weights, settings) {
 export function pickTiers(rates) {
   const rounded = rates.map((r) => ({ ...r, cost: r.price, price: roundUp5(r.price) }))
   if (!rounded.length) return null
-  const standard = rounded.reduce((a, b) => (b.price < a.price ? b : a))
-  // Express: llega estrictamente antes que Standard; días desconocidos no cuentan.
+  const d = (r) => r.days ?? Infinity
+  // Standard: precio redondeado; empate -> menos días, luego menor costo original.
+  const standard = rounded.reduce((a, b) => (b.price - a.price || d(b) - d(a) || b.cost - a.cost) < 0 ? b : a)
+  // Express: la de menos días entre las que llegan antes que Standard (empate -> la más barata); días desconocidos no cuentan.
   const faster = standard.days == null ? [] : rounded.filter((r) => r.days != null && r.days < standard.days)
-  const express = faster.length ? faster.reduce((a, b) => (b.price < a.price ? b : a)) : null
+  const express = faster.length ? faster.reduce((a, b) => ((b.days - a.days || b.price - a.price) < 0 ? b : a)) : null
   return { standard, express }
 }
 
