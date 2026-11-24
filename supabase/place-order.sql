@@ -6,7 +6,8 @@
 -- Al final se quita la politica de insert publico: la unica puerta es esta.
 --
 -- Correr en el SQL Editor de Supabase ANTES de desplegar el cliente nuevo.
--- Requiere supabase/promotions.sql (tabla promotions y promo_info).
+-- Requiere supabase/promotions.sql (tabla promotions y promo_info) y
+-- supabase/shipping.sql (shipping_settings, shipping_quotes, columnas de envio).
 -- Es idempotente: se puede volver a correr entero cada vez que cambie.
 
 begin;
@@ -16,8 +17,9 @@ begin;
 alter table public.coupons add column if not exists first_purchase_only boolean not null default false;
 update public.coupons set first_purchase_only = true where code = 'WELCOME10';
 
--- Correo del cliente (se pide en envio a domicilio) y costo de envio que el
--- admin captura despues en el pedido. El total sigue siendo solo productos.
+-- Correo del cliente (se pide en envio a domicilio) y costo de envio: lo cobra
+-- place_order desde la cotizacion, o el admin lo captura despues si no hubo.
+-- El total sigue siendo solo productos.
 alter table public.orders add column if not exists customer_email text;
 alter table public.orders add column if not exists shipping_cost numeric;
 
@@ -26,6 +28,8 @@ alter table public.orders add column if not exists shipping_cost numeric;
 drop function if exists public.place_order(text, text, text, text, text, jsonb, text);
 -- p_expected_total (promociones): la firma de 8 argumentos se reemplaza.
 drop function if exists public.place_order(text, text, text, text, text, jsonb, text, text);
+-- Cotizacion de envio (p_shipping_quote_id, p_shipping_tier, p_address_parts): se reemplaza la de 9.
+drop function if exists public.place_order(text, text, text, text, text, jsonb, text, text, numeric);
 drop function if exists public.coupon_first_purchase_ok(text, text);
 
 -- Clave para comparar telefonos: solo digitos, sin el 00 internacional, y los
@@ -55,7 +59,10 @@ create or replace function public.place_order(
   p_items             jsonb,          -- [{ "productId": ..., "size": ..., "color": ..., "qty": 1 }]
   p_coupon_code       text default null,
   p_customer_email    text default null,
-  p_expected_total    numeric default null  -- total que vio el cliente; si no cuadra, no se guarda
+  p_expected_total    numeric default null, -- total que vio el cliente (productos + envio); si no cuadra, no se guarda
+  p_shipping_quote_id uuid    default null, -- shipping_quotes.id; sin cotizacion el envio queda null, como antes
+  p_shipping_tier     text    default null, -- 'standard' | 'express'
+  p_address_parts     jsonb   default null  -- { zip, ... } la direccion por campos; p_address sigue igual
 )
 returns public.orders
 language plpgsql
@@ -83,6 +90,13 @@ declare
   v_email      text;
   v_recent     int;
   v_order      public.orders;
+  v_quote      public.shipping_quotes%rowtype;
+  v_tier_rate  jsonb;          -- standard o express de la cotizacion
+  v_tier       text;
+  v_ship       numeric;        -- null = sin cotizacion (el admin lo captura)
+  v_free       boolean;
+  v_cart_key   text;
+  v_parts      jsonb;
 begin
   -- ── Contacto ──────────────────────────────────────────────────────────
   -- translate() quita < y >, igual que sanitizeText en el cliente
@@ -214,17 +228,70 @@ begin
   v_discount := least(greatest(round(v_discount, 2), 0), round(v_subtotal, 2));
   v_total    := round(v_subtotal, 2) - v_discount;
 
+  -- ── Envio ─────────────────────────────────────────────────────────────
+  -- Solo envio a domicilio con cotizacion; si no, v_ship queda null como antes.
+  if p_shipping_quote_id is not null and p_delivery_method = 'Envío a domicilio' then
+    select * into v_quote from public.shipping_quotes where id = p_shipping_quote_id;
+    if not found or v_quote.expires_at < now() then
+      raise exception 'La cotizacion de envio vencio. Vuelve a cotizar.' using errcode = '22023';
+    end if;
+
+    v_tier := p_shipping_tier;
+    v_tier_rate := case v_tier when 'standard' then v_quote.standard when 'express' then v_quote.express end;
+    -- jsonb 'null' tambien cuenta como sin tarifa; Express gratis necesita el precio de Standard
+    if jsonb_typeof(v_tier_rate) is distinct from 'object'
+       or jsonb_typeof(v_quote.standard) is distinct from 'object' then
+      raise exception 'Opcion de envio invalida.' using errcode = '22023';
+    end if;
+
+    -- Misma regla que cartKey() en supabase/functions/_shared/shipping.js:
+    -- qty sumada por productId, orden por codigo de caracter, "id:qty|id:qty"
+    select string_agg(pid || ':' || q, '|' order by pid collate "C") into v_cart_key
+      from (select e->>'productId' as pid, sum((e->>'qty')::int) as q
+              from jsonb_array_elements(p_items) e
+             group by 1) t;
+    -- Sin p_address_parts el zip es null y tambien cae aqui
+    if v_cart_key is distinct from v_quote.cart_key
+       or v_quote.zip is distinct from (p_address_parts->>'zip') then
+      raise exception 'Tu carrito cambio. Vuelve a cotizar el envio.' using errcode = '22023';
+    end if;
+
+    -- Misma regla que isFreeShipping()/chargeFor(): gratis cubre Standard,
+    -- Express cobra solo la diferencia.
+    v_free := coalesce(v_coupon.free_shipping, false)
+              or coalesce(v_subtotal >= (select s.free_shipping_min from public.shipping_settings s where s.id = 1), false);
+    v_ship := case
+      when v_free and v_tier = 'express'
+        then (v_tier_rate->>'price')::numeric - (v_quote.standard->>'price')::numeric
+      when v_free then 0
+      else (v_tier_rate->>'price')::numeric
+    end;
+    -- Una tarifa sin precio no debe guardar el pedido con envio null (gratis)
+    if v_ship is null or v_ship < 0 then
+      raise exception 'Opcion de envio invalida.' using errcode = '22023';
+    end if;
+  end if;
+
+  -- La direccion por campos: cada valor como texto saneado, igual que p_address
+  if jsonb_typeof(p_address_parts) = 'object' then
+    select jsonb_object_agg(left(key, 40), left(translate(value #>> '{}', '<>', ''), 200))
+      into v_parts
+      from (select key, value from jsonb_each(p_address_parts) limit 20) t;
+  end if;
+
   -- La promo pudo empezar o terminar con la pagina abierta: mejor no guardar
   -- que guardar un total distinto al que el cliente acepto.
-  if p_expected_total is not null and abs(v_total - p_expected_total) >= 0.5 then
+  -- coalesce: un v_ship null apagaria la revision.
+  if p_expected_total is not null and abs(v_total + coalesce(v_ship, 0) - p_expected_total) >= 0.5 then
     -- detail lleva el total real: el checkout lo muestra si el reloj del equipo no cuadra
     raise exception 'Los precios cambiaron. Revisa tu bolsa.'
-      using errcode = '22023', detail = v_total::text;
+      using errcode = '22023', detail = (v_total + coalesce(v_ship, 0))::text;
   end if;
 
   insert into public.orders (
     customer_name, customer_whatsapp, customer_email, payment_method, delivery_method,
-    address, cart_items, subtotal, discount, coupon_code, total, status
+    address, cart_items, subtotal, discount, coupon_code, total, status,
+    shipping_cost, shipping_tier, shipping_carrier, shipping_service, shipping_quote_id, address_parts
   ) values (
     v_name,
     v_whatsapp,
@@ -238,7 +305,13 @@ begin
     -- El envio gratis tambien es usar el cupon, aunque el porcentaje de 0 (todo en promo)
     case when v_discount > 0 or v_coupon.free_shipping then v_coupon.code else null end,
     v_total,
-    'pendientedepago'
+    'pendientedepago',
+    v_ship,
+    case when v_ship is not null then v_tier end,
+    case when v_ship is not null then left(v_tier_rate->>'carrier', 80) end,
+    case when v_ship is not null then left(v_tier_rate->>'service', 80) end,
+    case when v_ship is not null then p_shipping_quote_id end,
+    v_parts
   )
   returning * into v_order;
 
@@ -247,8 +320,8 @@ end;
 $$;
 
 -- Solo se ejecuta desde el sitio; nadie mas hereda el permiso.
-revoke all on function public.place_order(text, text, text, text, text, jsonb, text, text, numeric) from public;
-grant execute on function public.place_order(text, text, text, text, text, jsonb, text, text, numeric) to anon, authenticated;
+revoke all on function public.place_order(text, text, text, text, text, jsonb, text, text, numeric, uuid, text, jsonb) from public;
+grant execute on function public.place_order(text, text, text, text, text, jsonb, text, text, numeric, uuid, text, jsonb) to anon, authenticated;
 
 -- Aviso temprano para el checkout: ¿este WhatsApp o correo todavia puede usar
 -- el cupon? Solo devuelve si/no; no expone pedidos ni datos del cliente.
