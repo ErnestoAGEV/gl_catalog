@@ -11,8 +11,6 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { categoryLabel, getSeoForRoute } from '../src/core/routeSeo.js'
-import { infoPages } from '../src/pages/info/infoData.js'
 import { INSTAGRAM_URL, FACEBOOK_URL, STORE_PHONE, stores, heroSlides as defaultHeroSlides } from '../src/pages/home/homeData.js'
 import { resolveHomeContent } from '../src/pages/home/homeContent.js'
 import { heroLeftHtml, heroRightHtml, categoriesHtml, statsHtml, manifestoHtml, slideCountHtml, reviewsHtml } from '../src/pages/home/homeSections.js'
@@ -51,6 +49,26 @@ if (!process.env.VITE_SUPABASE_URL && existsSync('.env')) {
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL
 const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY
 
+// Minimo de envio gratis (shipping_settings, via RPC). routeSeo e infoData lo leen
+// de globalThis al cargarse, por eso se importan despues de fijarlo.
+let FREE_SHIPPING_MIN = 1499
+try {
+  if (!SUPABASE_URL) throw new Error('sin VITE_SUPABASE_URL')
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/free_shipping_min`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+    body: '{}',
+  })
+  const n = Number(await res.json())
+  if (!res.ok || !Number.isFinite(n)) throw new Error(`HTTP ${res.status}`)
+  FREE_SHIPPING_MIN = n
+} catch (err) {
+  console.warn(`[prerender] No pude leer free_shipping_min (${err.message}); uso 1499`)
+}
+globalThis.__FREE_SHIPPING_MIN__ = FREE_SHIPPING_MIN
+const { categoryLabel, getSeoForRoute } = await import('../src/core/routeSeo.js')
+const { infoPages } = await import('../src/pages/info/infoData.js')
+
 // ── Utilidades ──────────────────────────────────────────────────────────────
 
 const escapeHtml = (value) =>
@@ -66,46 +84,8 @@ const jsonLd = (data) =>
 
 const absolute = (path) => new URL(path, BASE_URL).toString()
 
-// Politica comercial real de la tienda. Google Shopping la muestra al comprador,
-// asi que estos numeros tienen que cuadrar con lo que dice la tienda.
-// freeShippingMin duplica el valor de src/utils/config.js (ese usa
-// import.meta.env y no se puede importar desde node).
-const FREE_SHIPPING_MIN = 1499
-const SHIPPING_COST = 150
-
-const shippingDetails = [
-  {
-    '@type': 'OfferShippingDetails',
-    shippingRate: { '@type': 'MonetaryAmount', value: SHIPPING_COST, currency: 'MXN' },
-    shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'MX' },
-    deliveryTime: {
-      '@type': 'ShippingDeliveryTime',
-      handlingTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 1, unitCode: 'DAY' },
-      transitTime: { '@type': 'QuantitativeValue', minValue: 3, maxValue: 4, unitCode: 'DAY' },
-    },
-  },
-  {
-    '@type': 'OfferShippingDetails',
-    shippingRate: {
-      '@type': 'MonetaryAmount',
-      value: 0,
-      currency: 'MXN',
-      // Envio gratis a partir de este subtotal
-      eligibleTransactionVolume: {
-        '@type': 'PriceSpecification',
-        minPrice: FREE_SHIPPING_MIN,
-        priceCurrency: 'MXN',
-      },
-    },
-    shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'MX' },
-    deliveryTime: {
-      '@type': 'ShippingDeliveryTime',
-      handlingTime: { '@type': 'QuantitativeValue', minValue: 0, maxValue: 1, unitCode: 'DAY' },
-      transitTime: { '@type': 'QuantitativeValue', minValue: 3, maxValue: 4, unitCode: 'DAY' },
-    },
-  },
-]
-
+// Las tarifas de envio se configuran en Merchant Center: el JSON-LD ya no lleva
+// shippingDetails con costo fijo (el costo depende del codigo postal).
 // No hay devoluciones con reembolso: solo cambios, dentro de 8 dias desde la
 // entrega, con el envio a cargo del cliente (salvo error de talla nuestro,
 // matiz que schema.org no sabe expresar).
@@ -117,11 +97,6 @@ const returnPolicy = {
   returnMethod: 'https://schema.org/ReturnByMail',
   refundType: 'https://schema.org/ExchangeRefund',
   returnFees: 'https://schema.org/ReturnShippingFees',
-  returnShippingFeesAmount: {
-    '@type': 'MonetaryAmount',
-    value: SHIPPING_COST,
-    currency: 'MXN',
-  },
 }
 
 // Google pide priceValidUntil en la oferta y avisa cuando falta. Un ano desde
@@ -403,7 +378,7 @@ function categoryIntro(category, items) {
   const frases = [
     `Nuestro catálogo incluye ${items.length} ${nombre}${deMarcas}` +
       (detalles.length ? `, ${detalles.join(esPerfume ? ', y ' : ' y ')}.` : '.'),
-    `Enviamos a todo México en 3 a 4 días hábiles. El envío cuesta $${SHIPPING_COST} y es gratis ` +
+    `Enviamos a todo México; recíbelo en 2 a 6 días hábiles. El costo se calcula con tu código postal y es gratis ` +
       `desde $${FREE_SHIPPING_MIN.toLocaleString('es-MX')}.`,
     esPerfume
       ? 'Si no sabes cuál elegir, con gusto te asesoramos por WhatsApp sobre el aroma de cada fragancia.'
@@ -621,7 +596,7 @@ routes.push({
   shell: contentShell(`
             ${breadcrumbNav([{ name: 'Inicio', path: '/' }, { name: 'Tienda', path: '/catalog' }])}
             <h1 class="font-heading font-[800] text-[clamp(40px,7vw,88px)] leading-[0.9] tracking-[-0.03em] mb-6">Tienda</h1>
-            <p class="text-[17px] text-ink/70 max-w-[560px] leading-relaxed mb-10">Contamos con ${products.length} piezas de ropa de marca para hombre: camisas, polos, jeans, playeras, zapatos y perfumes. Enviamos a todo México en 3 a 4 días hábiles.</p>
+            <p class="text-[17px] text-ink/70 max-w-[560px] leading-relaxed mb-10">Contamos con ${products.length} piezas de ropa de marca para hombre: camisas, polos, jeans, playeras, zapatos y perfumes. Enviamos a todo México; recíbelo en 2 a 6 días hábiles.</p>
             <ul class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
               ${categories.map((c) => `<li><a class="ul-link text-[15px] font-medium" href="/categoria/${encodeURIComponent(c)}">${escapeHtml(c)}</a></li>`).join('\n              ')}
             </ul>
@@ -817,7 +792,7 @@ for (const product of products) {
                 <p class="text-[16px] text-ink/70 leading-relaxed mb-6">${escapeHtml(fitNote(product) || productDescription(product))}</p>
                 ${product.sizes?.length ? `<p class="text-[14px] text-ink/60 mb-2">Tallas: ${escapeHtml(product.sizes.join(', '))}</p>` : ''}
                 ${product.colors?.length ? `<p class="text-[14px] text-ink/60 mb-6">Colores: ${escapeHtml(product.colors.join(', '))}</p>` : ''}
-                <p class="text-[14px] text-ink/60">${inStock ? 'Disponible' : 'Agotado'} · Envío a todo México por $${SHIPPING_COST} MXN, gratis desde $${FREE_SHIPPING_MIN.toLocaleString('es-MX')} · Entrega en 3 a 4 días hábiles · Cambios dentro de 8 días · 2 sucursales físicas</p>
+                <p class="text-[14px] text-ink/60">${inStock ? 'Disponible' : 'Agotado'} · Envío a todo México, gratis desde $${FREE_SHIPPING_MIN.toLocaleString('es-MX')} · Recíbelo en 2 a 6 días hábiles · Cambios dentro de 8 días · 2 sucursales físicas</p>
               </div>
             </div>
             ${brandLink(product)}
@@ -856,7 +831,6 @@ for (const product of products) {
           availability: `https://schema.org/${inStock ? 'InStock' : 'OutOfStock'}`,
           itemCondition: 'https://schema.org/NewCondition',
           seller: { '@id': `${BASE_URL}/#marca` },
-          shippingDetails,
           hasMerchantReturnPolicy: returnPolicy,
         },
       },
@@ -909,7 +883,6 @@ for (const product of products) {
                     availability: `https://schema.org/${isInStock(variant) ? 'InStock' : 'OutOfStock'}`,
                     itemCondition: 'https://schema.org/NewCondition',
                     seller: { '@id': `${BASE_URL}/#marca` },
-                    shippingDetails,
                     hasMerchantReturnPolicy: returnPolicy,
                   },
                 }
@@ -1231,7 +1204,7 @@ Facebook: ${FACEBOOK_URL}
 
 ## Datos que conviene citar bien
 
-- Envío: $${SHIPPING_COST} MXN a todo México, gratis desde $${FREE_SHIPPING_MIN.toLocaleString('es-MX')} MXN.
+- Envío: a todo México, costo según tu código postal; gratis desde $${FREE_SHIPPING_MIN.toLocaleString('es-MX')} MXN. Recíbelo en 2 a 6 días hábiles.
 - Entrega en ${3} a ${4} días hábiles contados desde que se confirma el pedido.
 - Recoger en tienda no cuesta nada.
 - No hay reembolso en efectivo: solo cambio de prenda, dentro de 8 días desde

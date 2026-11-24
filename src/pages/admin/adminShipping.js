@@ -1,7 +1,6 @@
 import { getShippingSettings, saveShippingSettings, saveCategoryWeight, deleteCategoryWeight, getState } from '../../store/index.js'
 import { showToast } from '../../utils/toast.js'
 import { escapeHtml, sanitizeText } from '../../utils/sanitize.js'
-import { formatMoney } from '../../utils/format.js'
 import { MX_STATES } from '../../../supabase/functions/_shared/shipping.js'
 import { carrierName } from '../checkout/shippingBlock.js'
 import { confirmDelete } from './adminConfirm.js'
@@ -115,7 +114,12 @@ export function pageAdminShipping() {
               </div>
             </div>
 
-            <p class="text-[12.5px] text-muted bg-canvas rounded-xl2 px-4 py-3">Envío gratis desde ${esc(formatMoney(s.free_shipping_min || 0))}. Este monto se cambia en la configuración del sitio, no aquí.</p>
+            <div class="space-y-1">
+              <h2 class="font-display font-bold text-ink text-[16px]">Envío gratis</h2>
+              <label class="text-[11px] text-faint" for="sh-free-min">Monto mínimo de compra (MXN)</label>
+              <input id="sh-free-min" name="free_shipping_min" type="number" min="0" max="100000" step="1" required value="${esc(s.free_shipping_min)}" class="adm-fld tnum w-36" onwheel="this.blur()" />
+              <p class="text-[12px] text-faint">Al guardarlo, la tienda se vuelve a publicar con el nuevo monto en unos minutos.</p>
+            </div>
 
             <p data-error class="hidden text-[13px] text-bad bg-bad-tint rounded-xl2 px-4 py-2" role="alert"></p>
             <button type="submit" data-submit class="adm-btn adm-btn-primary">Guardar ajustes</button>
@@ -173,9 +177,12 @@ export function pageAdminShipping() {
         const default_grams = num('default_grams')
         if (!inRange(default_grams, 1, 30000)) return fail('El peso por defecto debe estar entre 1 y 30000 g.')
 
+        const free_shipping_min = num('free_shipping_min')
+        if (!form.elements.free_shipping_min.value.trim() || !inRange(free_shipping_min, 0, 100000)) return fail('El envío gratis debe ser un monto entero entre 0 y 100000.')
+
         submitBtn.disabled = true
         let error
-        try { ({ error } = await saveShippingSettings({ carriers, envelope, box, origin, default_grams, default_needs_box: form.elements.default_needs_box.checked })) } catch (e) { error = e } finally { submitBtn.disabled = false }
+        try { ({ error } = await saveShippingSettings({ carriers, envelope, box, origin, default_grams, free_shipping_min,default_needs_box: form.elements.default_needs_box.checked })) } catch (e) { error = e } finally { submitBtn.disabled = false }
         if (error) return fail('No se pudieron guardar los ajustes.')
         showToast('Ajustes guardados', 'success')
       })

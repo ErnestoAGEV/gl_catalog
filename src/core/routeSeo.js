@@ -3,6 +3,7 @@
 
 import { colorPhrase, findProductByPath, isDenim, productBrand, productDescription, productPath, productTitle } from '../utils/productCopy.js'
 import { findBrandBySlug } from '../utils/brands.js'
+import { freeShippingText } from '../utils/freeShipping.js'
 import { safeDecode } from '../utils/sanitize.js'
 import { isPerfumeCategory } from '../pages/admin/adminProductsData.js'
 
@@ -40,7 +41,7 @@ export function getSeoForRoute(path, basePath, state) {
       // El slogan va primero: es lo que se ve en la pestana. Lo de despues es lo
       // que le dice a Google (y a quien lee el resultado) que vende.
       title: 'G&L Boutique | Tu fit perfecto · Ropa de marca para hombre',
-      description: 'Camisas, polos, jeans, zapatos y perfumes de marca para hombre. Envío a todo México, gratis desde $1,499, y atención personal por WhatsApp. Desde 1995.',
+      description: `Camisas, polos, jeans, zapatos y perfumes de marca para hombre. Envío a todo México, gratis desde ${freeShippingText}, y atención personal por WhatsApp. Desde 1995.`,
       canonicalPath: '/',
       robots: 'index,follow',
     }
@@ -72,7 +73,7 @@ export function getSeoForRoute(path, basePath, state) {
     const label = categoryLabel(category)
     const cats = category.split(',').map((c) => c.trim())
     const items = publicos.filter((p) => cats.includes(p.type))
-    let description = `${label} de marca. Enviamos a todo México, gratis desde $1,499, con atención por WhatsApp.`
+    let description = `${label} de marca. Enviamos a todo México, gratis desde ${freeShippingText}, con atención por WhatsApp.`
     if (items.length) {
       // Perfumes sin nombres de casas: ver brandIndex en brands.js
       const cuenta = {}
@@ -83,7 +84,7 @@ export function getSeoForRoute(path, basePath, state) {
         }
       }
       const marcas = Object.keys(cuenta).sort((a, b) => cuenta[b] - cuenta[a]).slice(0, 3)
-      description = `${label}${marcas.length ? `: ${colorPhrase(marcas)}` : ''}. ${priceRange(items)} Enviamos a todo México, gratis desde $1,499.`
+      description = `${label}${marcas.length ? `: ${colorPhrase(marcas)}` : ''}. ${priceRange(items)} Enviamos a todo México, gratis desde ${freeShippingText}.`
     }
     return {
       title: `${label} | G&L`,
@@ -172,7 +173,7 @@ export function getSeoForRoute(path, basePath, state) {
     },
     '/envios': {
       title: 'Envíos y formas de pago | G&L',
-      description: 'Envío a todo México por $150 MXN, gratis desde $1,499. Entrega en 3 a 4 días hábiles. Pago en efectivo, transferencia, tarjeta o link de pago.',
+      description: `Envío a todo México con costo según tu código postal, gratis desde ${freeShippingText}. Recíbelo en 2 a 6 días hábiles. Pago en efectivo, transferencia o tarjeta.`,
     },
     '/cambios': {
       title: 'Cambios y garantía | G&L',

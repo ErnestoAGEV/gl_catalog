@@ -105,3 +105,16 @@ alter table public.orders add column if not exists shipping_quote_id uuid;
 alter table public.orders add column if not exists address_parts     jsonb;
 
 commit;
+
+-- Minimo de envio gratis, legible por el build del sitio (vite.config.js / prerender)
+create or replace function public.free_shipping_min()
+returns numeric language sql stable security definer set search_path = public, pg_temp as $$
+  select free_shipping_min from public.shipping_settings where id = 1
+$$;
+revoke all on function public.free_shipping_min() from public;
+grant execute on function public.free_shipping_min() to anon, authenticated;
+
+-- Al cambiar el minimo, se republica la tienda (usa trigger_rebuild de deploy-hook.sql)
+drop trigger if exists shipping_settings_rebuild on public.shipping_settings;
+create trigger shipping_settings_rebuild after update of free_shipping_min on public.shipping_settings
+  for each statement execute function public.trigger_rebuild();
