@@ -7,6 +7,7 @@ const fixture = { meta: 'rate', data: [
   { carrier: 'estafeta', service: 'dia_sig', serviceDescription: 'Día siguiente', deliveryEstimate: '1 día', totalPrice: 240, currency: 'MXN' },
   { carrier: 'estafeta', service: 'raro', deliveryEstimate: 'n/d', totalPrice: '99', deliveryDate: { timeUnit: 'days', dateDifference: 3 } },
   { carrier: 'estafeta', service: 'sin_precio', totalPrice: 'x' },
+  { carrier: 'estafeta', service: 'terrestre_ocurre', serviceDescription: 'Estafeta Terrestre Ocurre - Domicilio', deliveryEstimate: '2-4 días', totalPrice: '150', currency: 'MXN' },
 ] }
 assert.deepEqual(parseRates(fixture, 'estafeta'), [
   { carrier: 'estafeta', service: 'Terrestre', price: 187.3, days: 4 },

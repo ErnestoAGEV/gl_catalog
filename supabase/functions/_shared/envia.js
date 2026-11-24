@@ -22,6 +22,8 @@ export function parseRates(json, carrier) {
   return json.data
     .map((r) => ({ carrier: r.carrier ?? carrier, service: r.serviceDescription || r.service, price: parseFloat(r.totalPrice), days: parseDays(r) }))
     .filter((r) => Number.isFinite(r.price) && r.price > 0 && r.service)
+    // Dueño: todos los envíos a domicilio; Ocurre = recoger en sucursal
+    .filter((r) => !/ocurre/i.test(r.service.normalize('NFD').replace(/[̀-ͯ]/g, '')))
 }
 
 const addr = (a) => ({ ...a, state: enviaState(a.state), country: 'MX' })
