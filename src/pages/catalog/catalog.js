@@ -67,7 +67,7 @@ export function pageCatalog(initialState) {
     : `Todo el <span class="text-brand">cat\u00E1logo</span>.`
   let heroDesc = initialType
     ? (TYPE_DESCRIPTIONS[initialType] || `Explora nuestra selecci\u00F3n de ${safeInitialType.toLowerCase()}.`)
-    : 'Camisas, pantalones, polos, zapatos y perfumes de marca, seleccionados por nuestro equipo. Enviamos a todo M\u00e9xico en 3 a 4 d\u00edas h\u00e1biles.'
+    : 'Camisas, pantalones, polos, zapatos y perfumes de marca, seleccionados por nuestro equipo. Enviamos a todo M\u00e9xico; rec\u00edbelo en 2 a 6 d\u00edas h\u00e1biles.'
 
   // La marca manda sobre la categoria: /marca/wrangler no es una categoria.
   const safeBrandName = escapeHtml(brandName)
@@ -75,7 +75,7 @@ export function pageCatalog(initialState) {
     heroH1 = `Solo <span class="text-brand">${safeBrandName}</span>.`
     heroDesc = brandItems.length
       ? escapeHtml(brandIntro(brandName, brandItems))
-      : `Contamos con piezas de ${safeBrandName}. Enviamos a todo México en 3 a 4 días hábiles.`
+      : `Contamos con piezas de ${safeBrandName}. Enviamos a todo México; recíbelo en 2 a 6 días hábiles.`
   }
 
   // Build category chips from actual data, ordered by the DB category order
@@ -841,7 +841,7 @@ export function pageCatalog(initialState) {
         const desc = root.querySelector('#hero-desc')
         const safeVal = escapeHtml(val)
         if (h1) h1.innerHTML = val ? `Solo <span class="text-brand">${safeVal}</span>.` : `Todo el <span class="text-brand">cat\u00E1logo</span>.`
-        if (desc) desc.textContent = val ? (TYPE_DESCRIPTIONS[val] || `Explora nuestra selecci\u00F3n de ${val.toLowerCase()}.`) : 'Camisas, pantalones, polos, zapatos y perfumes de marca, seleccionados por nuestro equipo. Enviamos a todo M\u00e9xico en 3 a 4 d\u00edas h\u00e1biles.'
+        if (desc) desc.textContent = val ? (TYPE_DESCRIPTIONS[val] || `Explora nuestra selecci\u00F3n de ${val.toLowerCase()}.`) : 'Camisas, pantalones, polos, zapatos y perfumes de marca, seleccionados por nuestro equipo. Enviamos a todo M\u00e9xico; rec\u00edbelo en 2 a 6 d\u00edas h\u00e1biles.'
 
         renderGrid({ resetPage: true })
         animateCategoryChange()
@@ -959,7 +959,7 @@ export function pageCatalog(initialState) {
         const h1 = root.querySelector('#hero-h1')
         const desc = root.querySelector('#hero-desc')
         if (h1) h1.innerHTML = `Todo el <span class="text-brand">catálogo</span>.`
-        if (desc) desc.textContent = 'Camisas, pantalones, polos, zapatos y perfumes de marca, seleccionados por nuestro equipo. Enviamos a todo México en 3 a 4 días hábiles.'
+        if (desc) desc.textContent = 'Camisas, pantalones, polos, zapatos y perfumes de marca, seleccionados por nuestro equipo. Enviamos a todo México; recíbelo en 2 a 6 días hábiles.'
         window.history.replaceState(null, '', withQuery('/catalog'))
         seoSettled = false   // title y canonical siguen a la url nueva
         renderGrid({ resetPage: true })

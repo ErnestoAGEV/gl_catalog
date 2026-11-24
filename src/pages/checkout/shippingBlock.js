@@ -16,7 +16,7 @@ export function shippingBlockHTML({ status, quote, tier, prices }) {
   if (status !== 'ready') return ''
   const option = (key) => {
     const q = quote[key]
-    const days = q.days ? `Llega en ${q.days} ${q.days === 1 ? 'día hábil' : 'días hábiles'}` : ''
+    const days = q.days ? `Recíbelo en ${q.days} ${q.days === 1 ? 'día hábil' : 'días hábiles'}` : ''
     const label = `${TIER_NAMES[key]} · ${escapeHtml(carrierName(q.carrier))}`
     const price = prices[key] > 0 ? formatMoney(prices[key]) : 'Gratis'
     const body = `<span class="flex-1"><span class="block font-display font-bold text-[16px] leading-tight">${label}</span>${days ? `<span class="block mt-1 font-mono text-[11px] text-ink/55">${days}</span>` : ''}</span>

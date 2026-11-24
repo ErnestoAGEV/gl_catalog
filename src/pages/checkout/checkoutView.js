@@ -153,7 +153,7 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
                   <span class="dot after:!hidden">${checkIcon}</span>
                   <div class="flex-1">
                     <div class="font-display font-bold text-[18px] leading-none tracking-[-0.02em]">Env&iacute;o a domicilio</div>
-                    <div class="meta mt-2 font-mono text-[11px] text-ink/55">3 a 4 d&iacute;as h&aacute;biles &middot; todo M&eacute;xico</div>
+                    <div class="meta mt-2 font-mono text-[11px] text-ink/55">2 a 6 d&iacute;as h&aacute;biles &middot; todo M&eacute;xico</div>
                   </div>
                   <div class="font-mono text-[11px] tracking-wider uppercase text-right">${freeShipping ? 'Gratis' : `Gratis desde ${formatMoney(BRAND.freeShippingMin)}`}</div>
                 </button>
