@@ -12,8 +12,8 @@ const CARRIERS = ['estafeta', 'fedex', 'dhl', 'paquetexpress', 'ups', 'jtexpress
 const esc = (v) => escapeHtml(String(v ?? ''))
 // CP separados por coma/espacio/salto -> 5 digitos sin repetir; null si alguno es invalido
 export const parseZips = (text) => {
-  const list = String(text).split(/[s,;]+/).filter(Boolean)
-  return list.every(z => /^d{5}$/.test(z)) ? [...new Set(list)] : null
+  const list = String(text).split(/[\s,;]+/).filter(Boolean)
+  return list.every(z => /^\d{5}$/.test(z)) ? [...new Set(list)] : null
 }
 const inRange = (n, min, max) => Number.isInteger(n) && n >= min && n <= max
 
