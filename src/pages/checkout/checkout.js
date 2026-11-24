@@ -126,6 +126,7 @@ export function pageCheckout(state) {
       let serverTotal = null
       // Cotizacion de envio: idle | quoting | ready | fallback. `key` = CP|estado|carrito cotizado;
       // `seq` descarta respuestas viejas; `pending` es la peticion en vuelo.
+      let quoteErrors = 0 // errores de cotizacion seguidos al enviar
       const ship = { status: 'idle', quote: null, tier: 'standard', key: '', seq: 0, timer: 0, pending: null }
       // Reveal on scroll
       const io = new IntersectionObserver((entries) => {
@@ -306,7 +307,8 @@ export function pageCheckout(state) {
       }
       // Antes de enviar: lo que este por cotizarse se cotiza ya, y se espera la respuesta (tope 8 s)
       const settleShipping = async () => {
-        if (ship.timer) { clearTimeout(ship.timer); runQuote() }
+        clearTimeout(ship.timer)
+        runQuote() // sin cambios en CP/estado/carrito no hace nada (Enter en la ciudad cae aqui)
         if (!ship.pending) return
         let timedOut = false
         await Promise.race([ship.pending, new Promise(r => setTimeout(() => { timedOut = true; r() }, QUOTE_WAIT_MS))])
@@ -325,7 +327,7 @@ export function pageCheckout(state) {
         const currentFreeShip = currentCoupon?.freeShipping || currentSubtotal >= BRAND.freeShippingMin
         const shipLabel = ship.status === 'quoting' && deliveryNow() === ENVIO ? 'Calculando…'
           : activeQuote() ? (currentCharge > 0 ? formatMoney(currentCharge) : 'Gratis')
-          : currentFreeShip ? 'Gratis' : 'Te lo confirmamos por WhatsApp'
+          : currentFreeShip && ship.status !== 'fallback' ? 'Gratis' : 'Te lo confirmamos por WhatsApp'
         if (!keepShip) renderShip()
         const liveCart = getState().cart
         const currentItemCount = liveCart.reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
@@ -698,12 +700,18 @@ export function pageCheckout(state) {
               setSubmitting(false)
               return
             }
-            if (/vencio|carrito cambio/i.test(error.message || '')) {
-              // La cotizacion caduco o el carrito cambio: se cotiza otra vez y se confirma el precio nuevo
+            if (/vencio|carrito cambio|envio invalida/i.test(error.message || '')) {
+              // La cotizacion caduco, el carrito cambio o la opcion ya no vale: se cotiza otra vez
+              // y se confirma el precio nuevo. Al segundo error seguido, el pedido va sin cotizacion.
+              quoteErrors++
+              ship.tier = 'standard'
               ship.key = ''
-              runQuote()
-              Promise.resolve(ship.pending).finally(() => {
-                setError(`Actualizamos el costo de tu envío. El total de tu pedido es ${formatMoney(shownTotal)}. Confirma de nuevo para enviarlo.`)
+              if (quoteErrors > 1) { resetShip('fallback'); ship.key = quoteInputs().key; renderShip(); refreshSummaryView({ keepShip: true }) }
+              const requote = quoteErrors > 1 ? Promise.resolve() : settleShipping()
+              requote.then(() => {
+                setError(ship.status === 'fallback'
+                  ? `Te confirmamos el costo de envío por WhatsApp. El total de tu pedido es ${formatMoney(shownTotal)}. Confirma de nuevo para enviarlo.`
+                  : `Actualizamos el costo de tu envío. El total de tu pedido es ${formatMoney(shownTotal)}. Confirma de nuevo para enviarlo.`)
                 setSubmitting(false)
               })
               return
