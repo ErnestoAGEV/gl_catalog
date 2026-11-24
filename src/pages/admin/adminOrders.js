@@ -67,7 +67,7 @@ function itemThumb(item) {
 // Hoja de pedido para imprimir. Se abre en una ventana aparte, asi que todo va
 // en linea (estilos y la URL absoluta del logo) y se imprime al cargar el logo.
 // "Estándar · Estafeta"; vacio si el pedido no se cotizo
-const shippingService = (o) => o.shipping_tier ? `${TIER_NAMES[o.shipping_tier] || o.shipping_tier} · ${carrierName(o.shipping_carrier)}`.replace(/ · $/, '') : ''
+const shippingService = (o) => o.shipping_carrier === 'local' ? carrierName('local') : o.shipping_tier ? `${TIER_NAMES[o.shipping_tier] || o.shipping_tier} · ${carrierName(o.shipping_carrier)}`.replace(/ · $/, '') : ''
 
 function printOrderHtml(d) {
   const shipping = d.shipping == null ? null : Number(d.shipping) || 0

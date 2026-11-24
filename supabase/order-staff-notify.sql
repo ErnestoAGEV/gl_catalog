@@ -128,7 +128,7 @@ begin
          || case when o.shipping_carrier is not null then ' · ' || html_esc(case o.shipping_carrier
               when 'estafeta' then 'Estafeta' when 'fedex' then 'FedEx' when 'dhl' then 'DHL'
               when 'paquetexpress' then 'Paquetexpress' when 'ups' then 'UPS'
-              when 'jtexpress' then 'J&T Express' when '99minutos' then '99minutos'
+              when 'jtexpress' then 'J&T Express' when '99minutos' then '99minutos' when 'local' then 'Entrega local'
               else o.shipping_carrier end) else '' end
          || '): ' || case when o.shipping_cost = 0 then 'Gratis' else money_mx(o.shipping_cost) end
          || '<br><b>Total a cobrar: ' || money_mx(v_total) || '</b>'

@@ -32,6 +32,13 @@ export function pickTiers(rates) {
   return { standard, express }
 }
 
+// Entrega propia: si el CP esta en la lista local, un solo tier fijo (sin Envia, sin redondeo: el precio lo pone el dueño).
+export function localTiers(settings, zip) {
+  if (!settings.local_delivery_zips?.includes(zip)) return null
+  const price = Number(settings.local_delivery_price)
+  return { standard: { carrier: 'local', service: 'Entrega local', price, cost: price, days: 1 }, express: null }
+}
+
 // Respuesta de la RPC free_shipping_min -> numero valido o 1499 (nunca 0 por un null/''/[]).
 export const parseFreeShippingMin = (ok, raw) => (ok && typeof raw === 'number' && raw >= 0 ? raw : 1499)
 export const isFreeShipping = (subtotal, coupon, min) => !!coupon?.freeShipping || subtotal >= min

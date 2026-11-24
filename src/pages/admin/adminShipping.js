@@ -10,6 +10,11 @@ import { ICON } from './adminIcons.js'
 const CARRIERS = ['estafeta', 'fedex', 'dhl', 'paquetexpress', 'ups', 'jtexpress', '99minutos']
 // escapeHtml devuelve '' si no es string: los numeros de la BD se pasan por String
 const esc = (v) => escapeHtml(String(v ?? ''))
+// CP separados por coma/espacio/salto -> 5 digitos sin repetir; null si alguno es invalido
+export const parseZips = (text) => {
+  const list = String(text).split(/[s,;]+/).filter(Boolean)
+  return list.every(z => /^d{5}$/.test(z)) ? [...new Set(list)] : null
+}
 const inRange = (n, min, max) => Number.isInteger(n) && n >= min && n <= max
 
 const boxFields = (key, label, v = {}) => `
@@ -121,6 +126,15 @@ export function pageAdminShipping() {
               <p class="text-[12px] text-faint">Al guardarlo, la tienda se vuelve a publicar con el nuevo monto en unos minutos.</p>
             </div>
 
+            <div class="space-y-2">
+              <h2 class="font-display font-bold text-ink text-[16px]">Entrega local (Colima y Villa de Álvarez)</h2>
+              <p class="text-[12px] text-faint">Los códigos postales de la lista no se cotizan con paquetería: se cobra este precio fijo.</p>
+              <div><label class="text-[11px] text-faint" for="sh-local-price">Precio (MXN)</label>
+                <input id="sh-local-price" name="local_delivery_price" type="number" min="0" max="10000" step="1" required value="${esc(s.local_delivery_price)}" class="adm-fld tnum w-32" onwheel="this.blur()" /></div>
+              <div><label class="text-[11px] text-faint" for="sh-local-zips">Códigos postales (separados por coma, espacio o salto de línea)</label>
+                <textarea id="sh-local-zips" name="local_delivery_zips" rows="4" class="adm-fld tnum">${esc((s.local_delivery_zips || []).join(', '))}</textarea></div>
+            </div>
+
             <p data-error class="hidden text-[13px] text-bad bg-bad-tint rounded-xl2 px-4 py-2" role="alert"></p>
             <button type="submit" data-submit class="adm-btn adm-btn-primary">Guardar ajustes</button>
           </form>
@@ -180,9 +194,14 @@ export function pageAdminShipping() {
         const free_shipping_min = num('free_shipping_min')
         if (!form.elements.free_shipping_min.value.trim() || !inRange(free_shipping_min, 1, 100000)) return fail('El envío gratis debe ser un monto entero entre 1 y 100000.')
 
+        const local_delivery_price = num('local_delivery_price')
+        if (!form.elements.local_delivery_price.value.trim() || !inRange(local_delivery_price, 0, 10000)) return fail('El precio de entrega local debe ser un monto entero entre 0 y 10000.')
+        const local_delivery_zips = parseZips(form.elements.local_delivery_zips.value)
+        if (!local_delivery_zips) return fail('Los códigos postales de entrega local deben tener 5 dígitos cada uno.')
+
         submitBtn.disabled = true
         let error
-        try { ({ error } = await saveShippingSettings({ carriers, envelope, box, origin, default_grams, free_shipping_min, default_needs_box: form.elements.default_needs_box.checked })) } catch (e) { error = e } finally { submitBtn.disabled = false }
+        try { ({ error } = await saveShippingSettings({ carriers, envelope, box, origin, default_grams, free_shipping_min, local_delivery_price, local_delivery_zips, default_needs_box: form.elements.default_needs_box.checked })) } catch (e) { error = e } finally { submitBtn.disabled = false }
         if (error) return fail('No se pudieron guardar los ajustes.')
         showToast('Ajustes guardados', 'success')
       })

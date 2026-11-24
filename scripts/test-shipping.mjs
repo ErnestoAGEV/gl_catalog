@@ -30,6 +30,12 @@ assert.equal(cartKey([{ productId: 2, qty: 1 }, { productId: 1, qty: 1 }, { prod
 assert.equal(cartKey([{ productId: 10, qty: 1 }, { productId: 9, qty: 1 }]), '10:1|9:1')   // orden de texto, igual que SQL collate "C"
 assert.equal(isMxZip('28000'), true); assert.equal(isMxZip('2800'), false); assert.equal(isMxZip('280000'), false)
 assert.equal(MX_STATES.length, 32)
+// Entrega local: CP en la lista -> un tier fijo sin redondeo; si no, null (se cotiza con Envia)
+import { localTiers } from '../supabase/functions/_shared/shipping.js'
+const L = { local_delivery_price: '62', local_delivery_zips: ['28000', '28950'] }
+assert.deepEqual(localTiers(L, '28950'), { standard: { carrier: 'local', service: 'Entrega local', price: 62, cost: 62, days: 1 }, express: null })
+assert.equal(localTiers(L, '28100'), null)
+assert.equal(localTiers({}, '28000'), null)
 console.log('test-shipping ok')
 
 // Lectura del minimo de envio gratis (RPC): null, texto, negativos o error -> respaldo 1499

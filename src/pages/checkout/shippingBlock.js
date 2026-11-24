@@ -1,7 +1,7 @@
 import { formatMoney } from '../../utils/format.js'
 import { escapeHtml } from '../../utils/sanitize.js'
 
-const CARRIERS = { fedex: 'FedEx', dhl: 'DHL', ups: 'UPS', estafeta: 'Estafeta', paquetexpress: 'Paquetexpress', jtexpress: 'J&T Express' }
+const CARRIERS = { local: 'Entrega local', fedex: 'FedEx', dhl: 'DHL', ups: 'UPS', estafeta: 'Estafeta', paquetexpress: 'Paquetexpress', jtexpress: 'J&T Express' }
 export const carrierName = (slug) => CARRIERS[String(slug || '').toLowerCase()] || (slug ? String(slug).charAt(0).toUpperCase() + String(slug).slice(1) : '')
 export const TIER_NAMES = { standard: 'Estándar', express: 'Express' }
 
@@ -17,7 +17,7 @@ export function shippingBlockHTML({ status, quote, tier, prices }) {
   const option = (key) => {
     const q = quote[key]
     const days = q.days ? `Recíbelo en ${q.days} ${q.days === 1 ? 'día hábil' : 'días hábiles'}` : ''
-    const label = `${TIER_NAMES[key]} · ${escapeHtml(carrierName(q.carrier))}`
+    const label = q.carrier === 'local' ? 'Entrega local en Colima y Villa de Álvarez' : `${TIER_NAMES[key]} · ${escapeHtml(carrierName(q.carrier))}`
     const price = prices[key] > 0 ? formatMoney(prices[key]) : 'Gratis'
     const body = `<span class="flex-1"><span class="block font-display font-bold text-[16px] leading-tight">${label}</span>${days ? `<span class="block mt-1 font-mono text-[11px] text-ink/55">${days}</span>` : ''}</span>
       <span class="font-mono text-[13px] digit-tabular">${price}</span>`
