@@ -33,7 +33,7 @@ assert.equal(MX_STATES.length, 32)
 console.log('test-shipping ok')
 
 // Lectura del minimo de envio gratis (RPC): null, texto, negativos o error -> respaldo 1499
-import { parseFreeShippingMin } from '../src/utils/freeShipping.js'
+import { parseFreeShippingMin } from '../supabase/functions/_shared/shipping.js'
 assert.equal(parseFreeShippingMin(true, 999), 999)
 for (const bad of [null, 'x', '', [], true, -1]) assert.equal(parseFreeShippingMin(true, bad), 1499)
 assert.equal(parseFreeShippingMin(false, 999), 1499)

@@ -32,6 +32,8 @@ export function pickTiers(rates) {
   return { standard, express }
 }
 
+// Respuesta de la RPC free_shipping_min -> numero valido o 1499 (nunca 0 por un null/''/[]).
+export const parseFreeShippingMin = (ok, raw) => (ok && typeof raw === 'number' && raw >= 0 ? raw : 1499)
 export const isFreeShipping = (subtotal, coupon, min) => !!coupon?.freeShipping || subtotal >= min
 
 // Envío gratis cubre Standard; Express cobra solo la diferencia.

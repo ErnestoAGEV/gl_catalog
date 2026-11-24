@@ -9,6 +9,7 @@
 //
 // Se ejecuta despues de `vite build`. Ver package.json.
 
+import { parseFreeShippingMin } from '../supabase/functions/_shared/shipping.js'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { INSTAGRAM_URL, FACEBOOK_URL, STORE_PHONE, stores, heroSlides as defaultHeroSlides } from '../src/pages/home/homeData.js'
@@ -66,7 +67,6 @@ try {
   console.warn(`[prerender] No pude leer free_shipping_min (${err.message}); uso 1499`)
 }
 globalThis.__FREE_SHIPPING_MIN__ = FREE_SHIPPING_MIN
-const { parseFreeShippingMin } = await import('../src/utils/freeShipping.js')
 const { categoryLabel, getSeoForRoute } = await import('../src/core/routeSeo.js')
 const { infoPages } = await import('../src/pages/info/infoData.js')
 
@@ -118,7 +118,8 @@ async function supabaseSelect(table, query) {
 
 // ── Plantilla ───────────────────────────────────────────────────────────────
 
-const template = readFileSync(join(DIST, 'index.html'), 'utf8')
+// El monto de envio gratis del index.html base es solo respaldo: siempre se reescribe
+const template = readFileSync(join(DIST, 'index.html'), 'utf8').replace(/\$1,?499\b/g, () => `$${FREE_SHIPPING_MIN.toLocaleString('es-MX')}`)
 
 const APP_OPEN = '<div id="app" class="overflow-x-clip">'
 const SHELL_END = '<!-- prerender:shell-end'
