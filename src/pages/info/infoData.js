@@ -1,4 +1,5 @@
 import { stores, STORE_PHONE } from '../home/homeData.js'
+import { FREE_SHIPPING_MIN, freeShippingText } from '../../utils/freeShipping.js'
 
 const LEGAL_ADDRESS = 'Calle Ignacio Zaragoza #140, Col. Centro, C.P. 28000, Colima, Colima'
 const PRIVACY_EMAIL = 'glboutiquecolima@gmail.com'
@@ -10,10 +11,9 @@ const LEGAL_UPDATED = '6 de noviembre de 2026'
 // nada del DOM.
 
 export const SHIPPING = {
-  cost: 150,
-  freeFrom: 1499,
-  daysMin: 3,
-  daysMax: 4,
+  freeFrom: FREE_SHIPPING_MIN,
+  daysMin: 2,
+  daysMax: 6,
   exchangeDays: 8,
 }
 
@@ -98,20 +98,20 @@ export const infoPages = {
     // el FAQPage tiene que coincidir con lo visible.
     faq: true,
     eyebrow: 'Envíos y pagos',
-    heading: 'Te llega en<br/>3 o 4 <span class="text-brand">días</span>.',
-    lead: 'Enviamos a todo México. Tu pedido sale en cuanto se confirma el pago y llega en 3 a 4 días hábiles.',
+    heading: 'Recíbelo en<br/>2 a 6 <span class="text-brand">días</span>.',
+    lead: `Enviamos a todo México. Calculamos el costo de envío con tu código postal al hacer tu pedido. Gratis desde ${freeShippingText}. Recíbelo en 2 a 6 días hábiles según la paquetería que elijas.`,
     sections: [
       {
         h: '¿Cuánto cuesta el envío?',
         list: [
-          '$150 MXN a cualquier parte de la República.',
-          'Gratis en compras de $1,499 MXN o más.',
+          'Calculamos el costo con tu código postal al hacer tu pedido.',
+          `Gratis en compras de ${freeShippingText} MXN o más.`,
           'Recoger en tienda no tiene costo: apartas por WhatsApp y pasas por tu pedido.',
         ],
       },
       {
-        h: '¿En cuánto tiempo llega mi pedido?',
-        body: 'De 3 a 4 días hábiles, contados desde que completas tu pedido y no desde que agregas productos al carrito. Los fines de semana y días festivos no cuentan. Cuando tu pedido sale, te compartimos el número de guía por WhatsApp para que puedas rastrearlo.',
+        h: '¿En cuánto tiempo recibo mi pedido?',
+        body: 'De 2 a 6 días hábiles según la paquetería que elijas, contados desde que completas tu pedido y no desde que agregas productos al carrito. Los fines de semana y días festivos no cuentan. Cuando tu pedido sale, te compartimos el número de guía por WhatsApp para que puedas rastrearlo.',
       },
       {
         h: '¿Cómo puedo pagar?',
@@ -261,7 +261,7 @@ export const infoPages = {
       },
       {
         h: 'Envíos',
-        body: `El envío cuesta $${SHIPPING.cost} MXN a todo México y es gratis desde $${SHIPPING.freeFrom.toLocaleString('es-MX')} MXN. Llega en ${SHIPPING.daysMin} a ${SHIPPING.daysMax} días hábiles desde que se confirma el pedido. Recoger en tienda no cuesta. Detalles en <a class="ul-link" href="/envios">envíos y pagos</a>.`,
+        body: `El costo del envío a todo México se calcula con tu código postal y es gratis desde ${freeShippingText} MXN. Recíbelo en ${SHIPPING.daysMin} a ${SHIPPING.daysMax} días hábiles desde que se confirma el pedido. Recoger en tienda no cuesta. Detalles en <a class="ul-link" href="/envios">envíos y pagos</a>.`,
       },
       {
         h: 'Cambios',

@@ -52,6 +52,7 @@ const lazyAdminRoutes = {
   '/admin/orders':     () => import('../pages/admin/adminOrders.js').then(m => m.pageAdminOrders),
   '/admin/coupons':    () => import('../pages/admin/adminCoupons.js').then(m => m.pageAdminCoupons),
   '/admin/promociones': () => import('../pages/admin/adminPromotions.js').then(m => m.pageAdminPromotions),
+  '/admin/envios':      () => import('../pages/admin/adminShipping.js').then(m => m.pageAdminShipping),
   '/admin/newsletter': () => import('../pages/admin/adminNewsletter.js').then(m => m.pageAdminNewsletter),
   '/admin/clientes':   () => import('../pages/admin/adminClientes.js').then(m => m.pageAdminClientes),
   '/admin/reportes':   () => import('../pages/admin/adminReportes.js').then(m => m.pageAdminReportes),

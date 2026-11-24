@@ -9,6 +9,7 @@ import { supabase } from '../../core/supabase.js'
 import { showToast } from '../../utils/toast.js'
 import { escapeHtml as esc, sanitizeEmail } from '../../utils/sanitize.js'
 import { ICON, statusPill, statCard } from './adminIcons.js'
+import { carrierName, TIER_NAMES } from '../checkout/shippingBlock.js'
 
 function getPaymentMeta(paymentMethod) {
   const raw = (paymentMethod || '').toString().trim()
@@ -65,6 +66,9 @@ function itemThumb(item) {
 
 // Hoja de pedido para imprimir. Se abre en una ventana aparte, asi que todo va
 // en linea (estilos y la URL absoluta del logo) y se imprime al cargar el logo.
+// "Estándar · Estafeta"; vacio si el pedido no se cotizo
+const shippingService = (o) => o.shipping_tier ? `${TIER_NAMES[o.shipping_tier] || o.shipping_tier} · ${carrierName(o.shipping_carrier)}`.replace(/ · $/, '') : ''
+
 function printOrderHtml(d) {
   const shipping = d.shipping == null ? null : Number(d.shipping) || 0
   const toPay = (Number(d.total) || 0) + (shipping || 0)
@@ -127,7 +131,7 @@ function printOrderHtml(d) {
     <div class="totals">
       ${row('Subtotal', formatMoney(d.subtotal || 0), 'muted')}
       ${Number(d.discount) > 0 ? row(`Descuento${d.couponCode ? ` (${esc(d.couponCode)})` : ''}`, `−${formatMoney(d.discount)}`, 'disc') : ''}
-      ${shipping != null ? row('Envío', shipping > 0 ? formatMoney(shipping) : 'Gratis', 'muted') : ''}
+      ${shipping != null ? row(d.shippingService ? `Envío · ${esc(d.shippingService)}` : 'Envío', shipping > 0 ? formatMoney(shipping) : 'Gratis', 'muted') : ''}
       ${row('Total', formatMoney(toPay), 'grand')}
     </div>
     <footer>Gracias por tu compra en G&amp;L · Dudas o cambios por WhatsApp</footer>
@@ -349,9 +353,9 @@ export function pageAdminOrders(state) {
         const discount = Number(order.discount) || 0
         const shipping = order.shipping_cost == null ? null : Number(order.shipping_cost)
         const toPay = (Number(order.total) || 0) + (shipping || 0)
-        const printPayload = encodeURIComponent(JSON.stringify({ shortId: String(order.id).slice(0, 8), customerName: order.customer_name, customerWhatsapp: order.customer_whatsapp, customerEmail: order.customer_email, when, deliveryMethod: order.delivery_method, address: order.address, paymentLabel: payment.label, subtotal, discount, couponCode: order.coupon_code, shipping, total: Number(order.total) || 0, items }))
+        const printPayload = encodeURIComponent(JSON.stringify({ shortId: String(order.id).slice(0, 8), customerName: order.customer_name, customerWhatsapp: order.customer_whatsapp, customerEmail: order.customer_email, when, deliveryMethod: order.delivery_method, address: order.address, paymentLabel: payment.label, subtotal, discount, couponCode: order.coupon_code, shipping, shippingService: shippingService(order), total: Number(order.total) || 0, items }))
         // not-html: se copia al portapapeles como texto plano
-        const summaryLines = [`Pedido #${String(order.id).slice(0,8)}`, `Cliente: ${order.customer_name||'Sin nombre'}`, `WhatsApp: ${order.customer_whatsapp||'Sin teléfono'}`, ...(order.customer_email ? [`Correo: ${order.customer_email}`] : []), `Fecha: ${when}`, `Entrega: ${order.delivery_method||'Sin método'}`, `Dirección: ${order.address||'Sin dirección'}`, `Pago: ${payment.label}`, 'Productos:', ...(items.length ? items.map(i => `- ${i?.qty||0}x ${i?.name||'Producto'} (${i?.size||'Única'}) · ${formatMoney(i?.price||0)}`) : ['- Sin productos']), ...(shipping != null ? [`Envío: ${formatMoney(shipping)}`] : []), `Total: ${formatMoney(toPay)}`]
+        const summaryLines = [`Pedido #${String(order.id).slice(0,8)}`, `Cliente: ${order.customer_name||'Sin nombre'}`, `WhatsApp: ${order.customer_whatsapp||'Sin teléfono'}`, ...(order.customer_email ? [`Correo: ${order.customer_email}`] : []), `Fecha: ${when}`, `Entrega: ${order.delivery_method||'Sin método'}`, `Dirección: ${order.address||'Sin dirección'}`, `Pago: ${payment.label}`, 'Productos:', ...(items.length ? items.map(i => `- ${i?.qty||0}x ${i?.name||'Producto'} (${i?.size||'Única'}) · ${formatMoney(i?.price||0)}`) : ['- Sin productos']), ...(shipping != null ? [`Envío: ${formatMoney(shipping)}`] : []), ...(order.shipping_tier ? [`Servicio de envío: ${shippingService(order)}`] : []), `Total: ${formatMoney(toPay)}`]
 
         const deliveryIcon = (order.delivery_method || '').includes('domicilio') ? 'truck' : 'store'
         const deliveryLabel = (order.delivery_method || '').includes('domicilio') ? 'Domicilio' : 'En tienda'
@@ -436,6 +440,7 @@ export function pageAdminOrders(state) {
                 <button type="submit" class="adm-btn adm-btn-ink h-10 px-4 text-[13px]">Guardar</button>
               </div>
               <p class="text-[11.5px] text-faint mt-1.5">Vacío = sin envío. Se suma al total de la hoja impresa.</p>
+              ${order.shipping_tier ? `<p class="text-[13px] font-semibold text-ink mt-2">${esc(shippingService(order))}</p>` : ''}
             </form>
 
             <!-- Total -->

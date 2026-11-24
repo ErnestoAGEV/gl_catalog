@@ -3,6 +3,8 @@ import { BRAND } from '../../utils/config.js'
 import { getState, getProductById } from '../../store/index.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
 import { escapeHtml } from '../../utils/sanitize.js'
+export { shippingBlockHTML, carrierName, TIER_NAMES } from './shippingBlock.js'
+import { MX_STATES } from '../../../supabase/functions/_shared/shipping.js'
 
 const waIcon = `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`
 
@@ -151,7 +153,7 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
                   <span class="dot after:!hidden">${checkIcon}</span>
                   <div class="flex-1">
                     <div class="font-display font-bold text-[18px] leading-none tracking-[-0.02em]">Env&iacute;o a domicilio</div>
-                    <div class="meta mt-2 font-mono text-[11px] text-ink/55">3 a 4 d&iacute;as h&aacute;biles &middot; todo M&eacute;xico</div>
+                    <div class="meta mt-2 font-mono text-[11px] text-ink/55">2 a 6 d&iacute;as h&aacute;biles &middot; todo M&eacute;xico</div>
                   </div>
                   <div class="font-mono text-[11px] tracking-wider uppercase text-right">${freeShipping ? 'Gratis' : `Gratis desde ${formatMoney(BRAND.freeShippingMin)}`}</div>
                 </button>
@@ -183,9 +185,22 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
                 ${fieldHTML({ name: 'neighborhood', label: 'Colonia', span: 'md:col-span-6', placeholder: 'Ej. Centro', autocomplete: 'address-level3' })}
                 ${fieldHTML({ name: 'city', label: 'Ciudad', span: 'md:col-span-3', placeholder: 'Ej. Guadalajara', autocomplete: 'address-level2' })}
                 ${fieldHTML({ name: 'zipCode', label: 'C&oacute;digo postal', span: 'md:col-span-3', placeholder: 'Ej. 28000', autocomplete: 'postal-code', attrs: 'inputmode="numeric" maxlength="6"' })}
-                ${fieldHTML({ name: 'state', label: 'Estado', span: 'md:col-span-6', placeholder: 'Ej. Jalisco', autocomplete: 'address-level1' })}
+                <div class="field md:col-span-6">
+                  <label for="co-state" class="!text-[11px]">Estado</label>
+                  <select id="co-state" name="state" autocomplete="address-level1">
+                    <option value="">Selecciona tu estado</option>
+                    ${MX_STATES.map(s => `<option value="${s.code}">${s.name}</option>`).join('')}
+                    <option value="otro">Otro / fuera de M&eacute;xico</option>
+                  </select>
+                  <p id="co-state-error" class="mt-1.5 text-[12px] text-red-600 empty:hidden"></p>
+                </div>
+                <div id="state-other-wrap" class="hidden md:col-span-6">
+                  ${fieldHTML({ name: 'stateOther', label: 'Estado o regi&oacute;n', placeholder: 'Ej. California', autocomplete: 'off' })}
+                </div>
                 ${fieldHTML({ name: 'references', label: 'Referencias', span: 'md:col-span-6', placeholder: 'Ej. Casa azul, entre Hidalgo y Aldama', textarea: true })}
               </div>
+              <!-- Opciones de envio: las pinta checkout.js segun la cotizacion -->
+              <div id="ship-block" class="mt-2" aria-live="polite"></div>
             </section>
 
             <!-- Form error -->
@@ -239,7 +254,7 @@ export function checkoutHTML({ subtotal, discount, total, freeShipping, itemCoun
   </div>`
 }
 
-export function checkoutSummaryHTML({ subtotal, discount, total, freeShipping, itemCount, coupon }) {
+export function checkoutSummaryHTML({ subtotal, discount, total, freeShipping, itemCount, coupon, shipLabel = freeShipping ? 'Gratis' : 'Te lo confirmamos por WhatsApp' }) {
   const items = cartItemsHTML()
 
   return `
@@ -267,7 +282,7 @@ export function checkoutSummaryHTML({ subtotal, discount, total, freeShipping, i
           </div>
           <div class="flex justify-between gap-4">
             <span class="text-ink/65">Env&iacute;o</span>
-            <span class="text-right ${freeShipping ? 'text-brand' : 'text-ink/65'}">${freeShipping ? 'Gratis' : 'Te lo confirmamos por WhatsApp'}</span>
+            <span class="text-right ${shipLabel === 'Gratis' ? 'text-brand' : 'text-ink/65'}">${shipLabel}</span>
           </div>
         </div>
 

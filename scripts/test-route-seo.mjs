@@ -70,3 +70,8 @@ assert.ok(corta.length <= 160 && corta.endsWith('.'), corta)
 assert.equal(clipMeta('Corta.'), 'Corta.')
 
 console.log('ok — route seo')
+
+// Copy de envio: ya no hay costo fijo ni "3 a 4 dias"
+import { infoPages } from '../src/pages/info/infoData.js'
+const shipText = JSON.stringify(infoPages['/envios']) + getSeoForRoute('/envios', '/envios', state).description + getSeoForRoute('/', '/', state).description
+assert.ok(!/3 a 4|3 o 4|\$150/.test(shipText))

@@ -7,6 +7,7 @@ import { headerSearchButtons, headerSearchForm, headerSearchPanel } from './head
 import { lockScroll, unlockScroll } from '../utils/dom.js'
 import { brandIndex } from '../utils/brands.js'
 import { escapeHtml } from '../utils/sanitize.js'
+import { formatMoney } from '../utils/format.js'
 
 const CATEGORY_LINKS = [
   ['Camisas', 'Camisas'], ['Polos', 'Polos'], ['Jeans', 'Pantalones'], ['Perfumes', 'Perfumes'],
@@ -110,7 +111,7 @@ function container(children, theme = 'dark') {
   </div>`
 }
 
-const MARQUEE_DEFAULT = `★ Envío gratis desde $${BRAND.freeShippingMin} MXN — Nueva temporada 2026 — Atención personalizada por WhatsApp — 2 sucursales en Colima — Usa WELCOME10 · 10% de descuento en tu primera compra — `
+const MARQUEE_DEFAULT = `★ Envío gratis desde ${formatMoney(BRAND.freeShippingMin)} MXN — Nueva temporada 2026 — Atención personalizada por WhatsApp — 2 sucursales en Colima — Usa WELCOME10 · 10% de descuento en tu primera compra — `
 
 /** <li> de las marcas con pagina propia, para el pie. Vacio hasta que llegan los productos. */
 export function footerBrandsHtml(products) {
@@ -297,6 +298,7 @@ export function layoutAdmin({ title, contentHtml, state }) {
     { path: '/admin/size-guides', icon: 'tag', label: 'Guías de tallas', group: 'Tienda' },
     { path: '/admin/coupons', icon: 'coupon', label: 'Cupones', group: 'Tienda' },
     { path: '/admin/promociones', icon: 'calendar', label: 'Promociones', group: 'Tienda' },
+    { path: '/admin/envios', icon: 'truck', label: 'Envíos', group: 'Tienda' },
     { path: '/admin/banners', icon: 'image', label: 'Contenido', group: 'Tienda' },
     { path: '/admin/clientes', icon: 'users', label: 'Clientes', group: 'Clientes' },
     { path: '/admin/newsletter', icon: 'mail', label: 'Newsletter', group: 'Clientes' },
@@ -311,6 +313,7 @@ export function layoutAdmin({ title, contentHtml, state }) {
     '/admin/size-guides': 'Guías de tallas',
     '/admin/coupons': 'Cupones',
     '/admin/promociones': 'Promociones',
+    '/admin/envios': 'Envíos',
     '/admin/newsletter': 'Newsletter',
     '/admin/clientes': 'Clientes',
     '/admin/reportes': 'Reportes',
@@ -334,6 +337,7 @@ export function layoutAdmin({ title, contentHtml, state }) {
       users: '<circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 14a5 5 0 0 1 5 5"/><circle cx="17.5" cy="7.5" r="2.5"/>',
       chart: '<path d="M3 3v18h18"/><path d="M7 16l4-5 4 3 5-6"/>',
       image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
+      truck: '<path d="M3 6h11v9H3zM14 9h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/>',
     }
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="${cls}">${paths[name] || ''}</svg>`
   }

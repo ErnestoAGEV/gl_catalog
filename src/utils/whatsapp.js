@@ -1,7 +1,7 @@
 import { STORE_WHATSAPP_NUMBER } from './config.js'
 import { formatMoney } from './format.js'
 
-export function buildOrderMessage({ customer, cartLines, subtotal, discount, couponCode, total }) {
+export function buildOrderMessage({ customer, cartLines, subtotal, discount, couponCode, shipping, total }) {
   const lines = []
   
   // Header
@@ -53,6 +53,10 @@ export function buildOrderMessage({ customer, cartLines, subtotal, discount, cou
     lines.push(`Cupón ${couponCode}: -${formatMoney(discount)}`)
   }
   
+  if (shipping?.cost > 0) {
+    lines.push(`Envío (${shipping.label}): ${formatMoney(shipping.cost)}`)
+  }
+
   lines.push(`*TOTAL: ${formatMoney(total)}*`)
   
   return lines.join('\n')

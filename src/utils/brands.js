@@ -107,7 +107,7 @@ export function brandIntro(brand, items) {
     const max = Math.max(...precios)
     frases.push(min === max ? `Precio: $${min} MXN.` : `Precios de $${min} a $${max} MXN.`)
   }
-  frases.push('Enviamos a todo México en 3 a 4 días hábiles.')
+  frases.push('Enviamos a todo México; recíbelo en 2 a 6 días hábiles.')
   frases.push('Con gusto te confirmamos por WhatsApp la disponibilidad en cada sucursal.')
   return frases.join(' ')
 }

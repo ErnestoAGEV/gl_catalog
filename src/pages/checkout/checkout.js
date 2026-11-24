@@ -1,11 +1,12 @@
-import { getProductById, getState, cartTotal, getCoupon, getDiscountAmount, applyCoupon, removeCoupon, saveOrder, clearCart, addToCart, isFirstPurchaseCouponAvailable, refreshPromotions, refreshProducts, subscribe } from '../../store/index.js'
+import { getProductById, getState, cartTotal, getCoupon, getDiscountAmount, applyCoupon, removeCoupon, saveOrder, clearCart, addToCart, quoteShipping, isFirstPurchaseCouponAvailable, refreshPromotions, refreshProducts, subscribe } from '../../store/index.js'
 import { isValidWhatsapp } from '../../utils/phone.js'
 import { BRAND } from '../../utils/config.js'
 import { buildOrderMessage, openWhatsAppWithMessage } from '../../utils/whatsapp.js'
 import { on, qs } from '../../utils/dom.js'
 import { formatMoney } from '../../utils/format.js'
 import { isInfiniteStock } from '../../utils/stock.js'
-import { checkoutHTML, checkoutSummaryHTML, couponAppliedHTML, couponInputHTML, checkoutSuccessHTML } from './checkoutView.js'
+import { checkoutHTML, checkoutSummaryHTML, couponAppliedHTML, couponInputHTML, checkoutSuccessHTML, shippingBlockHTML, carrierName, TIER_NAMES } from './checkoutView.js'
+import { chargeFor, isFreeShipping, isMxZip, cartKey, MX_STATES } from '../../../supabase/functions/_shared/shipping.js'
 import { sizeSelectionModal, trapModal } from '../catalog/catalogModals.js'
 import { sanitizeText, sanitizeCouponCode, sanitizeEmail } from '../../utils/sanitize.js'
 import { navigate } from '../../core/router.js'
@@ -45,6 +46,8 @@ function clearCheckoutSuccess() {
 
 // ── Helpers de validación ──
 const ZIPCODE_RE  = /^[0-9]{4,6}$/
+const ENVIO = 'Envío a domicilio'
+const QUOTE_WAIT_MS = 8000
 
 
 function nameError(value) {
@@ -90,7 +93,7 @@ function clearFieldErrors(root) {
 }
 
 function needsAddress(_payment, deliveryMethod) {
-  return deliveryMethod === 'Envío a domicilio'
+  return deliveryMethod === ENVIO
 }
 
 export function pageCheckout(state) {
@@ -121,6 +124,10 @@ export function pageCheckout(state) {
       let shownTotal = total
       // Total de la base cuando aun asi no cuadra (p. ej. reloj del equipo desfasado)
       let serverTotal = null
+      // Cotizacion de envio: idle | quoting | ready | fallback. `key` = CP|estado|carrito cotizado;
+      // `seq` descarta respuestas viejas; `pending` es la peticion en vuelo.
+      let quoteErrors = 0 // errores de cotizacion seguidos al enviar
+      const ship = { status: 'idle', quote: null, tier: 'standard', key: '', seq: 0, timer: 0, pending: null }
       // Reveal on scroll
       const io = new IntersectionObserver((entries) => {
         entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in') })
@@ -234,15 +241,94 @@ export function pageCheckout(state) {
         }
       }
 
-      const refreshSummaryView = () => {
+      // ── Envio: cotizacion Estandar/Express ──
+      const field = (name) => root.querySelector(`[name="${name}"]`)
+      const deliveryNow = () => qs(root, 'select[name="deliveryMethod"]').value
+      const cartItems = () => getState().cart.map(i => ({ productId: i.productId, qty: Number(i.qty) || 0 }))
+      // Datos que definen la cotizacion; key '' si aun no alcanzan
+      const quoteInputs = () => {
+        const zip = (field('zipCode')?.value || '').trim()
+        const state = field('state')?.value || ''
+        const city = sanitizeText(field('city')?.value) || ''
+        const items = cartItems()
+        const ok = isMxZip(zip) && MX_STATES.some(s => s.code === state) && city && items.length
+        return { zip, state, city, items, key: ok ? `${zip}|${state}|${cartKey(items)}` : '' }
+      }
+      // Cotizacion vigente: lista, para el CP/estado/carrito de hoy y con envio a domicilio
+      const activeQuote = () => ship.status === 'ready' && deliveryNow() === ENVIO && ship.key === quoteInputs().key ? ship.quote : null
+      const shipFreeMin = (q) => q.freeShippingMin ?? BRAND.freeShippingMin
+      const shipCharge = (subtotal, coupon, tier = ship.tier) => {
+        const q = activeQuote()
+        return q ? chargeFor(q, tier, isFreeShipping(subtotal, coupon, shipFreeMin(q))) : 0
+      }
+      const renderShip = () => {
+        const block = root.querySelector('#ship-block')
+        if (!block) return
+        const q = activeQuote()
+        const subtotal = cartTotal()
+        const coupon = getCoupon()
+        const prices = q ? { standard: shipCharge(subtotal, coupon, 'standard'), express: q.express ? shipCharge(subtotal, coupon, 'express') : 0 } : null
+        block.innerHTML = deliveryNow() === ENVIO ? shippingBlockHTML({ status: ship.status, quote: q, tier: ship.tier, prices }) : ''
+      }
+      const resetShip = (status = 'idle') => { ship.seq++; ship.status = status; ship.quote = null; ship.key = ''; ship.pending = null }
+      const runQuote = () => {
+        ship.timer = 0
+        if (deliveryNow() !== ENVIO) return
+        const { state, city, items, key, zip } = quoteInputs()
+        // Fuera de Mexico o CP que no es de 5 digitos: no hay a quien cotizar, se confirma por WhatsApp
+        if (state === 'otro' || (zip.length >= 4 && !isMxZip(zip))) {
+          if (ship.status !== 'fallback') { resetShip('fallback'); renderShip(); refreshSummaryView({ keepShip: true }) }
+          return
+        }
+        if (!key) {
+          if (ship.status !== 'idle') { resetShip(); renderShip(); refreshSummaryView({ keepShip: true }) }
+          return
+        }
+        if (key === ship.key && ship.status !== 'idle') return
+        const seq = ++ship.seq
+        ship.status = 'quoting'
+        ship.quote = null
+        ship.key = key
+        renderShip()
+        refreshSummaryView({ keepShip: true })
+        ship.pending = quoteShipping({ zipCode: zip, state, city, items }).then((res) => {
+          if (seq !== ship.seq) return
+          ship.pending = null
+          ship.status = res.fallback ? 'fallback' : 'ready'
+          ship.quote = res.fallback ? null : res
+          if (ship.tier === 'express' && !ship.quote?.express) ship.tier = 'standard'
+          renderShip()
+          refreshSummaryView({ keepShip: true })
+        })
+      }
+      const scheduleQuote = () => {
+        clearTimeout(ship.timer)
+        ship.timer = setTimeout(runQuote, 400)
+      }
+      // Antes de enviar: lo que este por cotizarse se cotiza ya, y se espera la respuesta (tope 8 s)
+      const settleShipping = async () => {
+        clearTimeout(ship.timer)
+        runQuote() // sin cambios en CP/estado/carrito no hace nada (Enter en la ciudad cae aqui)
+        if (!ship.pending) return
+        let timedOut = false
+        await Promise.race([ship.pending, new Promise(r => setTimeout(() => { timedOut = true; r() }, QUOTE_WAIT_MS))])
+        if (timedOut && ship.status === 'quoting') { resetShip('fallback'); renderShip(); refreshSummaryView({ keepShip: true }) }
+      }
+
+      const refreshSummaryView = ({ keepShip = false } = {}) => {
         // Recalculate totals
         const currentSubtotal = cartTotal()
         const currentCoupon = getCoupon()
         const currentDiscount = getDiscountAmount(currentCoupon)
-        const currentTotal = currentSubtotal - currentDiscount
+        const currentCharge = shipCharge(currentSubtotal, currentCoupon)
+        const currentTotal = currentSubtotal - currentDiscount + currentCharge
         shownTotal = currentTotal
         serverTotal = null
         const currentFreeShip = currentCoupon?.freeShipping || currentSubtotal >= BRAND.freeShippingMin
+        const shipLabel = ship.status === 'quoting' && deliveryNow() === ENVIO ? 'Calculando…'
+          : activeQuote() ? (currentCharge > 0 ? formatMoney(currentCharge) : 'Gratis')
+          : currentFreeShip && ship.status !== 'fallback' ? 'Gratis' : 'Te lo confirmamos por WhatsApp'
+        if (!keepShip) renderShip()
         const liveCart = getState().cart
         const currentItemCount = liveCart.reduce((acc, i) => acc + (Number(i.qty) || 0), 0)
 
@@ -256,6 +342,7 @@ export function pageCheckout(state) {
             freeShipping: currentFreeShip, 
             itemCount: currentItemCount, 
             coupon: currentCoupon, 
+            shipLabel,
             upsellProducts 
           })
           
@@ -361,7 +448,24 @@ export function pageCheckout(state) {
         setError('')
         clearFieldErrors(root)
         refreshConditional()
+        refreshSummaryView()
+        scheduleQuote()
       })
+
+      // Estado en lista; "otro" abre el campo libre
+      on(root, 'change', 'select[name="state"]', (_e, sel) => {
+        setFieldError(sel, '')
+        root.querySelector('#state-other-wrap').classList.toggle('hidden', sel.value !== 'otro')
+        scheduleQuote()
+      })
+      on(root, 'input', 'input[name="zipCode"]', scheduleQuote)
+      // La ciudad solo hace falta para cotizar; se revisa al salir del campo, no en cada letra
+      on(root, 'focusout', 'input[name="city"]', scheduleQuote)
+      on(root, 'change', 'input[name="shipTier"]', (_e, radio) => {
+        ship.tier = radio.value
+        refreshSummaryView({ keepShip: true })
+      })
+      scheduleQuote()
 
       // Limpiar error de campo al escribir
       form.addEventListener('input', (e) => {
@@ -425,7 +529,7 @@ export function pageCheckout(state) {
         })
       }
 
-      form.addEventListener('submit', (ev) => {
+      form.addEventListener('submit', async (ev) => {
         ev.preventDefault()
         setError('')
         clearFieldErrors(root)
@@ -461,6 +565,7 @@ export function pageCheckout(state) {
         const requireAddress = needsAddress(paymentMethod, deliveryMethod)
         let fullAddress = ''
         let email = ''
+        let addressParts = null
 
         if (requireAddress) {
           const emailEl = root.querySelector('input[name="email"]')
@@ -474,7 +579,8 @@ export function pageCheckout(state) {
           const neighborhoodEl = root.querySelector('input[name="neighborhood"]')
           const cityEl         = root.querySelector('input[name="city"]')
           const zipCodeEl      = root.querySelector('input[name="zipCode"]')
-          const stateEl        = root.querySelector('input[name="state"]')
+          const stateEl        = root.querySelector('select[name="state"]')
+          const stateOtherEl   = root.querySelector('input[name="stateOther"]')
           const referencesEl   = root.querySelector('textarea[name="references"]')
 
           const street       = sanitizeText(streetEl?.value)       || ''
@@ -483,7 +589,8 @@ export function pageCheckout(state) {
           const neighborhood = sanitizeText(neighborhoodEl?.value) || ''
           const city         = sanitizeText(cityEl?.value)         || ''
           const zipCode      = (zipCodeEl?.value || '').trim()     || ''
-          const stateVal     = sanitizeText(stateEl?.value)        || ''
+          const stateSel     = stateEl?.value || ''
+          const stateName    = stateSel === 'otro' ? (sanitizeText(stateOtherEl?.value) || '') : (MX_STATES.find(s => s.code === stateSel)?.name || '')
           const references   = sanitizeText(referencesEl?.value)  || ''
 
           if (!street)                              return setError('Ingresa la calle.', streetEl)
@@ -492,9 +599,20 @@ export function pageCheckout(state) {
           if (!city)                                return setError('Ingresa la ciudad.', cityEl)
           if (!zipCode)                             return setError('Ingresa el código postal.', zipCodeEl)
           if (!ZIPCODE_RE.test(zipCode))            return setError('El código postal debe ser de 4 a 6 dígitos numéricos.', zipCodeEl)
-          if (!stateVal)                            return setError('Ingresa el estado.', stateEl)
+          if (!stateSel)                            return setError('Selecciona tu estado.', stateEl)
+          if (!stateName)                           return setError('Ingresa tu estado o región.', stateOtherEl)
 
-          fullAddress = `${street} #${numExt}${numInt ? ' Int. ' + numInt : ''}, Col. ${neighborhood}, ${city}, ${stateVal}, C.P. ${zipCode}${references ? ' | Ref: ' + references : ''}`
+          fullAddress = `${street} #${numExt}${numInt ? ' Int. ' + numInt : ''}, Col. ${neighborhood}, ${city}, ${stateName}, C.P. ${zipCode}${references ? ' | Ref: ' + references : ''}`
+          addressParts = { street, numExt, numInt, neighborhood, city, state: stateSel === 'otro' ? null : stateSel, stateName, zip: zipCode, references }
+
+          // Si aun se esta cotizando, se espera; si el total cambio por el envio, se confirma de nuevo
+          const totalBefore = shownTotal
+          setSubmitting(true)
+          await settleShipping()
+          setSubmitting(false)
+          if (Math.abs(shownTotal - totalBefore) >= 0.005) {
+            return setError(`Calculamos el envío de tu pedido. El total es ${formatMoney(shownTotal)}. Confirma de nuevo para enviarlo.`)
+          }
         }
 
         // ── Construir y enviar el pedido ──
@@ -528,7 +646,9 @@ export function pageCheckout(state) {
         const currentSubtotal = cartTotal()
         const appliedCoupon   = getCoupon()
         const currentDiscount = getDiscountAmount(appliedCoupon)
-        const currentTotal    = currentSubtotal - currentDiscount
+        const quote           = requireAddress ? activeQuote() : null
+        const currentCharge   = shipCharge(currentSubtotal, appliedCoupon)
+        const currentTotal    = currentSubtotal - currentDiscount + currentCharge
         if (Math.abs(currentTotal - shownTotal) >= 0.005) {
           refreshSummaryView()
           setError('Los precios cambiaron. Revisa el total y confirma de nuevo.')
@@ -541,6 +661,7 @@ export function pageCheckout(state) {
           subtotal: currentSubtotal,
           discount: currentDiscount,
           couponCode: appliedCoupon?.code || null,
+          shipping: quote ? { label: `${TIER_NAMES[ship.tier]} · ${carrierName(quote[ship.tier].carrier)}`, cost: currentCharge } : null,
           total: serverTotal ?? currentTotal,
         })
 
@@ -556,6 +677,9 @@ export function pageCheckout(state) {
           address: requireAddress ? fullAddress : null,
           couponCode: appliedCoupon?.code || null,
           expectedTotal: serverTotal ?? Math.round(shownTotal * 100) / 100,
+          shippingQuoteId: quote?.quoteId || null,
+          shippingTier: quote ? ship.tier : null,
+          addressParts,
           items: liveCart.map(i => ({
             productId: i.productId,
             size: i.size,
@@ -574,6 +698,22 @@ export function pageCheckout(state) {
             if (usedCoupon && /primera compra/i.test(error.message || '')) {
               dropFirstPurchaseCoupon(usedCoupon.code)
               setSubmitting(false)
+              return
+            }
+            if (/vencio|carrito cambio|envio invalida/i.test(error.message || '')) {
+              // La cotizacion caduco, el carrito cambio o la opcion ya no vale: se cotiza otra vez
+              // y se confirma el precio nuevo. Al segundo error seguido, el pedido va sin cotizacion.
+              quoteErrors++
+              ship.tier = 'standard'
+              ship.key = ''
+              if (quoteErrors > 1) { resetShip('fallback'); ship.key = quoteInputs().key; renderShip(); refreshSummaryView({ keepShip: true }) }
+              const requote = quoteErrors > 1 ? Promise.resolve() : settleShipping()
+              requote.then(() => {
+                setError(ship.status === 'fallback'
+                  ? `Te confirmamos el costo de envío por WhatsApp. El total de tu pedido es ${formatMoney(shownTotal)}. Confirma de nuevo para enviarlo.`
+                  : `Actualizamos el costo de tu envío. El total de tu pedido es ${formatMoney(shownTotal)}. Confirma de nuevo para enviarlo.`)
+                setSubmitting(false)
+              })
               return
             }
             if (/precios cambiaron/i.test(error.message || '')) {
@@ -623,6 +763,7 @@ export function pageCheckout(state) {
       // Una promo que empieza o termina con el checkout abierto repinta el resumen
       let lastPromoRev = getState().promoRev
       const unsubPromo = subscribe(() => {
+        scheduleQuote() // el carrito pudo cambiar; con la misma cotizacion vigente no hace nada
         const rev = getState().promoRev
         if (rev === lastPromoRev) return
         lastPromoRev = rev
@@ -630,6 +771,8 @@ export function pageCheckout(state) {
       })
 
       return () => {
+        clearTimeout(ship.timer)
+        ship.seq++
         unsubPromo()
         io.disconnect()
       }

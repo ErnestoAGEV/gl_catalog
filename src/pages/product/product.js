@@ -403,7 +403,7 @@ export function pageProduct(initialState) {
                 <div class="grid grid-cols-3 gap-px bg-ink/10 rounded-lg overflow-hidden mb-7">
                   <div class="bg-paper p-3 sm:p-4 text-center">
                     <svg class="w-5 h-5 mx-auto mb-1.5 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9l2-4h14l2 4M3 9v11a1 1 0 001 1h16a1 1 0 001-1V9M3 9h18M16 13a4 4 0 11-8 0"/></svg>
-                    <div class="font-mono text-[11px] tracking-[0.12em] uppercase leading-snug">Envío en 3 a 4 días</div>
+                    <div class="font-mono text-[11px] tracking-[0.12em] uppercase leading-snug">Envío a todo México</div>
                   </div>
                   <div class="bg-paper p-3 sm:p-4 text-center">
                     <svg class="w-5 h-5 mx-auto mb-1.5 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M5 6h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2zM8 14h.01M12 14h4"/></svg>
@@ -436,7 +436,7 @@ export function pageProduct(initialState) {
                     <svg class="chev w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
                   </summary>
                   <div class="body">
-                    Enviamos a todo México, sin costo en compras de ${formatMoney(BRAND.freeShippingMin)} o más. Tu pedido llega en 3 a 4 días hábiles a partir de la confirmación del pago, y te compartimos la guía por WhatsApp. Recoger en tienda no tiene costo: apartas por WhatsApp y pasas por tu pedido a nuestra sucursal del Centro o de Villa de Álvarez.
+                    Enviamos a todo México. El costo se calcula con tu código postal al hacer tu pedido y es gratis desde ${formatMoney(BRAND.freeShippingMin)}. Recíbelo en 2 a 6 días hábiles a partir de la confirmación del pago, y te compartimos la guía por WhatsApp. Recoger en tienda no tiene costo: apartas por WhatsApp y pasas por tu pedido a nuestra sucursal del Centro o de Villa de Álvarez.
                   </div>
                 </details>
 

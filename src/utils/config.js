@@ -1,8 +1,10 @@
+import { FREE_SHIPPING_MIN } from './freeShipping.js'
+
 export const BRAND = {
   name: import.meta.env.VITE_BRAND_NAME || 'G&L',
   tagline: 'Boutique de ropa para hombre. Desde 1995.',
   whatsapp: import.meta.env.VITE_WHATSAPP_NUMBER || '523121018263',
-  freeShippingMin: 1499,
+  freeShippingMin: FREE_SHIPPING_MIN,
 }
 
 // Formato internacional sin '+' (ej: 5255XXXXXXXX). Reemplazar por el número real.
