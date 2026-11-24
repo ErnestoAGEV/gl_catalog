@@ -36,6 +36,7 @@ const L = { local_delivery_price: '62', local_delivery_zips: ['28000', '28950'] 
 assert.deepEqual(localTiers(L, '28950'), { standard: { carrier: 'local', service: 'Entrega local', price: 62, cost: 62, days: 1 }, express: null })
 assert.equal(localTiers(L, '28100'), null)
 assert.equal(localTiers({}, '28000'), null)
+assert.equal(localTiers({ ...L, local_delivery_price: 'NaN' }, '28000'), null)
 console.log('test-shipping ok')
 
 // Lectura del minimo de envio gratis (RPC): null, texto, negativos o error -> respaldo 1499

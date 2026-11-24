@@ -661,7 +661,7 @@ export function pageCheckout(state) {
           subtotal: currentSubtotal,
           discount: currentDiscount,
           couponCode: appliedCoupon?.code || null,
-          shipping: quote ? { label: `${TIER_NAMES[ship.tier]} · ${carrierName(quote[ship.tier].carrier)}`, cost: currentCharge } : null,
+          shipping: quote ? { label: quote[ship.tier].carrier === 'local' ? carrierName('local') : `${TIER_NAMES[ship.tier]} · ${carrierName(quote[ship.tier].carrier)}`, cost: currentCharge } : null,
           total: serverTotal ?? currentTotal,
         })
 

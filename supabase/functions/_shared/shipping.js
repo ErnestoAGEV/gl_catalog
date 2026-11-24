@@ -36,6 +36,7 @@ export function pickTiers(rates) {
 export function localTiers(settings, zip) {
   if (!settings.local_delivery_zips?.includes(zip)) return null
   const price = Number(settings.local_delivery_price)
+  if (!Number.isFinite(price) || price < 0) return null
   return { standard: { carrier: 'local', service: 'Entrega local', price, cost: price, days: 1 }, express: null }
 }
 

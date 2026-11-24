@@ -128,6 +128,7 @@ revoke insert, update, delete, truncate on public.shipping_settings, public.ship
 -- La hace la tienda a precio fijo; shipping-quote la responde sin llamar a Envia.
 alter table public.shipping_settings add column if not exists local_delivery_price numeric not null default 60 check (local_delivery_price >= 0);
 alter table public.shipping_settings add column if not exists local_delivery_zips text[] not null default '{}';
+-- Re-ejecutar este archivo vuelve a sembrar la lista si se dejo vacia.
 -- Siembra (solo si esta vacio): CP de los municipios Colima (59) y Villa de Álvarez (28), estado de Colima.
 -- Fuente: geocodes.envia.com/locate/MX/<cp> (region_2 = municipio), consultado 2026-11-24. Editable en Admin > Envios.
 update public.shipping_settings set local_delivery_zips = array['28000','28010','28012','28014','28016','28017','28018','28019','28020','28023','28025','28030','28035','28037','28040','28043','28044','28045','28046','28047','28048','28050','28060','28063','28067','28068','28070','28075','28077','28078','28079','28080','28085','28089','28090','28600','28602','28610','28613','28615','28619','28620','28626','28627','28628','28629','28630','28633','28634','28635','28638','28640','28641','28645','28646','28647','28650','28655','28668','28950','28952','28955','28958','28959','28960','28963','28964','28965','28966','28968','28970','28973','28974','28975','28976','28977','28978','28979','28980','28982','28983','28984','28985','28986','28987','28988','28989']
