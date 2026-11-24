@@ -1,6 +1,6 @@
 import { getShippingSettings, saveShippingSettings, saveCategoryWeight, deleteCategoryWeight, getState } from '../../store/index.js'
 import { showToast } from '../../utils/toast.js'
-import { escapeHtml as esc, sanitizeText } from '../../utils/sanitize.js'
+import { escapeHtml, sanitizeText } from '../../utils/sanitize.js'
 import { formatMoney } from '../../utils/format.js'
 import { MX_STATES } from '../../../supabase/functions/_shared/shipping.js'
 import { carrierName } from '../checkout/shippingBlock.js'
@@ -9,6 +9,8 @@ import { ICON } from './adminIcons.js'
 
 // Castores no se ofrece (decision del dueño)
 const CARRIERS = ['estafeta', 'fedex', 'dhl', 'paquetexpress', 'ups', 'jtexpress', '99minutos']
+// escapeHtml devuelve '' si no es string: los numeros de la BD se pasan por String
+const esc = (v) => escapeHtml(String(v ?? ''))
 const inRange = (n, min, max) => Number.isInteger(n) && n >= min && n <= max
 
 const boxFields = (key, label, v = {}) => `
@@ -17,13 +19,13 @@ const boxFields = (key, label, v = {}) => `
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
       ${[['length', 'Largo (cm)'], ['width', 'Ancho (cm)'], ['height', 'Alto (cm)'], ['max_grams', 'Peso máx. (g)']].map(([f, l]) => `
         <div><label class="text-[11px] text-faint" for="sh-${key}-${f}">${l}</label>
-        <input id="sh-${key}-${f}" name="${key}.${f}" type="number" min="1" max="${f === 'max_grams' ? 30000 : 200}" step="1" required value="${esc(v[f] ?? '')}" class="adm-fld tnum" onwheel="this.blur()" /></div>`).join('')}
+        <input id="sh-${key}-${f}" name="${key}.${f}" type="number" min="1" max="${f === 'max_grams' ? 30000 : 200}" step="1" required value="${esc(v[f])}" class="adm-fld tnum" onwheel="this.blur()" /></div>`).join('')}
     </div>
   </fieldset>`
 
 const textField = (name, label, value, extra = '') => `
   <div><label class="adm-lbl" for="sh-${name}">${label}</label>
-  <input id="sh-${name}" name="${name}" type="text" maxlength="80" value="${esc(value ?? '')}" class="adm-fld" ${extra} /></div>`
+  <input id="sh-${name}" name="${name}" type="text" maxlength="${name === 'o-postalCode' ? 5 : 80}" value="${esc(value)}" class="adm-fld" ${extra} /></div>`
 
 export function pageAdminShipping() {
   return {
@@ -40,7 +42,9 @@ export function pageAdminShipping() {
 
     async onMount(root) {
       const body = root.querySelector('#shipping-body')
-      const { settings: s, weights } = await getShippingSettings()
+      const loadFail = () => { body.innerHTML = '<p class="text-[13px] text-bad bg-bad-tint rounded-xl2 px-4 py-3">No se pudieron cargar los ajustes de envío.</p>' }
+      let s, weights
+      try { ({ settings: s, weights } = await getShippingSettings()) } catch (_e) { return loadFail() }
       if (!s) { body.innerHTML = '<p class="text-[13px] text-bad bg-bad-tint rounded-xl2 px-4 py-3">No se pudieron cargar los ajustes de envío.</p>'; return }
 
       const rowsByCat = new Map(weights.map(w => [w.category, w]))
@@ -55,7 +59,7 @@ export function pageAdminShipping() {
               <p class="text-[13.5px] font-semibold text-ink">${esc(cat)}</p>
               ${w ? '' : `<p class="text-[11px] text-faint">Usa el valor por defecto (${esc(s.default_grams)} g)</p>`}
             </div>
-            <input data-grams type="number" min="1" max="30000" step="1" value="${esc(w?.grams ?? '')}" placeholder="gramos" aria-label="Gramos de ${esc(cat)}" class="adm-fld tnum w-28" onwheel="this.blur()" />
+            <input data-grams type="number" min="1" max="30000" step="1" value="${esc(w?.grams)}" placeholder="gramos" aria-label="Gramos de ${esc(cat)}" class="adm-fld tnum w-28" onwheel="this.blur()" />
             <label class="flex items-center gap-1.5 text-[13px] text-body"><input data-box type="checkbox" class="w-4 h-4 accent-brand" ${w?.needs_box ? 'checked' : ''}> Va en caja</label>
             <button type="button" data-save class="adm-btn adm-btn-ink h-9 px-3 text-[13px]">Guardar</button>
             ${w ? `<button type="button" data-del class="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-bad hover:bg-bad-tint transition-colors" title="Quitar (usará el valor por defecto)" aria-label="Quitar ${esc(cat)}">${ICON.trash('w-4 h-4')}</button>` : ''}
@@ -95,9 +99,9 @@ export function pageAdminShipping() {
                 ${textField('o-city', 'Ciudad *', o.city, 'required')}
                 <div><label class="adm-lbl" for="sh-o-state">Estado *</label>
                   <select id="sh-o-state" name="o-state" class="adm-fld" required>
-                    ${MX_STATES.map(st => `<option value="${esc(st.code)}" ${st.code === o.state ? 'selected' : ''}>${esc(st.name)}</option>`).join('')}
+                    ${(MX_STATES.some(st => st.code === o.state) || !o.state ? MX_STATES : [{ code: o.state, name: o.state }, ...MX_STATES]).map(st => `<option value="${esc(st.code)}" ${st.code === o.state ? 'selected' : ''}>${esc(st.name)}</option>`).join('')}
                   </select></div>
-                ${textField('o-postalCode', 'Código postal *', o.postalCode, 'required inputmode="numeric" maxlength="5"')}
+                ${textField('o-postalCode', 'Código postal *', o.postalCode, 'required inputmode="numeric"')}
               </div>
             </div>
 
@@ -126,14 +130,14 @@ export function pageAdminShipping() {
         const category = row.dataset.row
         if (btn.matches('[data-del]')) {
           if (!await confirmDelete({ title: '¿Quitar peso?', highlight: category, message: 'La categoría usará el valor por defecto.' })) return
-          const { error } = await deleteCategoryWeight(category)
+          const { error } = await deleteCategoryWeight(category).catch(e => ({ error: e }))
           if (error) { showToast('No se pudo quitar', 'error'); return }
           rowsByCat.delete(category)
         } else {
           const grams = Number(row.querySelector('[data-grams]').value)
           if (!inRange(grams, 1, 30000)) { showToast('Los gramos deben estar entre 1 y 30000', 'error'); return }
           const needs_box = row.querySelector('[data-box]').checked
-          const { error } = await saveCategoryWeight({ category, grams, needs_box })
+          const { error } = await saveCategoryWeight({ category, grams, needs_box }).catch(e => ({ error: e }))
           if (error) { showToast('No se pudo guardar', 'error'); return }
           rowsByCat.set(category, { category, grams, needs_box })
         }
@@ -170,8 +174,8 @@ export function pageAdminShipping() {
         if (!inRange(default_grams, 1, 30000)) return fail('El peso por defecto debe estar entre 1 y 30000 g.')
 
         submitBtn.disabled = true
-        const { error } = await saveShippingSettings({ carriers, envelope, box, origin, default_grams, default_needs_box: form.elements.default_needs_box.checked })
-        submitBtn.disabled = false
+        let error
+        try { ({ error } = await saveShippingSettings({ carriers, envelope, box, origin, default_grams, default_needs_box: form.elements.default_needs_box.checked })) } catch (e) { error = e } finally { submitBtn.disabled = false }
         if (error) return fail('No se pudieron guardar los ajustes.')
         showToast('Ajustes guardados', 'success')
       })

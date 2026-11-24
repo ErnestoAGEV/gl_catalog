@@ -21,19 +21,21 @@ export async function quoteShipping({ zipCode, state, city, items }) {
 
 export async function getShippingSettings() {
   const access = await ensureAdminAccess()
-  if (!access.ok) return { settings: null, weights: [] }
+  if (!access.ok) return { settings: null, weights: [], error: access.error }
   const [s, w] = await Promise.all([
     supabase.from('shipping_settings').select('*').eq('id', 1).single(),
     supabase.from('shipping_category_weights').select('*').order('category'),
   ])
-  return { settings: s.error ? null : s.data, weights: w.error ? [] : w.data || [] }
+  const error = s.error || w.error
+  return error ? { settings: null, weights: [], error } : { settings: s.data, weights: w.data || [] }
 }
 
 async function adminWrite(run) {
   const access = await ensureAdminAccess()
   if (!access.ok) return { error: access.error.message }
-  const { error } = await run()
-  return { error }
+  // .select() devuelve las filas tocadas: RLS que filtra todo no da error, solo 0 filas
+  const { data, error } = await run().select()
+  return { error: error || (data?.length ? null : { message: 'Sin cambios' }) }
 }
 
 export const saveShippingSettings = (settings) =>
