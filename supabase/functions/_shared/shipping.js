@@ -55,7 +55,7 @@ export function cartKey(items) {
 
 export const isMxZip = (zip) => /^\d{5}$/.test(zip)
 
-// shortcut: códigos ISO 3166-2:MX; verificar contra el formato de Envia al desplegar
+// El mapeo de estados a los códigos de Envia vive en envia.js (verificado contra queries.envia.com)
 export const MX_STATES = [
   ['AGU', 'Aguascalientes'], ['BCN', 'Baja California'], ['BCS', 'Baja California Sur'], ['CAM', 'Campeche'],
   ['CHP', 'Chiapas'], ['CHH', 'Chihuahua'], ['CMX', 'Ciudad de México'], ['COA', 'Coahuila'],

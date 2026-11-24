@@ -11,8 +11,10 @@ export const enviaState = (code) => ENVIA_STATE[code] ?? code
 
 // deliveryEstimate es texto libre ("2-4 días"): días = el número mayor (conservador). Sin número -> null.
 function parseDays(r) {
-  const nums = String(r.deliveryEstimate ?? '').match(/\d+/g)?.map(Number)
-  if (nums?.length) return Math.max(...nums)
+  const txt = String(r.deliveryEstimate ?? '')
+  // Fechas ("27/11") o cifras > 30 no son días
+  const nums = /\d\/\d/.test(txt) ? null : txt.match(/\d+/g)?.map(Number)
+  if (nums?.length) { const n = Math.max(...nums); return n > 30 ? null : n }
   const dd = r.deliveryDate
   return dd?.timeUnit === 'days' && Number.isFinite(dd.dateDifference) ? dd.dateDifference : null
 }
@@ -23,7 +25,7 @@ export function parseRates(json, carrier) {
     .map((r) => ({ carrier: r.carrier ?? carrier, service: r.serviceDescription || r.service, price: parseFloat(r.totalPrice), days: parseDays(r) }))
     .filter((r) => Number.isFinite(r.price) && r.price > 0 && r.service)
     // Dueño: todos los envíos a domicilio; Ocurre = recoger en sucursal
-    .filter((r) => !/ocurre/i.test(r.service.normalize('NFD').replace(/[̀-ͯ]/g, '')))
+    .filter((r) => !/ocurre/i.test(r.service.normalize('NFD').replace(/[\u0300-\u036f]/g, '')))
 }
 
 const addr = (a) => ({ ...a, state: enviaState(a.state), country: 'MX' })

@@ -10,6 +10,7 @@ export async function quoteShipping({ zipCode, state, city, items }) {
   try {
     const { data, error } = await supabase.functions.invoke('shipping-quote', {
       body: { zipCode: String(zipCode), state, city, items },
+      timeout: 10000, // sin esto "Calculando…" podría colgarse; al vencer vuelve error -> fallback
     })
     return error || !data?.quoteId ? { fallback: true } : data
   } catch (_err) {

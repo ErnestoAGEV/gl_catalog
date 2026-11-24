@@ -62,6 +62,8 @@ declare
   v_ship   boolean := coalesce(o.delivery_method, '') ilike '%domicilio%';
   v_head   text;
   v_when   text := to_char(o.created_at at time zone 'America/Mexico_City', 'DD/MM/YYYY HH24:MI');
+  v_quoted boolean := o.shipping_cost is not null;
+  v_total  numeric := o.total + coalesce(o.shipping_cost, 0);
   v_subject text;
   v_html   text;
 begin
@@ -96,7 +98,7 @@ begin
     v_head := '<div style="background:#D6453E;color:#fff;padding:14px 16px;border-radius:10px;font-size:18px"><b>Pedido cancelado. No lo despaches.</b><br><span style="font-size:14px">Si ya estaba empacado, regresa las piezas al inventario.</span></div>';
   else
     v_subject := 'Pedido #' || v_short || ' · ' || coalesce(o.delivery_method, '') || ' · '
-      || v_pieces || case when v_pieces = 1 then ' pieza' else ' piezas' end || ' · ' || money_mx(o.total);
+      || v_pieces || case when v_pieces = 1 then ' pieza' else ' piezas' end || ' · ' || money_mx(v_total);
     v_head := '<div style="background:#111;color:#fff;padding:14px 16px;border-radius:10px;font-size:18px"><b>'
       || html_esc(coalesce(o.delivery_method, 'Sin método de entrega')) || '</b><br>'
       || '<span style="font-size:14px">Pago: ' || html_esc(coalesce(nullif(o.payment_method, ''), 'Sin definir'))
@@ -121,8 +123,17 @@ begin
     || '<h2 style="font-size:16px;margin:22px 0 6px">Cobro</h2>'
     || '<p style="margin:0;font-size:15px;line-height:1.6">Subtotal: ' || money_mx(o.subtotal)
     || case when coalesce(o.discount, 0) > 0 then '<br>Descuento' || case when o.coupon_code is not null then ' (' || html_esc(o.coupon_code) || ')' else '' end || ': -' || money_mx(o.discount) else '' end
-    || '<br><b>Total productos: ' || money_mx(o.total) || '</b>'
-    || case when v_ship then '<br><span style="color:#555">El envío se cobra aparte.</span>' else '' end
+    || case when v_quoted then
+         '<br>Envío (' || case o.shipping_tier when 'express' then 'Express' else 'Estándar' end
+         || case when o.shipping_carrier is not null then ' · ' || html_esc(case o.shipping_carrier
+              when 'estafeta' then 'Estafeta' when 'fedex' then 'FedEx' when 'dhl' then 'DHL'
+              when 'paquetexpress' then 'Paquetexpress' when 'ups' then 'UPS'
+              when 'jtexpress' then 'J&T Express' when '99minutos' then '99minutos'
+              else o.shipping_carrier end) else '' end
+         || '): ' || case when o.shipping_cost = 0 then 'Gratis' else money_mx(o.shipping_cost) end
+         || '<br><b>Total a cobrar: ' || money_mx(v_total) || '</b>'
+       else '<br><b>Total productos: ' || money_mx(o.total) || '</b>' end
+    || case when v_ship and not v_quoted then '<br><span style="color:#555">El envío se cobra aparte.</span>' else '' end
     || '</p>'
     || '<p style="margin:26px 0 0"><a href="https://glboutique.com.mx/admin/orders" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:bold">Ver en el admin</a></p>'
     || '<p style="margin:22px 0 0;color:#888;font-size:12px">Aviso interno de G&amp;L. Trae datos del cliente: no lo reenvíes fuera del equipo.</p>'

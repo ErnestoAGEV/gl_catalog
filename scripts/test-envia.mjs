@@ -8,6 +8,7 @@ const fixture = { meta: 'rate', data: [
   { carrier: 'estafeta', service: 'raro', deliveryEstimate: 'n/d', totalPrice: '99', deliveryDate: { timeUnit: 'days', dateDifference: 3 } },
   { carrier: 'estafeta', service: 'sin_precio', totalPrice: 'x' },
   { carrier: 'estafeta', service: 'terrestre_ocurre', serviceDescription: 'Estafeta Terrestre Ocurre - Domicilio', deliveryEstimate: '2-4 días', totalPrice: '150', currency: 'MXN' },
+  { carrier: 'estafeta', service: 'x', serviceDescription: 'Estafeta Terrestre OCURRE', deliveryEstimate: '2 días', totalPrice: '120' },
 ] }
 assert.deepEqual(parseRates(fixture, 'estafeta'), [
   { carrier: 'estafeta', service: 'Terrestre', price: 187.3, days: 4 },
@@ -16,4 +17,5 @@ assert.deepEqual(parseRates(fixture, 'estafeta'), [
 ])
 assert.deepEqual(parseRates({ error: 'x' }, 'dhl'), [])
 assert.equal(parseRates({ data: [{ service: 's', totalPrice: '10' }] }, 'dhl')[0].days, null)
+assert.equal(parseRates({ data: [{ service: 's', totalPrice: '10', deliveryEstimate: '27/11' }] }, 'dhl')[0].days, null)
 assert.equal(enviaState('COL'), 'CL'); assert.equal(enviaState('COA'), 'CO'); assert.equal(enviaState('NLE'), 'NL'); assert.equal(enviaState('CMX'), 'CX')
