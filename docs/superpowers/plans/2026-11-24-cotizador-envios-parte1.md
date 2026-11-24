@@ -64,7 +64,7 @@
   - `pickTiers(rates: {carrier: string, service: string, price: number, days: number|null}[]) => {standard: Rate, express: Rate|null} | null` — `Rate` incluye `price` (redondeado) y `cost` (original de Envia).
   - `isFreeShipping(subtotal: number, coupon: {freeShipping?: boolean}|null, min: number) => boolean`
   - `chargeFor(tiers: {standard: {price}, express: {price}|null}, tier: 'standard'|'express', free: boolean) => number`
-  - `cartKey(items: {productId: string|number, qty: number}[]) => string` — suma qty por `productId`, ordena por id, `"id:qty|id:qty"`.
+  - `cartKey(items: {productId: string|number, qty: number}[]) => string` — suma qty por `String(productId)`, ordena por texto y por código de carácter (comparar con `<`/`>`, sin `localeCompare` ni resta; igual que `collate "C"` en SQL), `"id:qty|id:qty"`.
   - `isMxZip(zip: string) => boolean` (exactamente 5 dígitos)
   - `MX_STATES: {code: string, name: string}[]` (32 estados; `code` en el formato que pide Envia — verificar en su doc, p. ej. `CL` Colima, `JA` Jalisco)
   - `ShippingSettings = { envelope: {length,width,height,max_grams}, box: {length,width,height,max_grams}, default_grams: number, default_needs_box: boolean, carriers: string[], free_shipping_min: number }`
@@ -98,6 +98,7 @@ assert.equal(chargeFor(t, 'standard', false), 190); assert.equal(chargeFor(t, 'e
 assert.equal(chargeFor(t, 'standard', true), 0); assert.equal(chargeFor(t, 'express', true), 40)
 
 assert.equal(cartKey([{ productId: 2, qty: 1 }, { productId: 1, qty: 1 }, { productId: 2, qty: 2 }]), '1:1|2:3')
+assert.equal(cartKey([{ productId: 10, qty: 1 }, { productId: 9, qty: 1 }]), '10:1|9:1')   // orden de texto, igual que SQL collate "C"
 assert.equal(isMxZip('28000'), true); assert.equal(isMxZip('2800'), false); assert.equal(isMxZip('280000'), false)
 assert.equal(MX_STATES.length, 32)
 console.log('test-shipping ok')
@@ -128,14 +129,18 @@ console.log('test-shipping ok')
 
 - [ ] **Step 1: Escribir `supabase/shipping.sql`** con tablas, semillas (`insert ... on conflict do nothing`), RLS y columnas de `orders`.
 - [ ] **Step 2: Modificar `place_order`**. Después de calcular `v_total`:
-  - Si `p_shipping_quote_id` viene: buscar la cotización; errores `22023` con estos textos exactos: no existe o `expires_at < now()` → `'La cotizacion de envio vencio. Vuelve a cotizar.'`; `p_shipping_tier` no es `'standard'`/`'express'` o ese tier es null → `'Opcion de envio invalida.'`; `cart_key` distinto al de `p_items` (misma regla que `cartKey`: sumar qty por productId, ordenar, `id:qty|...`) o `zip` distinto a `p_address_parts->>'zip'` → `'Tu carrito cambio. Vuelve a cotizar el envio.'`.
+  - Si `p_delivery_method <> 'Envío a domicilio'`, ignorar la cotización (`v_ship` null).
+  - Si `p_shipping_quote_id` viene (y es envío a domicilio): exigir `p_address_parts` no null; buscar la cotización; errores `22023` con estos textos exactos: no existe o `expires_at < now()` → `'La cotizacion de envio vencio. Vuelve a cotizar.'`; `p_shipping_tier` no es `'standard'`/`'express'` o ese tier es null → `'Opcion de envio invalida.'`; `cart_key` distinto al de `p_items` (misma regla que `cartKey`: sumar qty por `v_item->>'productId'`, `string_agg(id || ':' || qty, '|' order by id collate "C")`) o `q.zip is distinct from (p_address_parts->>'zip')` → `'Tu carrito cambio. Vuelve a cotizar el envio.'`.
   - Envío gratis: `v_subtotal >= settings.free_shipping_min or coalesce(v_coupon.free_shipping, false)`. Cargo: igual que `chargeFor`.
-  - `p_expected_total` se compara contra `v_total + v_ship`; el `detail` del error "Los precios cambiaron" pasa a ser `(v_total + v_ship)::text`.
+  - `p_expected_total` se compara contra `v_total + coalesce(v_ship, 0)`; el `detail` del error "Los precios cambiaron" pasa a ser `(v_total + coalesce(v_ship, 0))::text` (sin coalesce, un `v_ship` null apaga la revisión).
   - Insertar `shipping_cost = v_ship` (null si no hubo cotización), `shipping_tier`, `shipping_carrier`, `shipping_service`, `shipping_quote_id`, `address_parts` (sanear: cada valor texto `left(translate(...,'<>',''), 200)`).
 - [ ] **Step 3: Correr ambos archivos en el SQL Editor de Supabase** (primero `shipping.sql`, luego `place-order.sql`). Verificación:
   - `select count(*) from shipping_category_weights;` → 12 (o los que existan tras confirmar nombres).
   - Insertar a mano una cotización de prueba (`standard = {"price":190,...}`, `express = {"price":230,...}`, `cart_key` de un producto real) y llamar `place_order` con ella: con subtotal < 1499 y `standard` → `shipping_cost = 190`; con un cupón `free_shipping` y `express` → `shipping_cost = 40`; con `expires_at` en el pasado → error "vencio"; con otro carrito → error "carrito cambio". Borrar los pedidos de prueba al terminar.
   - Llamar `place_order` sin cotización (como el sitio de hoy) → funciona y `shipping_cost` es null.
+  - Sin cotización y con `p_expected_total` equivocado → error "Los precios cambiaron".
+  - Cotización de un carrito de **2 productos** (ids que ordenen distinto como número y como texto si los hay) → se acepta.
+  - Con cotización pero `p_address_parts` null o con otro `zip` → error "carrito cambio"; con `p_delivery_method = 'Recoger en tienda'` → `shipping_cost` null.
 - [ ] **Step 4: Commit** `feat(envios): tablas de envío y place_order cobra desde la cotización`
 
 ---
@@ -143,15 +148,16 @@ console.log('test-shipping ok')
 ### Task 3: Edge Function `shipping-quote`
 
 **Files:**
-- Create: `supabase/config.toml` (`npx supabase init`, sin Docker), `supabase/functions/_shared/envia.js`, `supabase/functions/shipping-quote/index.js`, `supabase/functions/README.md`
+- Create: `supabase/config.toml` (`npx supabase init`), `supabase/functions/_shared/envia.js`, `supabase/functions/shipping-quote/index.js`, `supabase/functions/README.md`
+- En `config.toml`: `[functions.shipping-quote]` con `entrypoint = './functions/shipping-quote/index.js'` (el CLI busca `index.ts` por defecto; confirmar en el primer deploy). Desplegar con `npx supabase functions deploy shipping-quote --use-api` (sin Docker).
 
 **Interfaces:**
 - Consumes: `buildPackage`, `pickTiers`, `cartKey`, `isMxZip` (Task 1); tablas de Task 2.
 - Produces:
   - `envia.js`: `rateCarrier({ baseUrl, apiKey, carrier, origin, destination, pkg }) => Promise<{carrier, service, price, days}[]>` — una llamada al endpoint de tarifas por paquetería (verificar en la doc de Envia si hay que mandar `carrier` por llamada y el formato de `deliveryEstimate`/días; normalizar a `days: number|null`). Timeout 8 s con `AbortController`.
-  - Función HTTP `POST` con body `{ zipCode, state, city, items: [{productId, qty}] }` → `200 { quoteId, standard: {carrier, service, price, days}, express: {...}|null }`, o `200 { fallback: true }` cuando no se puede cotizar (CP no MX, paquete null, ninguna tarifa, Envia caído). `400` si el body es inválido (items no arreglo, más de 50, qty fuera de 1–50). `429` si la IP pasó el límite. **No** devolver `cost` al navegador.
+  - Función HTTP `POST` con body `{ zipCode, state, city, items: [{productId, qty}] }` → `200 { quoteId, standard: {carrier, service, price, days}, express: {...}|null, freeShippingMin }`, o `200 { fallback: true }` cuando no se puede cotizar (CP no MX, paquete null, ninguna tarifa, Envia caído). `400` si el body es inválido (items no arreglo, más de 50, qty fuera de 1–50). `429` si la IP pasó el límite. **No** devolver `cost` al navegador.
   - Secretos: `ENVIA_API_KEY`, `ENVIA_BASE_URL` (sandbox `https://api-test.envia.com` hasta que el dueño dé la llave de producción). `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` los pone Supabase.
-- Comportamiento: leer `products` (`type` por id), `shipping_settings`, `shipping_category_weights` con service role; `buildPackage`; `Promise.allSettled` de `rateCarrier` para cada `settings.carriers`; `pickTiers`; insertar en `shipping_quotes` (`ip_hash` = SHA-256 de la IP de `x-forwarded-for` + `SUPABASE_URL` como sal). Límite: más de 10 cotizaciones de ese `ip_hash` en el último minuto → 429 antes de llamar a Envia. CORS: permitir el origen `https://www.glboutique.com.mx` y localhost de Vite (`http://localhost:5173`), y responder `OPTIONS`.
+- Comportamiento: leer `products` (`type` por id), `shipping_settings`, `shipping_category_weights` con service role; `buildPackage`; `Promise.allSettled` de `rateCarrier` para cada `settings.carriers`; `pickTiers`; insertar en `shipping_quotes` (`ip_hash` = SHA-256 de la IP de `x-forwarded-for` + `SUPABASE_URL` como sal). Límite: se cuentan **intentos**, no solo cotizaciones guardadas (insertar fila en cada intento, también en fallback, con `standard` null); si ese `ip_hash` ya tiene `>= 10` en el último minuto → 429 antes de llamar a Envia. CORS: permitir los orígenes `https://www.glboutique.com.mx`, `https://glboutique.com.mx` y `http://localhost:5173`; `Access-Control-Allow-Headers: authorization, apikey, x-client-info, content-type`; responder `OPTIONS`. La respuesta incluye `freeShippingMin` (de `shipping_settings`) para que el checkout use el mismo mínimo que el servidor.
 
 - [ ] **Step 1: `npx supabase init`** y `npx supabase link --project-ref <ref>` (el ref está en la URL de `src/core/supabase.js`). Escribir `README.md` con los comandos de deploy y `secrets set` (sin valores).
 - [ ] **Step 2: Implementar `envia.js` e `index.js`.**
@@ -159,7 +165,8 @@ console.log('test-shipping ok')
 - [ ] **Step 4: Verificar con curl** (anon key en `Authorization: Bearer`):
   - CP `44100` (Guadalajara) + una playera real → `200` con `quoteId` y `standard.price % 5 === 0`; la fila existe en `shipping_quotes` con `cost` sin redondear.
   - CP `2800` → `{ fallback: true }`.
-  - 11 llamadas seguidas → la 11ª da `429`.
+  - 11 llamadas seguidas (también con CP que da fallback) → la 11ª da `429`.
+  - Preflight `OPTIONS` desde `http://localhost:5173` con los 4 headers → 200 con `Access-Control-Allow-Headers`.
   - `ENVIA_BASE_URL` apuntando a un host inválido → `{ fallback: true }` en ≤ 9 s.
 - [ ] **Step 5: Commit** `feat(envios): Edge Function shipping-quote con Envia`
 
@@ -174,14 +181,15 @@ console.log('test-shipping ok')
 **Interfaces:**
 - Consumes: `shipping-quote` (Task 3); `chargeFor`, `isFreeShipping`, `isMxZip`, `cartKey`, `MX_STATES` (Task 1); nueva firma de `place_order` (Task 2).
 - Produces:
-  - `quoteShipping({ zipCode, state, city, items }) => Promise<{quoteId, standard, express} | {fallback: true}>` en `src/store/shipping.js` (`supabase.functions.invoke('shipping-quote', ...)`; cualquier error de red → `{fallback: true}`).
+  - `quoteShipping({ zipCode, state, city, items }) => Promise<{quoteId, standard, express} | {fallback: true}>` en `src/store/shipping.js` (`supabase.functions.invoke('shipping-quote', ...)`; `invoke` no lanza con 429/500, regresa `{ error }`: cualquier `error`, excepción, o `data` sin `quoteId` → `{fallback: true}`).
   - `saveOrder({ ...igual que hoy, shippingQuoteId, shippingTier, addressParts })` pasa `p_shipping_quote_id`, `p_shipping_tier`, `p_address_parts`.
   - `addressParts = { street, numExt, numInt, neighborhood, city, state: <code>, stateName, zip, references }`.
 
-- [ ] **Step 1: Estado como lista.** En `checkoutView.js`, el campo `state` pasa a `<select>` con `MX_STATES` (valor = `code`, texto = `name`, opción vacía "Selecciona tu estado"). `fullAddress` sigue usando el nombre.
+- [ ] **Step 1: Estado como lista.** En `checkoutView.js`, el campo `state` pasa a `<select>` con `MX_STATES` (valor = `code`, texto = `name`, opción vacía "Selecciona tu estado") más la opción final **"Otro / fuera de México"** (valor `otro`), que muestra un campo de texto libre `stateOther`. En `checkout.js` (hoy lee `input[name="state"]`, ~línea 477) leer el `select` y, si es `otro`, el texto libre. Con `otro`: fallback sin llamar a la función y `addressParts.state = null`. `fullAddress` usa el nombre o el texto libre.
 - [ ] **Step 2: Bloque de envío** debajo de la dirección (solo con "Envío a domicilio"): estados *cotizando* ("Calculando envío…"), *opciones* (radios Estándar / Express con precio y "Llega en N días hábiles"; si `express` es null, solo Estándar sin radio), *fallback* (texto exacto de Global Constraints). Accesible: `role="radiogroup"`, los radios con `<label>`, mensaje en `aria-live="polite"`.
 - [ ] **Step 3: Disparadores.** Cotizar (debounce 400 ms) cuando `isMxZip(zip)` y hay estado, y cuando cambia el carrito (`cartKey` distinto al cotizado). Ignorar respuestas viejas (guardar un contador de petición). CP no MX con dirección completa → fallback sin llamar.
-- [ ] **Step 4: Totales.** El cargo mostrado = `chargeFor(tiers, tierElegido, isFreeShipping(subtotal, coupon, BRAND.freeShippingMin))`; se recalcula al cambiar cupón o subtotal, sin recotizar. `shownTotal` = productos − descuento + cargo; `expectedTotal` lo incluye; el resumen lateral muestra la línea "Envío" ("Gratis" si es 0). `buildOrderMessage` agrega `Envío (Estándar · Estafeta): $190` antes del total cuando hay cargo; total con envío.
+- [ ] **Step 3b: Envío mientras cotiza y cambio de entrega.** Estándar queda preseleccionado. Si el cliente envía mientras dice "Calculando envío…", se espera la respuesta con tope de 8 s; si no llega, el pedido va sin cotización (fallback). Si cambia a "Pago al recoger", deja de sumar el cargo y no manda `shippingQuoteId`.
+- [ ] **Step 4: Totales.** El cargo mostrado = `chargeFor(tiers, tierElegido, isFreeShipping(subtotal, coupon, freeShippingMin))`, con `freeShippingMin` el que regresó la cotización (si no hay, `BRAND.freeShippingMin`); se recalcula al cambiar cupón o subtotal, sin recotizar. `shownTotal` = productos − descuento + cargo; `expectedTotal` lo incluye; el resumen lateral muestra la línea "Envío" ("Gratis" si es 0). `buildOrderMessage` agrega `Envío (Estándar · Estafeta): $190` antes del total cuando hay cargo; total con envío.
 - [ ] **Step 5: Errores de `place_order`.** "vencio" o "carrito cambio" → recotizar sola, mostrar el precio nuevo y pedir que confirme de nuevo (no se pierde el formulario). El `detail` de "Los precios cambiaron" ya incluye envío.
 - [ ] **Step 6: Verificación manual en `npm run dev`** (con la función en sandbox): CP 44100 + playera → aparecen opciones y el total suma el envío; elegir Express cambia el total; aplicar un cupón `free_shipping` → Estándar "Gratis" y Express solo la diferencia; cambiar cantidad → recotiza; CP 2800 → fallback; enviar pedido → en Supabase el pedido tiene `shipping_cost`, `shipping_tier`, `shipping_carrier` y `address_parts`. `npm test` y `npm run build` pasan.
 - [ ] **Step 7: Commit** `feat(envios): el checkout cotiza Estándar/Express y cobra el envío`
