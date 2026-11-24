@@ -1,11 +1,11 @@
 // Cliente mínimo de Envia (POST /ship/rate/). Sin APIs de Deno a nivel de módulo: lo importa también Node en las pruebas.
 
-// Códigos de estado de Envia (2 letras). Verificados en la doc solo NL y CX; el resto sigue la convención de Envia: confirmar con sandbox.
+// Códigos de estado de Envia (columna 2-digit de https://queries.envia.com/state?country_code=MX, consultado 2026-11-24).
 const ENVIA_STATE = {
   AGU: 'AG', BCN: 'BC', BCS: 'BS', CAM: 'CM', CHP: 'CS', CHH: 'CH', CMX: 'CX', COA: 'CO',
-  COL: 'CL', DUR: 'DG', GUA: 'GT', GRO: 'GR', HID: 'HG', JAL: 'JC', MEX: 'EM', MIC: 'MI',
-  MOR: 'MO', NAY: 'NT', NLE: 'NL', OAX: 'OC', PUE: 'PL', QUE: 'QT', ROO: 'QR', SLP: 'SL',
-  SIN: 'SP', SON: 'SR', TAB: 'TC', TAM: 'TS', TLA: 'TL', VER: 'VZ', YUC: 'YN', ZAC: 'ZS',
+  COL: 'CL', DUR: 'DG', GUA: 'GT', GRO: 'GR', HID: 'HG', JAL: 'JA', MEX: 'EM', MIC: 'MI',
+  MOR: 'MO', NAY: 'NA', NLE: 'NL', OAX: 'OA', PUE: 'PU', QUE: 'QT', ROO: 'QR', SLP: 'SL',
+  SIN: 'SI', SON: 'SO', TAB: 'TB', TAM: 'TM', TLA: 'TL', VER: 'VE', YUC: 'YU', ZAC: 'ZA',
 }
 export const enviaState = (code) => ENVIA_STATE[code] ?? code
 

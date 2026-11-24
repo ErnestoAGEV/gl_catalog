@@ -15,4 +15,4 @@ assert.deepEqual(parseRates(fixture, 'estafeta'), [
 ])
 assert.deepEqual(parseRates({ error: 'x' }, 'dhl'), [])
 assert.equal(parseRates({ data: [{ service: 's', totalPrice: '10' }] }, 'dhl')[0].days, null)
-assert.equal(enviaState('COL'), 'CL'); assert.equal(enviaState('NLE'), 'NL'); assert.equal(enviaState('CMX'), 'CX')
+assert.equal(enviaState('COL'), 'CL'); assert.equal(enviaState('COA'), 'CO'); assert.equal(enviaState('NLE'), 'NL'); assert.equal(enviaState('CMX'), 'CX')
