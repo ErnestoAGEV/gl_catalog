@@ -1,13 +1,15 @@
--- Correos del boletín: bienvenida automática, envíos a suscriptores y baja.
+-- Correos del boletín: alta con doble confirmación, envíos a suscriptores y baja.
 --
 -- Cómo funciona: el admin (Newsletter) arma el correo y guarda el asunto y el
 -- HTML ya listo. Supabase lo manda por Resend con pg_net, igual que
 -- deploy-hook.sql avisa a Vercel, y cambia {{BAJA_URL}} por el enlace de baja
 -- de cada persona (glboutique.com.mx/baja?t=...).
---   · Bienvenida: un trigger al entrar un suscriptor nuevo. Si alguien se
---     vuelve a suscribir con el mismo correo, el insert falla por duplicado y
---     no recibe un segundo correo.
---   · Envíos: el admin llama a send_newsletter(); solo a quien no se dio de baja.
+--   · Alta: la home llama a newsletter_subscribe(); le llega un correo con el
+--     enlace /confirmar?t=... y solo al pulsar el botón de esa página queda
+--     confirmada (newsletter_confirm). No hay correo de bienvenida: la página
+--     muestra el código WELCOME10.
+--   · Envíos: el admin llama a send_newsletter(); solo a confirmados sin baja.
+-- Depende de security-base.sql (rate_check, request_ip, topes nl_*).
 --
 -- ──────────────────────────────────────────────────────────────────────────
 -- ANTES DE EJECUTAR
@@ -43,7 +45,7 @@ CREATE OR REPLACE FUNCTION public.newsletter_unsubscribe(p_token uuid)
 RETURNS boolean
 LANGUAGE sql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, pg_temp
 AS $$
   WITH u AS (
     UPDATE public.newsletter_subscribers
@@ -56,7 +58,7 @@ $$;
 REVOKE ALL ON FUNCTION public.newsletter_unsubscribe(uuid) FROM public;
 GRANT EXECUTE ON FUNCTION public.newsletter_unsubscribe(uuid) TO anon, authenticated;
 
--- 2. Las plantillas ('welcome' y el borrador 'campaign'). Solo los admins las
+-- 2. Las plantillas (el borrador 'campaign'; la fila 'welcome' ya no se usa). Solo los admins las
 --    leen o escriben; el trigger las lee como SECURITY DEFINER.
 CREATE TABLE IF NOT EXISTS public.email_templates (
   key text PRIMARY KEY,
@@ -97,6 +99,7 @@ CREATE OR REPLACE FUNCTION public.newsletter_email_json(p_to text, p_token uuid,
 RETURNS jsonb
 LANGUAGE sql
 IMMUTABLE
+SET search_path = public, pg_temp
 AS $$
   SELECT jsonb_build_object(
     'from', 'G&L Boutique <hola@glboutique.com.mx>',
@@ -113,7 +116,7 @@ CREATE OR REPLACE FUNCTION public.resend_post(p_endpoint text, p_body jsonb)
 RETURNS bigint
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, extensions, vault
+SET search_path = public, extensions, vault, pg_temp
 AS $$
 DECLARE
   api_key text;
@@ -130,59 +133,195 @@ END;
 $$;
 REVOKE ALL ON FUNCTION public.resend_post(text, jsonb) FROM public, anon, authenticated;
 
--- 5. Bienvenida. Mientras no guardes el correo en el admin no hay fila
---    'welcome' y no se envía nada. Nunca lanza error: la suscripción vale más
---    que el correo.
-CREATE OR REPLACE FUNCTION public.send_welcome_to(p_email text, p_token uuid)
+-- 5. Alta con doble confirmación. Una fila sin confirmed_at está pendiente: no
+--    recibe envíos y security_prune() la borra a los 7 días.
+ALTER TABLE public.newsletter_subscribers
+  ADD COLUMN IF NOT EXISTS confirmed_at timestamptz,
+  ADD COLUMN IF NOT EXISTS confirm_token uuid,
+  ADD COLUMN IF NOT EXISTS confirm_sent_at timestamptz;
+CREATE UNIQUE INDEX IF NOT EXISTS newsletter_subscribers_confirm_token_key
+  ON public.newsletter_subscribers (confirm_token);
+-- Los suscriptores de antes de la doble confirmación cuentan como confirmados.
+-- Se puede repetir: quien pidió confirmación ya tiene confirm_token.
+UPDATE public.newsletter_subscribers
+SET confirmed_at = coalesce(subscribed_at, now())
+WHERE confirmed_at IS NULL AND confirm_token IS NULL;
+
+-- El correo con el enlace de confirmación. Nunca lanza error.
+CREATE OR REPLACE FUNCTION public.send_confirm_to(p_email text, p_token uuid)
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, extensions, vault
+SET search_path = public, extensions, vault, pg_temp
 AS $$
-DECLARE
-  tpl record;
 BEGIN
-  SELECT subject, html INTO tpl FROM public.email_templates WHERE key = 'welcome' AND enabled;
-  IF NOT FOUND THEN RETURN; END IF;
-  IF public.resend_post('emails', public.newsletter_email_json(p_email, p_token, tpl.subject, tpl.html)) IS NULL THEN
-    RAISE WARNING 'send_welcome_to: falta la API key de Resend en Vault';
+  IF public.resend_post('emails', jsonb_build_object(
+    'from', 'G&L Boutique <hola@glboutique.com.mx>',
+    'reply_to', 'glboutiquecolima@gmail.com',
+    'to', jsonb_build_array(p_email),
+    'subject', 'Confirma tu suscripción a G&L',
+    'html', '<p>Hola:</p><p>Para recibir las novedades de G&amp;L, confirma tu correo:</p>'
+         || '<p><a href="https://www.glboutique.com.mx/confirmar?t=' || p_token || '">Confirmar suscripción</a></p>'
+         || '<p>Si no fuiste tú, ignora este correo. No te volveremos a escribir.</p>'
+  )) IS NULL THEN
+    RAISE WARNING 'send_confirm_to: falta la API key de Resend en Vault';
   END IF;
 EXCEPTION WHEN OTHERS THEN
-  RAISE WARNING 'send_welcome_to: %', SQLERRM;
+  RAISE WARNING 'send_confirm_to: %', SQLERRM;
 END;
 $$;
-REVOKE ALL ON FUNCTION public.send_welcome_to(text, uuid) FROM public, anon, authenticated;
+REVOKE ALL ON FUNCTION public.send_confirm_to(text, uuid) FROM public, anon, authenticated;
 
--- Al entrar un suscriptor nuevo.
+-- La home llama a esto. Responde igual exista o no el correo (no revela quién
+-- está suscrito). Topes en security_limits: nl_ip (por IP), nl_email (enlaces
+-- a una misma dirección) y nl_global (de toda la tienda).
+CREATE OR REPLACE FUNCTION public.newsletter_subscribe(p_email text)
+RETURNS void
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_email text := lower(btrim(p_email));
+  v_token uuid := gen_random_uuid();
+  r public.newsletter_subscribers%rowtype;
+BEGIN
+  IF v_email IS NULL OR length(v_email) > 254
+     OR v_email !~ '^[^[:space:]@]+@[^[:space:]@]+[.][^[:space:]@]+$'
+     OR v_email ~ '[<>"'']' THEN
+    RAISE EXCEPTION 'El correo no parece valido.' USING errcode = '22023';
+  END IF;
+  IF NOT public.rate_check('nl_ip', public.request_ip()) THEN
+    RAISE EXCEPTION 'Demasiados intentos. Intenta mas tarde.' USING errcode = '22023';
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtext('nl:' || v_email));
+  SELECT * INTO r FROM public.newsletter_subscribers WHERE lower(email) = v_email;
+  -- Ya confirmada, o ya se le mandó el enlace hoy: nada que mandar
+  IF r.id IS NOT NULL AND ((r.confirmed_at IS NOT NULL AND r.unsubscribed_at IS NULL)
+                           OR r.confirm_sent_at > now() - interval '24 hours') THEN
+    RETURN;
+  END IF;
+  -- Sin raise, para que el intento quede contado
+  IF NOT public.rate_check('nl_email', v_email) THEN RETURN; END IF;
+  IF NOT public.rate_check('nl_global', '*') THEN
+    RAISE EXCEPTION 'Demasiados intentos. Intenta mas tarde.' USING errcode = '22023';
+  END IF;
+
+  -- Marca para los triggers: no es un insert directo y manda su propio correo
+  PERFORM set_config('gl.nl_rpc', '1', true);
+  IF r.id IS NULL THEN
+    INSERT INTO public.newsletter_subscribers (email, source, confirm_token, confirm_sent_at)
+    VALUES (v_email, 'home_page', v_token, now());
+  ELSE
+    -- unsubscribed_at y confirmed_at solo los cambia newsletter_confirm
+    UPDATE public.newsletter_subscribers
+    SET confirm_token = v_token, confirm_sent_at = now()
+    WHERE id = r.id;
+  END IF;
+  PERFORM set_config('gl.nl_rpc', '', true);
+  PERFORM public.send_confirm_to(v_email, v_token);
+END;
+$$;
+REVOKE ALL ON FUNCTION public.newsletter_subscribe(text) FROM public;
+GRANT EXECUTE ON FUNCTION public.newsletter_subscribe(text) TO anon, authenticated;
+
+-- El botón de /confirmar. true = suscripción activa (también en el segundo
+-- clic: el confirm_token se conserva); false = el enlace no es de nadie o venció.
+-- No manda bienvenida: la página muestra el código WELCOME10.
+CREATE OR REPLACE FUNCTION public.newsletter_confirm(p_token uuid)
+RETURNS boolean
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  r public.newsletter_subscribers%rowtype;
+BEGIN
+  SELECT * INTO r FROM public.newsletter_subscribers WHERE confirm_token = p_token FOR UPDATE;
+  IF NOT FOUND THEN RETURN false; END IF;
+  IF r.confirmed_at IS NOT NULL AND r.unsubscribed_at IS NULL THEN RETURN true; END IF;
+  IF r.confirm_sent_at > now() - interval '7 days' THEN
+    UPDATE public.newsletter_subscribers
+    SET confirmed_at = now(), unsubscribed_at = NULL, unsub_token = gen_random_uuid()
+    WHERE id = r.id;
+    RETURN true;
+  END IF;
+  RETURN false;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.newsletter_confirm(uuid) FROM public;
+GRANT EXECUTE ON FUNCTION public.newsletter_confirm(uuid) TO anon, authenticated;
+
+-- Puerta vieja: el sitio en caché inserta directo en la tabla (anon tiene
+-- INSERT hasta la Fase C). Esa alta pasa por los mismos topes y queda
+-- pendiente de confirmar, mande lo que mande el cliente.
+CREATE OR REPLACE FUNCTION public.newsletter_direct_insert()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  IF current_setting('gl.nl_rpc', true) IS NOT DISTINCT FROM '1' THEN RETURN NEW; END IF;
+  NEW.email := lower(btrim(NEW.email));
+  IF NEW.email IS NULL OR length(NEW.email) > 254
+     OR NEW.email !~ '^[^[:space:]@]+@[^[:space:]@]+[.][^[:space:]@]+$'
+     OR NEW.email ~ '[<>"'']' THEN
+    RAISE EXCEPTION 'El correo no parece valido.' USING errcode = '22023';
+  END IF;
+  IF NOT public.rate_check('nl_ip', public.request_ip()) THEN
+    RAISE EXCEPTION 'Demasiados intentos. Intenta mas tarde.' USING errcode = '22023';
+  END IF;
+  IF NOT public.rate_check('nl_global', '*') THEN
+    RAISE EXCEPTION 'Demasiados intentos. Intenta mas tarde.' USING errcode = '22023';
+  END IF;
+  NEW.source := 'home_page';
+  NEW.subscribed_at := now();
+  NEW.unsub_token := gen_random_uuid();
+  NEW.unsubscribed_at := NULL;
+  NEW.confirmed_at := NULL;
+  NEW.confirm_token := gen_random_uuid();
+  NEW.confirm_sent_at := now();
+  RETURN NEW;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.newsletter_direct_insert() FROM public, anon, authenticated;
+
+DROP TRIGGER IF EXISTS newsletter_direct_insert ON public.newsletter_subscribers;
+CREATE TRIGGER newsletter_direct_insert
+BEFORE INSERT ON public.newsletter_subscribers
+FOR EACH ROW EXECUTE FUNCTION public.newsletter_direct_insert();
+
+-- Después de un insert directo: el correo de confirmación, nunca bienvenida.
+-- Las altas por newsletter_subscribe lo mandan ellas mismas.
 CREATE OR REPLACE FUNCTION public.send_welcome_email()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, extensions, vault
+SET search_path = public, extensions, vault, pg_temp
 AS $$
 BEGIN
-  PERFORM public.send_welcome_to(NEW.email, NEW.unsub_token);
+  IF NEW.confirmed_at IS NULL AND current_setting('gl.nl_rpc', true) IS DISTINCT FROM '1' THEN
+    PERFORM public.send_confirm_to(NEW.email, NEW.confirm_token);
+  END IF;
   RETURN NULL;
 END;
 $$;
+REVOKE ALL ON FUNCTION public.send_welcome_email() FROM public, anon, authenticated;
 
--- Quien se dio de baja y vuelve a suscribirse choca con el correo duplicado;
--- la home llama a esto en ese caso: lo reactiva con enlace de baja nuevo y le
--- manda la bienvenida otra vez. Si ya estaba activo no hace nada.
+-- El sitio en caché llama a esto cuando su insert choca con un correo que ya
+-- existe. Ya no reactiva: manda el enlace de confirmación.
 CREATE OR REPLACE FUNCTION public.newsletter_resubscribe(p_email text)
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, pg_temp
 AS $$
-DECLARE
-  r record;
 BEGIN
-  UPDATE public.newsletter_subscribers
-  SET unsubscribed_at = NULL, unsub_token = gen_random_uuid()
-  WHERE lower(email) = lower(btrim(p_email)) AND unsubscribed_at IS NOT NULL
-  RETURNING email, unsub_token INTO r;
-  IF FOUND THEN PERFORM public.send_welcome_to(r.email, r.unsub_token); END IF;
+  PERFORM public.newsletter_subscribe(p_email);
 END;
 $$;
 REVOKE ALL ON FUNCTION public.newsletter_resubscribe(text) FROM public;
@@ -192,6 +331,9 @@ DROP TRIGGER IF EXISTS newsletter_welcome_email ON public.newsletter_subscribers
 CREATE TRIGGER newsletter_welcome_email
 AFTER INSERT ON public.newsletter_subscribers
 FOR EACH ROW EXECUTE FUNCTION public.send_welcome_email();
+
+-- La bienvenida ya no existe
+DROP FUNCTION IF EXISTS public.send_welcome_to(text, uuid);
 
 -- 6. Envío a suscriptores (solo admins), por una cola: send_newsletter() deja
 --    los correos en newsletter_outbox y pg_cron manda un lote de 100 cada 10
@@ -224,7 +366,7 @@ CREATE FUNCTION public.send_newsletter(p_subject text, p_html text, p_test_email
 RETURNS integer
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, extensions, vault
+SET search_path = public, extensions, vault, pg_temp
 AS $$
 DECLARE
   campana bigint;
@@ -249,13 +391,13 @@ BEGIN
     RETURN 1;
   END IF;
 
-  SELECT count(*) INTO total FROM public.newsletter_subscribers WHERE unsubscribed_at IS NULL;
+  SELECT count(*) INTO total FROM public.newsletter_subscribers WHERE unsubscribed_at IS NULL AND confirmed_at IS NOT NULL;
   IF total = 0 THEN RAISE EXCEPTION 'No hay suscriptores activos'; END IF;
 
   INSERT INTO public.newsletter_campaigns (subject, total) VALUES (p_subject, total) RETURNING id INTO campana;
   INSERT INTO public.newsletter_outbox (campaign_id, email)
   SELECT campana, public.newsletter_email_json(email, unsub_token, p_subject, p_html)
-  FROM public.newsletter_subscribers WHERE unsubscribed_at IS NULL
+  FROM public.newsletter_subscribers WHERE unsubscribed_at IS NULL AND confirmed_at IS NOT NULL
   ORDER BY id;
   RETURN total;
 END;
@@ -268,7 +410,7 @@ CREATE OR REPLACE FUNCTION public.newsletter_outbox_tick()
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, extensions, vault
+SET search_path = public, extensions, vault, pg_temp
 AS $$
 DECLARE
   ids bigint[];
@@ -316,7 +458,7 @@ CREATE OR REPLACE FUNCTION public.newsletter_last_campaign()
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, pg_temp
 AS $$
 DECLARE
   out jsonb;
@@ -343,12 +485,13 @@ REVOKE ALL ON FUNCTION public.newsletter_last_campaign() FROM public, anon;
 GRANT EXECUTE ON FUNCTION public.newsletter_last_campaign() TO authenticated;
 
 -- 7. Comprobación
---   · Que no se repitan correos (la bienvenida depende de esto). Debe devolver
---     una fila; si no devuelve nada, avísame antes de lanzar envíos:
+--   · Que no se repitan correos. Debe devolver una fila; si no devuelve nada,
+--     avísame antes de lanzar envíos:
 -- SELECT indexname FROM pg_indexes WHERE tablename = 'newsletter_subscribers' AND indexdef ILIKE '%UNIQUE%(email)%';
---   · Bienvenida: guarda el correo en el admin y suscríbete en la home con un
---     alias tuyo (tucorreo+prueba1@gmail.com llega a tu bandeja normal; cada
---     prueba necesita un alias nuevo porque el correo no se puede repetir).
+--   · supabase/checks/newsletter.sql (con execute_sql; termina en CHECK_OK).
+--   · Alta: suscríbete en la home con un alias tuyo (tucorreo+prueba1@gmail.com
+--     llega a tu bandeja normal): debe llegar el correo de confirmación, no una
+--     bienvenida.
 --   · Envíos: usa "Enviarme una prueba" en el admin antes de mandar a todos.
 --   · Que la cola corra (debe aparecer 'newsletter-outbox'):
 -- SELECT jobname, schedule FROM cron.job;

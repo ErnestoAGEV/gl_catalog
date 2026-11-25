@@ -235,6 +235,7 @@ function pageModule(path) {
   if (path === '/cart') return 'src/pages/cart/cart.js'
   if (path === '/checkout' || path === '/checkout/success') return 'src/pages/checkout/checkout.js'
   if (path === '/baja') return 'src/pages/unsubscribe/unsubscribe.js'
+  if (path === '/confirmar') return 'src/pages/unsubscribe/confirm.js'
   if (infoPages[path]) return 'src/pages/info/info.js'
   return null
 }
@@ -1009,7 +1010,7 @@ for (const [path, page] of Object.entries(infoPages)) {
 
 // Rutas de carrito/checkout: noindex, pero necesitan HTML propio para no
 // depender del rewrite catch-all
-for (const path of ['/cart', '/checkout', '/checkout/success', '/baja']) {
+for (const path of ['/cart', '/checkout', '/checkout/success', '/baja', '/confirmar']) {
   routes.push({ path, shell: contentShell('') })
 }
 
@@ -1256,7 +1257,7 @@ Facebook: ${FACEBOOK_URL}
 ## No citar
 
 Estas rutas son transaccionales o privadas, no informativas:
-/admin, /api, /cart, /checkout, /checkout/success, /baja
+/admin, /api, /cart, /checkout, /checkout/success, /baja, /confirmar
 
 Última generación: ${today}
 `

@@ -5,7 +5,7 @@ export { addToCart, setCartItemQty, removeCartItem, clearCart, cartCount, cartTo
 export { applyCoupon, removeCoupon, getCoupon, getDiscountAmount, getAdminCoupons, createCoupon, updateCoupon, deleteCoupon } from './coupons.js'
 export { setSearchQuery, getSearchQuery, searchProducts } from './search.js'
 export { getTheme, toggleTheme } from './theme.js'
-export { subscribeNewsletter, isSubscribedNewsletter, getAdminSubscribers, getEmailTemplate, saveEmailTemplate, sendNewsletter, getLastCampaign, unsubscribeNewsletter } from './newsletter.js'
+export { subscribeNewsletter, isSubscribedNewsletter, getAdminSubscribers, getEmailTemplate, saveEmailTemplate, sendNewsletter, getLastCampaign, unsubscribeNewsletter, confirmNewsletter } from './newsletter.js'
 export { saveOrder, getAdminOrders, updateAdminOrderStatus, updateAdminOrderShipping, sendOrderConfirmation, getOrderNotifyEmails, addOrderNotifyEmail, removeOrderNotifyEmail, sendOrderStaffTest } from './orders.js'
 export { quoteShipping, getShippingSettings, saveShippingSettings, saveCategoryWeight, deleteCategoryWeight } from './shipping.js'
 export { loadSizeGuides, getSizeGuides, addSizeGuide, updateSizeGuide, deleteSizeGuide } from './sizeGuides.js'

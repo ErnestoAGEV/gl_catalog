@@ -439,8 +439,8 @@ export function pageHome() {
                 <div class="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg class="w-7 h-7 text-paper" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                 </div>
-                <p class="font-heading font-bold text-[18px]">Suscripción confirmada.</p>
-                <p class="text-paper/60 text-[14px] mt-1">Gracias por unirte al Club G&L.</p>
+                <p class="font-heading font-bold text-[18px]">Revisa tu correo.</p>
+                <p class="text-paper/60 text-[14px] mt-1">Te mandamos un enlace para confirmar tu suscripción al Club G&L.</p>
               </div>
             `
           } else {

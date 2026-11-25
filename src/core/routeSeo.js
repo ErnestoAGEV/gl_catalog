@@ -224,6 +224,15 @@ export function getSeoForRoute(path, basePath, state) {
     }
   }
 
+  if (basePath === '/confirmar') {
+    return {
+      title: 'Confirmar suscripción | G&L',
+      description: 'Confirma tu suscripción al boletín de G&L.',
+      canonicalPath: '/confirmar',
+      robots: 'noindex,nofollow',
+    }
+  }
+
   if (basePath === '/checkout/success') {
     return {
       title: 'Pedido confirmado | G&L',

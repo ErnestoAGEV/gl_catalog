@@ -20,6 +20,7 @@ const lazyPublic = {
   checkout: () => import('../pages/checkout/checkout.js').then(m => m.pageCheckout),
   checkoutSuccess: () => import('../pages/checkout/checkout.js').then(m => m.pageCheckoutSuccess),
   unsubscribe: () => import('../pages/unsubscribe/unsubscribe.js').then(m => m.pageUnsubscribe),
+  confirm: () => import('../pages/unsubscribe/confirm.js').then(m => m.pageConfirm),
   info: () => import('../pages/info/info.js').then(m => m.pageInfo),
   notFound: () => import('../pages/notFound/notFound.js').then(m => m.pageNotFound),
   adminLogin: () => import('../pages/admin/adminLogin.js').then(m => m.pageAdminLogin),
@@ -31,6 +32,7 @@ const publicRoutes = {
   '/checkout': lazyPublic.checkout,
   '/checkout/success': lazyPublic.checkoutSuccess,
   '/baja': lazyPublic.unsubscribe,
+  '/confirmar': lazyPublic.confirm,
 }
 
 /** Tras pintar la home, baja en reposo las páginas a las que se suele ir, para que navegar siga siendo instantáneo. */

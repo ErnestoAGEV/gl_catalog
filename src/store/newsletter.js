@@ -14,25 +14,19 @@ export async function subscribeNewsletter(email) {
   emit()
 
   if (supabase) {
-    const { error } = await supabase
-      .from('newsletter_subscribers')
-      .insert({ email: normalizedEmail, source: 'home_page' })
-
+    // Siempre la misma respuesta exista o no el correo; llega un enlace para confirmar.
+    const { error } = await supabase.rpc('newsletter_subscribe', { p_email: normalizedEmail })
     if (error) {
-      // Ya existe: si se habia dado de baja, se reactiva (y recibe la bienvenida).
-      if (error.code === '23505') {
-        await supabase.rpc('newsletter_resubscribe', { p_email: normalizedEmail })
-        return { ok: true }
-      }
       if (import.meta.env.DEV) console.error('Newsletter Supabase error:', error)
-      return { ok: false, error: 'No se pudo guardar tu suscripción. Intenta de nuevo.' }
+      const msg = error.message || ''
+      return { ok: false, error: msg.includes('Demasiados') ? msg : 'No se pudo guardar tu suscripción. Intenta de nuevo.' }
     }
   }
 
   return { ok: true }
 }
 
-/** Plantilla de email_templates ('welcome' o el borrador 'campaign'); data null = aún no se guarda. */
+/** Plantilla de email_templates (el borrador 'campaign'); data null = aún no se guarda. */
 export async function getEmailTemplate(key) {
   if (!supabase) return { data: null, error: 'No hay conexion con la base de datos.' }
   const access = await ensureAdminAccess()
@@ -78,6 +72,15 @@ export async function unsubscribeNewsletter(token) {
   if (!supabase) return null
   const { data, error } = await supabase.rpc('newsletter_unsubscribe', { p_token: token })
   if (error && import.meta.env.DEV) console.error('Error unsubscribing:', error)
+  return error ? null : data === true
+}
+
+/** Botón de /confirmar: true si quedó suscrito, false si el enlace no es de nadie o venció, null si falló la red. */
+export async function confirmNewsletter(token) {
+  if (!/^[0-9a-f-]{36}$/i.test(token || '')) return false
+  if (!supabase) return null
+  const { data, error } = await supabase.rpc('newsletter_confirm', { p_token: token })
+  if (error && import.meta.env.DEV) console.error('Error confirming newsletter:', error)
   return error ? null : data === true
 }
 
