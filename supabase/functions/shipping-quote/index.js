@@ -35,9 +35,9 @@ Deno.serve(async (req) => {
   const zip = typeof zipCode === 'string' ? zipCode.trim().slice(0, 10) : ''
 
   // Topes atómicos (rate_events) antes de tocar Envia; cuentan también los fallbacks.
-  // IP verificada en el runtime de Edge (V-3): cf-connecting-ip, luego x-real-ip, luego último XFF (el primero lo controla el cliente).
-  // Sin IP → '' y SQL la trata como 'unknown' (pasa; el tope global sigue aplicando).
-  const ip = req.headers.get('cf-connecting-ip') ?? req.headers.get('x-real-ip') ?? (req.headers.get('x-forwarded-for') ?? '').split(',').pop().trim()
+  // IP: solo cf-connecting-ip, la cabecera verificada en el runtime de Edge (V-3); X-Real-IP/XFF los puede falsificar el cliente.
+  // Sin ella → '' y SQL la trata como 'unknown' (tope por IP omitido, evento ip_unknown; el tope global sigue aplicando).
+  const ip = req.headers.get('cf-connecting-ip') ?? ''
   const perIp = await db.rpc('rate_check_ip', { p_name: 'quote_ip', p_ip: ip })
   if (perIp.error || perIp.data !== true) return json({ error: 'rate_limited' }, 429)
   const global = await db.rpc('rate_check', { p_name: 'quote_global', p_key: '*' })
