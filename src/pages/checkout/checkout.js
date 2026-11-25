@@ -1,4 +1,4 @@
-import { getProductById, getState, cartTotal, getCoupon, getDiscountAmount, applyCoupon, removeCoupon, saveOrder, clearCart, addToCart, quoteShipping, isFirstPurchaseCouponAvailable, refreshPromotions, refreshProducts, subscribe } from '../../store/index.js'
+import { getProductById, getState, cartTotal, getCoupon, getDiscountAmount, applyCoupon, removeCoupon, saveOrder, clearCart, addToCart, quoteShipping, refreshPromotions, refreshProducts, subscribe } from '../../store/index.js'
 import { isValidWhatsapp } from '../../utils/phone.js'
 import { BRAND } from '../../utils/config.js'
 import { buildOrderMessage, openWhatsAppWithMessage } from '../../utils/whatsapp.js'
@@ -479,11 +479,10 @@ export function pageCheckout(state) {
       form.addEventListener('focusout', (e) => {
         const check = blurChecks[e.target.name]
         if (check) setFieldError(e.target, check(e.target.value))
-        if (e.target.name === 'whatsapp' || e.target.name === 'email') checkFirstPurchaseCoupon()
       })
 
-      // WELCOME10 es de primera compra: si ese WhatsApp ya lo uso, se quita el
-      // cupon antes de enviar y se explica, en vez de rechazar el pedido al final
+      // WELCOME10 es de primera compra: si place_order lo rechaza al enviar, se
+      // quita el cupon y se explica
       const firstPurchaseMsg = (code) => `${code} es válido solo en la primera compra y este WhatsApp o correo ya lo utilizó. Retiramos el cupón y actualizamos tu total.`
       const dropFirstPurchaseCoupon = (code, opts) => {
         // Silencioso, como el boton de quitar: un emit repintaria la vista y el aviso se perderia
@@ -491,27 +490,6 @@ export function pageCheckout(state) {
         refreshSummaryView()
         setError(firstPurchaseMsg(code), null, opts)
       }
-      // El correo solo cuenta en envio a domicilio, que es donde se pide
-      const currentEmail = () => {
-        const delivery = qs(root, 'select[name="deliveryMethod"]').value
-        const email = sanitizeEmail(root.querySelector('#co-email')?.value || '')
-        return needsAddress('', delivery) && email.valid ? email.value : ''
-      }
-      async function checkFirstPurchaseCoupon() {
-        const coupon = getCoupon()
-        const raw = root.querySelector('#co-whatsapp')?.value || ''
-        const whatsapp = isValidWhatsapp(raw) ? raw : ''
-        const email = currentEmail()
-        if (!coupon?.firstPurchaseOnly || (!whatsapp && !email)) return
-        const ok = await isFirstPurchaseCouponAvailable(coupon.code, whatsapp, email)
-        // El cupon, el numero o el correo pudieron cambiar mientras llegaba la respuesta
-        const stillSame = (root.querySelector('#co-whatsapp')?.value || '') === raw && currentEmail() === email
-        if (!ok && getCoupon()?.code === coupon.code && stillSame) {
-          // Al salir del campo no se mueve la pagina: el usuario va al siguiente
-          dropFirstPurchaseCoupon(coupon.code, { scroll: false })
-        }
-      }
-
       // ── Form Submit ──
       const submitBtns = root.querySelectorAll('button[type="submit"]')
 
@@ -722,7 +700,7 @@ export function pageCheckout(state) {
               const dbTotal = Number(error.details)
               const coupon = getCoupon()
               Promise.all([refreshPromotions(), refreshProducts()])
-                .then(() => coupon ? applyCoupon(coupon.code, true).then(r => { if (!r.success) removeCoupon(true) }) : null)
+                .then(() => coupon ? applyCoupon(coupon.code, true).then(r => { if (!r.success && !r.rateLimited) removeCoupon(true) }) : null)
                 .finally(() => {
                   refreshSummaryView()
                   // Si aun no cuadra (reloj del equipo desfasado) manda la base: se

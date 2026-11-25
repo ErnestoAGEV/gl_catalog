@@ -1,10 +1,13 @@
 import { getAdminCoupons, createCoupon, updateCoupon, deleteCoupon, getState } from '../../store/index.js'
 import { showToast } from '../../utils/toast.js'
-import { sanitizeCouponCode, sanitizeText, sanitizeNumber } from '../../utils/sanitize.js'
+import { sanitizeCouponCode, sanitizeText, sanitizeNumber, escapeHtml } from '../../utils/sanitize.js'
+import { couponExpiryIso, couponExpiryDate } from '../../utils/coupons.js'
 import { confirmDelete } from './adminConfirm.js'
 import { ICON } from './adminIcons.js'
 
 // ── Helpers ──
+
+const esc = (v) => escapeHtml(String(v ?? ''))
 
 function couponCard(c) {
   const discountPct = c.discount ? Math.round(c.discount * 100) : 0
@@ -12,8 +15,11 @@ function couponCard(c) {
     ? `<span class="inline-flex items-center px-2 h-[20px] rounded-md text-[10.5px] font-semibold bg-brand-tint text-brand">Solo aplicables</span>`
     : `<span class="inline-flex items-center px-2 h-[20px] rounded-md text-[10.5px] font-semibold bg-canvas text-muted">Toda la tienda</span>`
 
+  const expiry = couponExpiryDate(c.expires_at).split('-').reverse().join('/')
+  const limits = [expiry && `Vence ${expiry}`, c.max_uses && `Máx. ${c.max_uses} usos`].filter(Boolean)
+
   return `
-    <div class="relative bg-paper rounded-3xl border border-line shadow-card group overflow-hidden ${!c.active ? 'opacity-60' : ''}" data-coupon-code="${c.code}">
+    <div class="relative bg-paper rounded-3xl border border-line shadow-card group overflow-hidden ${!c.active ? 'opacity-60' : ''}" data-coupon-code="${esc(c.code)}">
       <!-- Notch circles -->
       <div class="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-canvas border border-line"></div>
       <div class="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-canvas border border-line"></div>
@@ -23,15 +29,15 @@ function couponCard(c) {
         <div class="flex items-start justify-between gap-2">
           ${catLabel}
           <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button data-edit="${c.code}" class="w-7 h-7 rounded-lg flex items-center justify-center text-muted hover:text-brand hover:bg-brand-tint transition-colors" title="Editar">${ICON.edit('w-4 h-4')}</button>
-            <button data-delete="${c.code}" class="w-7 h-7 rounded-lg flex items-center justify-center text-muted hover:text-bad hover:bg-bad-tint transition-colors" title="Eliminar">${ICON.trash('w-4 h-4')}</button>
+            <button data-edit="${esc(c.code)}" class="w-7 h-7 rounded-lg flex items-center justify-center text-muted hover:text-brand hover:bg-brand-tint transition-colors" title="Editar">${ICON.edit('w-4 h-4')}</button>
+            <button data-delete="${esc(c.code)}" class="w-7 h-7 rounded-lg flex items-center justify-center text-muted hover:text-bad hover:bg-bad-tint transition-colors" title="Eliminar">${ICON.trash('w-4 h-4')}</button>
           </div>
         </div>
 
         <!-- Code -->
         <div>
-          <p class="font-mono font-bold text-[20px] tracking-widest ${c.active ? 'text-ink' : 'text-muted'}">${c.code}</p>
-          <p class="text-[12.5px] text-muted mt-0.5 truncate">${c.label || '—'}</p>
+          <p class="font-mono font-bold text-[20px] tracking-widest ${c.active ? 'text-ink' : 'text-muted'}">${esc(c.code)}</p>
+          <p class="text-[12.5px] text-muted mt-0.5 truncate">${esc(c.label || '—')}</p>
         </div>
 
         <!-- Dashed divider -->
@@ -48,11 +54,12 @@ function couponCard(c) {
             <p class="eyebrow text-faint mt-1">Envío gratis</p>
           </div>
         </div>
+        ${limits.length ? `<p class="text-[11.5px] text-muted tnum text-center">${limits.map(esc).join(' · ')}</p>` : ''}
 
         <!-- Footer -->
         <div class="flex items-center justify-between pt-1">
           <span class="text-[11.5px] text-faint tnum">${new Date(c.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-          <button type="button" data-toggle="${c.code}" class="gl-toggle ${c.active ? 'on' : ''}" title="${c.active ? 'Desactivar' : 'Activar'}"></button>
+          <button type="button" data-toggle="${esc(c.code)}" class="gl-toggle ${c.active ? 'on' : ''}" title="${c.active ? 'Desactivar' : 'Activar'}"></button>
         </div>
       </div>
     </div>`
@@ -121,19 +128,31 @@ export function pageAdminCoupons() {
                 <button data-close class="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-ink hover:bg-canvas transition-colors">${ICON.close('w-[18px] h-[18px]')}</button>
               </div>
               <form data-form class="px-5 pb-5 space-y-4 overflow-y-auto adm-scroll-thin flex-1">
-                ${isEdit ? `<input type="hidden" name="id" value="${coupon.code}">` : ''}
+                ${isEdit ? `<input type="hidden" name="id" value="${esc(coupon.code)}">` : ''}
                 <div>
                   <label class="adm-lbl">Código *</label>
-                  <input name="code" type="text" required maxlength="20" value="${isEdit ? coupon.code : ''}" class="adm-fld font-mono uppercase" placeholder="VERANO25" ${isEdit ? 'readonly style="background:#F5F6F8;cursor:not-allowed"' : ''} />
+                  <input name="code" type="text" required maxlength="20" value="${isEdit ? esc(coupon.code) : ''}" class="adm-fld font-mono uppercase" placeholder="VERANO25" ${isEdit ? 'readonly style="background:#F5F6F8;cursor:not-allowed"' : ''} />
                   <p class="text-[10.5px] text-faint mt-1">Solo letras y números, máx. 20 caracteres</p>
                 </div>
                 <div>
                   <label class="adm-lbl">Descripción</label>
-                  <input name="label" type="text" maxlength="100" value="${isEdit ? (coupon.label || '') : ''}" class="adm-fld" placeholder="Descuento de verano 25%" />
+                  <input name="label" type="text" maxlength="100" value="${isEdit ? esc(coupon.label) : ''}" class="adm-fld" placeholder="Descuento de verano 25%" />
                 </div>
                 <div>
                   <label class="adm-lbl">Descuento (%)</label>
                   <input name="discount" type="number" min="0" max="100" step="1" value="${isEdit ? Math.round((coupon.discount || 0) * 100) : ''}" class="adm-fld tnum" placeholder="25" onwheel="this.blur()" />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="adm-lbl" for="coupon-expires">Vence (opcional)</label>
+                    <input id="coupon-expires" name="expires_at" type="date" value="${isEdit ? esc(couponExpiryDate(coupon.expires_at)) : ''}" class="adm-fld tnum" />
+                    <p class="text-[10.5px] text-faint mt-1">Vacío = sin vencimiento</p>
+                  </div>
+                  <div>
+                    <label class="adm-lbl" for="coupon-max-uses">Máx. usos (opcional)</label>
+                    <input id="coupon-max-uses" name="max_uses" type="number" min="1" step="1" value="${isEdit && coupon.max_uses ? esc(coupon.max_uses) : ''}" class="adm-fld tnum" placeholder="Sin límite" />
+                    <p class="text-[10.5px] text-faint mt-1">Vacío = sin límite</p>
+                  </div>
                 </div>
 
                 <!-- Categories -->
@@ -143,8 +162,8 @@ export function pageAdminCoupons() {
                   <div class="grid grid-cols-2 gap-2 bg-canvas p-3 rounded-xl2 border border-line max-h-36 overflow-y-auto adm-scroll-thin">
                     ${availableTypes.map(type => `
                       <label class="flex items-center gap-2 text-[13px] cursor-pointer hover:bg-line/50 p-1.5 rounded-lg transition-colors text-body">
-                        <input type="checkbox" name="categories" value="${type}" class="rounded text-brand focus:ring-brand w-4 h-4 accent-brand" ${selectedTypes.includes(type) ? 'checked' : ''}>
-                        ${type}
+                        <input type="checkbox" name="categories" value="${esc(type)}" class="rounded text-brand focus:ring-brand w-4 h-4 accent-brand" ${selectedTypes.includes(type) ? 'checked' : ''}>
+                        ${esc(type)}
                       </label>
                     `).join('')}
                   </div>
@@ -201,14 +220,18 @@ export function pageAdminCoupons() {
           const freeShipping = form.querySelector('input[name="free_shipping"]').checked
           const active = form.querySelector('input[name="active"]').checked
           const categories = Array.from(form.querySelectorAll('input[name="categories"]:checked')).map(i => i.value)
+          const expiresAt = couponExpiryIso(form.querySelector('input[name="expires_at"]').value)
+          const maxUsesRaw = form.querySelector('input[name="max_uses"]').value.trim()
+          const maxUses = maxUsesRaw ? Number(maxUsesRaw) : null
 
           if (!code) { errorEl.textContent = 'El código es requerido y solo puede tener letras y números.'; errorEl.classList.remove('hidden'); return }
+          if (maxUses !== null && !(Number.isInteger(maxUses) && maxUses >= 1)) { errorEl.textContent = 'Máx. usos debe ser un número entero de 1 en adelante.'; errorEl.classList.remove('hidden'); return }
 
           submitBtn.disabled = true
           submitBtn.textContent = 'Guardando...'
 
           const originalCode = form.querySelector('input[name="id"]')?.value
-          const payload = { label, discount, free_shipping: freeShipping, active, categories }
+          const payload = { label, discount, free_shipping: freeShipping, active, categories, expires_at: expiresAt, max_uses: maxUses }
           if (!originalCode) payload.code = code
 
           let result

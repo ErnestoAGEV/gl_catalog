@@ -14,13 +14,10 @@ export async function applyCoupon(code, silent = false) {
     return { success: false, error: 'No se pudo validar el cupón en este momento. Intenta de nuevo.' }
   }
 
-  const { data: coupon, error } = await supabase
-    .from('coupons')
-    .select('*')
-    .eq('code', normalizedCode)
-    .eq('active', true)
-    .single()
-
+  // POST (rpc): validate_coupon cuenta cada intento por IP
+  const { data, error } = await supabase.rpc('validate_coupon', { p_code: normalizedCode })
+  if (error?.hint === 'rate') return { success: false, rateLimited: true, error: error.message }
+  const coupon = data?.[0]
   if (error || !coupon) {
     return { success: false, error: 'Cupón no válido o expirado' }
   }
@@ -56,18 +53,6 @@ export async function applyCoupon(code, silent = false) {
   if (!silent) emit()
 
   return { success: true, coupon: state.coupon }
-}
-
-/**
- * Aviso temprano para cupones de primera compra (WELCOME10): pregunta a la base
- * si ese WhatsApp o correo ya lo uso. La regla de verdad vive en place_order; esto solo
- * evita que el cliente se entere al final. Si la consulta falla, no se bloquea.
- */
-export async function isFirstPurchaseCouponAvailable(code, whatsapp, email = '') {
-  if (!supabase || !code || (!whatsapp && !email)) return true
-  const { data, error } = await supabase.rpc('coupon_first_purchase_ok', { p_code: code, p_whatsapp: whatsapp || '', p_email: email || null })
-  if (error) return true
-  return data !== false
 }
 
 export function removeCoupon(silent = false) {
