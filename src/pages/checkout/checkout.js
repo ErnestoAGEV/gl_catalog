@@ -715,6 +715,21 @@ export function pageCheckout(state) {
                 })
               return
             }
+            if (error.hint === 'whatsapp') {
+              // Tope de pedidos: el pedido no se guardo, pero se puede mandar por
+              // WhatsApp con el mismo mensaje. El carrito se queda como esta.
+              setError(error.message)
+              const waBtn = document.createElement('button')
+              waBtn.type = 'button'
+              waBtn.className = 'mt-3 flex items-center justify-center bg-[#25D366] text-paper px-6 h-12 rounded-full font-sans normal-case tracking-normal text-[15px] font-semibold hover:bg-[#1ebc59] transition-colors'
+              waBtn.textContent = 'Pedir por WhatsApp'
+              waBtn.addEventListener('click', () => {
+                try { openWhatsAppWithMessage(message) } catch (err) { console.error('WhatsApp failed to open', err) }
+              })
+              errorBox.append(waBtn)
+              setSubmitting(false)
+              return
+            }
             setError(error.message || 'No se pudo registrar tu pedido. Intenta de nuevo por favor.')
             setSubmitting(false)
             return

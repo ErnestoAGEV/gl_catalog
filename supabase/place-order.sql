@@ -7,7 +7,10 @@
 --
 -- Correr en el SQL Editor de Supabase ANTES de desplegar el cliente nuevo.
 -- Requiere supabase/promotions.sql (tabla promotions y promo_info) y
--- supabase/shipping.sql (shipping_settings, shipping_quotes, columnas de envio).
+-- supabase/shipping.sql (shipping_settings, shipping_quotes, columnas de envio),
+-- supabase/security-base.sql (rate_check, request_ip, is_admin) y
+-- supabase/coupons.sql (coupon_open, expires_at, max_uses).
+-- Check: supabase/checks/place-order.sql.
 -- Es idempotente: se puede volver a correr entero cada vez que cambie.
 
 begin;
@@ -35,6 +38,12 @@ drop function if exists public.place_order(text, text, text, text, text, jsonb, 
 -- Cotizacion de envio (p_shipping_quote_id, p_shipping_tier, p_address_parts): se reemplaza la de 9.
 drop function if exists public.place_order(text, text, text, text, text, jsonb, text, text, numeric);
 drop function if exists public.coupon_first_purchase_ok(text, text);
+-- El aviso temprano de primera compra ya no existe: place_order lo revisa al
+-- guardar (el sitio viejo, si la llamada falla, deja pasar).
+drop function if exists public.coupon_first_purchase_ok(text, text, text);
+
+-- coupon_open cuenta los usos de cada cupon en los pedidos
+create index if not exists orders_coupon_code_idx on public.orders (coupon_code) where coupon_code is not null;
 
 -- Clave para comparar telefonos: solo digitos, sin el 00 internacional, y los
 -- de Mexico sin 52 / 521 / 044 / 045, para que "+52 1 312...", "00 52 312...",
@@ -44,6 +53,7 @@ create or replace function public.phone_key(p text)
 returns text
 language sql
 immutable
+set search_path = public, pg_temp
 as $fn$
   select case
     when d ~ '^04[45][0-9]{10}$' then right(d, 10)
@@ -92,7 +102,13 @@ declare
   v_whatsapp   text;
   v_address    text;
   v_email      text;
-  v_recent     int;
+  v_admin      boolean := public.is_admin();
+  v_payment    text;
+  v_delivery   text;
+  v_code       text;
+  v_size       text;
+  v_color      text;
+  v_opts       jsonb;
   v_order      public.orders;
   v_quote      public.shipping_quotes%rowtype;
   v_tier_rate  jsonb;          -- standard o express de la cotizacion
@@ -119,17 +135,38 @@ begin
   end if;
   -- Opcional en la base (sitios viejos en cache no lo mandan); el checkout lo
   -- exige en envio a domicilio. Misma regla que EMAIL_RE en sanitize.js.
-  if v_email is not null and (length(v_email) > 254 or v_email !~ '^[^[:space:]@]+@[^[:space:]@]+[.][^[:space:]@]+$') then
+  -- Sin comillas ni < >: el correo se pinta en los avisos al equipo
+  if v_email is not null and (length(v_email) > 254
+                              or v_email !~ '^[^[:space:]@]+@[^[:space:]@]+[.][^[:space:]@]+$'
+                              or v_email ~ '[<>"'']') then
     raise exception 'El correo no parece valido.' using errcode = '22023';
   end if;
 
-  -- ── Limite anti-inundacion: 5 pedidos por numero cada 10 minutos ──────
-  select count(*) into v_recent
-    from public.orders
-   where customer_whatsapp = v_whatsapp
-     and created_at > now() - interval '10 minutes';
-  if v_recent >= 5 then
-    raise exception 'Demasiados pedidos seguidos. Espera unos minutos.' using errcode = '22023';
+  -- ── Metodos ───────────────────────────────────────────────────────────
+  -- El sitio solo ofrece estos; el admin (pedidos a mano) escribe lo que quiera
+  v_payment  := left(translate(coalesce(p_payment_method, ''), '<>', ''), 80);
+  v_delivery := left(translate(coalesce(p_delivery_method, ''), '<>', ''), 80);
+  if not v_admin
+     and (coalesce(p_payment_method, '') not in ('Transferencia', 'Pago al recoger')
+          or coalesce(p_delivery_method, '') not in ('Recoger en tienda', 'Envío a domicilio')) then
+    raise exception 'Metodo de pago o de entrega invalido.' using errcode = '22023';
+  end if;
+
+  -- ── Topes (security_limits) ───────────────────────────────────────────
+  -- Si el pedido se rechaza mas abajo, el raise deshace tambien estos conteos:
+  -- solo cuentan los pedidos que entran. hint 'whatsapp': el checkout ofrece
+  -- mandar el pedido por WhatsApp.
+  if not v_admin then
+    if not public.rate_check('order_ip', public.request_ip())
+       or not public.rate_check('order_ip_day', public.request_ip())
+       or not public.rate_check('order_phone', public.phone_key(v_whatsapp)) then
+      raise exception 'Demasiados pedidos seguidos. Espera unos minutos o pídenos por WhatsApp.'
+        using errcode = '22023', hint = 'whatsapp';
+    end if;
+    if not public.rate_check('order_global', '*') then
+      raise exception 'La tienda está recibiendo muchos pedidos en este momento. Pídenos por WhatsApp y te atendemos.'
+        using errcode = '22023', hint = 'whatsapp';
+    end if;
   end if;
 
   -- ── Carrito ───────────────────────────────────────────────────────────
@@ -143,10 +180,17 @@ begin
   -- El cupon se busca antes del bucle: hace falta para saber que lineas suman
   -- al descuento cuando aplica solo a ciertas categorias.
   if coalesce(btrim(p_coupon_code), '') <> '' then
+    -- Misma normalizacion que validate_coupon
+    v_code := upper(regexp_replace(left(p_coupon_code, 64), '[^A-Za-z0-9]', '', 'g'));
+    -- Con tope de usos, dos pedidos simultaneos se forman en fila antes de contar
+    if exists (select 1 from public.coupons where code = v_code and max_uses is not null) then
+      perform pg_advisory_xact_lock(hashtext('coupon:' || v_code));
+    end if;
+    -- Vencido, inactivo o sin usos libres: igual que un codigo que no existe
     select * into v_coupon
-      from public.coupons
-     where code = upper(regexp_replace(p_coupon_code, '[^A-Za-z0-9]', '', 'g'))
-       and active = true;
+      from public.coupons c
+     where c.code = v_code
+       and public.coupon_open(c);
     if found then
       -- Dos pedidos simultaneos del mismo numero se forman en fila: sin esto
       -- los dos pasarian la revision antes de que cualquiera inserte
@@ -187,8 +231,21 @@ begin
     select * into v_product
       from public.products
      where id::text = v_item->>'productId';
-    if not found then
+    -- Un borrador no se vende, tampoco desde el admin
+    if not found or v_product.badge = 'Borrador' then
       raise exception 'Uno de los productos ya no esta disponible.' using errcode = '22023';
+    end if;
+
+    -- Talla y color, si el producto tiene lista, deben estar en ella
+    v_size  := left(translate(coalesce(v_item->>'size', ''), '<>', ''), 40);
+    v_color := left(translate(coalesce(v_item->>'color', ''), '<>', ''), 40);
+    v_opts  := to_jsonb(v_product.sizes);
+    if v_size <> '' and jsonb_typeof(v_opts) = 'array' and v_opts <> '[]'::jsonb and not (v_opts ? v_size) then
+      raise exception 'Revisa la talla o el color de tus productos.' using errcode = '22023';
+    end if;
+    v_opts  := to_jsonb(v_product.colors);
+    if v_color <> '' and jsonb_typeof(v_opts) = 'array' and v_opts <> '[]'::jsonb and not (v_opts ? v_color) then
+      raise exception 'Revisa la talla o el color de tus productos.' using errcode = '22023';
     end if;
 
     v_unlimited := v_product.stock is null or btrim(v_product.stock::text) in ('', E'\u221E');
@@ -213,14 +270,30 @@ begin
       'stock_unlimited', v_unlimited,
       'name',            v_product.name,
       'type',            v_product.type,
-      'size',            left(coalesce(v_item->>'size', ''), 40),
-      'color',           left(coalesce(v_item->>'color', ''), 40),
+      'size',            v_size,
+      'color',           v_color,
       'qty',             v_qty,
       'price',           v_price,
       'subtotal',        round(v_price * v_qty, 2)
     ) || case when v_promo_name is null then '{}'::jsonb
               else jsonb_build_object('promo', v_promo_name, 'list_price', v_product.price) end);
   end loop;
+
+  -- ── Existencias ───────────────────────────────────────────────────────
+  -- Solo stock numerico (vacio o infinito no limita), qty sumada por producto.
+  -- Nunca se descuenta: el dueño ajusta el stock a mano. El admin vende sin tope.
+  if not v_admin and exists (
+    select 1
+      from (select e->>'productId' as pid, sum((e->>'qty')::int) as q
+              from jsonb_array_elements(p_items) e
+             group by 1) t
+      join lateral (select case when btrim(p.stock::text) ~ '^-?[0-9]+$' then btrim(p.stock::text)::numeric end as n
+                      from public.products p
+                     where p.id::text = t.pid) s on true
+     where s.n is not null and (s.n <= 0 or t.q > s.n)
+  ) then
+    raise exception 'Uno de los productos esta agotado o no tiene suficientes piezas.' using errcode = '22023';
+  end if;
 
   -- ── Descuento ─────────────────────────────────────────────────────────
   if v_coupon.code is not null then
@@ -235,7 +308,7 @@ begin
 
   -- ── Envio ─────────────────────────────────────────────────────────────
   -- Solo envio a domicilio con cotizacion; si no, v_ship queda null como antes.
-  if p_shipping_quote_id is not null and p_delivery_method = 'Envío a domicilio' then
+  if p_shipping_quote_id is not null and v_delivery = 'Envío a domicilio' then
     select * into v_quote from public.shipping_quotes where id = p_shipping_quote_id;
     if not found or v_quote.expires_at < now() then
       raise exception 'La cotizacion de envio vencio. Vuelve a cotizar.' using errcode = '22023';
@@ -278,11 +351,28 @@ begin
     end if;
   end if;
 
-  -- La direccion por campos: cada valor como texto saneado, igual que p_address
+  -- La direccion por campos: solo las claves del checkout, cada valor como
+  -- texto saneado, igual que p_address
   if jsonb_typeof(p_address_parts) = 'object' then
-    select jsonb_object_agg(left(key, 40), left(translate(value #>> '{}', '<>', ''), 200))
+    select jsonb_object_agg(key, left(translate(value #>> '{}', '<>', ''), 200))
       into v_parts
-      from (select key, value from jsonb_each(p_address_parts) limit 20) t;
+      from jsonb_each(p_address_parts)
+     where key in ('street', 'numExt', 'numInt', 'neighborhood', 'city', 'state', 'stateName', 'zip', 'references');
+  end if;
+  -- Con partes, la direccion de texto se arma de ellas (mismo formato que el
+  -- checkout) y p_address se ignora: asi no pueden decir cosas distintas
+  if v_delivery = 'Envío a domicilio' and jsonb_typeof(v_parts) = 'object' then
+    if nullif(btrim(v_parts->>'street'), '') is null or nullif(btrim(v_parts->>'numExt'), '') is null
+       or nullif(btrim(v_parts->>'neighborhood'), '') is null or nullif(btrim(v_parts->>'city'), '') is null
+       or nullif(btrim(v_parts->>'stateName'), '') is null or nullif(btrim(v_parts->>'zip'), '') is null then
+      raise exception 'Completa tu direccion de envio.' using errcode = '22023';
+    end if;
+    v_address := left(
+      (v_parts->>'street') || ' #' || (v_parts->>'numExt')
+      || coalesce(' Int. ' || nullif(v_parts->>'numInt', ''), '')
+      || ', Col. ' || (v_parts->>'neighborhood') || ', ' || (v_parts->>'city')
+      || ', ' || (v_parts->>'stateName') || ', C.P. ' || (v_parts->>'zip')
+      || coalesce(' | Ref: ' || nullif(v_parts->>'references', ''), ''), 500);
   end if;
 
   -- La promo pudo empezar o terminar con la pagina abierta: mejor no guardar
@@ -302,8 +392,8 @@ begin
     v_name,
     v_whatsapp,
     v_email,
-    left(coalesce(p_payment_method, ''), 80),
-    left(coalesce(p_delivery_method, ''), 80),
+    v_payment,
+    v_delivery,
     v_address,
     v_lines,
     round(v_subtotal, 2),
@@ -325,36 +415,10 @@ begin
 end;
 $$;
 
--- Solo se ejecuta desde el sitio; nadie mas hereda el permiso.
+-- Solo se ejecuta desde el sitio; nadie mas hereda el permiso. Desde la Fase 0
+-- las funciones nuevas nacen sin EXECUTE: el grant va explicito.
 revoke all on function public.place_order(text, text, text, text, text, jsonb, text, text, numeric, uuid, text, jsonb) from public;
-grant execute on function public.place_order(text, text, text, text, text, jsonb, text, text, numeric, uuid, text, jsonb) to anon, authenticated;
-
--- Aviso temprano para el checkout: ¿este WhatsApp o correo todavia puede usar
--- el cupon? Solo devuelve si/no; no expone pedidos ni datos del cliente.
-create or replace function public.coupon_first_purchase_ok(p_code text, p_whatsapp text, p_email text default null)
-returns boolean
-language sql
-stable
-security definer
-set search_path = public, pg_temp
-as $fn$
-  select not exists (
-    select 1
-      from public.coupons c
-      join public.orders o on o.coupon_code = c.code
-     where c.code = upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g'))
-       and c.first_purchase_only
-       and coalesce(o.status, '') <> 'cancelado'
-       and (
-         (public.phone_key(o.customer_whatsapp) = public.phone_key(p_whatsapp)
-          and length(public.phone_key(p_whatsapp)) >= 8)
-         or (nullif(btrim(p_email), '') is not null and o.customer_email = lower(btrim(p_email)))
-       )
-  )
-$fn$;
-
-revoke all on function public.coupon_first_purchase_ok(text, text, text) from public;
-grant execute on function public.coupon_first_purchase_ok(text, text, text) to anon, authenticated;
+grant execute on function public.place_order(text, text, text, text, text, jsonb, text, text, numeric, uuid, text, jsonb) to anon, authenticated, service_role;
 
 -- Se cierra la puerta vieja: ya no se puede insertar un pedido a mano.
 drop policy if exists "orders_public_insert" on public.orders;

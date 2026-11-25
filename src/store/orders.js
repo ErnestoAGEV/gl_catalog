@@ -8,7 +8,7 @@ import { ensureAdminAccess } from './auth.js'
  * quiere comprar. Ver supabase/place-order.sql
  */
 export async function saveOrder({ name, whatsapp, email, paymentMethod, deliveryMethod, address, items, couponCode, expectedTotal, shippingQuoteId, shippingTier, addressParts }) {
-  if (!supabase) return { error: 'No hay conexión a la base de datos' }
+  if (!supabase) return { error: { message: 'No hay conexión a la base de datos', details: null, hint: null } }
   const { error } = await supabase.rpc('place_order', {
     p_customer_name: name,
     p_customer_whatsapp: whatsapp,
@@ -24,7 +24,8 @@ export async function saveOrder({ name, whatsapp, email, paymentMethod, delivery
     p_shipping_tier: shippingQuoteId ? shippingTier : null,
     p_address_parts: addressParts || null,
   })
-  return { error }
+  // hint 'whatsapp': tope de pedidos alcanzado, el checkout ofrece pedir por WhatsApp
+  return { error: error ? { message: error.message, details: error.details, hint: error.hint } : null }
 }
 
 export async function getAdminOrders() {
