@@ -5,13 +5,14 @@ import { getAdminOrder, saveOrderLabelFields } from '../../store/orders.js'
 import { showToast } from '../../utils/toast.js'
 import { escapeHtml as esc } from '../../utils/sanitize.js'
 import { confirmDelete } from './adminConfirm.js'
-import { labelState, labelBodyHtml, ratesHtml, optionExtras, addressFormHtml, ADDRESS_FIELDS } from './orderLabelView.js'
+import { labelState, labelBodyHtml, ratesHtml, optionExtras, addressFormHtml, ADDRESS_FIELDS, pollDelay, mountMode } from './orderLabelView.js'
 
 export { labelBlockHtml } from './orderLabelView.js'
 
 // Sobreviven al repintado del detalle (onChange vuelve a montar el bloque)
 const carry = new Map() // orderId -> { error, addressError, address }
 const inFlight = new Set() // pedidos con generate/release en curso: un repintado no reactiva botones
+const dirty = new Set() // pedidos cuya relectura tras una llamada falló: no se pinta desde memoria
 
 export function mountLabelBlock(root, order, onChange) {
   if (!root) return
@@ -30,7 +31,8 @@ export function mountLabelBlock(root, order, onChange) {
   const setError = (t) => { errorEl.textContent = t || '' }
   const lock = (on) => root.querySelectorAll('button, input, select').forEach((el) => { el.disabled = on })
 
-  if (inFlight.has(id)) {
+  const mode = mountMode(id, inFlight, dirty)
+  if (mode === 'busy') {
     lock(true)
     setStatus('Procesando…')
     return
@@ -42,12 +44,24 @@ export function mountLabelBlock(root, order, onChange) {
     inFlight.delete(id)
     busy = false
     if (!fresh) {
+      dirty.add(id)
+      if (note) carry.set(id, note)
       setStatus('')
       setError(`${note?.error ? note.error + ' ' : ''}No se pudo volver a leer el pedido. Cierra y vuelve a abrir el detalle.`)
       return // queda bloqueado: no se repinta desde memoria
     }
+    dirty.delete(id)
     if (note) carry.set(id, note)
+    else carry.delete(id)
     onChange(fresh)
+  }
+
+  if (mode === 'dirty') {
+    busy = true
+    lock(true)
+    setStatus('Actualizando…')
+    refresh(pending)
+    return
   }
 
   const paint = () => {
@@ -74,6 +88,8 @@ export function mountLabelBlock(root, order, onChange) {
     if (!root.isConnected) return
     if (r.error || !Array.isArray(r.options) || !r.options.length) {
       if (r.addressError) return showForm(r.error)
+      // Sobre/Caja fallido: volver al radio y precios anteriores
+      if (rates && body.querySelector('[name="label-kind"]')) body.innerHTML = ratesHtml(rates, sel, order)
       lock(false)
       return setError(r.error || 'Envia no regresó opciones para este paquete. Intenta de nuevo o usa el panel de Envia.')
     }
@@ -98,11 +114,14 @@ export function mountLabelBlock(root, order, onChange) {
     if (!r.label) return refresh({ error: r.error || 'Algo falló. Intenta de nuevo.', addressError: r.addressError, address })
     const l = r.label
     if (!r.saved) {
-      const { error } = await saveOrderLabelFields(id, {
-        label_status: 'generated', label_tracking: l.tracking, label_track_url: l.trackUrl, label_url: l.url,
-        label_carrier: l.carrier, label_service: l.service, label_cost: l.cost,
-        label_created_at: new Date().toISOString(), label_sandbox: l.sandbox === true,
-      })
+      let error
+      try {
+        ({ error } = await saveOrderLabelFields(id, {
+          label_status: 'generated', label_tracking: l.tracking, label_track_url: l.trackUrl, label_url: l.url,
+          label_carrier: l.carrier, label_service: l.service, label_cost: l.cost,
+          label_created_at: new Date().toISOString(), label_sandbox: l.sandbox === true,
+        }))
+      } catch (e) { error = e || true }
       if (error) {
         const msg = `La guía se creó pero no se guardó. Anota el rastreo: ${l.tracking}`
         showToast(esc(msg), 'error', 15000)
@@ -133,8 +152,10 @@ export function mountLabelBlock(root, order, onChange) {
       try { await navigator.clipboard.writeText(String(order.label_tracking)); showToast('Rastreo copiado', 'success') } catch { showToast('No se pudo copiar', 'error') }
     },
     'release-generated': async () => {
-      if (!order.label_sandbox && !(await confirmDelete({ title: 'Quitar guía', message: 'Solo si ya cancelaste esta guía en el panel de Envia.', confirmLabel: 'Quitar guía' }))) return
-      release(true)
+      const ok = order.label_sandbox
+        ? await confirmDelete({ title: 'Quitar guía de prueba', message: 'El pedido vuelve a quedar sin guía.', confirmLabel: 'Quitar', icon: 'close' })
+        : await confirmDelete({ title: 'Quitar guía', message: 'Solo si ya cancelaste esta guía en el panel de Envia.', confirmLabel: 'Quitar guía' })
+      if (ok) release(true)
     },
     'release-review': async () => {
       if (!(await confirmDelete({ title: 'Liberar pedido', message: 'Si la guía sí se creó, no la vuelvas a generar: cópiala del panel de Envia.', confirmLabel: 'Liberar' }))) return
@@ -169,13 +190,20 @@ export function mountLabelBlock(root, order, onChange) {
   const state = labelState(order)
   if (pending?.error) setError(pending.error)
   if (pending?.addressError && state === 'empty') showForm(pending.error)
-  // Un 'generating' reciente pasa a duda a los 2 min: releer entonces
-  if (state === 'generating') {
-    const wait = Math.max(0, Date.parse(order.label_locked_at) + 121_000 - Date.now())
+  // 'generating' reciente (p. ej. tras un timeout del cliente): releer cada 10 s hasta que cambie o venza a duda
+  const poll = (current) => {
+    const wait = pollDelay(current)
+    if (wait != null) return schedule(current, wait)
+    // Sin fila nueva: el vencimiento sale de label_locked_at del mismo pedido
+    if (current === order) body.innerHTML = labelBodyHtml(order)
+    else onChange(current)
+  }
+  const schedule = (current, wait) => {
     setTimeout(async () => {
       if (!root.isConnected || busy) return
       const fresh = await getAdminOrder(id)
-      if (fresh && root.isConnected) onChange(fresh)
+      if (root.isConnected && !busy) poll(fresh ?? current)
     }, wait)
   }
+  if (state === 'generating') poll(order)
 }

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { labelState, labelBlockHtml, ratesHtml, optionExtras, confirmLabel, addressFormHtml, SANDBOX_NOTE } from '../src/pages/admin/orderLabelView.js'
+import { labelState, labelBlockHtml, ratesHtml, optionExtras, confirmLabel, addressFormHtml, SANDBOX_NOTE, money, pollDelay, mountMode } from '../src/pages/admin/orderLabelView.js'
 
 const NOW = Date.parse('2026-11-24T12:00:00Z')
 const base = { id: 'abcdef12-0000-4000-8000-000000000000', delivery_method: 'Envío a domicilio', shipping_carrier: 'fedex', status: 'completado', label_status: null }
@@ -57,5 +57,29 @@ assert.doesNotMatch(f, /<script>|<x>/)
 assert.match(f, /value="COL" selected/)
 assert.match(f, /name="zip" value="2800"/)
 assert.match(f, /<label for="label-addr-city"/)
+
+// Dinero: centavos solo si los hay
+assert.equal(money(135.5), '$135.50')
+assert.equal(money(150), '$150')
+assert.equal(confirmLabel(135.5, false), 'Generar guía por $135.50 — se cobra a tu saldo de Envia')
+assert.match(labelBlockHtml({ ...gen, label_cost: 99.9 }, NOW), /\$99\.90/)
+assert.match(ratesHtml({ ...r, options: [{ ...r.options[0], cost: 160.25 }], paid: 150 }, 0, base), /\$160\.25[\s\S]*cuesta \$10\.25 más/)
+
+// Números (rastreo, CP, número exterior) no se pierden al escapar
+assert.match(labelBlockHtml({ ...gen, label_tracking: 7700123 }, NOW), /7700123/)
+assert.match(addressFormHtml({ zip: 28000, numExt: 12 }), /name="zip" value="28000"/)
+assert.match(addressFormHtml({ zip: 28000, numExt: 12 }), /name="numExt" value="12"/)
+
+// Releer 'generating' cada 10 s hasta el vencimiento; nada en otros estados
+const genAt = (iso) => ({ ...base, label_status: 'generating', label_locked_at: iso })
+assert.equal(pollDelay(genAt('2026-11-24T11:59:30Z'), NOW), 10_000)
+assert.equal(pollDelay(genAt('2026-11-24T11:58:05Z'), NOW), 6_000)
+assert.equal(pollDelay(genAt('2026-11-24T11:57:00Z'), NOW), null)
+assert.equal(pollDelay(base, NOW), null)
+
+// Montaje: llamada en curso gana a relectura pendiente
+assert.equal(mountMode('a', new Set(['a']), new Set(['a'])), 'busy')
+assert.equal(mountMode('a', new Set(), new Set(['a'])), 'dirty')
+assert.equal(mountMode('a', new Set(), new Set()), 'ready')
 
 console.log('test-order-label ok')

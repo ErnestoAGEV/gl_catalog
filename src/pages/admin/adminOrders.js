@@ -458,7 +458,10 @@ export function pageAdminOrders(state) {
         content.dataset.orderId = String(order.id)
         // Guía: repinta solo si este pedido sigue abierto (la llamada pudo terminar con el detalle cerrado)
         mountLabelBlock(content.querySelector('[data-label-block]'), order, (o) => {
-          ordersById.set(String(o.id), o)
+          // En el mismo objeto: allOrders y el menú de estado lo comparten
+          const cur = ordersById.get(String(o.id))
+          if (cur) Object.assign(cur, o)
+          else ordersById.set(String(o.id), o)
           if (!drawer.classList.contains('hidden') && content.dataset.orderId === String(o.id)) openOrderDetails(o.id)
         })
 

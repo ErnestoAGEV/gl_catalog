@@ -1,11 +1,19 @@
 // HTML puro del bloque "Guía" del detalle del pedido (sin store ni DOM: lo prueba Node).
 // El estado sale solo de las columnas label_* del pedido, nunca de memoria.
 import { formatMoney } from '../../utils/format.js'
-import { escapeHtml as esc } from '../../utils/sanitize.js'
+import { escapeHtml } from '../../utils/sanitize.js'
 import { carrierName } from '../checkout/shippingBlock.js'
 import { ICON } from './adminIcons.js'
 import { MX_STATES } from '../../../supabase/functions/_shared/shipping.js'
 import { costNote, orderRef, REVIEW_MSG } from '../../../supabase/functions/_shared/label.js'
+
+// escapeHtml regresa '' con números: el rastreo, el CP o el número pueden venir numéricos
+const esc = (v) => escapeHtml(v == null ? '' : String(v))
+// Centavos solo cuando los hay: $135.50, pero $150
+export const money = (n) => {
+  const v = Number(n)
+  return Number.isInteger(v) ? formatMoney(v) : v.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
 
 export const SANDBOX_NOTE = 'Guía de prueba: no sirve para enviar'
 const STALE_MS = 120_000 // la función libera un 'generating' de más de 2 min
@@ -42,7 +50,7 @@ function bodyHtml(order, s) {
     const sb = order.label_sandbox === true
     return `<p class="text-[13.5px] font-semibold text-ink">${esc(carrierName(order.label_carrier))} · ${esc(order.label_service)}</p>
       ${order.label_tracking ? trackingRow(order.label_tracking) : ''}
-      <p class="text-[13px] text-muted">Costo de la guía: <span class="tnum font-semibold text-ink">${formatMoney(order.label_cost)}</span></p>
+      <p class="text-[13px] text-muted">Costo de la guía: <span class="tnum font-semibold text-ink">${money(order.label_cost)}</span></p>
       <div class="flex flex-wrap items-center gap-2">
         ${url ? `<a href="${esc(url)}" target="_blank" rel="noopener" class="adm-btn adm-btn-ink h-10 text-[13px]">${ICON.print('w-[17px] h-[17px]')} Imprimir guía</a>` : ''}
         ${sb ? `<span class="text-[12px] font-semibold text-warn">${SANDBOX_NOTE}</span>` : ''}
@@ -53,6 +61,15 @@ function bodyHtml(order, s) {
   }
   return '<button type="button" data-label="start" class="adm-btn adm-btn-ink h-10 text-[13px]">Generar guía</button>'
 }
+
+// Cada cuánto releer un 'generating' reciente (p. ej. tras un timeout del cliente); null si no aplica
+export function pollDelay(order, now = Date.now()) {
+  if (labelState(order, now) !== 'generating') return null
+  return Math.max(0, Math.min(10_000, Date.parse(order.label_locked_at) + STALE_MS + 1000 - now))
+}
+
+/** Al montar: 'busy' (llamada en curso), 'dirty' (falta releer la fila) o 'ready' */
+export const mountMode = (id, inFlight, dirty) => (inFlight.has(id) ? 'busy' : dirty.has(id) ? 'dirty' : 'ready')
 
 export const labelBodyHtml = (order, now) => bodyHtml(order, labelState(order, now))
 
@@ -71,12 +88,12 @@ export function labelBlockHtml(order, now = Date.now()) {
 const days = (d) => (Number(d) > 0 ? ` · ${Number(d)} día${Number(d) === 1 ? '' : 's'}` : '')
 
 export const confirmLabel = (cost, sandbox) =>
-  sandbox ? 'Generar guía de prueba' : `Generar guía por ${formatMoney(cost)} — se cobra a tu saldo de Envia`
+  sandbox ? 'Generar guía de prueba' : `Generar guía por ${money(cost)} — se cobra a tu saldo de Envia`
 
 /** Aviso de costo y texto del botón para la opción `sel` de una respuesta de `rates`. */
 export function optionExtras(r, sel) {
   const o = r.options[sel]
-  return { note: costNote(o.cost, r.paid, r.free, formatMoney), confirm: confirmLabel(o.cost, r.sandbox) }
+  return { note: costNote(o.cost, r.paid, r.free, money), confirm: confirmLabel(o.cost, r.sandbox) }
 }
 
 export function ratesHtml(r, sel, order) {
@@ -89,7 +106,7 @@ export function ratesHtml(r, sel, order) {
       ${r.options.map((o, i) => `<label class="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-line text-[13px] text-body cursor-pointer">
         <input type="radio" name="label-option" value="${i}" ${i === sel ? 'checked' : ''}>
         <span class="flex-1">${esc(carrierName(o.carrier))} · ${esc(o.service)}<span class="text-faint">${days(o.days)}</span></span>
-        <span class="font-semibold text-ink tnum">${formatMoney(o.cost)}</span>
+        <span class="font-semibold text-ink tnum">${money(o.cost)}</span>
       </label>`).join('')}
     </div>
     <p data-label-note class="text-[12.5px] text-warn empty:hidden">${esc(x.note ?? '')}</p>
