@@ -15,6 +15,7 @@ export const parseZips = (text) => {
   const list = String(text).split(/[\s,;]+/).filter(Boolean)
   return list.every(z => /^\d{5}$/.test(z)) ? [...new Set(list)] : null
 }
+const PRINT_SIZES = [['PAPER_LETTER', 'Hoja carta (PDF)'], ['PAPER_4X6', 'Etiqueta 4×6 (PDF)']]
 const inRange = (n, min, max) => Number.isInteger(n) && n >= min && n <= max
 
 const boxFields = (key, label, v = {}) => `
@@ -96,7 +97,8 @@ export function pageAdminShipping() {
               <h2 class="font-display font-bold text-ink text-[16px]">Remitente</h2>
               <div class="grid sm:grid-cols-2 gap-3">
                 ${textField('o-name', 'Nombre *', o.name, 'required')}
-                ${textField('o-phone', 'Teléfono *', o.phone, 'required inputmode="tel"')}
+                <div>${textField('o-phone', 'Teléfono *', o.phone, 'required inputmode="tel" aria-describedby="sh-o-phone-hint"')}
+                  <p id="sh-o-phone-hint" class="text-[11px] text-faint mt-1">10 dígitos. Lo pide la paquetería para generar guías.</p></div>
                 ${textField('o-street', 'Calle *', o.street, 'required')}
                 ${textField('o-number', 'Número', o.number)}
                 ${textField('o-district', 'Colonia', o.district)}
@@ -107,6 +109,15 @@ export function pageAdminShipping() {
                   </select></div>
                 ${textField('o-postalCode', 'Código postal *', o.postalCode, 'required inputmode="numeric"')}
               </div>
+            </div>
+
+            <div class="space-y-1">
+              <h2 class="font-display font-bold text-ink text-[16px]">Guías</h2>
+              <label class="text-[11px] text-faint" for="sh-print-size">Formato de impresión</label>
+              <select id="sh-print-size" name="label_print_size" class="adm-fld w-56">
+                ${PRINT_SIZES.map(([v, l]) => `<option value="${v}" ${(s.label_print_size || 'PAPER_LETTER') === v ? 'selected' : ''}>${l}</option>`).join('')}
+              </select>
+              <p class="text-[12px] text-faint">Las dos se imprimen en impresora normal.</p>
             </div>
 
             <div class="space-y-3">
@@ -184,9 +195,13 @@ export function pageAdminShipping() {
           if (!inRange(p.max_grams, 1, 30000)) return fail(`El peso máximo de ${label} debe estar entre 1 y 30000 g.`)
         }
 
-        const origin = { name: txt('o-name'), phone: txt('o-phone'), street: txt('o-street'), number: txt('o-number'), district: txt('o-district'), city: txt('o-city'), state: form.elements['o-state'].value, postalCode: form.elements['o-postalCode'].value.trim() }
+        const origin = { name: txt('o-name'), phone: form.elements['o-phone'].value.replace(/\D/g, ''), street: txt('o-street'), number: txt('o-number'), district: txt('o-district'), city: txt('o-city'), state: form.elements['o-state'].value, postalCode: form.elements['o-postalCode'].value.trim() }
         if (!/^\d{5}$/.test(origin.postalCode)) return fail('El código postal del remitente debe tener 5 dígitos.')
         if (!origin.name || !origin.phone || !origin.street || !origin.city) return fail('Completa nombre, teléfono, calle y ciudad del remitente.')
+
+        if (origin.phone.length !== 10) return fail('El teléfono del remitente debe tener 10 dígitos.')
+        const label_print_size = form.elements.label_print_size.value
+        if (!PRINT_SIZES.some(([v]) => v === label_print_size)) return fail('Elige un formato de impresión válido.')
 
         const default_grams = num('default_grams')
         if (!inRange(default_grams, 1, 30000)) return fail('El peso por defecto debe estar entre 1 y 30000 g.')
@@ -201,7 +216,7 @@ export function pageAdminShipping() {
 
         submitBtn.disabled = true
         let error
-        try { ({ error } = await saveShippingSettings({ carriers, envelope, box, origin, default_grams, free_shipping_min, local_delivery_price, local_delivery_zips, default_needs_box: form.elements.default_needs_box.checked })) } catch (e) { error = e } finally { submitBtn.disabled = false }
+        try { ({ error } = await saveShippingSettings({ carriers, envelope, box, origin, default_grams, free_shipping_min, local_delivery_price, local_delivery_zips, label_print_size, default_needs_box: form.elements.default_needs_box.checked })) } catch (e) { error = e } finally { submitBtn.disabled = false }
         if (error) return fail('No se pudieron guardar los ajustes.')
         showToast('Ajustes guardados', 'success')
       })
