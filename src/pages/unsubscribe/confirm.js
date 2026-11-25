@@ -19,7 +19,7 @@ export function pageConfirm() {
     html: `
       <section class="min-h-[70vh] flex items-center py-16 lg:py-24">
         <div class="max-w-[720px] mx-auto px-4 sm:px-6 w-full" aria-live="polite">
-          <h1 id="confirm-title" class="font-display font-extrabold text-[clamp(30px,5vw,56px)] leading-[0.95] tracking-[-0.035em]">${MESSAGES.ask[0]}</h1>
+          <h1 id="confirm-title" tabindex="-1" class="focus:outline-none font-display font-extrabold text-[clamp(30px,5vw,56px)] leading-[0.95] tracking-[-0.035em]">${MESSAGES.ask[0]}</h1>
           <p id="confirm-body" class="mt-5 text-[15px] leading-relaxed text-ink/65 max-w-[52ch]">${MESSAGES.ask[1]}</p>
           <div class="mt-8 flex flex-wrap gap-3">
             <button id="confirm-btn" type="button" class="inline-flex items-center h-11 px-5 rounded-full bg-ink text-paper text-[14px] font-semibold hover:bg-brand transition-colors disabled:opacity-60">Confirmar mi suscripción</button>
@@ -40,8 +40,10 @@ export function pageConfirm() {
         const result = await confirmNewsletter(token)
         show(MESSAGES[result === true ? 'done' : result === false ? 'invalid' : 'error'])
         // Solo el error de red deja reintentar
-        if (result === null) btn.disabled = false
-        else btn.remove()
+        if (result === null) { btn.disabled = false; return }
+        // El foco iba en el botón: se pasa al título antes de quitarlo
+        root.querySelector('#confirm-title').focus()
+        btn.remove()
       })
     },
   }

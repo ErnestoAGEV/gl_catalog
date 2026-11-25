@@ -3,12 +3,16 @@
 -- deshace las filas de prueba, los cambios en security_limits y rate_events).
 -- No manda correos reales: las peticiones a Resend quedan en la cola de pg_net
 -- dentro de la transaccion y el rollback las quita. Depende de security-base.sql.
+-- La cola se cuenta solo por correos a zz+test...: el trafico real no la altera.
 do $$
 declare
   v0     bigint;
   v_n    int;
   v_msg  text;
+  v_st   text;
   v_tok  uuid;
+  v_unsub uuid;
+  v_body text;
   r      public.newsletter_subscribers%rowtype;
 begin
   perform set_config('plpgsql.check_asserts', 'on', true);
@@ -28,21 +32,23 @@ begin
   execute 'set local role anon';
   perform public.newsletter_subscribe('ZZ+Test@Example.com ');
   execute 'reset role';
-  select count(*) into v_n from net.http_request_queue where id > v0;
+  select count(*), max(convert_from(body, 'UTF8')) into v_n, v_body from net.http_request_queue
+   where id > v0 and convert_from(body, 'UTF8') like '%zz+test@example.com%';
   assert v_n = 1, format('alta: %s correos en cola (esperado 1)', v_n);
-  assert (select convert_from(body, 'UTF8') from net.http_request_queue where id > v0) like '%Confirma tu suscripci%',
-    'alta: el correo no es el de confirmacion';
+  assert v_body like '%Confirma tu suscripci%', 'alta: el correo no es el de confirmacion';
   select * into r from public.newsletter_subscribers where email = 'zz+test@example.com';
   assert r.id is not null, 'alta: no hay fila con el correo normalizado';
   assert r.confirmed_at is null and r.confirm_token is not null and r.confirm_sent_at is not null and r.source = 'home_page',
     'alta: la fila no quedo pendiente';
-  assert (select convert_from(body, 'UTF8') from net.http_request_queue where id > v0) like '%/confirmar?t=' || r.confirm_token || '%',
-    'alta: el enlace no lleva el confirm_token';
+  assert v_body like '%/confirmar?t=' || r.confirm_token || '%', 'alta: el enlace no lleva el confirm_token';
+  assert v_body not like '%/baja%' and v_body not like '%List-Unsubscribe%' and v_body not like '%' || r.unsub_token || '%',
+    'alta: el correo de confirmacion lleva enlace de baja o el unsub_token';
   v_tok := r.confirm_token;
 
   v0 := (select coalesce(max(id), 0) from net.http_request_queue);
   perform public.newsletter_subscribe('zz+test@example.com');
-  select count(*) into v_n from net.http_request_queue where id > v0;
+  select count(*) into v_n from net.http_request_queue
+   where id > v0 and convert_from(body, 'UTF8') like '%zz+test@example.com%';
   assert v_n = 0, format('alta repetida: %s correos en cola (esperado 0)', v_n);
 
   -- ── Confirmar: sin bienvenida, segundo clic = true, token ajeno o vencido = false ──
@@ -54,7 +60,8 @@ begin
   execute 'reset role';
   assert (select confirmed_at is not null and unsubscribed_at is null from public.newsletter_subscribers where email = 'zz+test@example.com'),
     'confirmar: no quedo confirmada';
-  select count(*) into v_n from net.http_request_queue where id > v0;
+  select count(*) into v_n from net.http_request_queue
+   where id > v0 and convert_from(body, 'UTF8') like '%zz+test%';
   assert v_n = 0, format('confirmar: %s correos en cola (esperado 0, sin bienvenida)', v_n);
 
   perform public.newsletter_subscribe('zz+test2@example.com');
@@ -73,7 +80,7 @@ begin
   end;
   assert v_msg = 'El correo no parece valido.', format('correo invalido: %s', coalesce(v_msg, 'no lanzo'));
 
-  -- ── Tope por IP en 1 ──
+  -- ── Tope por IP en 1: la RPC y el insert directo se rechazan sin guardar ──
   update public.security_limits set max_hits = 1 where name = 'nl_ip';
   delete from public.rate_events where bucket = 'nl_ip';
   perform public.newsletter_subscribe('zz+test3@example.com');
@@ -85,6 +92,16 @@ begin
   end;
   assert v_msg = 'Demasiados intentos. Intenta mas tarde.', format('2a alta con nl_ip=1: %s', coalesce(v_msg, 'no lanzo'));
   assert not exists (select 1 from public.newsletter_subscribers where email = 'zz+test4@example.com'), 'nl_ip: la 2a alta se guardo';
+  execute 'set local role anon';
+  begin
+    insert into public.newsletter_subscribers (email) values ('zz+test6@example.com');
+    v_msg := null;
+  exception when others then
+    v_msg := sqlerrm;
+  end;
+  execute 'reset role';
+  assert v_msg = 'Demasiados intentos. Intenta mas tarde.', format('insert directo con nl_ip lleno: %s', coalesce(v_msg, 'no lanzo'));
+  assert not exists (select 1 from public.newsletter_subscribers where email = 'zz+test6@example.com'), 'nl_ip: el insert directo se guardo';
   update public.security_limits set max_hits = 100 where name = 'nl_ip';
 
   -- ── Tope por correo en 1: la 2a peticion (pasadas 24 h) no manda nada ──
@@ -92,9 +109,44 @@ begin
   update public.newsletter_subscribers set confirm_sent_at = now() - interval '2 days' where email = 'zz+test3@example.com';
   v0 := (select coalesce(max(id), 0) from net.http_request_queue);
   perform public.newsletter_subscribe('zz+test3@example.com');
-  select count(*) into v_n from net.http_request_queue where id > v0;
+  select count(*) into v_n from net.http_request_queue
+   where id > v0 and convert_from(body, 'UTF8') like '%zz+test3@example.com%';
   assert v_n = 0, format('2a peticion con nl_email=1: %s correos en cola (esperado 0)', v_n);
+  -- Insert directo de un correo con nl_email lleno: no se guarda y no lanza
+  perform public.rate_check('nl_email', 'zz+test10@example.com');
+  v0 := (select coalesce(max(id), 0) from net.http_request_queue);
+  execute 'set local role anon';
+  insert into public.newsletter_subscribers (email) values ('zz+test10@example.com');
+  execute 'reset role';
+  assert not exists (select 1 from public.newsletter_subscribers where email = 'zz+test10@example.com'), 'nl_email: el insert directo se guardo';
+  select count(*) into v_n from net.http_request_queue
+   where id > v0 and convert_from(body, 'UTF8') like '%zz+test10@example.com%';
+  assert v_n = 0, format('insert directo con nl_email lleno: %s correos en cola (esperado 0)', v_n);
   update public.security_limits set max_hits = 100 where name = 'nl_email';
+
+  -- ── Tope global en 1: tras una alta, la RPC y el insert directo se rechazan ──
+  update public.security_limits set max_hits = 1 where name = 'nl_global';
+  delete from public.rate_events where bucket = 'nl_global';
+  perform public.newsletter_subscribe('zz+test7@example.com');
+  begin
+    perform public.newsletter_subscribe('zz+test8@example.com');
+    v_msg := null;
+  exception when others then
+    v_msg := sqlerrm;
+  end;
+  assert v_msg = 'Demasiados intentos. Intenta mas tarde.', format('alta con nl_global lleno: %s', coalesce(v_msg, 'no lanzo'));
+  execute 'set local role anon';
+  begin
+    insert into public.newsletter_subscribers (email) values ('zz+test9@example.com');
+    v_msg := null;
+  exception when others then
+    v_msg := sqlerrm;
+  end;
+  execute 'reset role';
+  assert v_msg = 'Demasiados intentos. Intenta mas tarde.', format('insert directo con nl_global lleno: %s', coalesce(v_msg, 'no lanzo'));
+  assert not exists (select 1 from public.newsletter_subscribers where email in ('zz+test8@example.com', 'zz+test9@example.com')),
+    'nl_global: se guardo una alta rechazada';
+  update public.security_limits set max_hits = 100 where name = 'nl_global';
 
   -- ── Insert directo como el sitio en caché: queda pendiente y recibe confirmacion ──
   v0 := (select coalesce(max(id), 0) from net.http_request_queue);
@@ -106,27 +158,54 @@ begin
   assert r.id is not null, 'insert directo: no se normalizo el correo';
   assert r.confirmed_at is null and r.source = 'home_page' and r.confirm_token is not null,
     format('insert directo: confirmed_at %s, source %s', r.confirmed_at, r.source);
-  select count(*) into v_n from net.http_request_queue where id > v0;
+  select count(*), max(convert_from(body, 'UTF8')) into v_n, v_body from net.http_request_queue
+   where id > v0 and convert_from(body, 'UTF8') like '%zz+test5@example.com%';
   assert v_n = 1, format('insert directo: %s correos en cola (esperado 1)', v_n);
-  assert (select convert_from(body, 'UTF8') from net.http_request_queue where id > v0) like '%Confirma tu suscripción a G&L%',
-    'insert directo: el correo no es el de confirmacion';
+  assert v_body like '%Confirma tu suscripción a G&L%', 'insert directo: el correo no es el de confirmacion';
+
+  -- Insert directo de un correo que ya existe (con otras mayusculas): 23505, como espera el cliente viejo
+  execute 'set local role anon';
+  begin
+    insert into public.newsletter_subscribers (email) values ('ZZ+TEST@example.com');
+    v_st := null;
+  exception when others then
+    v_st := sqlstate;
+  end;
+  execute 'reset role';
+  assert v_st = '23505', format('insert directo de correo existente: sqlstate %s (esperado 23505)', coalesce(v_st, 'no lanzo'));
+
+  -- ── Baja: borra el confirm_token ──
+  select unsub_token into v_unsub from public.newsletter_subscribers where email = 'zz+test@example.com';
+  assert public.newsletter_unsubscribe(v_unsub), 'baja: devolvio false';
+  assert (select confirm_token is null and unsubscribed_at is not null from public.newsletter_subscribers where email = 'zz+test@example.com'),
+    'baja: quedo con confirm_token o sin unsubscribed_at';
 
   -- ── newsletter_resubscribe de alguien dado de baja: no reactiva, manda enlace ──
-  update public.newsletter_subscribers set unsubscribed_at = now(), confirm_sent_at = now() - interval '2 days'
+  update public.newsletter_subscribers set confirm_sent_at = now() - interval '2 days'
    where email = 'zz+test@example.com';
   v0 := (select coalesce(max(id), 0) from net.http_request_queue);
   execute 'set local role anon';
   perform public.newsletter_resubscribe('zz+test@example.com');
   execute 'reset role';
-  assert (select unsubscribed_at is not null from public.newsletter_subscribers where email = 'zz+test@example.com'),
-    'resubscribe: lo reactivo sin confirmar';
-  select count(*) into v_n from net.http_request_queue where id > v0;
+  select * into r from public.newsletter_subscribers where email = 'zz+test@example.com';
+  assert r.unsubscribed_at is not null, 'resubscribe: lo reactivo sin confirmar';
+  select count(*) into v_n from net.http_request_queue
+   where id > v0 and convert_from(body, 'UTF8') like '%zz+test@example.com%';
   assert v_n = 1, format('resubscribe: %s correos en cola (esperado 1)', v_n);
 
-  -- Ninguna funcion nueva quedo abierta de mas
+  -- ── Confirmar a alguien dado de baja con su enlace nuevo: reactiva y cambia el enlace de baja ──
+  execute 'set local role anon';
+  assert public.newsletter_confirm(r.confirm_token), 'confirmar tras baja: devolvio false';
+  execute 'reset role';
+  assert (select unsubscribed_at is null and unsub_token <> r.unsub_token from public.newsletter_subscribers where id = r.id),
+    'confirmar tras baja: no borro unsubscribed_at o no cambio unsub_token';
+
+  -- Ninguna funcion quedo abierta de mas
   assert has_function_privilege('anon', 'public.newsletter_subscribe(text)', 'execute'), 'anon no puede llamar newsletter_subscribe';
   assert has_function_privilege('anon', 'public.newsletter_confirm(uuid)', 'execute'), 'anon no puede llamar newsletter_confirm';
   assert not has_function_privilege('anon', 'public.send_confirm_to(text, uuid)', 'execute'), 'anon puede llamar send_confirm_to';
+  assert not has_function_privilege('anon', 'public.newsletter_direct_insert()', 'execute'), 'anon puede llamar newsletter_direct_insert';
+  assert not has_function_privilege('anon', 'public.send_welcome_email()', 'execute'), 'anon puede llamar send_welcome_email';
 
   raise exception 'CHECK_OK';
 end;

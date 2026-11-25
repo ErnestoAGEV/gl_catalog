@@ -19,7 +19,9 @@ export async function subscribeNewsletter(email) {
     if (error) {
       if (import.meta.env.DEV) console.error('Newsletter Supabase error:', error)
       const msg = error.message || ''
-      return { ok: false, error: msg.includes('Demasiados') ? msg : 'No se pudo guardar tu suscripción. Intenta de nuevo.' }
+      if (msg.includes('Demasiados')) return { ok: false, error: 'Demasiados intentos. Intenta más tarde.' }
+      if (msg.includes('no parece valido')) return { ok: false, error: 'El correo electrónico no es válido.' }
+      return { ok: false, error: 'No se pudo guardar tu suscripción. Intenta de nuevo.' }
     }
   }
 

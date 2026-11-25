@@ -10,6 +10,8 @@
 --     muestra el código WELCOME10.
 --   · Envíos: el admin llama a send_newsletter(); solo a confirmados sin baja.
 -- Depende de security-base.sql (rate_check, request_ip, topes nl_*).
+-- Se aplica entero en una sola transacción (apply_migration ya lo hace; por
+-- eso no lleva begin/commit): si algo falla, no queda a medias.
 --
 -- ──────────────────────────────────────────────────────────────────────────
 -- ANTES DE EJECUTAR
@@ -49,7 +51,8 @@ SET search_path = public, pg_temp
 AS $$
   WITH u AS (
     UPDATE public.newsletter_subscribers
-    SET unsubscribed_at = coalesce(unsubscribed_at, now())
+    -- Sin confirm_token: el enlace de confirmación viejo ya no lo reactiva
+    SET unsubscribed_at = coalesce(unsubscribed_at, now()), confirm_token = NULL
     WHERE unsub_token = p_token
     RETURNING 1
   )
@@ -141,6 +144,12 @@ ALTER TABLE public.newsletter_subscribers
   ADD COLUMN IF NOT EXISTS confirm_sent_at timestamptz;
 CREATE UNIQUE INDEX IF NOT EXISTS newsletter_subscribers_confirm_token_key
   ON public.newsletter_subscribers (confirm_token);
+-- Un correo = una fila sin importar mayúsculas. Si el update choca con el índice
+-- único es que hay duplicados por mayúsculas: resolverlos a mano antes.
+UPDATE public.newsletter_subscribers SET email = lower(btrim(email))
+WHERE email <> lower(btrim(email));
+CREATE UNIQUE INDEX IF NOT EXISTS newsletter_subscribers_email_lower_key
+  ON public.newsletter_subscribers (lower(email));
 -- Los suscriptores de antes de la doble confirmación cuentan como confirmados.
 -- Se puede repetir: quien pidió confirmación ya tiene confirm_token.
 UPDATE public.newsletter_subscribers
@@ -265,6 +274,9 @@ SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
 BEGIN
+  -- Ningún insert entra ya confirmado ni dado de baja, venga de donde venga
+  NEW.confirmed_at := NULL;
+  NEW.unsubscribed_at := NULL;
   IF current_setting('gl.nl_rpc', true) IS NOT DISTINCT FROM '1' THEN RETURN NEW; END IF;
   NEW.email := lower(btrim(NEW.email));
   IF NEW.email IS NULL OR length(NEW.email) > 254
@@ -275,14 +287,14 @@ BEGIN
   IF NOT public.rate_check('nl_ip', public.request_ip()) THEN
     RAISE EXCEPTION 'Demasiados intentos. Intenta mas tarde.' USING errcode = '22023';
   END IF;
+  -- Demasiados enlaces a este correo: no se guarda, en silencio (como la RPC)
+  IF NOT public.rate_check('nl_email', NEW.email) THEN RETURN NULL; END IF;
   IF NOT public.rate_check('nl_global', '*') THEN
     RAISE EXCEPTION 'Demasiados intentos. Intenta mas tarde.' USING errcode = '22023';
   END IF;
   NEW.source := 'home_page';
   NEW.subscribed_at := now();
   NEW.unsub_token := gen_random_uuid();
-  NEW.unsubscribed_at := NULL;
-  NEW.confirmed_at := NULL;
   NEW.confirm_token := gen_random_uuid();
   NEW.confirm_sent_at := now();
   RETURN NEW;
