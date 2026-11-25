@@ -40,6 +40,14 @@ ALTER TABLE public.newsletter_subscribers
   ADD COLUMN IF NOT EXISTS unsubscribed_at timestamptz;
 CREATE UNIQUE INDEX IF NOT EXISTS newsletter_subscribers_unsub_token_key
   ON public.newsletter_subscribers (unsub_token);
+-- Doble confirmación (paso 5). Van aquí porque newsletter_unsubscribe (SQL,
+-- se valida al crearse) ya usa confirm_token.
+ALTER TABLE public.newsletter_subscribers
+  ADD COLUMN IF NOT EXISTS confirmed_at timestamptz,
+  ADD COLUMN IF NOT EXISTS confirm_token uuid,
+  ADD COLUMN IF NOT EXISTS confirm_sent_at timestamptz;
+CREATE UNIQUE INDEX IF NOT EXISTS newsletter_subscribers_confirm_token_key
+  ON public.newsletter_subscribers (confirm_token);
 
 -- Pública a propósito: quien tenga el token (solo llega en sus correos) puede
 -- darse de baja. Devuelve false si el enlace no corresponde a nadie.
@@ -138,12 +146,7 @@ REVOKE ALL ON FUNCTION public.resend_post(text, jsonb) FROM public, anon, authen
 
 -- 5. Alta con doble confirmación. Una fila sin confirmed_at está pendiente: no
 --    recibe envíos y security_prune() la borra a los 7 días.
-ALTER TABLE public.newsletter_subscribers
-  ADD COLUMN IF NOT EXISTS confirmed_at timestamptz,
-  ADD COLUMN IF NOT EXISTS confirm_token uuid,
-  ADD COLUMN IF NOT EXISTS confirm_sent_at timestamptz;
-CREATE UNIQUE INDEX IF NOT EXISTS newsletter_subscribers_confirm_token_key
-  ON public.newsletter_subscribers (confirm_token);
+-- (Las columnas confirmed_at, confirm_token y confirm_sent_at se crean en el paso 1.)
 -- Un correo = una fila sin importar mayúsculas. Si el update choca con el índice
 -- único es que hay duplicados por mayúsculas: resolverlos a mano antes.
 UPDATE public.newsletter_subscribers SET email = lower(btrim(email))
