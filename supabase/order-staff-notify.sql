@@ -149,7 +149,7 @@ create or replace function public.send_order_staff_email(p_order_id uuid, p_kind
 returns bigint
 language plpgsql
 security definer
-set search_path = public, extensions, vault
+set search_path = public, extensions, vault, pg_temp
 as $$
 declare
   v_order public.orders%rowtype;
@@ -183,11 +183,23 @@ create or replace function public.notify_staff_on_order()
 returns trigger
 language plpgsql
 security definer
-set search_path = public, extensions, vault
+set search_path = public, extensions, vault, pg_temp
 as $$
 begin
   if tg_op = 'INSERT' then
-    perform public.send_order_staff_email(new.id, 'nuevo');
+    -- Tope diario (security_limits.staff_mail) para no agotar la cuota de Resend.
+    -- Al llegar al tope se avisa una vez y los siguientes no mandan correo.
+    -- Las cancelaciones no cuentan. Si el tope falla, se manda (el pedido no se bloquea).
+    begin
+      if public.rate_check('staff_mail', '*') then
+        perform public.send_order_staff_email(new.id, 'nuevo');
+      else
+        perform public.send_staff_alert('staff_mail');
+      end if;
+    exception when others then
+      raise warning 'notify_staff_on_order: %', sqlerrm;
+      perform public.send_order_staff_email(new.id, 'nuevo');
+    end;
   elsif new.status = 'cancelado' and coalesce(old.status, '') <> 'cancelado' then
     perform public.send_order_staff_email(new.id, 'cancelado');
   end if;
@@ -207,7 +219,7 @@ create or replace function public.send_order_staff_test()
 returns text
 language plpgsql
 security definer
-set search_path = public, extensions, vault
+set search_path = public, extensions, vault, pg_temp
 as $$
 declare
   v_id uuid;
