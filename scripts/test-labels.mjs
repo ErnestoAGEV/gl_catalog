@@ -56,6 +56,7 @@ const o = (carrier, cost, days, serviceCode = carrier) => ({ carrier, service: '
 const opts = [o('estafeta', 150, 4), o('dhl', 180, 2), o('fedex', 200, 1), o('dhl', 260, 1, 'exp')]
 assert.equal(defaultOption(opts, { carrier: 'dhl', tier: 'standard' }), 1)
 assert.equal(defaultOption(opts, { carrier: 'dhl', tier: 'express' }), 3)
+assert.equal(defaultOption(opts, { carrier: 'DHL', tier: 'express' }), 3)                 // carrier del pedido sin importar mayúsculas
 assert.equal(defaultOption(opts, { carrier: 'ups', tier: 'standard' }), 0)
 assert.equal(defaultOption(opts, { carrier: null, tier: null }), 0)
 assert.equal(defaultOption(opts, { carrier: 'estafeta', tier: 'express' }), 2)      // su paquetería no tiene Express: Express de todas

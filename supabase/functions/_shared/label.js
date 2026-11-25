@@ -93,7 +93,8 @@ export function defaultOption(options, { carrier, tier }) {
   if (!options.length) return -1
   const all = options.map((o, i) => ({ ...o, price: o.cost, i }))
   const pick = (list) => (list.length && tier ? pickTiers(list)[tier]?.i : undefined)
-  const i = pick(all.filter((o) => o.carrier === carrier)) ?? pick(all)
+  const lc = String(carrier ?? '').toLowerCase()
+  const i = pick(all.filter((o) => String(o.carrier).toLowerCase() === lc)) ?? pick(all)
   if (i !== undefined) return i
   return all.reduce((a, b) => (b.cost < a.cost ? b : a)).i
 }

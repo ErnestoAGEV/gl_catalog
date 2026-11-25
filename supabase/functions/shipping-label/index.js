@@ -36,6 +36,7 @@ function validBody(b) {
   if (!isObj(b) || !MODES.includes(b.mode) || typeof b.orderId !== 'string' || !UUID.test(b.orderId)) return false
   if (b.kind !== undefined && b.kind !== 'envelope' && b.kind !== 'box') return false
   if (b.address != null && !isObj(b.address)) return false
+  if (b.confirmGenerated !== undefined && typeof b.confirmGenerated !== 'boolean') return false
   if (b.mode === 'generate') {
     // La paquetería se valida contra settings.carriers al cargar los ajustes.
     if (typeof b.carrier !== 'string' || typeof b.serviceCode !== 'string' || !/^[\w.-]{1,60}$/.test(b.serviceCode)) return false
@@ -46,11 +47,13 @@ function validBody(b) {
 
 const toOption = (r) => ({ carrier: r.carrier, service: r.service, serviceCode: r.serviceCode, cost: r.price, days: r.days })
 
-async function release(orderId) {
+// Liberar una guía ya generada (pagada) solo con confirmación explícita.
+async function release(orderId, confirmGenerated) {
   const stale = new Date(Date.now() - 120_000).toISOString()
+  const generated = confirmGenerated === true ? 'label_status.eq.generated,' : ''
   const rows = must(await db.from('orders').update(LABEL_CLEARED)
     .eq('id', orderId)
-    .or(`label_status.eq.review,label_status.eq.generated,and(label_status.eq.generating,label_locked_at.lt.${stale})`)
+    .or(`label_status.eq.review,${generated}and(label_status.eq.generating,label_locked_at.lt.${stale})`)
     .select('id'))
   return rows.length ? { ok: true } : { error: 'No hay nada que liberar en este pedido.' }
 }
@@ -93,10 +96,11 @@ async function prepare(body) {
 
 async function rates(ctx) {
   const { cfg, order, settings, destination, pkg, ref } = ctx
-  const results = await Promise.allSettled(settings.carriers.map((carrier) =>
-    rateCarrier({ baseUrl: cfg.baseUrl, apiKey: cfg.apiKey, carrier, origin: settings.origin, destination, pkg })))
+  // Cada llamada es de una paquetería: se marca con el slug de settings, no con lo que regrese Envia.
+  const results = await Promise.allSettled(settings.carriers.map(async (carrier) =>
+    (await rateCarrier({ baseUrl: cfg.baseUrl, apiKey: cfg.apiKey, carrier, origin: settings.origin, destination, pkg })).map((r) => ({ ...toOption(r), carrier }))))
   results.forEach((r, i) => r.status === 'rejected' && console.error('shipping-label', ref, settings.carriers[i], r.reason?.message))
-  const options = results.flatMap((r) => (r.status === 'fulfilled' ? r.value : [])).map(toOption).sort((x, y) => x.cost - y.cost)
+  const options = results.flatMap((r) => (r.status === 'fulfilled' ? r.value : [])).sort((x, y) => x.cost - y.cost)
   if (!options.length) return { error: 'Envia no regresó opciones para este paquete. Intenta de nuevo o usa el panel de Envia.' }
 
   let coupon = null
@@ -117,7 +121,7 @@ async function generate(ctx, body) {
   const { carrier } = body
   let options
   try {
-    options = (await rateCarrier({ baseUrl: cfg.baseUrl, apiKey: cfg.apiKey, carrier, origin: settings.origin, destination, pkg })).map(toOption)
+    options = (await rateCarrier({ baseUrl: cfg.baseUrl, apiKey: cfg.apiKey, carrier, origin: settings.origin, destination, pkg })).map((r) => ({ ...toOption(r), carrier }))
   } catch (e) {
     console.error('shipping-label', ref, carrier, e?.message)
     return { error: 'No se pudo recotizar con Envia. Intenta de nuevo.' }
@@ -127,11 +131,13 @@ async function generate(ctx, body) {
   const { option } = rq
   const id = order.id
   const orders = () => db.from('orders')
+  const lockedAt = new Date().toISOString()
+  const markReview = async (t) => { must(await orders().update({ label_status: 'review', label_tracking: t }).eq('id', id)) }
 
   const r = await runGenerate({
     ref,
-    lock: async () => must(await orders().update({ label_status: 'generating', label_locked_at: new Date().toISOString() })
-      .eq('id', id).is('label_status', null).is('label_tracking', null).select('id')).length === 1,
+    lock: async () => must(await orders().update({ label_status: 'generating', label_locked_at: lockedAt })
+      .eq('id', id).is('label_status', null).is('label_tracking', null).or('status.is.null,status.neq.cancelado').select('id')).length === 1,
     build: () => buildLabelRequest({ origin: settings.origin, destination, pkg, carrier, serviceCode: option.serviceCode, printSize: settings.label_print_size, orderRef: ref }),
     send: async (req) => {
       const res = await generateLabel({ baseUrl: cfg.baseUrl, apiKey: cfg.apiKey, body: req })
@@ -143,14 +149,16 @@ async function generate(ctx, body) {
         label_status: 'generated', label_tracking: label.trackingNumber, label_track_url: label.trackUrl, label_url: label.labelUrl,
         label_carrier: carrier, label_service: option.service, label_cost: label.cost ?? option.cost,
         label_created_at: new Date().toISOString(), label_sandbox: cfg.sandbox, address_parts: address,
-      }).eq('id', id).eq('label_status', 'generating').select('id'))
+      }).eq('id', id).eq('label_status', 'generating').eq('label_locked_at', lockedAt).select('id'))
       if (rows.length !== 1) throw new Error('save: 0 filas')
     },
-    unlock: async () => { must(await orders().update({ label_status: null, label_locked_at: null }).eq('id', id).eq('label_status', 'generating')) },
-    markReview: async (t) => { must(await orders().update({ label_status: 'review', label_tracking: t }).eq('id', id)) },
+    unlock: async () => { must(await orders().update({ label_status: null, label_locked_at: null }).eq('id', id).eq('label_status', 'generating').eq('label_locked_at', lockedAt)) },
+    markReview,
   })
   if (!r.label) return r
   const l = r.label
+  // Guía comprada pero no guardada: dejar el rastreo en revisión para que liberar sea deliberado.
+  if (!r.saved) await markReview(l.trackingNumber).catch((e) => console.error('shipping-label', ref, 'markReview falló:', e?.message))
   return {
     label: { tracking: l.trackingNumber, trackUrl: l.trackUrl, url: l.labelUrl, carrier, service: option.service, cost: l.cost ?? option.cost, sandbox: cfg.sandbox },
     saved: r.saved,
@@ -163,7 +171,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
   if (req.method !== 'POST') return json({ error: 'method' }, 405)
 
-  const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer /, '')
+  const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer /i, '')
   const { data: auth, error: authErr } = token ? await db.auth.getUser(token) : { data: null, error: true }
   if (authErr || !auth?.user) return json({ error: 'auth' }, 401)
   // Plan de seguridad: aquí cambiará a is_admin() + aal2.
@@ -175,7 +183,7 @@ Deno.serve(async (req) => {
   if (!validBody(body)) return json({ error: 'body' }, 400)
 
   try {
-    if (body.mode === 'release') return json(await release(body.orderId))
+    if (body.mode === 'release') return json(await release(body.orderId, body.confirmGenerated))
     const ctx = await prepare(body)
     if (ctx.bad) return json({ error: 'body' }, 400)
     if (ctx.out) return json(ctx.out)
