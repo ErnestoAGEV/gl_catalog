@@ -2,19 +2,21 @@
 -- is_admin() y alertas al equipo.
 --
 -- Requiere pgcrypto, pg_cron, pg_net, supabase_vault y resend_post() de
--- newsletter-correos.sql. Solo agrega: no cambia nada que use el sitio actual.
+-- newsletter-correos.sql. Crea tablas y funciones que nada usa todavía (las
+-- consumen las Tareas 3, 4, 6, 7 y 12); lo único que actúa por su cuenta son
+-- los dos cron: avisos al equipo y limpieza de rate_events, shipping_quotes
+-- viejas e ip_hash.
 -- Desde la Fase 0 las funciones nuevas nacen sin EXECUTE: cada grant es explícito.
 --
--- Idempotente: se puede volver a correr entero (no pisa los topes que el
--- dueño ya ajustó ni la sal de Vault).
-
-begin;
+-- Aplicar con apply_migration (ya corre en una transacción). Idempotente: se
+-- puede volver a correr entero (no pisa los topes que el dueño ya ajustó ni
+-- la sal de Vault).
 
 -- ── Topes ───────────────────────────────────────────────────────────────
 create table if not exists public.security_limits (
   name     text primary key,
   max_hits int not null check (max_hits > 0),
-  win      interval not null
+  win      interval not null check (win > interval '0')
 );
 
 comment on table public.security_limits is
@@ -33,7 +35,8 @@ insert into public.security_limits (name, max_hits, win) values
   ('nl_global',       15, interval '24 hours'),
   ('coupon_ip',       30, interval '10 minutes'),
   ('quote_ip',        10, interval '1 minute'),
-  ('quote_global',    60, interval '1 minute')
+  ('quote_global',    60, interval '1 minute'),
+  ('ip_unknown',       5, interval '1 hour')   -- peticiones sin IP antes de avisar
 on conflict (name) do nothing;
 
 alter table public.security_limits enable row level security;
@@ -66,7 +69,9 @@ begin
 end;
 $$;
 
--- true = dentro del tope (y cuenta el intento); false = tope alcanzado (no cuenta)
+-- true = dentro del tope (y cuenta el intento); false = tope alcanzado (no cuenta).
+-- Si la transacción que llama se deshace (raise), el intento tampoco cuenta; y
+-- como inserta, las RPC que lo usan deben llamarse por POST (GET es solo lectura).
 create or replace function public.rate_hit(p_bucket text, p_key text, p_limit int, p_window interval)
 returns boolean
 language plpgsql
@@ -119,6 +124,13 @@ begin
   select * into v_lim from public.security_limits where name = p_name;
   if not found then
     raise exception 'Limite % no configurado', p_name;
+  end if;
+  -- Sin IP no hay a quién contar: se deja pasar (teléfono, topes globales y
+  -- Turnstile siguen aplicando) y security_watch avisa si se repite.
+  if p_key = 'unknown' then
+    raise warning 'rate_check %: peticion sin IP, tope por IP omitido', p_name;
+    insert into public.rate_events (bucket, key) values ('ip_unknown', '*');
+    return true;
   end if;
   return public.rate_hit(p_name, p_key, v_lim.max_hits, v_lim.win);
 end;
@@ -187,9 +199,10 @@ $$;
 revoke all on function public.rate_check_ip(text, text) from public, anon, authenticated;
 grant execute on function public.rate_check_ip(text, text) to service_role;
 
--- ── Admin con MFA ───────────────────────────────────────────────────────
--- Lo usan las políticas de la Fase D y las Edge Functions de admin
--- (rpc('is_admin') con el JWT de quien llama).
+-- ── Admin ───────────────────────────────────────────────────────────────
+-- Lo usan place_order y las Edge Functions de admin (rpc('is_admin') con el
+-- JWT de quien llama). Por ahora solo pertenencia a admin_users: la Tarea 16
+-- (admin-mfa.sql) le agrega la exigencia de aal2 en la Fase D.
 create or replace function public.is_admin()
 returns boolean
 language sql
@@ -198,7 +211,6 @@ security definer
 set search_path = public, pg_temp
 as $$
   select exists (select 1 from public.admin_users where user_id = auth.uid())
-     and coalesce(auth.jwt()->>'aal', '') = 'aal2'
 $$;
 revoke all on function public.is_admin() from public, anon;
 grant execute on function public.is_admin() to authenticated;
@@ -227,6 +239,9 @@ begin
   elsif p_reason = 'newsletter' then
     v_subject := 'Alerta G&L: muchas suscripciones al boletín';
     v_html := '<p>Se llegó al tope diario de correos de confirmación del boletín. Si no es una campaña tuya, puede ser abuso.</p>';
+  elsif p_reason = 'ip_unknown' then
+    v_subject := 'Alerta G&L: la tienda no está recibiendo la IP de los clientes';
+    v_html := '<p>Varias peticiones llegaron sin la IP del cliente, así que los topes por IP no se están aplicando (los de teléfono y los de toda la tienda sí).</p><p>Avisa a quien mantiene la tienda: puede que Supabase haya cambiado sus cabeceras.</p>';
   else
     raise warning 'send_staff_alert: motivo desconocido %', p_reason;
     return null;
@@ -235,7 +250,8 @@ begin
   select coalesce(jsonb_agg(email order by created_at), '[]'::jsonb) into v_to from public.order_notify_emails;
   if jsonb_array_length(v_to) = 0 then return null; end if;
 
-  if not (public.rate_check('staff_alert', '*') and public.rate_check('staff_alert_day', '*')) then
+  -- Una por motivo y hora (staff_alert) y pocas al día entre todas (staff_alert_day)
+  if not (public.rate_check('staff_alert', p_reason) and public.rate_check('staff_alert_day', '*')) then
     return null;
   end if;
 
@@ -253,7 +269,8 @@ $$;
 revoke all on function public.send_staff_alert(text) from public, anon, authenticated;
 
 -- Las alertas no pueden salir dentro de la transacción que se rechaza (el
--- raise las deshace): las manda este cron cuando un tope global está lleno.
+-- raise las deshace): las manda este cron cuando un tope global está lleno o
+-- cuando llegan demasiadas peticiones sin IP.
 create or replace function public.security_watch()
 returns void
 language plpgsql
@@ -262,19 +279,17 @@ security definer
 set search_path = public, pg_temp
 as $$
 declare
-  v_lim public.security_limits%rowtype;
+  r record;
 begin
-  select * into v_lim from public.security_limits where name = 'order_global';
-  if found and (select count(*) from public.rate_events
-                 where bucket = 'order_global' and at > now() - v_lim.win) >= v_lim.max_hits then
-    perform public.send_staff_alert('orders');
-  end if;
-
-  select * into v_lim from public.security_limits where name = 'nl_global';
-  if found and (select count(*) from public.rate_events
-                 where bucket = 'nl_global' and at > now() - v_lim.win) >= v_lim.max_hits then
-    perform public.send_staff_alert('newsletter');
-  end if;
+  for r in
+    select w.reason
+      from (values ('order_global', 'orders'), ('nl_global', 'newsletter'), ('ip_unknown', 'ip_unknown')) w(bucket, reason)
+      join public.security_limits l on l.name = w.bucket
+     where (select count(*) from public.rate_events e
+             where e.bucket = w.bucket and e.at > now() - l.win) >= l.max_hits
+  loop
+    perform public.send_staff_alert(r.reason);
+  end loop;
 end;
 $$;
 revoke all on function public.security_watch() from public, anon, authenticated;
@@ -287,13 +302,18 @@ security definer
 set search_path = public, pg_temp
 as $$
 begin
-  -- Lo más largo que se cuenta es nl_email (30 días)
+  -- Lo que ya salió de la ventana de su tope; lo de cubetas sin fila, a los
+  -- 31 días (lo más largo que se cuenta es nl_email, 30 días)
+  delete from public.rate_events e using public.security_limits l
+   where e.bucket = l.name and e.at < now() - l.win;
   delete from public.rate_events where at < now() - interval '31 days';
 
   delete from public.shipping_quotes q
    where q.created_at < now() - interval '24 hours'
      and not exists (select 1 from public.orders o where o.shipping_quote_id = q.id);
-  update public.shipping_quotes set ip_hash = null where ip_hash is not null;
+  -- El tope por IP de shipping-quote cuenta el último minuto: más viejo ya no sirve
+  update public.shipping_quotes set ip_hash = null
+   where ip_hash is not null and created_at < now() - interval '10 minutes';
 
   -- Altas al boletín nunca confirmadas. Las columnas llegan con la Tarea 6:
   -- SQL dinámico para que esta función compile antes de eso.
@@ -307,8 +327,6 @@ end;
 $$;
 revoke all on function public.security_prune() from public, anon, authenticated;
 
-commit;
-
--- ── Cron (fuera de la transacción; schedule con el mismo nombre reemplaza) ──
+-- ── Cron (al final; schedule con el mismo nombre reemplaza el job) ──────
 select cron.schedule('security-watch', '*/5 * * * *', 'select public.security_watch()');
 select cron.schedule('security-prune', '17 * * * *', 'select public.security_prune()');
