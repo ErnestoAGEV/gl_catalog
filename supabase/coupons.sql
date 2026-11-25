@@ -54,7 +54,7 @@ begin
     select c.code, c.discount, c.free_shipping, c.label,
            coalesce(to_jsonb(c.categories), '[]'::jsonb), c.first_purchase_only
       from public.coupons c
-     where c.code = upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g'))
+     where c.code = upper(regexp_replace(left(coalesce(p_code, ''), 64), '[^A-Za-z0-9]', '', 'g'))
        and public.coupon_open(c);
 end;
 $$;

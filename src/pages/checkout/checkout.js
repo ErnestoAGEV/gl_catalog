@@ -700,7 +700,7 @@ export function pageCheckout(state) {
               const dbTotal = Number(error.details)
               const coupon = getCoupon()
               Promise.all([refreshPromotions(), refreshProducts()])
-                .then(() => coupon ? applyCoupon(coupon.code, true).then(r => { if (!r.success && !r.rateLimited) removeCoupon(true) }) : null)
+                .then(() => coupon ? applyCoupon(coupon.code, true).then(r => { if (!r.success && !r.rateLimited && !r.transient) removeCoupon(true) }) : null)
                 .finally(() => {
                   refreshSummaryView()
                   // Si aun no cuadra (reloj del equipo desfasado) manda la base: se

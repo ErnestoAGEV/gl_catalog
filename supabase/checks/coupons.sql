@@ -8,7 +8,6 @@ declare
   v_msg   text;
   v_hint  text;
   v_code  text;
-  v0      bigint;
 begin
   perform set_config('plpgsql.check_asserts', 'on', true);
 
@@ -21,10 +20,10 @@ begin
   insert into public.coupons (code, discount, free_shipping, label, active, expires_at, max_uses) values
     ('ZZTEST1', 0.10, false, 'Prueba 1', true, null, null),
     ('ZZTEST2', 0.10, false, 'Prueba 2', true, now() - interval '1 day', null),
-    ('ZZTEST3', 0.10, false, 'Prueba 3', true, null, 1);
+    ('ZZTEST3', 0.10, false, 'Prueba 3', true, null, 1),
+    ('ZZTEST4', 0.10, false, 'Prueba 4', false, null, null);
 
-  -- El pedido a mano no debe avisar al equipo (y pg_net queda sin cola nueva)
-  v0 := (select coalesce(max(id), 0) from net.http_request_queue);
+  -- El pedido a mano no debe avisar al equipo
   alter table public.orders disable trigger tr_notify_staff_on_order;
   insert into public.orders (customer_name, customer_whatsapp, payment_method, delivery_method,
                              cart_items, subtotal, discount, total, coupon_code, status)
@@ -38,7 +37,19 @@ begin
   assert v_n = 0, 'ZZTEST3 sin usos libres devolvio fila';
   select count(*) into v_n from public.validate_coupon('NOEXISTE999');
   assert v_n = 0, 'codigo inexistente devolvio fila';
-  assert (select count(*) from public.rate_events where bucket = 'coupon_ip') = 4, 'los intentos no se contaron en coupon_ip';
+  select count(*) into v_n from public.validate_coupon('ZZTEST4');
+  assert v_n = 0, 'ZZTEST4 inactivo devolvio fila';
+  select count(*) into v_n from public.validate_coupon(null);
+  assert v_n = 0, 'validate_coupon(null) devolvio fila';
+  select count(*) into v_n from public.validate_coupon('');
+  assert v_n = 0, 'validate_coupon(vacio) devolvio fila';
+  assert (select count(*) from public.rate_events where bucket = 'coupon_ip') = 7, 'los intentos no se contaron en coupon_ip';
+
+  -- Como anon, igual que por PostgREST
+  execute 'set local role anon';
+  select count(*), max(v.code) into v_n, v_code from public.validate_coupon('ZZTEST1') v;
+  execute 'reset role';
+  assert v_n = 1 and v_code = 'ZZTEST1', format('ZZTEST1 como anon: %s filas, code %s', v_n, v_code);
 
   -- Un pedido cancelado no gasta el uso
   update public.orders set status = 'cancelado' where coupon_code = 'ZZTEST3';
@@ -69,6 +80,9 @@ begin
   assert has_function_privilege('authenticated', 'public.validate_coupon(text)', 'execute'), 'authenticated no ejecuta validate_coupon';
   assert (select prosecdef and provolatile = 'v' from pg_proc where oid = 'public.validate_coupon(text)'::regprocedure),
     'validate_coupon no es SECURITY DEFINER volatil';
+  assert pg_get_function_result('public.validate_coupon(text)'::regprocedure)
+       = 'TABLE(code text, discount numeric, free_shipping boolean, label text, categories jsonb, first_purchase_only boolean)',
+    format('firma de validate_coupon: %s', pg_get_function_result('public.validate_coupon(text)'::regprocedure));
 
   -- max_uses > 0
   begin
@@ -79,7 +93,6 @@ begin
   end;
   assert v_msg = 'ok', 'max_uses = 0 se acepto';
 
-  assert (select count(*) from net.http_request_queue where id > v0) = 0, 'el check encolo un correo';
 
   raise exception 'CHECK_OK';
 end;

@@ -17,8 +17,10 @@ export async function applyCoupon(code, silent = false) {
   // POST (rpc): validate_coupon cuenta cada intento por IP
   const { data, error } = await supabase.rpc('validate_coupon', { p_code: normalizedCode })
   if (error?.hint === 'rate') return { success: false, rateLimited: true, error: error.message }
+  // Red caida, 5xx o funcion ausente: no es que el cupon sea malo
+  if (error) return { success: false, transient: true, error: 'No se pudo validar el cupón. Intenta de nuevo.' }
   const coupon = data?.[0]
-  if (error || !coupon) {
+  if (!coupon) {
     return { success: false, error: 'Cupón no válido o expirado' }
   }
 
