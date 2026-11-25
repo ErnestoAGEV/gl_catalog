@@ -2,7 +2,8 @@
 -- nunca como migracion. Esperado: error con texto CHECK_OK (el raise final
 -- deshace pedidos, cambios en security_limits y rate_events). No manda correos
 -- reales: la peticion a Resend queda en la cola de pg_net dentro de la
--- transaccion y el rollback la quita.
+-- transaccion y el rollback la quita. Depende de security-base.sql (rate_check,
+-- send_staff_alert, security_limits).
 do $$
 declare
   v_p1  public.products%rowtype;
@@ -35,11 +36,12 @@ begin
 
   perform set_config('request.jwt.claims', '{"role":"anon"}', true);
   perform set_config('request.headers', jsonb_build_object('cf-connecting-ip', v_ip)::text, true);
-  execute 'set local role anon';
 
   -- 1o: aviso normal
   v0 := (select coalesce(max(id), 0) from net.http_request_queue);
+  execute 'set local role anon';
   select * into v_order from public.place_order('ZZ Prueba check', '3120000051', 'Transferencia', 'Recoger en tienda', null, v_items);
+  execute 'reset role';
   select count(*) into v_n from net.http_request_queue where id > v0;
   assert v_n = 1, format('1er pedido: %s correos en cola (esperado 1)', v_n);
   assert (select encode(body, 'escape') from net.http_request_queue where id > v0) not like '%se pausaron los avisos%',
@@ -47,7 +49,9 @@ begin
 
   -- 2o: tope lleno, sale la alerta de pausa
   v0 := (select coalesce(max(id), 0) from net.http_request_queue);
+  execute 'set local role anon';
   select * into v_order from public.place_order('ZZ Prueba check', '3120000052', 'Transferencia', 'Recoger en tienda', null, v_items);
+  execute 'reset role';
   select count(*) into v_n from net.http_request_queue where id > v0;
   assert v_n = 1, format('2o pedido: %s correos en cola (esperado 1, la alerta)', v_n);
   assert (select encode(body, 'escape') from net.http_request_queue where id > v0) like '%se pausaron los avisos%',
@@ -55,10 +59,11 @@ begin
 
   -- 3o: ni aviso ni alerta (una alerta por hora)
   v0 := (select coalesce(max(id), 0) from net.http_request_queue);
+  execute 'set local role anon';
   select * into v_order from public.place_order('ZZ Prueba check', '3120000053', 'Transferencia', 'Recoger en tienda', null, v_items);
+  execute 'reset role';
   select count(*) into v_n from net.http_request_queue where id > v0;
   assert v_n = 0, format('3er pedido: %s correos en cola (esperado 0)', v_n);
-  execute 'reset role';
 
   -- Cancelar no cuenta para el tope y siempre avisa
   v0 := (select coalesce(max(id), 0) from net.http_request_queue);
