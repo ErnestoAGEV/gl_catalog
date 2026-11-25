@@ -47,3 +47,21 @@ export const saveCategoryWeight = ({ category, grams, needs_box }) =>
 
 export const deleteCategoryWeight = (category) =>
   adminWrite(() => supabase.from('shipping_category_weights').delete().eq('category', category))
+
+// ── Admin: guías de Envia (Edge Function shipping-label). Nunca lanza: regresa los datos o { error } ──
+
+const LABEL_NO_AUTH = 'Tu sesión no tiene permiso para generar guías. Vuelve a entrar.'
+const LABEL_NO_CONN = 'No se pudo conectar con el servidor de guías. Revisa el pedido antes de volver a intentar.'
+
+export async function labelAction(body) {
+  const access = await ensureAdminAccess()
+  if (!access.ok) return { error: access.error.message }
+  try {
+    // 70 s: la función espera hasta 30 s a Envia más recotizar y guardar
+    const { data, error } = await supabase.functions.invoke('shipping-label', { body, timeout: 70000 })
+    if (error) return { error: [401, 403].includes(error.context?.status) ? LABEL_NO_AUTH : LABEL_NO_CONN }
+    return data && typeof data === 'object' ? data : { error: LABEL_NO_CONN }
+  } catch (_err) {
+    return { error: LABEL_NO_CONN }
+  }
+}
