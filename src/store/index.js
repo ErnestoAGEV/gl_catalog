@@ -1,5 +1,5 @@
 export { subscribe, getState } from './state.js'
-export { isAdminAuthed, initAdminSession, adminLogin, adminLogout } from './auth.js'
+export { isAdminAuthed, initAdminSession, adminLogin, adminLogout, completeAdminLogin, getMfaStep, listMfaFactors, startMfaEnroll, verifyMfa } from './auth.js'
 export { loadProducts, refreshProducts, addProduct, updateProduct, deleteProduct, uploadProductImage, getProductById, trackProductView, getMostViewedProducts } from './products.js'
 export { addToCart, setCartItemQty, removeCartItem, clearCart, cartCount, cartTotal } from './cart.js'
 export { applyCoupon, removeCoupon, getCoupon, getDiscountAmount, getAdminCoupons, createCoupon, updateCoupon, deleteCoupon } from './coupons.js'

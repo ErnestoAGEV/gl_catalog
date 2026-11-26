@@ -1,10 +1,78 @@
-import { adminLogin } from '../../store/index.js'
+import { adminLogin, adminLogout, completeAdminLogin, isAdminAuthed, getMfaStep, listMfaFactors, startMfaEnroll, verifyMfa, refreshProducts } from '../../store/index.js'
 import { navigate } from '../../core/router.js'
-import { on, qs } from '../../utils/dom.js'
+import { qs } from '../../utils/dom.js'
 import { sanitizeEmail } from '../../utils/sanitize.js'
 import { ICON } from './adminIcons.js'
+import { factorName, cleanTotpCode } from '../../utils/mfa.js'
 
-export function pageAdminLogin() {
+// Las mismas piezas sirven sin sesion (pantalla completa) y con sesion (dentro
+// del panel, como "Seguridad"). onMount decide que paso se ve.
+const steps = `
+            <p id="step-eyebrow" class="eyebrow text-brand mb-2.5">Acceso restringido</p>
+            <h1 id="step-title" class="font-display font-extrabold text-ink text-[28px] tracking-tight leading-tight">Panel de administración</h1>
+            <p id="step-lead" class="text-muted text-[14px] mt-2 mb-8">Inicia sesión para gestionar tu tienda.</p>
+
+            <div id="admin-error" role="alert" class="hidden mb-4 rounded-xl2 bg-bad-tint border border-bad/20 p-3 text-[13px] text-bad font-medium"></div>
+
+            <p id="step-loading" class="text-muted text-[14px]">Comprobando tu sesión…</p>
+
+            <form id="admin-login" class="hidden space-y-4" novalidate>
+              <div>
+                <label for="admin-user" class="adm-lbl">Email</label>
+                <input id="admin-user" name="user" type="email" class="adm-fld" autocomplete="username email" placeholder="admin@glboutique.mx" />
+              </div>
+              <div>
+                <label for="admin-pass" class="adm-lbl">Contraseña</label>
+                <div class="relative">
+                  <input id="admin-pass" name="pass" type="password" class="adm-fld pr-11" autocomplete="current-password" placeholder="••••••••" />
+                  <button type="button" id="toggle-pass" aria-label="Mostrar contraseña" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-faint hover:text-body transition-colors">${ICON.eye('w-[18px] h-[18px]')}</button>
+                </div>
+              </div>
+
+              <button type="submit" id="admin-submit" class="w-full adm-btn adm-btn-primary h-12 text-[15px] disabled:opacity-50 disabled:cursor-not-allowed">
+                Ingresar
+              </button>
+            </form>
+
+            <form id="mfa-form" class="hidden space-y-4" novalidate>
+              <div id="mfa-enroll" class="hidden space-y-4">
+                <p class="text-body text-[14px] leading-relaxed">Para entrar al admin necesitas un segundo paso. Escanea este código con Google Authenticator, 1Password o Authy y escribe el código de 6 dígitos.</p>
+                <div id="mfa-qr-box"></div>
+                <div>
+                  <label for="mfa-secret" class="adm-lbl">Si no puedes escanearlo, escribe esta clave en la app</label>
+                  <div class="flex gap-2">
+                    <input id="mfa-secret" type="text" readonly class="adm-fld font-mono text-[13px]" autocomplete="off" spellcheck="false" />
+                    <button type="button" id="mfa-copy" class="adm-btn adm-btn-ghost h-11 shrink-0">Copiar</button>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label for="mfa-code" class="adm-lbl">Código de tu app de autenticación</label>
+                <input id="mfa-code" name="code" type="text" class="adm-fld tnum text-center tracking-[0.3em] text-[18px]" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" placeholder="000000" aria-describedby="admin-error" />
+              </div>
+              <button type="submit" id="mfa-submit" class="w-full adm-btn adm-btn-primary h-12 text-[15px] disabled:opacity-50 disabled:cursor-not-allowed">Verificar</button>
+              <button type="button" id="mfa-cancel" class="w-full h-10 text-[13.5px] font-semibold text-muted hover:text-ink transition-colors">Usar otra cuenta</button>
+            </form>
+
+            <div id="mfa-retry" class="hidden space-y-3">
+              <button type="button" id="mfa-retry-btn" class="w-full adm-btn adm-btn-primary h-12 text-[15px]">Reintentar</button>
+              <!-- Mientras la base no exija el segundo paso (Fase D), un fallo al preparar el alta no debe dejar fuera al dueño. -->
+              <button type="button" id="mfa-skip" class="w-full h-10 text-[13.5px] font-semibold text-muted hover:text-ink transition-colors">Entrar sin segundo paso por ahora</button>
+            </div>
+
+            <section id="mfa-security" class="hidden space-y-4" aria-labelledby="step-title">
+              <h2 class="adm-lbl">Dispositivos dados de alta</h2>
+              <ul id="mfa-devices" class="rounded-xl2 border border-line divide-y divide-line"></ul>
+              <p id="mfa-status" role="status" class="text-[13px] text-ok font-medium"></p>
+              <button type="button" id="mfa-add" class="w-full adm-btn adm-btn-primary h-12 text-[15px] disabled:opacity-50 disabled:cursor-not-allowed">Agregar otro dispositivo</button>
+              <a href="/admin/dashboard" class="flex items-center justify-center h-10 text-[13.5px] font-semibold text-muted hover:text-ink transition-colors">Ir al panel</a>
+            </section>
+`
+
+export function pageAdminLogin(state) {
+  if (state?.isAdminAuthed) {
+    return { title: 'Seguridad | G&L', html: `<div class="max-w-md">${steps}</div>`, onMount }
+  }
   return {
     title: 'Login vendedores | G&L',
     html: `
@@ -22,30 +90,7 @@ export function pageAdminLogin() {
               </div>
             </div>
 
-            <p class="eyebrow text-brand mb-2.5">Acceso restringido</p>
-            <h1 class="font-display font-extrabold text-ink text-[28px] tracking-tight leading-tight">Panel de<br/>administración</h1>
-            <p class="text-muted text-[14px] mt-2 mb-8">Inicia sesión para gestionar tu tienda.</p>
-
-            <form id="admin-login" class="space-y-4" novalidate>
-              <div>
-                <label class="adm-lbl">Email</label>
-                <input name="user" type="email" class="adm-fld" autocomplete="username email" placeholder="admin@glboutique.mx" />
-              </div>
-              <div>
-                <label class="adm-lbl">Contraseña</label>
-                <div class="relative">
-                  <input name="pass" type="password" class="adm-fld pr-11" autocomplete="current-password" placeholder="••••••••" />
-                  <button type="button" id="toggle-pass" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-faint hover:text-body transition-colors">${ICON.eye('w-[18px] h-[18px]')}</button>
-                </div>
-              </div>
-
-              <div id="admin-error" class="hidden rounded-xl2 bg-bad-tint border border-bad/20 p-3 text-[13px] text-bad font-medium"></div>
-
-              <button type="submit" id="admin-submit" class="w-full adm-btn adm-btn-primary h-12 text-[15px] disabled:opacity-50 disabled:cursor-not-allowed">
-                Ingresar
-              </button>
-            </form>
-
+${steps}
             <div class="flex items-center gap-3 mt-7">
               <div class="flex-1 h-px bg-line"></div><span class="eyebrow text-faint">o</span><div class="flex-1 h-px bg-line"></div>
             </div>
@@ -73,96 +118,273 @@ export function pageAdminLogin() {
         </div>
       </div>
     `,
-    onMount(root) {
-      const form = qs(root, '#admin-login')
-      const errorBox = qs(root, '#admin-error')
-      const submitBtn = qs(root, '#admin-submit')
-      const passInput = qs(root, 'input[name="pass"]')
-      const eyeBtn = qs(root, '#toggle-pass')
-
-      eyeBtn?.addEventListener('click', () => {
-        const show = passInput.type === 'password'
-        passInput.type = show ? 'text' : 'password'
-        eyeBtn.innerHTML = (show ? ICON.eyeOff : ICON.eye)('w-[18px] h-[18px]')
-      })
-
-      const setError = (msg) => {
-        if (!msg) { errorBox.classList.add('hidden'); errorBox.textContent = ''; return }
-        errorBox.textContent = msg
-        errorBox.classList.remove('hidden')
-      }
-
-      const setLoading = (loading, label = 'Ingresar') => {
-        submitBtn.disabled = loading
-        submitBtn.textContent = loading ? 'Ingresando…' : label
-      }
-
-      // ── Anti-brute force: progressive lockout ──
-      let failCount = 0
-      let lockUntil = 0
-      let lockTimer = null
-
-      const startLockdown = () => {
-        const waitSec = Math.min(3 * Math.pow(2, failCount - 1), 30)
-        lockUntil = Date.now() + waitSec * 1000
-        submitBtn.disabled = true
-
-        const tick = () => {
-          const remaining = Math.ceil((lockUntil - Date.now()) / 1000)
-          if (remaining > 0) {
-            submitBtn.textContent = `Espera ${remaining}s…`
-            lockTimer = setTimeout(tick, 1000)
-          } else {
-            submitBtn.disabled = false
-            submitBtn.textContent = 'Ingresar'
-          }
-        }
-        tick()
-      }
-
-      form.addEventListener('submit', async (ev) => {
-        ev.preventDefault()
-        setError('')
-
-        if (Date.now() < lockUntil) return
-
-        const { value: email } = sanitizeEmail(qs(root, 'input[name="user"]').value)
-        const pass = qs(root, 'input[name="pass"]').value.trim()
-
-        if (!email || !pass) { setError('Completá email y contraseña.'); return }
-
-        setLoading(true)
-        // El finally no es adorno: si adminLogin lanzara, el boton se quedaba
-        // en "Ingresando…" y no habia forma de reintentar sin recargar.
-        let result
-        try {
-          result = await adminLogin(email, pass)
-        } catch (err) {
-          result = { error: String(err?.message || err) }
-        } finally {
-          setLoading(false)
-        }
-
-        if (result.error) {
-          failCount++
-          // El mensaje real, no "credenciales invalidas" para todo: con dos
-          // pestañas abiertas el fallo es del lock de sesion, y decir que la
-          // contraseña esta mal manda a buscar por donde no es.
-          const esCredencial = /invalid|credential|password|email/i.test(result.error)
-          setError(esCredencial ? 'Credenciales inválidas.' : result.error)
-          // El bloqueo progresivo es contra la fuerza bruta. Un fallo que no es
-          // de credenciales no deberia castigar al que si sabe su contraseña.
-          if (esCredencial) startLockdown()
-          else failCount--
-          return
-        }
-
-        failCount = 0
-        clearTimeout(lockTimer)
-        navigate('/admin/dashboard')
-      })
-
-      on(root, 'click', '#admin-logout', () => {})
-    },
+    onMount,
   }
+}
+
+async function onMount(root) {
+  const $ = (sel) => qs(root, sel)
+  const loading = $('#step-loading')
+  const loginForm = $('#admin-login')
+  const mfaForm = $('#mfa-form')
+  const retryBox = $('#mfa-retry')
+  const security = $('#mfa-security')
+  const errorBox = $('#admin-error')
+  const submitBtn = $('#admin-submit')
+  const passInput = $('#admin-pass')
+  const eyeBtn = $('#toggle-pass')
+  const enrollBox = $('#mfa-enroll')
+  const qrBox = $('#mfa-qr-box')
+  const secretInput = $('#mfa-secret')
+  const copyBtn = $('#mfa-copy')
+  const codeInput = $('#mfa-code')
+  const mfaSubmit = $('#mfa-submit')
+  const cancelBtn = $('#mfa-cancel')
+  const devices = $('#mfa-devices')
+  const statusLine = $('#mfa-status')
+
+  let enrollFactorId = null // factor en alta; null = codigo de un factor ya verificado
+  let addingDevice = false  // alta de otro dispositivo desde Seguridad (ya en aal2)
+
+  const show = (el) => {
+    for (const x of [loading, loginForm, mfaForm, retryBox, security]) x.classList.toggle('hidden', x !== el)
+  }
+
+  const setHead = (eyebrow, title, lead) => {
+    $('#step-eyebrow').textContent = eyebrow
+    $('#step-title').textContent = title
+    const leadEl = $('#step-lead')
+    leadEl.textContent = lead
+    leadEl.classList.toggle('hidden', !lead)
+  }
+
+  const setError = (msg) => {
+    codeInput.toggleAttribute('aria-invalid', Boolean(msg))
+    if (!msg) { errorBox.classList.add('hidden'); errorBox.textContent = ''; return }
+    errorBox.textContent = msg
+    errorBox.classList.remove('hidden')
+  }
+
+  eyeBtn.addEventListener('click', () => {
+    const showPass = passInput.type === 'password'
+    passInput.type = showPass ? 'text' : 'password'
+    eyeBtn.setAttribute('aria-label', showPass ? 'Ocultar contraseña' : 'Mostrar contraseña')
+    eyeBtn.innerHTML = (showPass ? ICON.eyeOff : ICON.eye)('w-[18px] h-[18px]')
+  })
+
+  // ── Anti-brute force: bloqueo progresivo, compartido por contraseña y código ──
+  let failCount = 0
+  let lockUntil = 0
+  let lockTimer = null
+
+  const startLockdown = (btn, label) => {
+    failCount++
+    const waitSec = Math.min(3 * Math.pow(2, failCount - 1), 30)
+    lockUntil = Date.now() + waitSec * 1000
+    btn.disabled = true
+    clearTimeout(lockTimer)
+
+    const tick = () => {
+      const remaining = Math.ceil((lockUntil - Date.now()) / 1000)
+      if (remaining > 0) {
+        btn.textContent = `Espera ${remaining}s…`
+        lockTimer = setTimeout(tick, 1000)
+      } else {
+        btn.disabled = false
+        btn.textContent = label
+      }
+    }
+    tick()
+  }
+
+  const setBusy = (btn, busy, idle, working) => {
+    btn.disabled = busy
+    btn.textContent = busy ? working : idle
+  }
+
+  const showLogin = () => {
+    setHead('Acceso restringido', 'Panel de administración', 'Inicia sesión para gestionar tu tienda.')
+    show(loginForm)
+  }
+
+  const showSecurity = async (status = '') => {
+    setHead('Cuenta', 'Seguridad', 'Los dispositivos con los que entras al admin. Ten al menos dos, por si pierdes uno.')
+    const list = await listMfaFactors()
+    devices.replaceChildren(...list.map((f) => {
+      const li = document.createElement('li')
+      li.className = 'flex items-center justify-between gap-3 px-4 py-3 text-[14px]'
+      const name = document.createElement('span')
+      name.className = 'font-semibold text-ink'
+      name.textContent = f.friendly_name || 'Dispositivo'
+      const date = document.createElement('span')
+      date.className = 'text-muted text-[13px]'
+      date.textContent = f.created_at ? `Desde ${new Date(f.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''
+      li.append(name, date)
+      return li
+    }))
+    if (!list.length) {
+      const li = document.createElement('li')
+      li.className = 'px-4 py-3 text-[14px] text-muted'
+      li.textContent = 'Aún no tienes dispositivos dados de alta.'
+      devices.append(li)
+    }
+    statusLine.textContent = status
+    show(security)
+  }
+
+  const showCode = async (step) => {
+    setError('')
+    codeInput.value = ''
+    cancelBtn.textContent = addingDevice ? 'Cancelar' : 'Usar otra cuenta'
+
+    if (step === 'challenge') {
+      enrollFactorId = null
+      enrollBox.classList.add('hidden')
+      setHead('Segundo paso', 'Verificación en dos pasos', 'Abre tu app de autenticación y escribe el código de 6 dígitos de G&L.')
+      show(mfaForm)
+      codeInput.focus()
+      return
+    }
+
+    loading.textContent = 'Preparando el alta…'
+    show(loading)
+    const names = addingDevice ? (await listMfaFactors()).map((f) => f.friendly_name) : []
+    const res = await startMfaEnroll(factorName(names))
+    if (res.error) {
+      setError(res.error)
+      if (addingDevice) { addingDevice = false; await showSecurity(); return }
+      show(retryBox)
+      return
+    }
+    enrollFactorId = res.factorId
+    // data:image/svg+xml que arma supabase-js; la CSP de vercel.json permite data: en img-src.
+    const qr = document.createElement('img')
+    qr.src = res.qr
+    qr.alt = 'Código QR para tu app de autenticación'
+    qr.width = 184
+    qr.height = 184
+    qr.className = 'w-[184px] h-[184px] bg-white rounded-xl2 p-2 border border-line'
+    qrBox.replaceChildren(qr)
+    secretInput.value = res.secret
+    copyBtn.textContent = 'Copiar'
+    enrollBox.classList.remove('hidden')
+    setHead('Segundo paso', addingDevice ? 'Agregar otro dispositivo' : 'Activa la verificación en dos pasos', '')
+    show(mfaForm)
+    codeInput.focus()
+  }
+
+  const finish = async () => {
+    const r = await completeAdminLogin()
+    if (r.error) { setError(r.error); showLogin(); return }
+    failCount = 0
+    clearTimeout(lockTimer)
+    // Con la sesión de admin el catálogo trae también los borradores.
+    refreshProducts().catch(() => {})
+    navigate('/admin/dashboard')
+  }
+
+  const decide = async () => {
+    const step = await getMfaStep()
+    if (step === 'login') return showLogin()
+    if (step === 'none') return isAdminAuthed() ? showSecurity() : finish()
+    return showCode(step)
+  }
+
+  loginForm.addEventListener('submit', async (ev) => {
+    ev.preventDefault()
+    setError('')
+
+    if (Date.now() < lockUntil) return
+
+    const { value: email } = sanitizeEmail(qs(root, 'input[name="user"]').value)
+    // Sin trim: los espacios de una contraseña son parte de ella.
+    const pass = passInput.value
+
+    if (!email || !pass) { setError('Completa email y contraseña.'); return }
+
+    setBusy(submitBtn, true, 'Ingresar', 'Ingresando…')
+    // El finally no es adorno: si adminLogin lanzara, el boton se quedaba
+    // en "Ingresando…" y no habia forma de reintentar sin recargar.
+    let result
+    try {
+      result = await adminLogin(email, pass)
+    } catch (err) {
+      result = { error: String(err?.message || err) }
+    } finally {
+      setBusy(submitBtn, false, 'Ingresar')
+    }
+
+    if (result.error) {
+      // El mensaje real, no "credenciales invalidas" para todo: con dos
+      // pestañas abiertas el fallo es del lock de sesion, y decir que la
+      // contraseña esta mal manda a buscar por donde no es.
+      const esCredencial = /invalid|credential|password|email/i.test(result.error)
+      setError(esCredencial ? 'Credenciales inválidas.' : result.error)
+      // El bloqueo progresivo es contra la fuerza bruta. Un fallo que no es
+      // de credenciales no deberia castigar al que si sabe su contraseña.
+      if (esCredencial) startLockdown(submitBtn, 'Ingresar')
+      return
+    }
+
+    passInput.value = ''
+    await decide()
+  })
+
+  mfaForm.addEventListener('submit', async (ev) => {
+    ev.preventDefault()
+    setError('')
+    if (Date.now() < lockUntil) return
+
+    const code = cleanTotpCode(codeInput.value)
+    if (!code) { setError('Escribe los 6 dígitos del código.'); codeInput.focus(); return }
+
+    setBusy(mfaSubmit, true, 'Verificar', 'Verificando…')
+    let r
+    try {
+      r = await verifyMfa(code, enrollFactorId || undefined)
+    } finally {
+      setBusy(mfaSubmit, false, 'Verificar')
+    }
+
+    if (r.error) {
+      setError(r.error)
+      codeInput.select()
+      if (r.wrongCode) startLockdown(mfaSubmit, 'Verificar')
+      return
+    }
+
+    enrollFactorId = null
+    if (addingDevice) {
+      addingDevice = false
+      await showSecurity('Dispositivo agregado.')
+      return
+    }
+    await finish()
+  })
+
+  cancelBtn.addEventListener('click', async () => {
+    setError('')
+    if (addingDevice) { addingDevice = false; await showSecurity(); return }
+    await adminLogout()
+    showLogin()
+  })
+
+  $('#mfa-add').addEventListener('click', () => {
+    addingDevice = true
+    showCode('enroll')
+  })
+
+  $('#mfa-retry-btn').addEventListener('click', () => { setError(''); showCode('enroll') })
+  $('#mfa-skip').addEventListener('click', () => { setError(''); finish() })
+
+  copyBtn.addEventListener('click', async () => {
+    secretInput.select()
+    try {
+      await navigator.clipboard.writeText(secretInput.value)
+      copyBtn.textContent = 'Copiada'
+    } catch { /* queda seleccionada para copiarla a mano */ }
+  })
+
+  await decide()
+  return () => clearTimeout(lockTimer)
 }

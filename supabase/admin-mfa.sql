@@ -1,0 +1,27 @@
+-- Segundo factor (TOTP) del admin.
+--
+-- Fase B (Tarea 13): este archivo solo trae la recuperacion, en comentarios.
+-- El login del admin ofrece y pide el codigo, pero la base TODAVIA NO exige
+-- aal2: una sesion con solo contraseña sigue pudiendo todo. La exigencia
+-- (is_admin() con aal2 y admin_users_self_read) la agrega la Tarea 16 (Fase D),
+-- solo cuando el dueño tenga dos dispositivos dados de alta.
+--
+-- ── Ver los factores de cada admin (solo lectura) ──
+-- select a.user_id, f.id, f.friendly_name, f.status, f.created_at
+--   from public.admin_users a
+--   left join auth.mfa_factors f on f.user_id = a.user_id
+--  order by a.user_id, f.created_at;
+--
+-- ── Recuperacion: telefono perdido o alta rota (la corre el controlador) ──
+-- Borra un factor; el admin entra con su contraseña y da de alta uno nuevo.
+-- delete from auth.mfa_factors where user_id = '<uuid>' and id = '<factor>';
+-- O todos los del usuario:
+-- delete from auth.mfa_factors where user_id = '<uuid>';
+-- (Tambien desde Supabase -> Authentication -> Users -> el usuario -> MFA.)
+-- Con la Fase D aplicada, la sesion vieja aal2 de ese usuario sigue valida
+-- hasta que caduque; el siguiente login vuelve a pedir el alta.
+--
+-- ── Altas a medias ──
+-- Un alta sin terminar deja un factor 'unverified'. El login los borra solo
+-- antes de cada alta nueva; si hiciera falta a mano:
+-- delete from auth.mfa_factors where user_id = '<uuid>' and status = 'unverified';

@@ -303,6 +303,7 @@ export function layoutAdmin({ title, contentHtml, state }) {
     { path: '/admin/clientes', icon: 'users', label: 'Clientes', group: 'Clientes' },
     { path: '/admin/newsletter', icon: 'mail', label: 'Newsletter', group: 'Clientes' },
     { path: '/admin/reportes', icon: 'chart', label: 'Reportes', group: 'Clientes' },
+    { path: '/admin/login', icon: 'shield', label: 'Seguridad', group: 'Cuenta' },
   ]
 
   const TITLES = {
@@ -318,6 +319,7 @@ export function layoutAdmin({ title, contentHtml, state }) {
     '/admin/clientes': 'Clientes',
     '/admin/reportes': 'Reportes',
     '/admin/banners': 'Contenido',
+    '/admin/login': 'Seguridad',
   }
 
   const I = (name, cls = 'w-[18px] h-[18px]') => {
@@ -336,6 +338,7 @@ export function layoutAdmin({ title, contentHtml, state }) {
       calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/>',
       users: '<circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 14a5 5 0 0 1 5 5"/><circle cx="17.5" cy="7.5" r="2.5"/>',
       chart: '<path d="M3 3v18h18"/><path d="M7 16l4-5 4 3 5-6"/>',
+      shield: '<path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/>',
       image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
       truck: '<path d="M3 6h11v9H3zM14 9h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/>',
     }

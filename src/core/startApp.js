@@ -378,10 +378,8 @@ export async function startApp(mountEl) {
 
     const authed = isAdminAuthed()
 
-    if (authed && path === '/admin/login') {
-      navigate('/admin/products')
-      return
-    }
+    // Con sesion, /admin/login es la pantalla de Seguridad (dispositivos del
+    // segundo factor) o el paso del codigo: ya no se redirige al panel.
 
     if (!authed && path.startsWith('/admin') && path !== '/admin/login') {
       navigate('/admin/login')
@@ -763,7 +761,9 @@ export async function startApp(mountEl) {
     // withTimeout del arranque); en cuanto llega, repintar la ruta admin.
     if (state.isAdminAuthed !== prevAdminAuthed) {
       prevAdminAuthed = state.isAdminAuthed
-      if (currentPath.startsWith('/admin')) {
+      // Al entrar, el login lleva su propio flujo (codigo, alta) y repintarlo lo
+      // cortaria a medias; al salir si se repinta.
+      if (currentPath.startsWith('/admin') && !(currentPath === '/admin/login' && state.isAdminAuthed)) {
         render(currentPath, { forceRebuild: true })
         return
       }

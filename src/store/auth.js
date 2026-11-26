@@ -2,6 +2,7 @@ import { state, emit, createStoreError } from './state.js'
 import { supabase } from '../core/supabase.js'
 import { withTimeout } from '../utils/async.js'
 import { classifySessionResult } from '../utils/session.js'
+import { mfaStep } from '../utils/mfa.js'
 
 /** getSession() que ni se cuelga ni miente. No toca el lock de supabase-js. */
 async function leerSesion() {
@@ -153,16 +154,27 @@ export async function adminLogin(email, pass) {
     }
   }
   if (error) return { error: error.message }
+  if (!data.session?.user?.id) return { error: 'No se pudo obtener el usuario.' }
+  // La pertenencia a admin_users se comprueba en completeAdminLogin, despues del
+  // segundo paso: con la Fase D una sesion aal1 ya no puede leer admin_users.
+  return { ok: true }
+}
 
-  const userId = data.session?.user?.id
+/** Cierra el login: pertenencia a admin_users (de siempre) y marca la sesion. */
+export async function completeAdminLogin() {
+  if (!supabase) return { error: 'No hay conexión con la base de datos.' }
+  const { estado, session } = await leerSesion()
+  if (estado === 'inconcluyente') return { error: 'No se pudo verificar la sesión. Reintenta en un momento.' }
+  const userId = session?.user?.id
   if (!userId) return { error: 'No se pudo obtener el usuario.' }
 
-  const { data: adminUser } = await supabase
+  const { data: adminUser, error } = await supabase
     .from('admin_users')
     .select('user_id')
     .eq('user_id', userId)
     .maybeSingle()
 
+  if (error) return { error: 'No se pudo validar permisos de administrador.' }
   if (!adminUser) {
     await supabase.auth.signOut()
     return { error: 'Tu usuario no está autorizado como administrador.' }
@@ -171,6 +183,73 @@ export async function adminLogin(email, pass) {
   state.isAdminAuthed = true
   emit()
   return { ok: true }
+}
+
+/** 'login' | 'none' | 'challenge' | 'enroll' (ver utils/mfa.js). */
+export async function getMfaStep() {
+  if (!supabase) return 'login'
+  try {
+    const { data, error } = await withTimeout(supabase.auth.mfa.getAuthenticatorAssuranceLevel(), 8000, 'La sesión')
+    if (error) return 'login'
+    return mfaStep(data)
+  } catch {
+    // Lock colgado o red: se pide la contraseña otra vez, que siempre funciona.
+    return 'login'
+  }
+}
+
+/** Factores TOTP verificados del usuario. */
+export async function listMfaFactors() {
+  if (!supabase) return []
+  const { data, error } = await supabase.auth.mfa.listFactors()
+  if (error) return []
+  return (data?.totp || []).map(({ id, friendly_name, created_at }) => ({ id, friendly_name, created_at }))
+}
+
+export async function startMfaEnroll(name) {
+  if (!supabase) return { error: 'No hay conexión con la base de datos.' }
+  try {
+    const { data: list, error: listError } = await withTimeout(supabase.auth.mfa.listFactors(), 15000, 'La consulta de dispositivos')
+    if (listError) return { error: 'No se pudo preparar el alta. Reintenta en un momento.' }
+    // Un alta a medias (se recargo la pagina antes del codigo) deja un factor
+    // sin verificar que bloquea la siguiente: se borran antes de empezar.
+    for (const f of list?.all || []) {
+      if (f.status === 'unverified') await supabase.auth.mfa.unenroll({ factorId: f.id })
+    }
+    const { data, error } = await withTimeout(
+      supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: name }),
+      15000,
+      'El alta'
+    )
+    if (error) return { error: 'No se pudo preparar el alta. Reintenta en un momento.' }
+    return { factorId: data.id, qr: data.totp.qr_code, secret: data.totp.secret }
+  } catch {
+    return { error: 'No se pudo preparar el alta. Reintenta en un momento.' }
+  }
+}
+
+/** { ok } | { error, wrongCode } — wrongCode cuenta para el bloqueo progresivo. */
+export async function verifyMfa(code, factorId) {
+  if (!supabase) return { error: 'No hay conexión con la base de datos.' }
+  try {
+    if (!factorId) {
+      const { data } = await supabase.auth.mfa.listFactors()
+      factorId = data?.totp?.[0]?.id
+      if (!factorId) return { error: 'No encontramos tu dispositivo. Recarga la página e inténtalo de nuevo.' }
+    }
+    const { error } = await withTimeout(
+      supabase.auth.mfa.challengeAndVerify({ factorId, code }),
+      20000,
+      'La verificación'
+    )
+    if (!error) return { ok: true }
+    if (error.code === 'mfa_verification_failed' || /invalid totp code/i.test(error.message || '')) {
+      return { error: 'Código incorrecto. Revisa la hora de tu teléfono e inténtalo de nuevo.', wrongCode: true }
+    }
+    return { error: 'No se pudo verificar el código. Recarga la página e inténtalo de nuevo.' }
+  } catch {
+    return { error: 'No se pudo verificar el código. Recarga la página e inténtalo de nuevo.' }
+  }
 }
 
 export async function adminLogout() {
