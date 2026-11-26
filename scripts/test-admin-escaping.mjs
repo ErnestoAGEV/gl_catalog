@@ -30,7 +30,7 @@ assert.deepEqual(leaks, [], `Datos del cliente sin escapar:\n${leaks.join('\n')}
 const STORE_FILES = ['src/core/startApp.js', 'src/pages/catalog/catalog.js', 'src/pages/catalog/catalogCard.js',
   'src/pages/home/homeCards.js', 'src/pages/home/home.js', 'src/pages/product/product.js', 'src/pages/admin/adminCategories.js',
   'src/pages/admin/adminProductCard.js', 'src/pages/admin/adminProductForm.js', 'src/pages/admin/adminProducts.js', 'src/components/headerSearch.js']
-const BARE = /\$\{\s*(?:p\.name|p\.type|p\.id|cat\.name|r\.quote|n\.title|n\.body|topProduct\.name|x|c|b|badge|type|color|b\.label|b\.value)\s*\}/g
+const BARE = /\$\{\s*(?:p\.name|p\.type|p\.id|cat\.name|r\.quote|n\.title|n\.body|topProduct\.name|x|c|b|badge|type|color|b\.label|b\.value|item\.src)\s*\}/g
 const storeLeaks = []
 for (const file of STORE_FILES) {
   const lines = readFileSync(file, 'utf8').split('\n')
