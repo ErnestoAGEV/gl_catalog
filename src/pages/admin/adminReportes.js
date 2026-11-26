@@ -3,11 +3,7 @@ import { promoReport } from '../../utils/promotions.js'
 import { formatMoney } from '../../utils/format.js'
 import { escapeHtml as esc } from '../../utils/sanitize.js'
 import { ICON, statCard } from './adminIcons.js'
-
-function isSuccessful(status) {
-  const s = (status || '').toLowerCase()
-  return s === 'completado' || s === 'pagado' || s === 'enviado'
-}
+import { isSuccessful, channelBreakdown } from '../../utils/manualOrder.js'
 
 function parseCartItems(cartItems) {
   try {
@@ -147,7 +143,7 @@ export function pageAdminReportes(state) {
         return {
           inRange, successful, revenue, avgTicket, conversionRate,
           buckets, categories, catTotal, topProducts,
-          payMethods, payTotal, useDaily,
+          payMethods, payTotal, useDaily, channels: channelBreakdown(inRange),
         }
       }
 
@@ -283,6 +279,15 @@ export function pageAdminReportes(state) {
         </div>`
       }
 
+      function renderChannels(ch) {
+        const rows = [['web', 'Web'], ['whatsapp', 'WhatsApp']].map(([k, l]) => `<div class="bg-canvas rounded-xl2 px-4 py-3">
+            <p class="eyebrow text-faint">${l}</p>
+            <p class="font-display font-extrabold text-ink text-[20px] tnum mt-1">${formatMoney(ch[k].revenue)}</p>
+            <p class="text-[12.5px] text-muted tnum">${esc(String(ch[k].count))} pedido${ch[k].count === 1 ? '' : 's'}</p>
+          </div>`).join('')
+        return `<div class="grid grid-cols-2 gap-3">${rows}</div>`
+      }
+
       function render() {
         renderMain()
         repRoot.firstElementChild?.firstElementChild?.insertAdjacentHTML('afterend', promoHtml)
@@ -362,6 +367,18 @@ export function pageAdminReportes(state) {
                 </div>
                 ${renderPaymentMethods(d.payMethods, d.payTotal)}
               </div>
+            </div>
+
+            <!-- Por canal -->
+            <div class="bg-paper rounded-3xl border border-line shadow-card p-5 md:p-6">
+              <div class="flex items-start justify-between mb-5">
+                <div>
+                  <h3 class="font-display font-bold text-ink text-[16px]">Por canal</h3>
+                  <p class="text-[12.5px] text-muted mt-0.5">Pedidos no cancelados e ingresos de pedidos exitosos · ${rangeLabel}</p>
+                </div>
+                <span class="w-8 h-8 rounded-[9px] bg-brand-tint-2 text-brand flex items-center justify-center shrink-0">${ICON.whatsapp('w-[17px] h-[17px]')}</span>
+              </div>
+              ${renderChannels(d.channels)}
             </div>
           </div>`
 

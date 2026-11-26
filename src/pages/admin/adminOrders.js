@@ -10,6 +10,7 @@ import { showToast } from '../../utils/toast.js'
 import { escapeHtml as esc, sanitizeEmail } from '../../utils/sanitize.js'
 import { ICON, statusPill, statCard } from './adminIcons.js'
 import { carrierName, TIER_NAMES } from '../checkout/shippingBlock.js'
+import { shouldSendConfirmation } from '../../utils/manualOrder.js'
 import { labelBlockHtml, mountLabelBlock } from './orderLabel.js'
 
 function getPaymentMeta(paymentMethod) {
@@ -32,6 +33,11 @@ const STATUS_OPTS = [
   { v: 'pendientedepago', label: 'Pendiente de pago' },
   { v: 'cancelado', label: 'Cancelado' },
 ]
+
+// Pedidos capturados por el admin desde WhatsApp
+const channelPill = (order) => order.channel === 'whatsapp'
+  ? '<span class="inline-flex items-center h-[18px] px-1.5 rounded-md bg-ok-tint text-ok text-[10.5px] font-semibold align-middle">WhatsApp</span>'
+  : ''
 
 function statusDropdownHtml(order) {
   const s = (order.status || '').toLowerCase()
@@ -221,6 +227,9 @@ export function pageAdminOrders(state) {
               <button data-filter="completado" class="shrink-0 inline-flex items-center gap-1.5 px-3 h-9 rounded-[10px] text-[13px] font-semibold border transition-colors bg-paper text-body border-line hover:border-line-strong">Completados</button>
               <button data-filter="cancelado" class="shrink-0 inline-flex items-center gap-1.5 px-3 h-9 rounded-[10px] text-[13px] font-semibold border transition-colors bg-paper text-body border-line hover:border-line-strong">Cancelados</button>
             </div>
+            <div id="orders-channels" role="group" aria-label="Canal" class="flex items-center gap-2 shrink-0">
+              ${[['all', 'Todos los canales'], ['web', 'Web'], ['whatsapp', 'WhatsApp']].map(([v, l]) => `<button type="button" data-channel="${v}" aria-pressed="${v === 'all'}" class="shrink-0 inline-flex items-center px-3 h-9 rounded-[10px] text-[13px] font-semibold border transition-colors ${v === 'all' ? 'bg-ink text-white border-ink' : 'bg-paper text-body border-line hover:border-line-strong'}">${l}</button>`).join('')}
+            </div>
             <a href="/admin/orders/new" class="adm-btn adm-btn-primary shrink-0">${ICON.plus('w-4 h-4')} Nuevo pedido</a>
           </div>
 
@@ -283,6 +292,7 @@ export function pageAdminOrders(state) {
       let isCheckingOrders = false
       let searchTerm = ''
       let statusFilter = 'all'
+      let channelFilter = 'all'
 
       const FILTER_CLS_ACTIVE = 'shrink-0 inline-flex items-center gap-1.5 px-3 h-9 rounded-[10px] text-[13px] font-semibold border transition-colors bg-ink text-white border-ink'
       const FILTER_CLS_IDLE = 'shrink-0 inline-flex items-center gap-1.5 px-3 h-9 rounded-[10px] text-[13px] font-semibold border transition-colors bg-paper text-body border-line hover:border-line-strong'
@@ -389,7 +399,7 @@ export function pageAdminOrders(state) {
             <div class="grid grid-cols-2 gap-2">
               <div class="bg-paper rounded-xl2 border border-line p-3.5">
                 <p class="eyebrow text-faint mb-1.5">Estado</p>
-                ${statusPill(order.status)}
+                ${statusPill(order.status)} ${channelPill(order)}
               </div>
               <div class="bg-paper rounded-xl2 border border-line p-3.5">
                 <p class="eyebrow text-faint mb-1.5">Pago</p>
@@ -510,7 +520,8 @@ export function pageAdminOrders(state) {
         return allOrders.filter(o => {
           const matchStatus = statusFilter === 'all' || o.status === statusFilter
           const matchSearch = !term || (o.customer_name || '').toLowerCase().includes(term) || String(o.id).toLowerCase().includes(term)
-          return matchStatus && matchSearch
+          const matchChannel = channelFilter === 'all' || (channelFilter === 'whatsapp') === (o.channel === 'whatsapp')
+          return matchStatus && matchSearch && matchChannel
         })
       }
 
@@ -537,7 +548,7 @@ export function pageAdminOrders(state) {
           return `
           <tr class="border-t border-line hover:bg-canvas transition-colors cursor-pointer group" data-row data-id="${order.id}">
             <td class="px-5 py-3.5">
-              <p class="text-[13.5px] font-semibold text-ink tnum">#${String(order.id).slice(0,8)}</p>
+              <p class="text-[13.5px] font-semibold text-ink tnum">#${String(order.id).slice(0,8)} ${channelPill(order)}</p>
               <span class="inline-flex items-center gap-1 text-[11.5px] text-muted mt-0.5">${ICON[payment.icon]('w-3.5 h-3.5')}${esc(payment.label)}</span>
             </td>
             <td class="px-5 py-3.5">
@@ -561,7 +572,7 @@ export function pageAdminOrders(state) {
             <div class="flex items-start justify-between gap-3">
               <div class="flex items-center gap-2.5 min-w-0">
                 <div class="w-9 h-9 rounded-full bg-brand-tint text-brand flex items-center justify-center text-[12px] font-bold shrink-0">${esc(initials(order.customer_name))}</div>
-                <div class="min-w-0"><p class="text-[14px] font-semibold text-ink truncate">${esc(order.customer_name)}</p><p class="text-[11.5px] text-faint tnum">#${String(order.id).slice(0,8)} · ${relTime(order.created_at)}</p></div>
+                <div class="min-w-0"><p class="text-[14px] font-semibold text-ink truncate">${esc(order.customer_name)}</p><p class="text-[11.5px] text-faint tnum">#${String(order.id).slice(0,8)} · ${relTime(order.created_at)} ${channelPill(order)}</p></div>
               </div>
               <p class="font-bold text-ink text-[15px] tnum shrink-0">${formatMoney(order.total||0)}</p>
             </div>
@@ -572,7 +583,7 @@ export function pageAdminOrders(state) {
           </div>`
         }).join('')
 
-        footerEl.textContent = searchTerm || statusFilter !== 'all'
+        footerEl.textContent = searchTerm || statusFilter !== 'all' || channelFilter !== 'all'
           ? `${filtered.length} de ${allOrders.length} pedidos`
           : `${allOrders.length} pedidos`
 
@@ -584,6 +595,12 @@ export function pageAdminOrders(state) {
           const isActive = f === statusFilter
           btn.className = isActive ? FILTER_CLS_ACTIVE : FILTER_CLS_IDLE
           btn.innerHTML = `${FILTER_LABELS[f] || f}<span class="tnum ${isActive ? 'text-white/55' : 'text-faint'}">${counts[f] ?? 0}</span>`
+        })
+
+        root.querySelectorAll('[data-channel]').forEach(btn => {
+          const on = btn.dataset.channel === channelFilter
+          btn.setAttribute('aria-pressed', String(on))
+          btn.className = btn.className.replace(/bg-ink text-white border-ink|bg-paper text-body border-line hover:border-line-strong/, on ? 'bg-ink text-white border-ink' : 'bg-paper text-body border-line hover:border-line-strong')
         })
 
         attachRowHandlers()
@@ -633,7 +650,7 @@ export function pageAdminOrders(state) {
                 return
               }
               showToast(`Estado actualizado a "${(STATUS_META[newStatus] || {}).label || newStatus}"`, 'success')
-              if (newStatus === 'completado' && order.customer_email && !order.confirmation_sent_at) {
+              if (shouldSendConfirmation(order, newStatus)) {
                 const { result, error: mailError } = await sendOrderConfirmation(order.id, orderConfirmationEmail(order, BRAND.whatsapp))
                 if (result === 'sent') {
                   order.confirmation_sent_at = new Date().toISOString()
@@ -652,6 +669,7 @@ export function pageAdminOrders(state) {
         const id = order?.id
         if (!id || notifiedOrderIds.has(id)) return
         notifiedOrderIds.add(id)
+        if (order.channel === 'whatsapp') return // lo capturo el propio admin
         notifyNewOrder(order)
       }
 
@@ -661,6 +679,12 @@ export function pageAdminOrders(state) {
 
       // ── Search + Filters ──
       searchInput?.addEventListener('input', (e) => { searchTerm = e.target.value.trim(); renderFiltered() })
+      root.querySelector('#orders-channels')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-channel]')
+        if (!btn) return
+        channelFilter = btn.dataset.channel
+        renderFiltered()
+      })
       filtersContainer?.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-filter]')
         if (!btn) return

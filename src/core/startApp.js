@@ -134,6 +134,7 @@ export async function startApp(mountEl) {
       const key = asKey(order?.id)
       if (!key || notifiedOrderIds.has(key)) return
       notifiedOrderIds.add(key)
+      if (order?.channel === 'whatsapp') return // lo capturo el propio admin
       notifyIncomingOrder(order)
     }
 
