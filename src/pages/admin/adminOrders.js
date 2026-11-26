@@ -10,6 +10,7 @@ import { showToast } from '../../utils/toast.js'
 import { escapeHtml as esc, sanitizeEmail } from '../../utils/sanitize.js'
 import { ICON, statusPill, statCard } from './adminIcons.js'
 import { carrierName, TIER_NAMES } from '../checkout/shippingBlock.js'
+import { labelBlockHtml, mountLabelBlock } from './orderLabel.js'
 
 function getPaymentMeta(paymentMethod) {
   const raw = (paymentMethod || '').toString().trim()
@@ -443,6 +444,8 @@ export function pageAdminOrders(state) {
               ${order.shipping_tier ? `<p class="text-[13px] font-semibold text-ink mt-2">${esc(shippingService(order))}</p>` : ''}
             </form>
 
+            ${labelBlockHtml(order)}
+
             <!-- Total -->
             <div class="bg-paper rounded-xl2 border border-line px-4 py-3">
               <div class="flex items-center justify-between text-[13px] text-muted mb-1"><span>Subtotal</span><span class="tnum">${formatMoney(subtotal)}</span></div>
@@ -451,6 +454,16 @@ export function pageAdminOrders(state) {
               <div class="flex items-center justify-between"><span class="font-display font-bold text-ink text-[16px]">Total</span><span class="font-display font-extrabold text-ink text-[20px] tnum">${formatMoney(toPay)}</span></div>
             </div>
           </div>`
+
+        content.dataset.orderId = String(order.id)
+        // Guía: repinta solo si este pedido sigue abierto (la llamada pudo terminar con el detalle cerrado)
+        mountLabelBlock(content.querySelector('[data-label-block]'), order, (o) => {
+          // En el mismo objeto: allOrders y el menú de estado lo comparten
+          const cur = ordersById.get(String(o.id))
+          if (cur) Object.assign(cur, o)
+          else ordersById.set(String(o.id), o)
+          if (!drawer.classList.contains('hidden') && content.dataset.orderId === String(o.id)) openOrderDetails(o.id)
+        })
 
         content.querySelector('[data-shipping-form]')?.addEventListener('submit', async (e) => {
           e.preventDefault()

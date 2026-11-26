@@ -56,6 +56,23 @@ export function updateAdminOrderShipping(orderId, shippingCost) {
   return updateAdminOrder(orderId, { shipping_cost: shippingCost })
 }
 
+/** Una fila fresca del pedido (el bloque de guía repinta desde aquí, no desde memoria); null si falla */
+export async function getAdminOrder(id) {
+  const access = await ensureAdminAccess()
+  if (!access.ok) return null
+  try {
+    const { data, error } = await supabase.from('orders').select('*').eq('id', id).single()
+    return error ? null : data
+  } catch (_err) {
+    return null
+  }
+}
+
+/** Campos label_* cuando la función compró la guía pero no la pudo guardar */
+export function saveOrderLabelFields(orderId, fields) {
+  return updateAdminOrder(orderId, fields)
+}
+
 /**
  * Manda al cliente el correo de confirmacion (una vez por pedido). Devuelve el
  * estado de send_order_confirmation: 'sent', 'no_email', 'already_sent'...
