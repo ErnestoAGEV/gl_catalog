@@ -33,7 +33,7 @@ export function showToast(message, type = 'success', duration = null) {
     : `<svg class="w-4 h-4 flex-shrink-0 text-brand-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`
 
   const retryBtn = type === 'error'
-    ? `<button onclick="location.reload()" class="ml-2 text-xs underline underline-offset-2 opacity-80 hover:opacity-100 flex-shrink-0">Recargar</button>`
+    ? `<button type="button" data-reload class="ml-2 text-xs underline underline-offset-2 opacity-80 hover:opacity-100 flex-shrink-0">Recargar</button>`
     : ''
 
   toast.innerHTML = `${icon}<span class="flex-1"></span>${retryBtn}`

@@ -24,7 +24,7 @@ const boxFields = (key, label, v = {}) => `
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
       ${[['length', 'Largo (cm)'], ['width', 'Ancho (cm)'], ['height', 'Alto (cm)'], ['max_grams', 'Peso máx. (g)']].map(([f, l]) => `
         <div><label class="text-[11px] text-faint" for="sh-${key}-${f}">${l}</label>
-        <input id="sh-${key}-${f}" name="${key}.${f}" type="number" min="1" max="${f === 'max_grams' ? 30000 : 200}" step="1" required value="${esc(v[f])}" class="adm-fld tnum" onwheel="this.blur()" /></div>`).join('')}
+        <input id="sh-${key}-${f}" name="${key}.${f}" type="number" min="1" max="${f === 'max_grams' ? 30000 : 200}" step="1" required value="${esc(v[f])}" class="adm-fld tnum" /></div>`).join('')}
     </div>
   </fieldset>`
 
@@ -64,7 +64,7 @@ export function pageAdminShipping() {
               <p class="text-[13.5px] font-semibold text-ink">${esc(cat)}</p>
               ${w ? '' : `<p class="text-[11px] text-faint">Usa el valor por defecto (${esc(s.default_grams)} g)</p>`}
             </div>
-            <input data-grams type="number" min="1" max="30000" step="1" value="${esc(w?.grams)}" placeholder="gramos" aria-label="Gramos de ${esc(cat)}" class="adm-fld tnum w-28" onwheel="this.blur()" />
+            <input data-grams type="number" min="1" max="30000" step="1" value="${esc(w?.grams)}" placeholder="gramos" aria-label="Gramos de ${esc(cat)}" class="adm-fld tnum w-28" />
             <label class="flex items-center gap-1.5 text-[13px] text-body"><input data-box type="checkbox" class="w-4 h-4 accent-brand" ${w?.needs_box ? 'checked' : ''}> Va en caja</label>
             <button type="button" data-save class="adm-btn adm-btn-ink h-9 px-3 text-[13px]">Guardar</button>
             ${w ? `<button type="button" data-del class="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-bad hover:bg-bad-tint transition-colors" title="Quitar (usará el valor por defecto)" aria-label="Quitar ${esc(cat)}">${ICON.trash('w-4 h-4')}</button>` : ''}
@@ -125,7 +125,7 @@ export function pageAdminShipping() {
               <p class="text-[12px] text-faint">Para productos de una categoría sin peso configurado.</p>
               <div class="flex flex-wrap items-center gap-4">
                 <div><label class="text-[11px] text-faint" for="sh-default-grams">Gramos por pieza</label>
-                  <input id="sh-default-grams" name="default_grams" type="number" min="1" max="30000" step="1" required value="${esc(s.default_grams)}" class="adm-fld tnum w-32" onwheel="this.blur()" /></div>
+                  <input id="sh-default-grams" name="default_grams" type="number" min="1" max="30000" step="1" required value="${esc(s.default_grams)}" class="adm-fld tnum w-32" /></div>
                 <label class="flex items-center gap-1.5 text-[13px] text-body pt-4"><input type="checkbox" name="default_needs_box" class="w-4 h-4 accent-brand" ${s.default_needs_box ? 'checked' : ''}> Va en caja</label>
               </div>
             </div>
@@ -133,7 +133,7 @@ export function pageAdminShipping() {
             <div class="space-y-1">
               <h2 class="font-display font-bold text-ink text-[16px]">Envío gratis</h2>
               <label class="text-[11px] text-faint" for="sh-free-min">Monto mínimo de compra (MXN)</label>
-              <input id="sh-free-min" name="free_shipping_min" type="number" min="1" max="100000" step="1" required value="${esc(s.free_shipping_min)}" class="adm-fld tnum w-36" onwheel="this.blur()" />
+              <input id="sh-free-min" name="free_shipping_min" type="number" min="1" max="100000" step="1" required value="${esc(s.free_shipping_min)}" class="adm-fld tnum w-36" />
               <p class="text-[12px] text-faint">Al guardarlo, la tienda se vuelve a publicar con el nuevo monto en unos minutos.</p>
             </div>
 
@@ -141,7 +141,7 @@ export function pageAdminShipping() {
               <h2 class="font-display font-bold text-ink text-[16px]">Entrega local (Colima y Villa de Álvarez)</h2>
               <p class="text-[12px] text-faint">Los códigos postales de la lista no se cotizan con paquetería: se cobra este precio fijo.</p>
               <div><label class="text-[11px] text-faint" for="sh-local-price">Precio (MXN)</label>
-                <input id="sh-local-price" name="local_delivery_price" type="number" min="0" max="10000" step="1" required value="${esc(s.local_delivery_price)}" class="adm-fld tnum w-32" onwheel="this.blur()" /></div>
+                <input id="sh-local-price" name="local_delivery_price" type="number" min="0" max="10000" step="1" required value="${esc(s.local_delivery_price)}" class="adm-fld tnum w-32" /></div>
               <div><label class="text-[11px] text-faint" for="sh-local-zips">Códigos postales (separados por coma, espacio o salto de línea)</label>
                 <textarea id="sh-local-zips" name="local_delivery_zips" rows="4" class="adm-fld tnum">${esc((s.local_delivery_zips || []).join(', '))}</textarea></div>
             </div>

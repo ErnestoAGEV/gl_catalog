@@ -338,7 +338,7 @@ export async function startApp(mountEl) {
       <div class="min-h-dvh flex flex-col items-center justify-center text-center px-6 bg-paper text-ink">
         <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55 mb-4">Algo salió mal</span>
         <h1 class="font-display font-extrabold text-[clamp(28px,5vw,48px)] leading-[0.95] tracking-[-0.035em] mb-6">No pudimos cargar<br/>esta página.</h1>
-        <button type="button" onclick="window.location.reload()" class="inline-flex items-center gap-2 bg-ink text-paper px-7 h-[52px] rounded-full text-[13px] font-semibold hover:bg-brand transition-colors">
+        <button type="button" data-reload class="inline-flex items-center gap-2 bg-ink text-paper px-7 h-[52px] rounded-full text-[13px] font-semibold hover:bg-brand transition-colors">
           Reintentar
         </button>
         <p class="mt-8 font-mono text-[10px] text-ink/40 max-w-[60ch] break-words">${msg}</p>

@@ -62,17 +62,7 @@
     <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png?v=2" />
 
     <!-- Inline script: set canonical dynamically BEFORE app loads (for crawlers) -->
-    <script>
-      (function() {
-        var path = window.location.pathname || '/';
-        var base = 'https://www.glboutique.com.mx';
-        var canonical = base + (path === '/' ? '/' : path.replace(/\/$/, ''));
-        var link = document.createElement('link');
-        link.rel = 'canonical';
-        link.href = canonical;
-        document.head.appendChild(link);
-      })();
-    </script>
+    <script>(function(){var p=location.pathname||'/';var l=document.createElement('link');l.rel='canonical';l.href='https://www.glboutique.com.mx'+(p==='/'?'/':p.replace(/\/$/,''));document.head.appendChild(l)})()</script>
   </head>
   <body class="bg-black overflow-x-clip">
     <div id="app" class="overflow-x-clip">
@@ -672,12 +662,8 @@
   </div></div>
       <!-- prerender-shell:end — dentro de #prerender-shell: prerender.mjs mete aquí el pie de contacto -->
   </div>
-      <script>
-        // The shell is only valid for the home route — hide it before paint elsewhere
-        if (window.location.pathname !== '/') {
-          document.getElementById('prerender-shell').style.display = 'none';
-        }
-      </script>
+      <!-- El shell solo vale para la home: se oculta antes de pintar en otras rutas. Una sola linea: el hash de la CSP no depende de CRLF/LF. -->
+      <script>if(location.pathname!=='/')document.getElementById('prerender-shell').style.display='none'</script>
     </div>
 
     <!-- prerender:shell-end — no mover ni renombrar: scripts/prerender.mjs corta
@@ -688,16 +674,5 @@
          nadie: solo metia un segundo encabezado de nivel 1 —el de la home— en
          las 251 paginas, porque los crawlers sin JS si parsean noscript. -->
     <script type="module" src="/src/main.js"></script>
-    <script>
-      // Register Service Worker
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker
-            .register("/sw.js")
-            .then((reg) => console.log("SW registered:", reg.scope))
-            .catch((err) => console.log("SW registration failed:", err));
-        });
-      }
-    </script>
   </body>
 </html>

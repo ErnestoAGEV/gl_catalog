@@ -27,7 +27,7 @@ export function bestSellerRow(p, idx) {
     <li class="ls-row relative py-6 px-3 border-b border-[#EAE9E4] cursor-pointer" data-href="${productPath(p)}">
       <div class="grid grid-cols-12 items-center gap-4">
         <span class="hidden md:block col-span-1 font-mono text-[12px] text-ink/50">${rank}</span>
-        <img class="md:hidden col-span-3 w-full aspect-[4/5] rounded-md bg-white ${isPerfume ? 'object-contain p-1' : 'object-cover'}" src="${img}" alt="" loading="lazy" decoding="async" onerror="this.src='/placeholder.webp'" />
+        <img class="md:hidden col-span-3 w-full aspect-[4/5] rounded-md bg-white ${isPerfume ? 'object-contain p-1' : 'object-cover'}" src="${img}" alt="" loading="lazy" decoding="async" data-fallback="/placeholder.webp" />
         <span class="col-span-5 md:col-span-6 min-w-0">
           ${descriptor ? `<span class="md:hidden block font-mono text-[11px] tracking-[0.14em] uppercase text-ink/70 mb-1">${descriptor}</span>` : ''}
           <span class="ls-name block font-heading font-bold text-[18px] md:text-[clamp(24px,2.5vw,40px)] tracking-[-0.03em] leading-tight">${escapeHtml(p.name)}</span>
@@ -38,7 +38,7 @@ export function bestSellerRow(p, idx) {
           <span>${formatMoney(p.price)}</span>
         </div>
       </div>
-      <img class="thumb" src="${img}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="this.src='/placeholder.webp'" />
+      <img class="thumb" src="${img}" alt="${escapeHtml(p.name)}" loading="lazy" data-fallback="/placeholder.webp" />
     </li>
   `
 }

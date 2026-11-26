@@ -136,11 +136,7 @@ function printOrderHtml(d) {
       ${row('Total', formatMoney(toPay), 'grand')}
     </div>
     <footer>Gracias por tu compra en G&amp;L · Dudas o cambios por WhatsApp</footer>
-  </div><script>
-    var img = document.images[0];
-    function go(){ window.focus(); window.print() }
-    if (img.complete) go(); else { img.onload = go; img.onerror = go }
-  </script></body></html>`
+  </div></body></html>`
 }
 
 function initials(name) {
@@ -334,6 +330,10 @@ export function pageAdminOrders(state) {
             if (!pw) { showToast('Ventana bloqueada', 'error'); return }
             pw.document.write(printOrderHtml(data))
             pw.document.close()
+            // Sin <script> en la ventana (hereda la CSP): se imprime desde aquí cuando cargó el logo
+            const go = () => { pw.focus(); pw.print() }
+            const img = pw.document.images[0]
+            if (!img || img.complete) go(); else { img.onload = go; img.onerror = go }
           }
         })
         return drawer

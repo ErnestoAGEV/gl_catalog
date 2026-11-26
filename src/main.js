@@ -22,7 +22,7 @@ function bootFailed(reason) {
     <div id="gl-boot-error" class="min-h-dvh flex flex-col items-center justify-center text-center px-6 bg-paper text-ink">
       <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/55 mb-4">No cargó</span>
       <h1 class="font-display font-extrabold text-[clamp(28px,5vw,48px)] leading-[0.95] tracking-[-0.035em] mb-6">Algo impidió abrir<br/>la página.</h1>
-      <button type="button" onclick="window.location.reload()" class="inline-flex items-center gap-2 bg-ink text-paper px-7 h-[52px] rounded-full text-[13px] font-semibold hover:bg-brand transition-colors">
+      <button type="button" data-reload class="inline-flex items-center gap-2 bg-ink text-paper px-7 h-[52px] rounded-full text-[13px] font-semibold hover:bg-brand transition-colors">
         Reintentar
       </button>
       <p class="mt-8 font-mono text-[10px] text-ink/40 max-w-[60ch] break-words">${detail}</p>
@@ -36,3 +36,22 @@ initCursorRing()
 
 // Red de seguridad: si nada se montó, la pantalla está en blanco de verdad.
 setTimeout(() => bootFailed('El arranque no completó a tiempo.'), 15000)
+
+// La CSP no deja correr onclick=/onerror=/onwheel= en el HTML: estos listeners delegados los reemplazan.
+document.addEventListener('click', (e) => { if (e.target.closest?.('[data-reload]')) location.reload() })
+// error no burbujea: se escucha en captura
+document.addEventListener('error', (e) => {
+  const img = e.target
+  if (img instanceof HTMLImageElement && img.dataset.fallback && img.getAttribute('src') !== img.dataset.fallback) img.src = img.dataset.fallback
+}, true)
+// La rueda sobre un input numérico enfocado cambiaba el valor sin querer
+document.addEventListener('wheel', (e) => {
+  const el = e.target
+  if (el instanceof HTMLInputElement && el.type === 'number' && el === document.activeElement) el.blur()
+}, { passive: true })
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((err) => console.log('SW registration failed:', err))
+  })
+}

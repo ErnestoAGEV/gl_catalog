@@ -128,7 +128,7 @@ export function pageAdminPromotions() {
                   </div>
                   <div>
                     <label class="adm-lbl" for="pr-pct">Descuento %</label>
-                    <input id="pr-pct" name="pct" type="number" min="1" max="90" step="1" required value="${promo?.discount_pct ?? ''}" class="adm-fld tnum" placeholder="20" onwheel="this.blur()" />
+                    <input id="pr-pct" name="pct" type="number" min="1" max="90" step="1" required value="${promo?.discount_pct ?? ''}" class="adm-fld tnum" placeholder="20" />
                   </div>
                 </div>
 
@@ -178,7 +178,7 @@ export function pageAdminPromotions() {
                   <div><p class="text-[13.5px] font-semibold text-ink">Cuenta regresiva</p><p class="text-[11.5px] text-faint">Franja arriba de la tienda: "empieza en…" y "termina en…"</p></div>
                   <div class="flex items-center gap-2">
                     <label class="text-[11.5px] text-faint whitespace-nowrap" for="pr-lead">Aviso (días)</label>
-                    <input id="pr-lead" name="lead" type="number" min="0" max="30" value="${promo?.countdown_lead_days ?? 3}" class="adm-fld tnum !w-16" onwheel="this.blur()" />
+                    <input id="pr-lead" name="lead" type="number" min="0" max="30" value="${promo?.countdown_lead_days ?? 3}" class="adm-fld tnum !w-16" />
                     ${toggle('show_countdown', promo ? promo.show_countdown : true)}
                   </div>
                 </div>

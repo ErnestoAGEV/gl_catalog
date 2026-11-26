@@ -140,7 +140,7 @@ export function pageAdminCoupons() {
                 </div>
                 <div>
                   <label class="adm-lbl">Descuento (%)</label>
-                  <input name="discount" type="number" min="0" max="100" step="1" value="${isEdit ? Math.round((coupon.discount || 0) * 100) : ''}" class="adm-fld tnum" placeholder="25" onwheel="this.blur()" />
+                  <input name="discount" type="number" min="0" max="100" step="1" value="${isEdit ? Math.round((coupon.discount || 0) * 100) : ''}" class="adm-fld tnum" placeholder="25" />
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                   <div>

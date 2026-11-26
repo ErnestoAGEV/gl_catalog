@@ -46,7 +46,7 @@ function recommendedCard(p, i) {
   return `
     <a href="${productPath(p)}" class="group block">
       <div class="aspect-[4/5] rounded-md overflow-hidden ${bgCls} relative">
-        <img src="${img}" alt="${safeName}" class="w-full h-full ${imgCls} transition-transform duration-700 group-hover:scale-105" loading="lazy" onerror="this.src='/placeholder.webp'"/>
+        <img src="${img}" alt="${safeName}" class="w-full h-full ${imgCls} transition-transform duration-700 group-hover:scale-105" loading="lazy" data-fallback="/placeholder.webp"/>
         <div class="absolute top-3 right-3 font-mono text-[11px] tracking-[0.2em] uppercase text-ink/60 bg-paper/85 backdrop-blur px-2 py-1 rounded-full">${ord}</div>
         <button data-quick-add="${escapeHtml(String(p.id))}" type="button" class="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-paper/90 backdrop-blur flex items-center justify-center text-ink hover:bg-ink hover:text-paper transition-colors opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 focus-visible:opacity-100 focus-visible:translate-y-0 [@media(hover:none)]:opacity-100 [@media(hover:none)]:translate-y-0 z-10" aria-label="Agregar rápido">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
