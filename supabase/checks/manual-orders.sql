@@ -125,6 +125,9 @@ begin
   select count(*) into v_n from net.http_request_queue where id > v0;
   assert v_n = 0, format('cancelacion WhatsApp: %s correos en cola (esperado 0)', v_n);
 
+  -- El producto vuelve a stock libre: el pedido web (no admin) rechaza stock <= 0
+  update public.products set stock = null where id = v_p.id;
+
   -- Pedido web: canal web y 1 aviso al equipo
   perform set_config('request.jwt.claims', '{"role":"anon"}', true);
   v0 := (select coalesce(max(id), 0) from net.http_request_queue);

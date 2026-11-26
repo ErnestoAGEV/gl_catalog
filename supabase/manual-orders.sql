@@ -69,7 +69,7 @@ begin
 
   update public.orders set
     shipping_cost = case when delivery_method = 'Envío a domicilio'
-                         then coalesce(p_shipping_cost, shipping_cost) else shipping_cost end,
+                         then coalesce(round(p_shipping_cost, 2), shipping_cost) else shipping_cost end,
     shipping_tier = case when p_local and delivery_method = 'Envío a domicilio' and p_shipping_cost is not null
                          then 'standard' else shipping_tier end,
     shipping_carrier = case when p_local and delivery_method = 'Envío a domicilio' and p_shipping_cost is not null
