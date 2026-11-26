@@ -1,6 +1,6 @@
 // node scripts/test-mfa.mjs — pantalla del login del admin segun la sesion (auditoria B-9).
 import assert from 'node:assert/strict'
-import { mfaStep, factorName, cleanTotpCode, isWrongCode, verifyAgainst } from '../src/utils/mfa.js'
+import { mfaStep, factorName, cleanTotpCode, isWrongCode, isRateLimited, verifyAgainst } from '../src/utils/mfa.js'
 
 assert.equal(mfaStep({ currentLevel: 'aal2', nextLevel: 'aal2' }), 'none')
 assert.equal(mfaStep({ currentLevel: 'aal1', nextLevel: 'aal2' }), 'challenge')
@@ -36,5 +36,12 @@ assert.deepEqual(tried, ['f1'])
 assert.deepEqual(await verifyAgainst(['f1', 'f2'], async () => wrong), { wrongCode: true })
 assert.deepEqual(await verifyAgainst(['f1', 'f2'], async (id) => id === 'f1' ? wrong : { code: 'x' }), { failed: true })
 assert.deepEqual(await verifyAgainst([], async () => null), { failed: true })
+// 429 en el primero: se para ahi.
+tried.length = 0
+assert.deepEqual(await verifyAgainst(['f1', 'f2'], async (id) => { tried.push(id); return { status: 429 } }), { rateLimited: true })
+assert.deepEqual(tried, ['f1'])
+assert.equal(isRateLimited({ code: 'over_request_rate_limit' }), true)
+// Un timeout del primero (devuelto como error) no impide probar el segundo.
+assert.deepEqual(await verifyAgainst(['f1', 'f2'], async (id) => id === 'f1' ? { name: 'TimeoutError' } : null), { ok: true })
 
 console.log('test-mfa ok')

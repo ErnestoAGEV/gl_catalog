@@ -263,14 +263,20 @@ export async function verifyMfa(code, factorId) {
       if (!ids.length) return { enroll: true }
     }
     const r = await verifyAgainst(ids, async (id) => {
-      const { error } = await withTimeout(
-        supabase.auth.mfa.challengeAndVerify({ factorId: id, code }),
-        20000,
-        'La verificación'
-      )
-      return error
+      // Un timeout se devuelve como error para que se pruebe el siguiente factor.
+      try {
+        const { error } = await withTimeout(
+          supabase.auth.mfa.challengeAndVerify({ factorId: id, code }),
+          20000,
+          'La verificación'
+        )
+        return error
+      } catch (err) {
+        return err
+      }
     })
     if (r.ok) return { ok: true }
+    if (r.rateLimited) return { error: 'Demasiados intentos. Espera un minuto e inténtalo de nuevo.' }
     return r.wrongCode ? { error: WRONG_CODE, wrongCode: true } : { error: VERIFY_FAILED }
   } catch {
     return { error: VERIFY_FAILED }

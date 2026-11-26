@@ -33,14 +33,19 @@ export function isWrongCode(error) {
   return error?.code === 'mfa_verification_failed' || /invalid totp code/i.test(error?.message || '')
 }
 
+export function isRateLimited(error) {
+  return error?.status === 429 || error?.code === 'over_request_rate_limit'
+}
+
 // Con dos telefonos, el codigo es de uno solo: se prueba contra cada factor
 // verificado y vale el primero que lo acepte. tryFactor(id) -> error | null.
-// { ok } | { wrongCode } (todos lo rechazaron por codigo) | { failed } (otro error).
+// { ok } | { wrongCode } (todos lo rechazaron por codigo) | { rateLimited } | { failed } (otro error).
 export async function verifyAgainst(factorIds, tryFactor) {
   let allWrong = factorIds.length > 0
   for (const id of factorIds) {
     const error = await tryFactor(id)
     if (!error) return { ok: true }
+    if (isRateLimited(error)) return { rateLimited: true } // los demas darian lo mismo
     if (!isWrongCode(error)) allWrong = false
   }
   return allWrong ? { wrongCode: true } : { failed: true }

@@ -153,8 +153,9 @@ async function onMount(root) {
 
   const show = (el) => {
     for (const x of [loading, loginForm, mfaForm, retryBox, security]) x.classList.toggle('hidden', x !== el)
-    // Al cambiar de paso, el lector de pantalla empieza por el titulo nuevo.
-    if (el !== loading) title.focus()
+    // Al cambiar de paso, el foco va al campo del codigo o al titulo nuevo.
+    if (el === mfaForm) codeInput.focus()
+    else if (el !== loading) title.focus()
   }
 
   const setHead = (eyebrow, text, lead) => {
@@ -309,13 +310,15 @@ async function onMount(root) {
     if (isAdminAuthed()) return true
     const r = await completeAdminLogin()
     if (r.error) { setError(r.error); showLogin(); return false }
-    // Con la sesión de admin el catálogo trae también los borradores.
-    refreshProducts().catch(() => {})
     return true
   }
 
+  // Con la sesión de admin el catálogo trae también los borradores.
+  const refreshCatalog = () => refreshProducts().catch(() => {})
+
   const finish = async () => {
     if (!(await complete())) return
+    refreshCatalog()
     failCount = 0
     clearTimeout(lockTimer)
     navigate('/admin/dashboard')
@@ -334,7 +337,7 @@ async function onMount(root) {
     }
     if (step === 'login') return showLogin()
     // aal2: la pagina es Seguridad, tambien si se abrio directo.
-    if (step === 'none') { if (await complete()) await showSecurity(); return }
+    if (step === 'none') { if (await complete()) { refreshCatalog(); await showSecurity() } return }
     if (step === 'challenge') return showChallenge()
     return showEnroll()
   }
