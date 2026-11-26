@@ -186,6 +186,8 @@ security definer
 set search_path = public, extensions, vault, pg_temp
 as $$
 begin
+  -- Pedidos de WhatsApp (admin_place_order): sin correo. to_jsonb no falla si la columna aun no existe.
+  if to_jsonb(new)->>'channel' = 'whatsapp' then return null; end if;
   if tg_op = 'INSERT' then
     -- Tope diario (security_limits.staff_mail) para no agotar la cuota de Resend.
     -- Al llegar al tope se avisa una vez y los siguientes no mandan correo.
