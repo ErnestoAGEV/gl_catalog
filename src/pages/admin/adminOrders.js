@@ -221,6 +221,7 @@ export function pageAdminOrders(state) {
               <button data-filter="completado" class="shrink-0 inline-flex items-center gap-1.5 px-3 h-9 rounded-[10px] text-[13px] font-semibold border transition-colors bg-paper text-body border-line hover:border-line-strong">Completados</button>
               <button data-filter="cancelado" class="shrink-0 inline-flex items-center gap-1.5 px-3 h-9 rounded-[10px] text-[13px] font-semibold border transition-colors bg-paper text-body border-line hover:border-line-strong">Cancelados</button>
             </div>
+            <a href="/admin/orders/new" class="adm-btn adm-btn-primary shrink-0">${ICON.plus('w-4 h-4')} Nuevo pedido</a>
           </div>
 
           <!-- Desktop table -->

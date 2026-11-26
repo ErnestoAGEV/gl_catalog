@@ -309,6 +309,7 @@ export function layoutAdmin({ title, contentHtml, state }) {
   const TITLES = {
     '/admin/dashboard': 'Dashboard',
     '/admin/orders': 'Órdenes',
+    '/admin/orders/new': 'Nuevo pedido',
     '/admin/products': 'Productos',
     '/admin/categories': 'Categorías',
     '/admin/size-guides': 'Guías de tallas',
@@ -358,7 +359,7 @@ export function layoutAdmin({ title, contentHtml, state }) {
       <p class="eyebrow text-white/35 px-3 mb-2">${g.name}</p>
       <div class="space-y-0.5">
         ${g.items.map(n => {
-          const on = currentPath === n.path || (currentPath === '/admin' && n.path === '/admin/dashboard')
+          const on = currentPath === n.path || currentPath.startsWith(n.path + '/') || (currentPath === '/admin' && n.path === '/admin/dashboard')
           return `<a href="${n.path}" class="admin-nav-link ${on ? 'active' : ''} group flex items-center gap-3 px-3 h-9 rounded-[11px] text-[14px] ${on ? 'font-semibold' : 'font-medium'} transition-colors ${on ? 'bg-white/10 text-white' : 'text-white/55 hover:text-white hover:bg-white/[0.06]'}">
             <span class="admin-rail"></span>
             <span class="${on ? 'text-white' : 'text-white/45 group-hover:text-white/80'} transition-colors">${I(n.icon)}</span>
