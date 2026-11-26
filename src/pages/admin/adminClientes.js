@@ -1,5 +1,6 @@
 import { getAdminOrders } from '../../store/index.js'
 import { formatMoney } from '../../utils/format.js'
+import { csvRow } from '../../utils/csv.js'
 import { lockScroll, unlockScroll } from '../../utils/dom.js'
 import { escapeHtml as esc } from '../../utils/sanitize.js'
 import { ICON, statCard, statusPill } from './adminIcons.js'
@@ -269,10 +270,9 @@ export function pageAdminClientes(state) {
         clientsRoot.querySelector('#clients-export')?.addEventListener('click', () => {
           if (!customers.length) return
           const rows = [
-            'Cliente,WhatsApp,Ordenes,Total gastado,Ultima compra,Ticket promedio',
+            csvRow(['Cliente', 'WhatsApp', 'Ordenes', 'Total gastado', 'Ultima compra', 'Ticket promedio']),
             ...getFiltered().map(c =>
-              // not-html: fila de CSV en texto plano
-              `"${c.name}",${c.whatsapp},${c.orderCount},${c.totalSpent.toFixed(2)},${formatDate(c.lastOrder)},${c.ticketAvg.toFixed(2)}`
+              csvRow([c.name, c.whatsapp, c.orderCount, c.totalSpent.toFixed(2), formatDate(c.lastOrder), c.ticketAvg.toFixed(2)])
             ),
           ].join('\n')
           const blob = new Blob([rows], { type: 'text/csv;charset=utf-8;' })

@@ -1,5 +1,6 @@
 import { getAdminSubscribers, saveEmailTemplate, sendNewsletter, getLastCampaign } from '../../store/index.js'
 import { escapeHtml as esc } from '../../utils/sanitize.js'
+import { csvRow } from '../../utils/csv.js'
 import { showToast } from '../../utils/toast.js'
 import { ICON, statCard } from './adminIcons.js'
 import { confirmDelete } from './adminConfirm.js'
@@ -182,7 +183,7 @@ export function pageAdminNewsletter(state) {
 
       exportBtn?.addEventListener('click', () => {
         if (!subscribers.length) return
-        const rows = ['Email,Fecha de registro,Estado', ...subscribers.map(s => `${s.email},${formatSubscriberDate(s)},${statusOf(s)}`)].join('\n')
+        const rows = [csvRow(['Email', 'Fecha de registro', 'Estado']), ...subscribers.map(s => csvRow([s.email, formatSubscriberDate(s), statusOf(s)]))].join('\n')
         const blob = new Blob([rows], { type: 'text/csv;charset=utf-8;' })
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
