@@ -196,3 +196,65 @@
 4. Live test:
    - create an order "PRUEBA Claude" (local pickup, 1 product) and check that no email went out, that it appears with the WhatsApp tag, and that it appears in Clientes;
    - cancel it.
+
+---
+
+## Corrections from Fable's review (mandatory; they override the text above)
+
+**Task 1**
+- Call `place_order` with named notation (`p_customer_name => ..., p_expected_total => null, ...`).
+- Steps 4–6 become one statement: `update public.orders set shipping_cost = case when delivery_method = 'Envío a domicilio' then coalesce(p_shipping_cost, shipping_cost) else shipping_cost end, shipping_tier/carrier/service = (local only if p_local and home delivery and p_shipping_cost is not null), status = coalesce(p_status, status) where id = v.id returning * into v`.
+- Trigger: update `supabase/order-staff-notify.sql` (it defines the function at line ~182). Use `if to_jsonb(new)->>'channel' = 'whatsapp' then return null; end if;`, so it doesn't break if run before the column exists. `manual-orders.sql` also recreates it with the same body.
+- **Customer confirmation on the server:** recreate `send_order_confirmation` in `manual-orders.sql` from `supabase/order-confirmation.sql` (same body), adding after the `already_sent` line: `if v_order.channel = 'whatsapp' then return 'manual'; end if;`. Check: on a WhatsApp order the RPC returns `'manual'` and queues nothing.
+- Do not create `orders_channel_idx`.
+- Check setup:
+  - copy lines 16–40 of `supabase/checks/order-staff-notify.sql` (limits, `rate_events` cleanup, IP header);
+  - admin claims: `{"role":"authenticated","sub":"<admin user_id>","aal":"aal2"}`;
+  - deterministic stock: `update products set stock = '0'` on the test product, then assert that the order is saved and stock is still `'0'`.
+
+**Task 2**
+- Shipping without breaking free shipping:
+  - `pickQuoteTier(quote, tier, free)` returns `{ cost: chargeFor(quote, tier, free), local }`, using `chargeFor` and `isFreeShipping` exactly as `src/pages/checkout/checkout.js:~262` uses them (they come from `supabase/functions/_shared/shipping.js` or wherever the checkout imports them).
+  - The form carries `costEdited: boolean`. `toRpcArgs` sends `p_shipping_cost` only if `costEdited` is true or there is no quote; otherwise `null`, and the database charges.
+  - Tests: quote `q1` without editing → `p_shipping_cost: null`; edited to 180 → `180`.
+- `previewTotals(form, products)`:
+  - uses `product.price` as is, which already includes the promotion (`store/products.js`), with no `promoFor`/`discounted` and no `promos`/`now` parameters;
+  - test: `{ price: 400, basePrice: 500 }` with qty 2 and shipping 60 → `{ subtotal: 800, shipping: 60, total: 860 }`;
+  - product source: `getState().products.filter(p => p.badge !== 'Borrador')`.
+- Coupon:
+  - add `checkCoupon(code)` to `src/store/coupons.js`: `sanitizeCouponCode`, then `supabase.rpc('validate_coupon', { p_code })`, returning `{ coupon }` or `{ error }` **without touching `state`**;
+  - preview discount = `couponBase(lines, coupon.categories) * coupon.discount`;
+  - **never** call `applyCoupon`.
+- `isValidWhatsapp` lives in `src/utils/phone.js`.
+- Export `createManualOrder` and `checkCoupon` from `src/store/index.js`.
+- There is no orders cache to refresh.
+- `validateManualOrder` requires `street`, `numExt`, `neighborhood`, `city`, `stateName` and `zip` for home delivery. `stateName` comes from the same state list the checkout uses.
+
+**Task 3**
+- `src/pages/admin/layout.js`:
+  - add `'/admin/orders/new': 'Nuevo pedido'` to `TITLES`;
+  - the side menu marks Pedidos with `currentPath === n.path || currentPath.startsWith(n.path + '/')`.
+- Optional: don't play the new-order toast or sound when `incoming.channel === 'whatsapp'` (`startApp.js:~190`, `adminOrders.js:~743`). Do it; it's one line each.
+
+**Task 4**
+- `channelBreakdown`:
+  - `count` = non-cancelled orders;
+  - `revenue` = sum of `Number(o.total)` over `isSuccessful(o.status)`, the same definition as the "Ventas del periodo" card in `adminReportes.js:~62`. Move `isSuccessful` to `manualOrder.js` and import it from both places.
+  - Web + WhatsApp must add up to that card.
+  - Test: web 100 completado, whatsapp 200 pendientedepago, whatsapp 50 cancelado → `web { count: 1, revenue: 100 }`, `whatsapp { count: 1, revenue: 0 }`.
+- Controller ruling: this follows the existing definition, so the report adds up. It doesn't change what the owner asked for.
+
+**After the tasks (controller), instead of the live test with a session:**
+1. Run three checks; all must give `CHECK_OK`: the new one, plus a re-run of `supabase/checks/order-staff-notify.sql` and `supabase/checks/place-order.sql`.
+2. Read-only `execute_sql`:
+   - the column default;
+   - `has_function_privilege` for anon and authenticated;
+   - `pg_get_functiondef` of `notify_staff_on_order` and `send_order_confirmation`;
+   - `select channel, count(*) from orders group by 1` → all web.
+3. Playwright without a session: `/admin/orders/new` shows the login.
+4. A checklist for the owner:
+   - create "PRUEBA" (pickup, 1 product);
+   - confirm there's no email, the order has the tag, and the customer appears in Clientes;
+   - mark it completado with an email address and confirm there's no email;
+   - cancel it;
+   - a product turned into a draft before saving shows the error and keeps the form.
