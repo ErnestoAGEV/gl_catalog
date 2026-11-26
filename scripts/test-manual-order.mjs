@@ -14,6 +14,7 @@ const base = {
 }
 const home = { ...base, deliveryMethod: ENVIO }
 
+const products = [{ id: 'p1', price: 400, basePrice: 500 }]
 // validateManualOrder
 assert.deepEqual(validateManualOrder(base), [])
 assert.deepEqual(validateManualOrder(home), [])
@@ -51,6 +52,13 @@ const noq = toRpcArgs({ ...home, shippingCost: 60, local: true })
 assert.equal(noq.p_shipping_cost, 60); assert.equal(noq.p_local, true); assert.equal(noq.p_shipping_quote_id, null); assert.equal(noq.p_shipping_tier, null)
 assert.equal(toRpcArgs({ ...base, shippingCost: 60, local: true }).p_local, false, 'recoger nunca es local')
 
+assert.equal(toRpcArgs({ ...home, shippingCost: '' }).p_shipping_cost, null, 'campo vacio no es envio gratis')
+assert.ok(!validateManualOrder({ ...home, shippingCost: '' }).length)
+assert.equal(previewTotals({ ...home, shippingCost: '' }, products).shipping, 0)
+const pq = toRpcArgs({ ...base, quote, tier: 'express' })
+assert.equal(pq.p_shipping_quote_id, null); assert.equal(pq.p_address_parts, null); assert.equal(pq.p_shipping_tier, null)
+assert.equal(toRpcArgs({ ...home, address: { ...addr, street: ' Reforma ' } }).p_address_parts.street, 'Reforma')
+
 // pickQuoteTier
 assert.deepEqual(pickQuoteTier({ standard: { carrier: 'local', price: 60 } }, 'standard'), { cost: 60, local: true })
 assert.equal(pickQuoteTier({ standard: { carrier: 'fedex', price: 165 }, express: null }, 'express'), null)
@@ -59,7 +67,6 @@ assert.deepEqual(pickQuoteTier(quote, 'standard', true), { cost: 0, local: false
 assert.equal(pickQuoteTier(null, 'standard'), null)
 
 // previewTotals
-const products = [{ id: 'p1', price: 400, basePrice: 500 }]
 assert.deepEqual(previewTotals({ ...home, shippingCost: 60 }, products), { subtotal: 800, shipping: 60, total: 860 })
 assert.deepEqual(previewTotals({ ...base, shippingCost: 60 }, products), { subtotal: 800, shipping: 0, total: 800 })
 assert.deepEqual(previewTotals({ ...home, items: [{ productId: 'zz', qty: 1 }] }, products), { subtotal: 0, shipping: 0, total: 0 })

@@ -7,6 +7,8 @@ const MAX_SHIPPING = 10000
 
 const isHome = (form) => form.deliveryMethod === ENVIO
 const text = (v) => String(v ?? '').trim()
+// Campo vacio = sin costo capturado (null), no 0
+const costOf = (form) => (text(form.shippingCost) === '' ? null : Number(form.shippingCost))
 
 export function validateManualOrder(form) {
   const errors = []
@@ -18,7 +20,7 @@ export function validateManualOrder(form) {
     if (!['street', 'numExt', 'neighborhood', 'city', 'stateName', 'zip'].every((k) => text(a[k]))) {
       errors.push('Completa la dirección de envío.')
     }
-    const c = form.shippingCost
+    const c = costOf(form)
     if (c != null && !(c >= 0 && c <= MAX_SHIPPING)) errors.push('El costo de envío debe estar entre 0 y 10,000.')
   }
   return errors
@@ -33,7 +35,7 @@ export function toRpcArgs(form) {
   const home = isHome(form)
   const quoteId = home ? form.quote?.quoteId || null : null
   // Con cotizacion y sin editar, el costo lo cobra la base (respeta envio gratis).
-  const sendCost = home && (form.costEdited || !quoteId) && form.shippingCost != null
+  const sendCost = home && (form.costEdited || !quoteId) && costOf(form) != null
   return {
     p_customer_name: text(form.name),
     p_customer_whatsapp: text(form.whatsapp),
@@ -45,8 +47,8 @@ export function toRpcArgs(form) {
     p_customer_email: text(form.email) || null,
     p_shipping_quote_id: quoteId,
     p_shipping_tier: quoteId ? form.tier : null,
-    p_address_parts: home ? form.address : null,
-    p_shipping_cost: sendCost ? Number(form.shippingCost) : null,
+    p_address_parts: home ? Object.fromEntries(Object.entries(form.address).map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v])) : null,
+    p_shipping_cost: sendCost ? costOf(form) : null,
     p_local: home && !!form.local,
     p_status: form.status || null,
   }
@@ -56,7 +58,7 @@ export function toRpcArgs(form) {
 export function previewTotals(form, products) {
   const byId = new Map(products.map((p) => [String(p.id), p]))
   const subtotal = form.items.reduce((acc, i) => acc + (Number(byId.get(String(i.productId))?.price) || 0) * (Number(i.qty) || 0), 0)
-  const shipping = isHome(form) ? Number(form.shippingCost) || 0 : 0
+  const shipping = isHome(form) ? costOf(form) || 0 : 0
   return { subtotal, shipping, total: subtotal + shipping }
 }
 

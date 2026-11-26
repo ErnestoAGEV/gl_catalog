@@ -29,7 +29,7 @@ export async function saveOrder({ name, whatsapp, email, paymentMethod, delivery
   return { error: error ? { message: error.message, details: error.details, hint: error.hint } : null }
 }
 
-// Pedido capturado por el admin (WhatsApp). La base valida precios, stock y cupon; ver supabase/manual-orders.sql
+// Pedido capturado por el admin (WhatsApp). La base valida precios y cupon (el admin no esta limitado por stock); ver supabase/manual-orders.sql
 export async function createManualOrder(form) {
   const access = await ensureAdminAccess()
   if (!access.ok) return { error: { message: access.error.message } }
