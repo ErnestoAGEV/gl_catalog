@@ -8,13 +8,14 @@ import { couponBase } from '../../utils/promotions.js'
 import { validateManualOrder, previewTotals, pickQuoteTier } from '../../utils/manualOrder.js'
 import { MX_STATES, isMxZip, isFreeShipping } from '../../../supabase/functions/_shared/shipping.js'
 import { TIER_NAMES, carrierName } from '../checkout/shippingBlock.js'
-import { ICON } from './adminIcons.js'
+import { resultsHtml, itemsHtml, summaryLinesHtml, MAX_QTY } from './newOrderParts.js'
 
 const esc = (v) => escapeHtml(String(v ?? ''))
 const ENVIO = 'Envío a domicilio'
 const PAYMENTS = ['Transferencia', 'Efectivo', 'Tarjeta', 'Pago al recoger']
 const STATUSES = [['pendientedepago', 'Pendiente de pago'], ['completado', 'Completado'], ['cancelado', 'Cancelado']]
 const MAX_RESULTS = 8
+const DRAFT = 'gl:newOrderDraft'
 
 const section = (n, title, body) => `
   <section class="bg-paper rounded-3xl border border-line shadow-card p-5 space-y-4">
@@ -51,7 +52,15 @@ export function pageAdminNewOrder() {
             </div>
             <div id="no-items"></div>`)}
 
-          ${section(3, 'Entrega y pago', `
+          ${section(3, 'Cupón', `
+            <div class="flex gap-2">
+              <div class="flex-1"><label class="adm-lbl" for="no-coupon">Código (opcional)</label>
+                <input id="no-coupon" name="couponCode" type="text" maxlength="30" autocomplete="off" class="adm-fld uppercase" /></div>
+              <button type="button" id="no-coupon-btn" class="adm-btn adm-btn-ghost self-end">Validar</button>
+            </div>
+            <p id="no-coupon-msg" class="text-[13px]" aria-live="polite"></p>`)}
+
+          ${section(4, 'Entrega y pago', `
             <div class="grid sm:grid-cols-2 gap-3">
               <div><label class="adm-lbl" for="no-payment">Método de pago</label>
                 <select id="no-payment" name="paymentMethod" class="adm-fld">${PAYMENTS.map(p => `<option>${esc(p)}</option>`).join('')}</select></div>
@@ -81,14 +90,6 @@ export function pageAdminNewOrder() {
                 <input id="no-shipping" name="shippingCost" type="number" inputmode="decimal" min="0" max="10000" step="0.01" class="adm-fld tnum w-36" />
                 <p class="text-[11.5px] text-faint mt-1">Vacío con cotización: lo calcula el sistema.</p></div>
             </div>`)}
-
-          ${section(4, 'Cupón', `
-            <div class="flex gap-2">
-              <div class="flex-1"><label class="adm-lbl" for="no-coupon">Código (opcional)</label>
-                <input id="no-coupon" name="couponCode" type="text" maxlength="30" autocomplete="off" class="adm-fld uppercase" /></div>
-              <button type="button" id="no-coupon-btn" class="adm-btn adm-btn-ghost self-end">Validar</button>
-            </div>
-            <p id="no-coupon-msg" class="text-[13px]" aria-live="polite"></p>`)}
 
           ${section(5, 'Estado del pedido', `
             <div><label class="adm-lbl" for="no-status">Estado</label>
@@ -120,34 +121,20 @@ export function pageAdminNewOrder() {
       const renderResults = () => {
         const term = $('#no-search').value.trim().toLowerCase()
         const list = term ? products().filter(p => [p.name, p.brand].join(' ').toLowerCase().includes(term)).slice(0, MAX_RESULTS) : []
-        $('#no-results').innerHTML = !term ? '' : list.length
-          ? list.map(p => `<li><button type="button" data-add="${esc(p.id)}" class="w-full flex items-center justify-between gap-3 text-left px-3 h-10 rounded-xl2 bg-canvas hover:bg-line/60 text-[13.5px]"><span class="truncate text-ink">${esc(p.name)}${p.brand ? ` <span class="text-faint">· ${esc(p.brand)}</span>` : ''}</span><span class="tnum text-muted shrink-0">${formatMoney(p.price)}</span></button></li>`).join('')
-          : '<li class="text-[13px] text-muted">Sin resultados.</li>'
+        $('#no-results').innerHTML = resultsHtml(list, !!term)
       }
-      const selectHtml = (label, key, idx, opts, value) => opts?.length
-        ? `<label class="text-[11px] text-faint block">${label}<select data-key="${key}" data-idx="${idx}" class="adm-fld mt-0.5 py-2">${opts.map(o => `<option value="${esc(o)}" ${o === value ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></label>` : ''
-      const renderItems = () => {
-        $('#no-items').innerHTML = form.items.length ? form.items.map((it, i) => {
-          const p = product(it.productId)
-          return `<div class="flex flex-wrap items-end gap-3 py-3 border-t border-line first:border-t-0">
-            <div class="flex-1 min-w-[160px]"><p class="text-[13.5px] font-semibold text-ink">${esc(p?.name || 'Producto')}</p><p class="text-[12px] text-muted tnum">${formatMoney(p?.price || 0)} c/u</p></div>
-            ${selectHtml('Talla', 'size', i, p?.sizes, it.size)}
-            ${selectHtml('Color', 'color', i, p?.colors, it.color)}
-            <label class="text-[11px] text-faint block">Cant.<input data-key="qty" data-idx="${i}" type="number" min="1" max="99" step="1" value="${esc(it.qty)}" class="adm-fld tnum mt-0.5 py-2 w-20" /></label>
-            <button type="button" data-remove="${i}" class="w-9 h-9 rounded-lg flex items-center justify-center text-muted hover:text-bad hover:bg-bad-tint" aria-label="Quitar ${esc(p?.name || 'producto')}">${ICON.trash('w-4 h-4')}</button>
-          </div>`
-        }).join('') : '<p class="text-[13px] text-muted">Todavía no agregas productos.</p>'
-      }
+      const renderItems = () => { $('#no-items').innerHTML = itemsHtml(form.items, product) }
       const addItem = (id) => {
         const p = product(id)
         if (!p) return
         const size = p.sizes?.[0] || ''
         const color = p.colors?.[0] || ''
         const same = form.items.find(i => String(i.productId) === String(p.id) && i.size === size && i.color === color)
-        if (same) same.qty = Math.min(99, same.qty + 1)
+        if (same) same.qty = Math.min(MAX_QTY, same.qty + 1)
         else form.items.push({ productId: p.id, size, color, qty: 1 })
         $('#no-search').value = ''
         renderResults(); renderItems(); itemsChanged()
+        $('#no-search').focus()
       }
 
       // ── Cupón ──
@@ -179,12 +166,13 @@ export function pageAdminNewOrder() {
       // Cualquier cambio de destino o carrito deja la cotizacion vieja sin valor
       const dropQuote = () => {
         quoteSeq++
-        if (!form.quote) return
+        if (!form.quote) { $('#no-quote').innerHTML = ''; return }
+        if (form.local) { form.local = false; $('#no-local').checked = false }
         form.quote = null; form.tier = null
         if (!form.costEdited) setCost(null)
         renderQuote()
       }
-      const itemsChanged = () => { dropQuote(); renderSummary() }
+      const itemsChanged = () => { dropQuote(); renderSummary(); persist() }
 
       const runQuote = async () => {
         const a = form.address
@@ -211,6 +199,7 @@ export function pageAdminNewOrder() {
         const disc = couponDiscount()
         const row = (l, v, cls = 'text-muted') => `<div class="flex justify-between text-[13px] ${cls}"><span>${l}</span><span class="tnum">${v}</span></div>`
         $('#no-summary').innerHTML = `<div class="space-y-1">
+          ${summaryLinesHtml(form.items, product)}
           ${row('Subtotal', formatMoney(subtotal))}
           ${disc > 0 ? row(`Descuento (${esc(coupon.code)})`, `−${formatMoney(disc)}`, 'text-ok') : ''}
           ${isHome() ? row('Envío', formatMoney(shipping)) : ''}
@@ -234,12 +223,13 @@ export function pageAdminNewOrder() {
         if (!b) return
         form.items.splice(Number(b.dataset.remove), 1)
         renderItems(); itemsChanged()
+        $('#no-search').focus()
       })
       $('#no-items').addEventListener('change', (e) => {
         const t = e.target
         const it = form.items[Number(t.dataset.idx)]
         if (!it || !t.dataset.key) return
-        it[t.dataset.key] = t.dataset.key === 'qty' ? Math.min(99, Math.max(1, Math.floor(Number(t.value)) || 1)) : t.value
+        it[t.dataset.key] = t.dataset.key === 'qty' ? Math.min(MAX_QTY, Math.max(1, Math.floor(Number(t.value)) || 1)) : t.value
         if (t.dataset.key === 'qty') t.value = it.qty
         itemsChanged()
       })
@@ -254,10 +244,12 @@ export function pageAdminNewOrder() {
         } else if (n === 'shippingCost') {
           form.shippingCost = t.value === '' ? null : Number(t.value)
           form.costEdited = t.value !== ''
+          if (!form.costEdited && form.quote) applyTier()
           renderSummary()
         } else if (n === 'couponCode') {
           form.couponCode = t.value
           coupon = null; $('#no-coupon-msg').textContent = ''
+          if (form.quote) { applyTier(); renderQuote() }
           renderSummary()
         } else if (n === 'paymentMethod' || n === 'status' || n === 'name' || n === 'whatsapp' || n === 'email') {
           form[n] = t.value
@@ -266,6 +258,7 @@ export function pageAdminNewOrder() {
           $('#no-address').classList.toggle('hidden', !isHome())
           renderSummary()
         }
+        persist()
       })
       $('#no-quote').addEventListener('change', (e) => {
         if (e.target.name !== 'tier') return
@@ -274,13 +267,14 @@ export function pageAdminNewOrder() {
       })
       $('#no-quote-btn').addEventListener('click', runQuote)
       $('#no-local').addEventListener('change', async (e) => {
-        form.local = e.target.checked
-        if (form.local && form.shippingCost == null) {
-          if (localPrice == null) { try { localPrice = Number((await getShippingSettings()).settings?.local_delivery_price) } catch (_e) { localPrice = NaN } }
-          if (Number.isFinite(localPrice)) { setCost(localPrice); form.costEdited = true; renderSummary() }
-        }
+        if (!e.target.checked) { form.local = false; persist(); return }
+        dropQuote() // el precio local no sale de una cotizacion
+        form.local = true
+        if (localPrice == null) { try { localPrice = Number((await getShippingSettings()).settings?.local_delivery_price) } catch (_e) { localPrice = NaN } }
+        if (Number.isFinite(localPrice)) { setCost(localPrice); form.costEdited = true } else quoteMsg('No se pudo leer el precio local. Escribe el costo a mano.', 'text-bad')
+        renderSummary(); persist()
       })
-      $('#no-coupon-btn').addEventListener('click', async () => {
+      const validateCoupon = async () => {
         const msg = $('#no-coupon-msg')
         const { coupon: c, error } = await checkCoupon(form.couponCode)
         coupon = c || null
@@ -288,7 +282,9 @@ export function pageAdminNewOrder() {
         msg.textContent = c ? `Cupón válido: ${c.label || c.code}` : error
         if (form.quote) { applyTier(); renderQuote() }
         renderSummary()
-      })
+        return !!c
+      }
+      $('#no-coupon-btn').addEventListener('click', validateCoupon)
 
       $('#new-order').addEventListener('submit', async (e) => {
         e.preventDefault()
@@ -299,18 +295,48 @@ export function pageAdminNewOrder() {
         saving = true
         const btn = $('#no-save')
         btn.disabled = true
-        const { error } = await createManualOrder(form)
-        saving = false
-        btn.disabled = false
-        if (error) {
-          const m = String(error.message || '')
-          showErrors([/no est[aá] disponible|stock|agotad|disponible/i.test(m) ? 'Uno de los productos ya no esta disponible.' : m || 'No se pudo guardar el pedido.'])
-          return
+        try {
+          // Cupon sin validar: se valida y el dueño ve el total final antes de guardar
+          if (form.couponCode.trim() && !coupon) {
+            if (!(await validateCoupon())) { showErrors([$('#no-coupon-msg').textContent]); return }
+            showErrors(['Revisa el total con el cupón y vuelve a guardar.'])
+            return
+          }
+          const { error } = await createManualOrder(form)
+          if (error) {
+            const m = String(error.message || '')
+            showErrors([/ya no est[aá] disponible/i.test(m) ? 'Uno de los productos ya no está disponible.' : m || 'No se pudo guardar el pedido.'])
+            return
+          }
+          clearDraft()
+          showToast('Pedido guardado', 'success')
+          navigate('/admin/orders')
+        } finally {
+          saving = false
+          btn.disabled = false
         }
-        showToast('Pedido guardado', 'success')
-        navigate('/admin/orders')
       })
 
+      // ── Borrador: sobrevive a una sesion vencida ──
+      function persist() { try { sessionStorage.setItem(DRAFT, JSON.stringify(form)) } catch (_e) { /* sin storage: no pasa nada */ } }
+      function clearDraft() { try { sessionStorage.removeItem(DRAFT) } catch (_e) { /* idem */ } }
+      const restore = () => {
+        let d
+        try { d = JSON.parse(sessionStorage.getItem(DRAFT) || 'null') } catch (_e) { d = null }
+        if (!d || typeof d !== 'object') return
+        Object.assign(form, d, { address: { ...form.address, ...d.address } })
+        form.items = (d.items || []).filter(i => product(i.productId))
+        root.querySelectorAll('#new-order [name]').forEach(el => {
+          const k = el.name
+          const v = k in form.address ? form.address[k] : form[k]
+          if (v != null && el.type !== 'radio') el.value = String(v)
+        })
+        $('#no-address').classList.toggle('hidden', !isHome())
+        $('#no-local').checked = !!form.local
+        renderQuote()
+      }
+
+      restore()
       renderItems()
       renderSummary()
     },

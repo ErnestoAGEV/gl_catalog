@@ -588,8 +588,9 @@ export function pageAdminOrders(state) {
           : `${allOrders.length} pedidos`
 
         // Update filter button counts + active state
-        const counts = { all: allOrders.length, completado: 0, pendientedepago: 0, cancelado: 0 }
-        allOrders.forEach(o => { const k = (o.status || '').toLowerCase(); if (counts[k] != null) counts[k]++ })
+        const inChannel = allOrders.filter(o => channelFilter === 'all' || (channelFilter === 'whatsapp') === (o.channel === 'whatsapp'))
+        const counts = { all: inChannel.length, completado: 0, pendientedepago: 0, cancelado: 0 }
+        inChannel.forEach(o => { const k = (o.status || '').toLowerCase(); if (counts[k] != null) counts[k]++ })
         filtersContainer.querySelectorAll('[data-filter]').forEach(btn => {
           const f = btn.dataset.filter
           const isActive = f === statusFilter

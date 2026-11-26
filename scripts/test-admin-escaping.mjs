@@ -41,6 +41,13 @@ for (const file of STORE_FILES) {
 }
 assert.deepEqual(storeLeaks, [], `Datos de la tienda sin escapar:\n${storeLeaks.join('\n')}`)
 
+// Nuevo pedido: nombres de producto hostiles salen escapados en resultados, filas y resumen
+import { resultsHtml, itemsHtml, summaryLinesHtml } from '../src/pages/admin/newOrderParts.js'
+const evil = { id: 1, name: '<img src=x onerror=alert(1)>', brand: '<b>x</b>', price: 10, sizes: ['<s>'], colors: [] }
+for (const html of [resultsHtml([evil], true), itemsHtml([{ productId: 1, size: '<s>', color: '', qty: 1 }], () => evil), summaryLinesHtml([{ productId: 1, size: '<s>', color: '', qty: 1 }], () => evil)]) {
+  assert.ok(!/<img|<b>|<s>/.test(html), `Nuevo pedido sin escapar: ${html}`)
+}
+
 // El toast pinta con textContent: un ${message} en su plantilla lo reabriria.
 assert.ok(!readFileSync('src/utils/toast.js', 'utf8').includes('${message}'), 'toast.js interpola message en HTML')
 
