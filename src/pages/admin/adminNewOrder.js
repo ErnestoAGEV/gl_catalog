@@ -1,4 +1,4 @@
-import { getState, quoteShipping, getShippingSettings, checkCoupon, createManualOrder } from '../../store/index.js'
+import { getState, subscribe, quoteShipping, getShippingSettings, checkCoupon, createManualOrder } from '../../store/index.js'
 import { navigate } from '../../core/router.js'
 import { showToast } from '../../utils/toast.js'
 import { escapeHtml, sanitizeText } from '../../utils/sanitize.js'
@@ -7,6 +7,7 @@ import { BRAND } from '../../utils/config.js'
 import { couponBase } from '../../utils/promotions.js'
 import { validateManualOrder, previewTotals, pickQuoteTier } from '../../utils/manualOrder.js'
 import { MX_STATES, isMxZip, isFreeShipping } from '../../../supabase/functions/_shared/shipping.js'
+import { confirmDelete } from './adminConfirm.js'
 import { TIER_NAMES, carrierName } from '../checkout/shippingBlock.js'
 import { resultsHtml, itemsHtml, summaryLinesHtml, MAX_QTY } from './newOrderParts.js'
 
@@ -98,7 +99,8 @@ export function pageAdminNewOrder() {
           ${section(6, 'Resumen', `
             <div id="no-summary" aria-live="polite"></div>
             <p id="new-order-errors" role="alert" aria-live="assertive" class="hidden text-[13px] text-bad bg-bad-tint rounded-xl2 px-4 py-2"></p>
-            <button type="submit" id="no-save" class="adm-btn adm-btn-primary">Guardar pedido</button>`)}
+            <div class="flex flex-wrap gap-2"><button type="submit" id="no-save" class="adm-btn adm-btn-primary">Guardar pedido</button>
+              <button type="button" id="no-reset" class="adm-btn adm-btn-ghost">Empezar de nuevo</button></div>`)}
         </form>
       </div>`,
 
@@ -115,6 +117,9 @@ export function pageAdminNewOrder() {
       let quoteSeq = 0
       const products = () => getState().products.filter(p => p.badge !== 'Borrador')
       const product = (id) => getState().products.find(p => String(p.id) === String(id))
+      // Catalogo aun sin cargar o producto retirado: la linea sigue con lo que se guardo en el borrador
+      const lookup = (id) => product(id) || form.items.find(i => String(i.productId) === String(id))?.snap
+      const catalog = () => [...products(), ...form.items.filter(i => i.snap && !product(i.productId)).map(i => ({ id: i.productId, ...i.snap }))]
       const isHome = () => form.deliveryMethod === ENVIO
 
       // ── Productos ──
@@ -123,7 +128,7 @@ export function pageAdminNewOrder() {
         const list = term ? products().filter(p => [p.name, p.brand].join(' ').toLowerCase().includes(term)).slice(0, MAX_RESULTS) : []
         $('#no-results').innerHTML = resultsHtml(list, !!term)
       }
-      const renderItems = () => { $('#no-items').innerHTML = itemsHtml(form.items, product) }
+      const renderItems = () => { $('#no-items').innerHTML = itemsHtml(form.items, lookup) }
       const addItem = (id) => {
         const p = product(id)
         if (!p) return
@@ -131,7 +136,7 @@ export function pageAdminNewOrder() {
         const color = p.colors?.[0] || ''
         const same = form.items.find(i => String(i.productId) === String(p.id) && i.size === size && i.color === color)
         if (same) same.qty = Math.min(MAX_QTY, same.qty + 1)
-        else form.items.push({ productId: p.id, size, color, qty: 1 })
+        else form.items.push({ productId: p.id, size, color, qty: 1, snap: { name: p.name, price: p.price, sizes: p.sizes, colors: p.colors } })
         $('#no-search').value = ''
         renderResults(); renderItems(); itemsChanged()
         $('#no-search').focus()
@@ -144,7 +149,7 @@ export function pageAdminNewOrder() {
 
       // ── Envío ──
       const quoteMsg = (html, cls = 'text-muted') => { $('#no-quote').innerHTML = `<p class="${cls}">${html}</p>` }
-      const subtotalNow = () => previewTotals(form, products()).subtotal
+      const subtotalNow = () => previewTotals(form, catalog()).subtotal
       const freeNow = () => form.quote ? isFreeShipping(subtotalNow(), coupon, form.quote.freeShippingMin ?? BRAND.freeShippingMin) : false
       const setCost = (v) => { form.shippingCost = v; $('#no-shipping').value = v == null ? '' : String(v) }
       const applyTier = () => {
@@ -190,16 +195,18 @@ export function pageAdminNewOrder() {
         form.quote = res
         form.tier = 'standard'
         form.costEdited = false
-        renderQuote(); applyTier(); renderSummary()
+        renderQuote(); applyTier(); renderSummary(); persist()
       }
 
       // ── Resumen ──
       function renderSummary() {
-        const { subtotal, shipping } = previewTotals(form, products())
+        // Con cotizacion y costo vacio, el sistema cobra la tarifa elegida
+        const eff = form.quote && form.tier && form.shippingCost == null ? pickQuoteTier(form.quote, form.tier, freeNow())?.cost : form.shippingCost
+        const { subtotal, shipping } = previewTotals({ ...form, shippingCost: eff }, catalog())
         const disc = couponDiscount()
         const row = (l, v, cls = 'text-muted') => `<div class="flex justify-between text-[13px] ${cls}"><span>${l}</span><span class="tnum">${v}</span></div>`
         $('#no-summary').innerHTML = `<div class="space-y-1">
-          ${summaryLinesHtml(form.items, product)}
+          ${summaryLinesHtml(form.items, lookup)}
           ${row('Subtotal', formatMoney(subtotal))}
           ${disc > 0 ? row(`Descuento (${esc(coupon.code)})`, `−${formatMoney(disc)}`, 'text-ok') : ''}
           ${isHome() ? row('Envío', formatMoney(shipping)) : ''}
@@ -244,7 +251,6 @@ export function pageAdminNewOrder() {
         } else if (n === 'shippingCost') {
           form.shippingCost = t.value === '' ? null : Number(t.value)
           form.costEdited = t.value !== ''
-          if (!form.costEdited && form.quote) applyTier()
           renderSummary()
         } else if (n === 'couponCode') {
           form.couponCode = t.value
@@ -260,10 +266,15 @@ export function pageAdminNewOrder() {
         }
         persist()
       })
+      $('#no-shipping').addEventListener('change', (e) => {
+        if (e.target.value !== '' || !form.quote) return
+        form.costEdited = false
+        applyTier(); renderSummary(); persist()
+      })
       $('#no-quote').addEventListener('change', (e) => {
         if (e.target.name !== 'tier') return
         form.tier = e.target.value
-        applyTier(); renderQuote(); renderSummary()
+        applyTier(); renderQuote(); renderSummary(); persist()
       })
       $('#no-quote-btn').addEventListener('click', runQuote)
       $('#no-local').addEventListener('change', async (e) => {
@@ -325,7 +336,7 @@ export function pageAdminNewOrder() {
         try { d = JSON.parse(sessionStorage.getItem(DRAFT) || 'null') } catch (_e) { d = null }
         if (!d || typeof d !== 'object') return
         Object.assign(form, d, { address: { ...form.address, ...d.address } })
-        form.items = (d.items || []).filter(i => product(i.productId))
+        form.items = Array.isArray(d.items) ? d.items : []
         root.querySelectorAll('#new-order [name]').forEach(el => {
           const k = el.name
           const v = k in form.address ? form.address[k] : form[k]
@@ -336,9 +347,33 @@ export function pageAdminNewOrder() {
         renderQuote()
       }
 
+      // Cuando llega el catalogo: un producto que ya no esta invalida la cotizacion guardada
+      let reconciled = false
+      const reconcile = () => {
+        if (reconciled || !getState().products.length) return
+        reconciled = true
+        if (form.items.some(i => !product(i.productId))) dropQuote()
+        renderItems(); renderSummary(); persist()
+      }
+      const unsub = subscribe(reconcile)
+
+      const freshAddress = () => ({ street: '', numExt: '', numInt: '', neighborhood: '', city: '', state: '', stateName: '', zip: '', references: '' })
+      $('#no-reset').addEventListener('click', async () => {
+        const ok = await confirmDelete({ title: 'Empezar de nuevo', message: 'Se borra todo lo capturado en este pedido.', confirmLabel: 'Limpiar', icon: 'trash' })
+        if (!ok) return
+        quoteSeq++; coupon = null
+        Object.assign(form, { name: '', whatsapp: '', email: '', items: [], couponCode: '', paymentMethod: PAYMENTS[0], deliveryMethod: 'Recoger en tienda', address: freshAddress(), quote: null, tier: null, shippingCost: null, costEdited: false, local: false, status: 'pendientedepago' })
+        $('#new-order').reset()
+        $('#no-address').classList.add('hidden')
+        $('#no-coupon-msg').textContent = ''; $('#no-quote').innerHTML = ''; showErrors([])
+        renderResults(); renderItems(); renderSummary(); clearDraft()
+      })
+
       restore()
       renderItems()
       renderSummary()
+      reconcile()
+      return unsub
     },
   }
 }
