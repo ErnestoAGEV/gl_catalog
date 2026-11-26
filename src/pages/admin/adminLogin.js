@@ -9,12 +9,13 @@ import { factorName, cleanTotpCode } from '../../utils/mfa.js'
 // del panel, como "Seguridad"). onMount decide que paso se ve.
 const steps = `
             <p id="step-eyebrow" class="eyebrow text-brand mb-2.5">Acceso restringido</p>
-            <h1 id="step-title" class="font-display font-extrabold text-ink text-[28px] tracking-tight leading-tight">Panel de administración</h1>
+            <h1 id="step-title" tabindex="-1" class="focus:outline-none font-display font-extrabold text-ink text-[28px] tracking-tight leading-tight">Panel de administración</h1>
             <p id="step-lead" class="text-muted text-[14px] mt-2 mb-8">Inicia sesión para gestionar tu tienda.</p>
 
             <div id="admin-error" role="alert" class="hidden mb-4 rounded-xl2 bg-bad-tint border border-bad/20 p-3 text-[13px] text-bad font-medium"></div>
+            <p id="step-status" role="status" class="text-[13px] text-ok font-medium mb-4 empty:mb-0"></p>
 
-            <p id="step-loading" class="text-muted text-[14px]">Comprobando tu sesión…</p>
+            <p id="step-loading" role="status" class="text-muted text-[14px]">Comprobando tu sesión…</p>
 
             <form id="admin-login" class="hidden space-y-4" novalidate>
               <div>
@@ -36,7 +37,8 @@ const steps = `
 
             <form id="mfa-form" class="hidden space-y-4" novalidate>
               <div id="mfa-enroll" class="hidden space-y-4">
-                <p class="text-body text-[14px] leading-relaxed">Para entrar al admin necesitas un segundo paso. Escanea este código con Google Authenticator, 1Password o Authy y escribe el código de 6 dígitos.</p>
+                <p id="mfa-intro" class="text-body text-[14px] leading-relaxed"></p>
+                <p class="text-muted text-[13px] leading-relaxed">Si ya habías escaneado un código antes, bórralo de la app y escanea este.</p>
                 <div id="mfa-qr-box"></div>
                 <div>
                   <label for="mfa-secret" class="adm-lbl">Si no puedes escanearlo, escribe esta clave en la app</label>
@@ -63,7 +65,6 @@ const steps = `
             <section id="mfa-security" class="hidden space-y-4" aria-labelledby="step-title">
               <h2 class="adm-lbl">Dispositivos dados de alta</h2>
               <ul id="mfa-devices" class="rounded-xl2 border border-line divide-y divide-line"></ul>
-              <p id="mfa-status" role="status" class="text-[13px] text-ok font-medium"></p>
               <button type="button" id="mfa-add" class="w-full adm-btn adm-btn-primary h-12 text-[15px] disabled:opacity-50 disabled:cursor-not-allowed">Agregar otro dispositivo</button>
               <a href="/admin/dashboard" class="flex items-center justify-center h-10 text-[13.5px] font-semibold text-muted hover:text-ink transition-colors">Ir al panel</a>
             </section>
@@ -71,7 +72,9 @@ const steps = `
 
 export function pageAdminLogin(state) {
   if (state?.isAdminAuthed) {
-    return { title: 'Seguridad | G&L', html: `<div class="max-w-md">${steps}</div>`, onMount }
+    // Dentro del panel el titulo de la pagina ya es el h1 de la cabecera.
+    const inner = steps.replace('<h1 ', '<h2 ').replace('</h1>', '</h2>')
+    return { title: 'Seguridad | G&L', html: `<div class="max-w-md">${inner}</div>`, onMount }
   }
   return {
     title: 'Login vendedores | G&L',
@@ -130,6 +133,8 @@ async function onMount(root) {
   const retryBox = $('#mfa-retry')
   const security = $('#mfa-security')
   const errorBox = $('#admin-error')
+  const statusLine = $('#step-status')
+  const title = $('#step-title')
   const submitBtn = $('#admin-submit')
   const passInput = $('#admin-pass')
   const eyeBtn = $('#toggle-pass')
@@ -141,28 +146,37 @@ async function onMount(root) {
   const mfaSubmit = $('#mfa-submit')
   const cancelBtn = $('#mfa-cancel')
   const devices = $('#mfa-devices')
-  const statusLine = $('#mfa-status')
+  const addBtn = $('#mfa-add')
 
   let enrollFactorId = null // factor en alta; null = codigo de un factor ya verificado
   let addingDevice = false  // alta de otro dispositivo desde Seguridad (ya en aal2)
 
   const show = (el) => {
     for (const x of [loading, loginForm, mfaForm, retryBox, security]) x.classList.toggle('hidden', x !== el)
+    // Al cambiar de paso, el lector de pantalla empieza por el titulo nuevo.
+    if (el !== loading) title.focus()
   }
 
-  const setHead = (eyebrow, title, lead) => {
+  const setHead = (eyebrow, text, lead) => {
     $('#step-eyebrow').textContent = eyebrow
-    $('#step-title').textContent = title
+    title.textContent = text
     const leadEl = $('#step-lead')
     leadEl.textContent = lead
     leadEl.classList.toggle('hidden', !lead)
   }
 
-  const setError = (msg) => {
-    codeInput.toggleAttribute('aria-invalid', Boolean(msg))
+  // field: el campo al que se refiere el error (aria-invalid solo en ese).
+  const setError = (msg, field) => {
+    for (const f of [passInput, codeInput]) f.removeAttribute('aria-invalid')
     if (!msg) { errorBox.classList.add('hidden'); errorBox.textContent = ''; return }
+    if (field) field.setAttribute('aria-invalid', 'true')
     errorBox.textContent = msg
     errorBox.classList.remove('hidden')
+  }
+
+  const showLoading = (text) => {
+    loading.textContent = text
+    show(loading)
   }
 
   eyeBtn.addEventListener('click', () => {
@@ -208,51 +222,65 @@ async function onMount(root) {
   }
 
   const showSecurity = async (status = '') => {
+    showLoading('Cargando tus dispositivos…')
+    const res = await listMfaFactors()
     setHead('Cuenta', 'Seguridad', 'Los dispositivos con los que entras al admin. Ten al menos dos, por si pierdes uno.')
-    const list = await listMfaFactors()
-    devices.replaceChildren(...list.map((f) => {
-      const li = document.createElement('li')
-      li.className = 'flex items-center justify-between gap-3 px-4 py-3 text-[14px]'
-      const name = document.createElement('span')
-      name.className = 'font-semibold text-ink'
-      name.textContent = f.friendly_name || 'Dispositivo'
-      const date = document.createElement('span')
-      date.className = 'text-muted text-[13px]'
-      date.textContent = f.created_at ? `Desde ${new Date(f.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''
-      li.append(name, date)
-      return li
-    }))
-    if (!list.length) {
+    const item = (text) => {
       const li = document.createElement('li')
       li.className = 'px-4 py-3 text-[14px] text-muted'
-      li.textContent = 'Aún no tienes dispositivos dados de alta.'
-      devices.append(li)
+      li.textContent = text
+      return li
     }
-    statusLine.textContent = status
+    if (res.error) {
+      // Sin la lista no se sabe que nombre esta libre: no se ofrece el alta.
+      devices.replaceChildren(item(res.error))
+      addBtn.disabled = true
+    } else {
+      addBtn.disabled = false
+      devices.replaceChildren(...res.factors.map((f) => {
+        const li = document.createElement('li')
+        li.className = 'flex items-center justify-between gap-3 px-4 py-3 text-[14px]'
+        const name = document.createElement('span')
+        name.className = 'font-semibold text-ink'
+        name.textContent = f.friendly_name || 'Dispositivo'
+        const date = document.createElement('span')
+        date.className = 'text-muted text-[13px]'
+        date.textContent = f.created_at ? `Desde ${new Date(f.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''
+        li.append(name, date)
+        return li
+      }))
+      if (!res.factors.length) devices.append(item('Aún no tienes dispositivos dados de alta.'))
+    }
     show(security)
+    statusLine.textContent = status
   }
 
-  const showCode = async (step) => {
+  const showChallenge = () => {
+    enrollFactorId = null
+    codeInput.value = ''
+    enrollBox.classList.add('hidden')
+    cancelBtn.textContent = 'Usar otra cuenta'
+    setHead('Segundo paso', 'Verificación en dos pasos', 'Abre tu app de autenticación y escribe el código de 6 dígitos de G&L.')
+    show(mfaForm)
+  }
+
+  const showEnroll = async () => {
     setError('')
     codeInput.value = ''
-    cancelBtn.textContent = addingDevice ? 'Cancelar' : 'Usar otra cuenta'
+    showLoading('Preparando el alta…')
 
-    if (step === 'challenge') {
-      enrollFactorId = null
-      enrollBox.classList.add('hidden')
-      setHead('Segundo paso', 'Verificación en dos pasos', 'Abre tu app de autenticación y escribe el código de 6 dígitos de G&L.')
-      show(mfaForm)
-      codeInput.focus()
-      return
+    let names = []
+    if (addingDevice) {
+      const list = await listMfaFactors()
+      if (list.error) { addingDevice = false; await showSecurity(); setError(list.error); return }
+      names = list.factors.map((f) => f.friendly_name)
     }
-
-    loading.textContent = 'Preparando el alta…'
-    show(loading)
-    const names = addingDevice ? (await listMfaFactors()).map((f) => f.friendly_name) : []
     const res = await startMfaEnroll(factorName(names))
+    if (res.challenge) { addingDevice = false; showChallenge(); return }
     if (res.error) {
       setError(res.error)
       if (addingDevice) { addingDevice = false; await showSecurity(); return }
+      setHead('Segundo paso', 'Activa la verificación en dos pasos', '')
       show(retryBox)
       return
     }
@@ -267,27 +295,48 @@ async function onMount(root) {
     qrBox.replaceChildren(qr)
     secretInput.value = res.secret
     copyBtn.textContent = 'Copiar'
+    $('#mfa-intro').textContent = addingDevice
+      ? 'Escanea este código con la app de autenticación del otro dispositivo (Google Authenticator, 1Password o Authy) y escribe el código de 6 dígitos que te da.'
+      : 'Para entrar al admin necesitas un segundo paso. Escanea este código con Google Authenticator, 1Password o Authy y escribe el código de 6 dígitos.'
+    cancelBtn.textContent = addingDevice ? 'Cancelar' : 'Usar otra cuenta'
     enrollBox.classList.remove('hidden')
     setHead('Segundo paso', addingDevice ? 'Agregar otro dispositivo' : 'Activa la verificación en dos pasos', '')
     show(mfaForm)
-    codeInput.focus()
+  }
+
+  // Marca la sesion como admin (admin_users). Error -> vuelve a la contraseña.
+  const complete = async () => {
+    if (isAdminAuthed()) return true
+    const r = await completeAdminLogin()
+    if (r.error) { setError(r.error); showLogin(); return false }
+    // Con la sesión de admin el catálogo trae también los borradores.
+    refreshProducts().catch(() => {})
+    return true
   }
 
   const finish = async () => {
-    const r = await completeAdminLogin()
-    if (r.error) { setError(r.error); showLogin(); return }
+    if (!(await complete())) return
     failCount = 0
     clearTimeout(lockTimer)
-    // Con la sesión de admin el catálogo trae también los borradores.
-    refreshProducts().catch(() => {})
     navigate('/admin/dashboard')
   }
 
   const decide = async () => {
-    const step = await getMfaStep()
+    setError('')
+    statusLine.textContent = ''
+    let step
+    try {
+      step = await getMfaStep()
+    } catch {
+      setError('No se pudo comprobar la sesión. Inténtalo de nuevo.')
+      showLogin()
+      return
+    }
     if (step === 'login') return showLogin()
-    if (step === 'none') return isAdminAuthed() ? showSecurity() : finish()
-    return showCode(step)
+    // aal2: la pagina es Seguridad, tambien si se abrio directo.
+    if (step === 'none') { if (await complete()) await showSecurity(); return }
+    if (step === 'challenge') return showChallenge()
+    return showEnroll()
   }
 
   loginForm.addEventListener('submit', async (ev) => {
@@ -319,7 +368,7 @@ async function onMount(root) {
       // pestañas abiertas el fallo es del lock de sesion, y decir que la
       // contraseña esta mal manda a buscar por donde no es.
       const esCredencial = /invalid|credential|password|email/i.test(result.error)
-      setError(esCredencial ? 'Credenciales inválidas.' : result.error)
+      setError(esCredencial ? 'Credenciales inválidas.' : result.error, esCredencial ? passInput : null)
       // El bloqueo progresivo es contra la fuerza bruta. Un fallo que no es
       // de credenciales no deberia castigar al que si sabe su contraseña.
       if (esCredencial) startLockdown(submitBtn, 'Ingresar')
@@ -336,7 +385,7 @@ async function onMount(root) {
     if (Date.now() < lockUntil) return
 
     const code = cleanTotpCode(codeInput.value)
-    if (!code) { setError('Escribe los 6 dígitos del código.'); codeInput.focus(); return }
+    if (!code) { setError('Escribe los 6 dígitos del código.', codeInput); codeInput.focus(); return }
 
     setBusy(mfaSubmit, true, 'Verificar', 'Verificando…')
     let r
@@ -346,8 +395,14 @@ async function onMount(root) {
       setBusy(mfaSubmit, false, 'Verificar')
     }
 
+    // Sus factores se borraron (recuperacion): toca dar de alta uno nuevo.
+    if (r.enroll) { await showEnroll(); return }
+
     if (r.error) {
-      setError(r.error)
+      const msg = r.wrongCode && enrollFactorId
+        ? `${r.error} Si ya habías escaneado un código antes, bórralo de la app y escanea este.`
+        : r.error
+      setError(msg, codeInput)
       codeInput.select()
       if (r.wrongCode) startLockdown(mfaSubmit, 'Verificar')
       return
@@ -369,12 +424,14 @@ async function onMount(root) {
     showLogin()
   })
 
-  $('#mfa-add').addEventListener('click', () => {
+  addBtn.addEventListener('click', () => {
+    statusLine.textContent = ''
     addingDevice = true
-    showCode('enroll')
+    showEnroll()
   })
 
-  $('#mfa-retry-btn').addEventListener('click', () => { setError(''); showCode('enroll') })
+  $('#mfa-retry-btn').addEventListener('click', () => { setError(''); showEnroll() })
+  // Solo hasta la Fase D (Tarea 16 lo quita): no dejar fuera al dueño si el alta no arranca.
   $('#mfa-skip').addEventListener('click', () => { setError(''); finish() })
 
   copyBtn.addEventListener('click', async () => {

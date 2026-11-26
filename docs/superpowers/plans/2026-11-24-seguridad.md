@@ -661,6 +661,8 @@ Cubre B-9 (servidor). **Solo con dos dispositivos dados de alta y el dueño ya e
   - **Reversa** (si el admin queda fuera): `drop policy "admin_users_self_read" on public.admin_users; create policy "admin_users_self_read" on public.admin_users for select to authenticated using (auth.uid() = user_id);` — devuelve el acceso con solo contraseña; para que las funciones DEFINER dejen de pedir `aal2`, re-aplicar `is_admin()` de `security-base.sql` (solo pertenencia), lo que deja fuera solo enviar correos.
   - **Recuperación de un teléfono perdido** (la corre el controlador): `delete from auth.mfa_factors where user_id = '<uuid>' and id = '<factor>';` (o todos los del usuario); el admin entra con contraseña y da de alta un factor nuevo. También desde Supabase → Authentication → Users → el usuario.
 
+- [ ] **Step 3b: Quitar la salida blanda del login** (Tarea 13): en `src/pages/admin/adminLogin.js`, borrar el botón `#mfa-skip` ("Entrar sin segundo paso por ahora") y su manejador; `#mfa-retry` queda solo con `Reintentar`. Con `aal2` exigido, ese camino daría "no autorizado" y cerraría la sesión. `npm test` y build.
+
 - [ ] **Step 4: El controlador aplica** `admin-mfa.sql` y los archivos tocados, corre el check → `CHECK_OK`, y con el dueño: entra con código y ve pedidos; **la campana suena con un pedido de prueba** (realtime con token `aal2`); una sesión vieja `aal1` (otro navegador abierto desde antes) lleva al paso del código y no muestra datos; subir una foto a un producto funciona.
 
 - [ ] **Step 5: Commit** `fix(seguridad): el admin exige segundo factor en la base`.

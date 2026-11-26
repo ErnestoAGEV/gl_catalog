@@ -2,7 +2,7 @@ import { state, emit, createStoreError } from './state.js'
 import { supabase } from '../core/supabase.js'
 import { withTimeout } from '../utils/async.js'
 import { classifySessionResult } from '../utils/session.js'
-import { mfaStep } from '../utils/mfa.js'
+import { mfaStep, verifyAgainst } from '../utils/mfa.js'
 
 /** getSession() que ni se cuelga ni miente. No toca el lock de supabase-js. */
 async function leerSesion() {
@@ -185,35 +185,53 @@ export async function completeAdminLogin() {
   return { ok: true }
 }
 
-/** 'login' | 'none' | 'challenge' | 'enroll' (ver utils/mfa.js). */
+/** Factores de la cuenta, frescos del servidor (no de la sesion en cache). */
+async function fetchFactors() {
+  const { data, error } = await withTimeout(supabase.auth.mfa.listFactors(), 15000, 'La consulta de dispositivos')
+  if (error) throw error
+  return data
+}
+
+/**
+ * 'login' | 'none' | 'challenge' | 'enroll' (ver utils/mfa.js). Lanza si no se
+ * pudo comprobar (lock colgado, red): la pagina lo muestra y pide la contraseña.
+ * En aal1 se decide con listFactors() y no con session.user.factors, que puede
+ * estar viejo (factor borrado por recuperacion, o dado de alta en otra pestaña).
+ */
 export async function getMfaStep() {
   if (!supabase) return 'login'
+  const { data, error } = await withTimeout(supabase.auth.mfa.getAuthenticatorAssuranceLevel(), 8000, 'La sesión')
+  if (error) throw error
+  if (data?.currentLevel !== 'aal1') return mfaStep(data)
+  const factors = await fetchFactors()
+  return mfaStep({ currentLevel: 'aal1', nextLevel: factors.totp.length ? 'aal2' : 'aal1' })
+}
+
+/** { factors: [{ id, friendly_name, created_at }] } (solo verificados) | { error } */
+export async function listMfaFactors() {
+  if (!supabase) return { error: 'No hay conexión con la base de datos.' }
   try {
-    const { data, error } = await withTimeout(supabase.auth.mfa.getAuthenticatorAssuranceLevel(), 8000, 'La sesión')
-    if (error) return 'login'
-    return mfaStep(data)
+    const data = await fetchFactors()
+    return { factors: data.totp.map(({ id, friendly_name, created_at }) => ({ id, friendly_name, created_at })) }
   } catch {
-    // Lock colgado o red: se pide la contraseña otra vez, que siempre funciona.
-    return 'login'
+    return { error: 'No se pudieron cargar tus dispositivos.' }
   }
 }
 
-/** Factores TOTP verificados del usuario. */
-export async function listMfaFactors() {
-  if (!supabase) return []
-  const { data, error } = await supabase.auth.mfa.listFactors()
-  if (error) return []
-  return (data?.totp || []).map(({ id, friendly_name, created_at }) => ({ id, friendly_name, created_at }))
-}
-
+/** { factorId, qr, secret } | { challenge: true } (ya tiene factor y le falta el codigo) | { error } */
 export async function startMfaEnroll(name) {
   if (!supabase) return { error: 'No hay conexión con la base de datos.' }
   try {
-    const { data: list, error: listError } = await withTimeout(supabase.auth.mfa.listFactors(), 15000, 'La consulta de dispositivos')
-    if (listError) return { error: 'No se pudo preparar el alta. Reintenta en un momento.' }
+    const list = await fetchFactors()
+    // Con un factor verificado, un alta solo se permite en aal2 (agregar otro
+    // dispositivo). En aal1 lo que falta es el codigo, no otra alta.
+    if (list.totp.length) {
+      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+      if (aal?.currentLevel !== 'aal2') return { challenge: true }
+    }
     // Un alta a medias (se recargo la pagina antes del codigo) deja un factor
     // sin verificar que bloquea la siguiente: se borran antes de empezar.
-    for (const f of list?.all || []) {
+    for (const f of list.all) {
       if (f.status === 'unverified') await supabase.auth.mfa.unenroll({ factorId: f.id })
     }
     const { data, error } = await withTimeout(
@@ -228,27 +246,34 @@ export async function startMfaEnroll(name) {
   }
 }
 
-/** { ok } | { error, wrongCode } — wrongCode cuenta para el bloqueo progresivo. */
+const WRONG_CODE = 'Código incorrecto. Revisa la hora de tu teléfono e inténtalo de nuevo.'
+const VERIFY_FAILED = 'No se pudo verificar el código. Recarga la página e inténtalo de nuevo.'
+
+/**
+ * { ok } | { error, wrongCode } | { enroll: true } (ya no tiene factores: se
+ * borraron para recuperarlo). wrongCode cuenta para el bloqueo progresivo.
+ * Sin factorId se prueba contra todos los verificados: cada telefono da su codigo.
+ */
 export async function verifyMfa(code, factorId) {
   if (!supabase) return { error: 'No hay conexión con la base de datos.' }
   try {
-    if (!factorId) {
-      const { data } = await supabase.auth.mfa.listFactors()
-      factorId = data?.totp?.[0]?.id
-      if (!factorId) return { error: 'No encontramos tu dispositivo. Recarga la página e inténtalo de nuevo.' }
+    let ids = factorId ? [factorId] : null
+    if (!ids) {
+      ids = (await fetchFactors()).totp.map((f) => f.id)
+      if (!ids.length) return { enroll: true }
     }
-    const { error } = await withTimeout(
-      supabase.auth.mfa.challengeAndVerify({ factorId, code }),
-      20000,
-      'La verificación'
-    )
-    if (!error) return { ok: true }
-    if (error.code === 'mfa_verification_failed' || /invalid totp code/i.test(error.message || '')) {
-      return { error: 'Código incorrecto. Revisa la hora de tu teléfono e inténtalo de nuevo.', wrongCode: true }
-    }
-    return { error: 'No se pudo verificar el código. Recarga la página e inténtalo de nuevo.' }
+    const r = await verifyAgainst(ids, async (id) => {
+      const { error } = await withTimeout(
+        supabase.auth.mfa.challengeAndVerify({ factorId: id, code }),
+        20000,
+        'La verificación'
+      )
+      return error
+    })
+    if (r.ok) return { ok: true }
+    return r.wrongCode ? { error: WRONG_CODE, wrongCode: true } : { error: VERIFY_FAILED }
   } catch {
-    return { error: 'No se pudo verificar el código. Recarga la página e inténtalo de nuevo.' }
+    return { error: VERIFY_FAILED }
   }
 }
 
