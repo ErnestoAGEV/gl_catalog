@@ -4,7 +4,7 @@ import { getState, subscribeNewsletter, isSubscribedNewsletter, getMostViewedPro
 import { on, qs } from '../../utils/dom.js'
 import { navigate } from '../../core/router.js'
 import { bestSellerRow, homeSkeletonCard } from './homeCards.js'
-import { sanitizeEmail } from '../../utils/sanitize.js'
+import { sanitizeEmail, escapeHtml } from '../../utils/sanitize.js'
 import { formatMoney } from '../../utils/format.js'
 import { stores, reviews } from './homeData.js'
 import { resolveHomeContent } from './homeContent.js'
@@ -34,7 +34,7 @@ export function pageHome() {
         <span class="w-1.5 h-1.5 rounded-full bg-brand"></span>
         <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink/60">Más vendido</span>
       </div>
-      <p class="font-heading font-bold text-[15px] text-ink leading-tight">${topProduct.name}</p>
+      <p class="font-heading font-bold text-[15px] text-ink leading-tight">${escapeHtml(topProduct.name)}</p>
       <span class="font-mono text-[13px] text-ink/70 shrink-0">${formatMoney(topProduct.price)}</span>
     </a>
   ` : ''

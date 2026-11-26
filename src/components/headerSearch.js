@@ -50,7 +50,7 @@ function resultRow(p) {
   return `
     <a href="${productPath(p)}" data-hsearch-result class="group flex items-center gap-4 p-2 -m-2 rounded-xl hover:bg-fog focus:bg-fog focus:outline-none transition-colors">
       <span class="shrink-0 w-14 h-[70px] rounded-lg overflow-hidden bg-fog">
-        ${img ? `<img src="${img}" alt="" loading="lazy" decoding="async" class="w-full h-full ${fit}" />` : ''}
+        ${img ? `<img src="${escapeHtml(String(img))}" alt="" loading="lazy" decoding="async" class="w-full h-full ${fit}" />` : ''}
       </span>
       <span class="min-w-0">
         <span class="block font-mono text-[10px] tracking-[0.18em] uppercase text-ink/50">${escapeHtml(p.type || '')}</span>

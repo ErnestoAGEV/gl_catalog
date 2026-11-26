@@ -341,7 +341,7 @@ export async function startApp(mountEl) {
         <button type="button" data-reload class="inline-flex items-center gap-2 bg-ink text-paper px-7 h-[52px] rounded-full text-[13px] font-semibold hover:bg-brand transition-colors">
           Reintentar
         </button>
-        <p class="mt-8 font-mono text-[10px] text-ink/40 max-w-[60ch] break-words">${msg}</p>
+        <p class="mt-8 font-mono text-[10px] text-ink/40 max-w-[60ch] break-words">${escapeHtml(String(msg))}</p>
       </div>
     `
   }

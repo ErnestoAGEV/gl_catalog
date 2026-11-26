@@ -157,7 +157,7 @@ export function pageAdminClientes(state) {
               <div class="p-4 flex flex-col sm:flex-row sm:items-center gap-3 border-b border-line">
                 <div class="relative flex-1 min-w-0">
                   <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-faint">${ICON.search('w-[18px] h-[18px]')}</span>
-                  <input id="clients-search" placeholder="Buscar por nombre o WhatsApp..." class="adm-fld pl-10" value="${searchTerm}" />
+                  <input id="clients-search" placeholder="Buscar por nombre o WhatsApp..." class="adm-fld pl-10" value="${esc(searchTerm)}" />
                 </div>
                 <button id="clients-export" class="adm-btn adm-btn-ghost">${ICON.arrowUpR('w-4 h-4')} Exportar CSV</button>
               </div>

@@ -558,7 +558,7 @@ export function pageProduct(initialState) {
         thumbsEl.innerHTML = images.map((img, i) => `
           <button type="button" class="thumb${i === idx ? ' active' : ''}${isPerfume ? ' !bg-white' : ''}" data-i="${i}" aria-label="Ver imagen ${i + 1} de ${images.length}"${i === idx ? ' aria-current="true"' : ''}>
             <span class="idx" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
-            <img src="${img}" alt="thumb ${i + 1}" loading="lazy" decoding="async" class="${isPerfume ? 'object-contain p-1' : ''}"/>
+            <img src="${escapeHtml(String(img))}" alt="thumb ${i + 1}" loading="lazy" decoding="async" class="${isPerfume ? 'object-contain p-1' : ''}"/>
           </button>
         `).join('')
         thumbsEl.querySelectorAll('.thumb').forEach(b => b.addEventListener('click', () => go(Number(b.dataset.i))))

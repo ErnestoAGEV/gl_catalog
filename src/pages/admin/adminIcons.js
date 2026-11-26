@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from '../../utils/sanitize.js'
 const S = (p, cls = '') =>
   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="${cls}">${p}</svg>`
 
@@ -55,7 +56,7 @@ export function statusPill(status) {
   }
   const m = map[(status || '').toLowerCase()] || { label: status || '-', cls: 'text-muted bg-line', dot: '#A4A8B2' }
   return `<span class="inline-flex items-center gap-1.5 px-2.5 h-[22px] rounded-full text-[11px] font-semibold ${m.cls}">
-    <span class="w-1.5 h-1.5 rounded-full" style="background:${m.dot}"></span>${m.label}</span>`
+    <span class="w-1.5 h-1.5 rounded-full" style="background:${m.dot}"></span>${esc(m.label)}</span>`
 }
 
 export function statCard({ eyebrow, value, icon, delta, deltaDir, foot, accent }) {

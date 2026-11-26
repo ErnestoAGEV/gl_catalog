@@ -38,7 +38,7 @@ function promoCard(p) {
   const scope = p.categories?.length ? p.categories.map(escapeHtml).join(', ') : 'Toda la tienda'
   return `
     <div class="bg-paper rounded-3xl border border-line shadow-card overflow-hidden ${!p.active ? 'opacity-60' : ''}">
-      ${p.accent_color ? `<div class="h-1.5" style="background:${p.accent_color}"></div>` : ''}
+      ${/^#[0-9a-fA-F]{6}$/.test(p.accent_color || '') ? `<div class="h-1.5" style="background:${p.accent_color}"></div>` : ''}
       <div class="p-5 space-y-3">
         <div class="flex items-start justify-between gap-2">
           <span class="inline-flex items-center px-2 h-[20px] rounded-md text-[10.5px] font-semibold ${st.cls}">${st.label}</span>

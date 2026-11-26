@@ -1,6 +1,7 @@
 import { formatMoney } from '../../utils/format.js'
 import { isInfiniteStock } from '../../utils/stock.js'
 import { ICON } from './adminIcons.js'
+import { escapeHtml as esc } from '../../utils/sanitize.js'
 
 // El admin muestra el precio de la base; el de promo va aparte (src/utils/promotions.js)
 const basePrice = (p) => p.basePrice ?? p.price
@@ -24,7 +25,7 @@ function badgePill(badge) {
     Premium: 'bg-ink text-white',
     Borrador: 'bg-line text-muted',
   }
-  return `<span class="inline-flex items-center px-1.5 h-[18px] rounded text-[10px] font-bold ${map[badge] || 'bg-line text-muted'}">${badge}</span>`
+  return `<span class="inline-flex items-center px-1.5 h-[18px] rounded text-[10px] font-bold ${map[badge] || 'bg-line text-muted'}">${esc(badge)}</span>`
 }
 
 export function productCard(p) {
@@ -32,24 +33,24 @@ export function productCard(p) {
   const isPublished = p.badge !== 'Borrador'
 
   return `
-    <tr class="border-t border-line hover:bg-canvas transition-colors group" data-product data-id="${p.id}">
+    <tr class="border-t border-line hover:bg-canvas transition-colors group" data-product data-id="${esc(String(p.id))}">
       <td class="px-5 py-3">
         <div class="flex items-center gap-3">
           ${img
-            ? `<div class="w-11 h-11 rounded-[10px] overflow-hidden bg-canvas border border-line shrink-0"><img src="${img}" alt="${p.name}" class="w-full h-full object-cover" loading="lazy"/></div>`
+            ? `<div class="w-11 h-11 rounded-[10px] overflow-hidden bg-canvas border border-line shrink-0"><img src="${esc(String(img))}" alt="${esc(p.name)}" class="w-full h-full object-cover" loading="lazy"/></div>`
             : `<div class="w-11 h-11 rounded-[10px] bg-canvas border border-line flex items-center justify-center shrink-0 text-faint">${ICON.products('w-5 h-5')}</div>`
           }
           <div class="min-w-0">
             <div class="flex items-center gap-1.5">
-              <p class="text-[13.5px] font-semibold text-ink truncate max-w-[220px]">${p.name}</p>
+              <p class="text-[13.5px] font-semibold text-ink truncate max-w-[220px]">${esc(p.name)}</p>
               ${badgePill(p.badge)}
             </div>
-            <p class="text-[11.5px] text-faint mt-0.5 truncate">${(p.sizes || []).join(', ')}${p.colors?.length ? ' · ' + p.colors.slice(0, 3).join(', ') : ''}</p>
+            <p class="text-[11.5px] text-faint mt-0.5 truncate">${esc((p.sizes || []).map(String).join(', '))}${p.colors?.length ? ' · ' + esc(p.colors.slice(0, 3).map(String).join(', ')) : ''}</p>
           </div>
         </div>
       </td>
       <td class="px-5 py-3">
-        <span class="inline-flex items-center px-2 h-[24px] rounded-md bg-canvas border border-line text-[12px] font-medium text-body">${p.type || 'Sin categoría'}</span>
+        <span class="inline-flex items-center px-2 h-[24px] rounded-md bg-canvas border border-line text-[12px] font-medium text-body">${esc(p.type || 'Sin categoría')}</span>
       </td>
       <td class="px-5 py-3 text-right">
         <p class="text-[14px] font-bold text-ink tnum">${formatMoney(basePrice(p))}</p>
@@ -78,17 +79,17 @@ export function productCardMobile(p) {
   const isPublished = p.badge !== 'Borrador'
 
   return `
-    <div class="p-4 hover:bg-canvas transition-colors" data-product data-id="${p.id}">
+    <div class="p-4 hover:bg-canvas transition-colors" data-product data-id="${esc(String(p.id))}">
       <div class="space-y-3">
         <div class="flex items-start justify-between gap-3">
           <div class="flex items-center gap-3 flex-1 min-w-0">
             ${img
-              ? `<div class="w-12 h-12 rounded-[10px] overflow-hidden bg-canvas border border-line shrink-0"><img src="${img}" alt="${p.name}" class="w-full h-full object-cover" loading="lazy"/></div>`
+              ? `<div class="w-12 h-12 rounded-[10px] overflow-hidden bg-canvas border border-line shrink-0"><img src="${esc(String(img))}" alt="${esc(p.name)}" class="w-full h-full object-cover" loading="lazy"/></div>`
               : `<div class="w-12 h-12 rounded-[10px] bg-canvas border border-line flex items-center justify-center shrink-0 text-faint">${ICON.products('w-5 h-5')}</div>`
             }
             <div class="min-w-0">
-              <div class="flex items-center gap-1.5"><p class="font-semibold text-ink text-[13.5px] line-clamp-2">${p.name}</p>${badgePill(p.badge)}</div>
-              <p class="text-[12px] text-faint mt-0.5">${p.type || 'Sin categoría'}</p>
+              <div class="flex items-center gap-1.5"><p class="font-semibold text-ink text-[13.5px] line-clamp-2">${esc(p.name)}</p>${badgePill(p.badge)}</div>
+              <p class="text-[12px] text-faint mt-0.5">${esc(p.type || 'Sin categoría')}</p>
             </div>
           </div>
           <div class="flex gap-1 shrink-0">

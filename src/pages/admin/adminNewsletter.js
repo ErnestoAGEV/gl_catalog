@@ -132,7 +132,7 @@ export function pageAdminNewsletter(state) {
       kpis.innerHTML = `
         ${statCard({ eyebrow: 'Suscritos activos', value: subscribers.filter(isActive).length.toLocaleString(), icon: 'mail', foot: `${subscribers.filter(s => statusOf(s) === 'Pendiente').length} pendientes · ${subscribers.filter(s => s.unsubscribed_at).length} dados de baja` })}
         ${statCard({ eyebrow: 'Nuevos (7 días)', value: newThisWeek.toString(), icon: 'trendUp', delta: newThisWeek > 0 ? `+${newThisWeek}` : '0', deltaDir: newThisWeek > 0 ? 'up' : 'flat', accent: '#1E9E6A' })}
-        ${statCard({ eyebrow: 'Top dominio', value: topDomain ? `@${topDomain[0]}` : '—', icon: 'users', foot: topDomain ? `${topDomain[1]} suscriptores` : '' })}
+        ${statCard({ eyebrow: 'Top dominio', value: topDomain ? `@${esc(topDomain[0])}` : '—', icon: 'users', foot: topDomain ? `${topDomain[1]} suscriptores` : '' })}
       `
 
       let searchTerm = ''

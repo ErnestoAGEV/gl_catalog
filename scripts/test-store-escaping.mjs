@@ -17,6 +17,12 @@ for (const html of [productCard(p, 0), bestSellerRow(p, 0)]) {
   assert.ok(html.includes('&lt;img src=x'))
 }
 
+// Rompe-atributo: una comilla no debe cerrar alt/src/data-*
+const brk = { ...p, name: '" onmouseover="x', type: '" onmouseover="x', images: ['" onmouseover="x'] }
+for (const html of [productCard(brk, 0), bestSellerRow(brk, 0)]) {
+  assert.ok(!html.includes('" onmouseover="x'), 'comilla sin escapar en atributo')
+}
+
 // Datos normales: sin doble escape
 const ok = productCard({ id: 'y', name: 'Camisa Lino', type: 'Camisas', price: 100, images: ['https://x/a.webp?a=1&b=2'], sizes: ['M'], colors: ['Negro'] }, 0)
 assert.ok(ok.includes('Camisa Lino') && !ok.includes('&amp;amp;'))

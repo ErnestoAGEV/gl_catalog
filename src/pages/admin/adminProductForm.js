@@ -6,6 +6,7 @@ import {
   PERFUME_SIZE_OPTIONS,
   SHOE_SIZE_OPTIONS,
 } from './adminProductsData.js'
+import { escapeHtml as esc } from '../../utils/sanitize.js'
 import { ICON } from './adminIcons.js'
 
 /**
@@ -16,20 +17,20 @@ import { ICON } from './adminIcons.js'
  */
 export function colorBadgesHTML(allColors) {
   return allColors.length > 0 ? allColors.map(color => `
-    <button type="button" class="px-2.5 py-1 rounded-lg border border-line bg-canvas text-[12px] font-medium text-body hover:border-line-strong transition-colors" data-color-badge="${color}">
-      ${color}
+    <button type="button" class="px-2.5 py-1 rounded-lg border border-line bg-canvas text-[12px] font-medium text-body hover:border-line-strong transition-colors" data-color-badge="${esc(String(color))}">
+      ${esc(String(color))}
     </button>
   `).join('') : '<span class="text-[12px] text-faint italic">No hay colores registrados</span>'
 }
 
 export function productFormHTML(allColors, dynamicCategories, allBrands = []) {
-  const brandOptions = allBrands.map(b => `<option value="${b}"></option>`).join('')
+  const brandOptions = allBrands.map(b => `<option value="${esc(String(b))}"></option>`).join('')
   const badgeOptions = BADGE_OPTIONS.map(b =>
-    `<option value="${b.value}">${b.label}</option>`
+    `<option value="${esc(String(b.value))}">${esc(String(b.label))}</option>`
   ).join('')
   const categories = dynamicCategories && dynamicCategories.length > 0 ? dynamicCategories : CATEGORY_OPTIONS
   const categoryOptions = categories.map(c =>
-    `<option value="${c}">${c}</option>`
+    `<option value="${esc(String(c))}">${esc(String(c))}</option>`
   ).join('')
 
   return `

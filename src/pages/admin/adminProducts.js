@@ -10,6 +10,7 @@ import { productCard, productCardMobile } from './adminProductCard.js'
 import { productFormHTML, colorBadgesHTML } from './adminProductForm.js'
 import { productBrand, productModel } from '../../utils/productCopy.js'
 import { confirmDelete } from './adminConfirm.js'
+import { escapeHtml as esc } from '../../utils/sanitize.js'
 import { ICON } from './adminIcons.js'
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -104,7 +105,7 @@ export function pageAdminProducts(state) {
             <div class="flex items-center gap-2 shrink-0">
               <select id="filter-type" class="adm-fld w-auto min-w-[120px]">
                 <option value="all">Categoría</option>
-                ${allTypes.map(type => `<option value="${type}">${type}</option>`).join('')}
+                ${allTypes.map(type => `<option value="${esc(type)}">${esc(type)}</option>`).join('')}
               </select>
               <select id="filter-status" class="adm-fld w-auto min-w-[110px]">
                 <option value="all">Estado</option>

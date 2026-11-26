@@ -28,8 +28,9 @@ assert.deepEqual(leaks, [], `Datos del cliente sin escapar:\n${leaks.join('\n')}
 // Tienda: nombres de producto/categoria, resenas y notificaciones tambien llegan a innerHTML.
 // Un ${p.name} pelado (sin escapeHtml/esc) falla; "// not-html:" lo exime igual que arriba.
 const STORE_FILES = ['src/core/startApp.js', 'src/pages/catalog/catalog.js', 'src/pages/catalog/catalogCard.js',
-  'src/pages/home/homeCards.js', 'src/pages/product/product.js', 'src/pages/admin/adminCategories.js']
-const BARE = /\$\{\s*(?:p\.name|cat\.name|r\.quote|n\.title|n\.body|x|c)\s*\}/g
+  'src/pages/home/homeCards.js', 'src/pages/home/home.js', 'src/pages/product/product.js', 'src/pages/admin/adminCategories.js',
+  'src/pages/admin/adminProductCard.js', 'src/pages/admin/adminProductForm.js', 'src/pages/admin/adminProducts.js', 'src/components/headerSearch.js']
+const BARE = /\$\{\s*(?:p\.name|p\.type|p\.id|cat\.name|r\.quote|n\.title|n\.body|topProduct\.name|x|c|b|badge|type|color|b\.label|b\.value)\s*\}/g
 const storeLeaks = []
 for (const file of STORE_FILES) {
   const lines = readFileSync(file, 'utf8').split('\n')
@@ -39,6 +40,9 @@ for (const file of STORE_FILES) {
   })
 }
 assert.deepEqual(storeLeaks, [], `Datos de la tienda sin escapar:\n${storeLeaks.join('\n')}`)
+
+// El toast pinta con textContent: un ${message} en su plantilla lo reabriria.
+assert.ok(!readFileSync('src/utils/toast.js', 'utf8').includes('${message}'), 'toast.js interpola message en HTML')
 
 assert.equal(escapeHtml('<img src=x onerror=alert(1)>'), '&lt;img src=x onerror=alert(1)&gt;')
 assert.equal(escapeHtml('" onmouseover="x'), '&quot; onmouseover=&quot;x')
