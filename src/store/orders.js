@@ -1,6 +1,7 @@
 import { state } from './state.js'
 import { supabase } from '../core/supabase.js'
 import { ensureAdminAccess } from './auth.js'
+import { toRpcArgs } from '../utils/manualOrder.js'
 
 /**
  * El pedido lo arma la base, no el navegador: place_order relee los precios de
@@ -26,6 +27,14 @@ export async function saveOrder({ name, whatsapp, email, paymentMethod, delivery
   })
   // hint 'whatsapp': tope de pedidos alcanzado, el checkout ofrece pedir por WhatsApp
   return { error: error ? { message: error.message, details: error.details, hint: error.hint } : null }
+}
+
+// Pedido capturado por el admin (WhatsApp). La base valida precios, stock y cupon; ver supabase/manual-orders.sql
+export async function createManualOrder(form) {
+  const access = await ensureAdminAccess()
+  if (!access.ok) return { error: { message: access.error.message } }
+  const { data, error } = await supabase.rpc('admin_place_order', toRpcArgs(form))
+  return error ? { error: { message: error.message } } : { order: data }
 }
 
 export async function getAdminOrders() {

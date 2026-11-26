@@ -57,6 +57,18 @@ export async function applyCoupon(code, silent = false) {
   return { success: true, coupon: state.coupon }
 }
 
+// Valida un cupon sin tocar el carrito ni `state` (vista previa del admin).
+export async function checkCoupon(code) {
+  const normalizedCode = sanitizeCouponCode(code)
+  if (!normalizedCode) return { error: 'Código de cupón inválido' }
+  if (!supabase) return { error: 'No se pudo validar el cupón. Intenta de nuevo.' }
+  const { data, error } = await supabase.rpc('validate_coupon', { p_code: normalizedCode })
+  if (error) return { error: error.hint === 'rate' ? error.message : 'No se pudo validar el cupón. Intenta de nuevo.' }
+  const c = data?.[0]
+  if (!c) return { error: 'Cupón no válido o expirado' }
+  return { coupon: { code: c.code, discount: Number(c.discount), freeShipping: c.free_shipping, label: c.label, categories: c.categories || [], firstPurchaseOnly: Boolean(c.first_purchase_only) } }
+}
+
 export function removeCoupon(silent = false) {
   state.coupon = null
   writeJson(STORAGE_KEYS.coupon, null)
