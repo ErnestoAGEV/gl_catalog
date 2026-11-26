@@ -48,7 +48,7 @@ function recommendedCard(p, i) {
       <div class="aspect-[4/5] rounded-md overflow-hidden ${bgCls} relative">
         <img src="${img}" alt="${safeName}" class="w-full h-full ${imgCls} transition-transform duration-700 group-hover:scale-105" loading="lazy" onerror="this.src='/placeholder.webp'"/>
         <div class="absolute top-3 right-3 font-mono text-[11px] tracking-[0.2em] uppercase text-ink/60 bg-paper/85 backdrop-blur px-2 py-1 rounded-full">${ord}</div>
-        <button data-quick-add="${p.id}" type="button" class="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-paper/90 backdrop-blur flex items-center justify-center text-ink hover:bg-ink hover:text-paper transition-colors opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 focus-visible:opacity-100 focus-visible:translate-y-0 [@media(hover:none)]:opacity-100 [@media(hover:none)]:translate-y-0 z-10" aria-label="Agregar rápido">
+        <button data-quick-add="${escapeHtml(String(p.id))}" type="button" class="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-paper/90 backdrop-blur flex items-center justify-center text-ink hover:bg-ink hover:text-paper transition-colors opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 focus-visible:opacity-100 focus-visible:translate-y-0 [@media(hover:none)]:opacity-100 [@media(hover:none)]:translate-y-0 z-10" aria-label="Agregar rápido">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
         </button>
       </div>
@@ -229,7 +229,7 @@ export function pageProduct(initialState) {
 
   /* ── Swatches ── */
   const swatchesHtml = hasColors ? product.colors.map((c, i) =>
-    `<button type="button" class="swatch-btn min-h-11${i === 0 ? ' active' : ''}" aria-pressed="${i === 0}" data-color="${c}"><span class="swatch-chip" style="background:${colorHex(c)}"></span><span class="name">${c}</span></button>`
+    `<button type="button" class="swatch-btn min-h-11${i === 0 ? ' active' : ''}" aria-pressed="${i === 0}" data-color="${escapeHtml(String(c))}"><span class="swatch-chip" style="background:${escapeHtml(colorHex(c))}"></span><span class="name">${escapeHtml(String(c))}</span></button>`
   ).join('') : ''
 
   /* ── Sizes ── */
@@ -354,7 +354,7 @@ export function pageProduct(initialState) {
                 ${hasColors ? `
                 <div class="mb-4">
                   <div class="flex items-center justify-between mb-2">
-                    <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/65">Color · <span class="text-ink" id="pdp-color-name">${product.colors[0]}</span></span>
+                    <span class="font-mono text-[11px] tracking-[0.28em] uppercase text-ink/65">Color · <span class="text-ink" id="pdp-color-name">${escapeHtml(String(product.colors[0]))}</span></span>
                   </div>
                   <div class="flex items-center gap-2.5 flex-wrap" id="pdp-colors">${swatchesHtml}</div>
                 </div>` : ''}
@@ -381,7 +381,7 @@ export function pageProduct(initialState) {
                   <!-- aria-disabled y no disabled: sigue enfocable, asi el teclado
                        y el lector de pantalla se enteran de por que no agrega, y
                        el foco no se pierde al marcar "Agregado" -->
-                  <button type="button" id="qv-add-to-cart" data-product-id="${product.id}" ${!inStock || (hasSizes && !initialSize) ? 'aria-disabled="true" aria-describedby="pdp-cta-hint"' : 'aria-disabled="false"'} class="press group relative flex items-center justify-center w-full bg-ink text-paper h-14 rounded-full text-[15px] font-semibold hover:bg-brand transition-colors aria-disabled:opacity-40 aria-disabled:cursor-not-allowed aria-disabled:hover:bg-ink">
+                  <button type="button" id="qv-add-to-cart" data-product-id="${escapeHtml(String(product.id))}" ${!inStock || (hasSizes && !initialSize) ? 'aria-disabled="true" aria-describedby="pdp-cta-hint"' : 'aria-disabled="false"'} class="press group relative flex items-center justify-center w-full bg-ink text-paper h-14 rounded-full text-[15px] font-semibold hover:bg-brand transition-colors aria-disabled:opacity-40 aria-disabled:cursor-not-allowed aria-disabled:hover:bg-ink">
                     <span id="pdp-add-label" class="inline-flex items-center gap-2.5">
                       ${bagIcon}
                       ${ctaText(initialSize)}
@@ -426,7 +426,7 @@ export function pageProduct(initialState) {
                   </summary>
                   <div class="body">
                     ${hasDescription ? `<p class="mb-4">${safeDescription}</p>` : ''}
-                    ${specRows.length > 0 ? `<table class="specs">${specRows.map(r => `<tr><td class="k">${r.k}</td><td>${r.v}</td></tr>`).join('')}</table>` : ''}
+                    ${specRows.length > 0 ? `<table class="specs">${specRows.map(r => `<tr><td class="k">${r.k}</td><td>${escapeHtml(String(r.v))}</td></tr>`).join('')}</table>` : ''}
                   </div>
                 </details>` : ''}
 
@@ -504,8 +504,8 @@ export function pageProduct(initialState) {
               ${product.reviews.slice(0, 4).map(r => `
               <div>
                 <div class="flex items-center gap-1 text-[14px] mb-3">${Array.from({ length: 5 }, (_, i) => `<span${i >= (r.stars || 5) ? ' class="text-ink/30"' : ''}>★</span>`).join('')}</div>
-                <p class="font-display text-[20px] leading-snug tracking-[-0.02em] mb-3">"${r.quote}"</p>
-                <div class="font-mono text-[11px] tracking-[0.22em] uppercase text-ink/65">${r.name || ''}${r.location ? ' · ' + r.location : ''}${r.date ? ' · ' + r.date : ''}</div>
+                <p class="font-display text-[20px] leading-snug tracking-[-0.02em] mb-3">"${escapeHtml(String(r.quote ?? ""))}"</p>
+                <div class="font-mono text-[11px] tracking-[0.22em] uppercase text-ink/65">${escapeHtml(String(r.name || ''))}${r.location ? ' · ' + escapeHtml(String(r.location)) : ''}${r.date ? ' · ' + escapeHtml(String(r.date)) : ''}</div>
               </div>`).join('')}
             </div>
           </div>

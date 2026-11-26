@@ -36,7 +36,8 @@ export function showToast(message, type = 'success', duration = null) {
     ? `<button onclick="location.reload()" class="ml-2 text-xs underline underline-offset-2 opacity-80 hover:opacity-100 flex-shrink-0">Recargar</button>`
     : ''
 
-  toast.innerHTML = `${icon}<span class="flex-1">${message}</span>${retryBtn}`
+  toast.innerHTML = `${icon}<span class="flex-1"></span>${retryBtn}`
+  toast.querySelector('span.flex-1').textContent = message // texto plano: el mensaje puede traer nombres del cliente
 
   container.appendChild(toast)
 

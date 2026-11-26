@@ -38,8 +38,8 @@ export function productCard(p, idx) {
   const images = p.images && p.images.length > 0
     ? p.images
     : ['https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400&h=500&fit=crop']
-  const img1 = images[0]
-  const img2 = images[1] || images[0]
+  const img1 = escapeHtml(String(images[0]))
+  const img2 = escapeHtml(String(images[1] || images[0]))
   const ord = String(idx + 1).padStart(2, '0')
   const isPerfume = isPerfumeCategory(p.type)
   const imgClass = isPerfume ? 'pimg pimg-contain' : 'pimg'
@@ -65,30 +65,30 @@ export function productCard(p, idx) {
   // separador no hay marca que sacar y arriba va la categoria, como antes.
   const model = productModel(p.name)
   const hasBrand = model !== String(p.name || '').trim()
-  const eyebrow = hasBrand ? productBrand(p.name) : (p.type || '')
+  const eyebrow = escapeHtml(hasBrand ? productBrand(p.name) : (p.type || ''))
 
   // Colors / swatches
   const swatches = (p.colors || []).map(c => {
-    const hex = c.startsWith('#') ? c : colorNameToHex(c)
+    const hex = String(c).startsWith('#') ? c : colorNameToHex(c)
     return `<span class="swatch" style="background:${escapeHtml(hex)}"></span>`
   }).join('')
 
   // Sizes
-  const sizeText = sortSizes(p.sizes || []).slice(0, 5).join(' \u00B7 ')
+  const sizeText = escapeHtml(sortSizes(p.sizes || []).slice(0, 5).map(String).join(' · '))
 
   // Price
   const hasDiscount = p.originalPrice && p.originalPrice > p.price
   const priceClass = p.promo ? 'promo-text' : hasDiscount ? 'text-brand' : ''
 
   return `
-    <a href="${productPath(p)}" class="pcard group block" data-product-id="${p.id}" style="--i:${idx}">
+    <a href="${productPath(p)}" class="pcard group block" data-product-id="${escapeHtml(String(p.id))}" style="--i:${idx}">
       <div class="pimg-wrap${isPerfume ? ' bg-white' : ''}">
-        <img src="${img1}" alt="${p.name}" class="${imgClass}" ${idx < EAGER_CARDS ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async" />
+        <img src="${img1}" alt="${escapeHtml(p.name)}" class="${imgClass}" ${idx < EAGER_CARDS ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async" />
         <img data-src="${img2}" alt="" class="${imgAltClass}" loading="lazy" decoding="async" />
         <div class="badge-wrap">${badges.join('')}</div>
         <div class="hidden md:block absolute top-3 right-3 font-mono text-[11px] tracking-[0.2em] uppercase text-ink/70 bg-paper/80 backdrop-blur px-2 py-1 rounded-full" aria-hidden="true">${ord}</div>
         <div class="quick-add">
-          <button class="qa-btn" data-quickview="${p.id}" type="button" tabindex="-1">
+          <button class="qa-btn" data-quickview="${escapeHtml(String(p.id))}" type="button" tabindex="-1">
             <span>Ver producto</span>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg>
           </button>
@@ -98,7 +98,7 @@ export function productCard(p, idx) {
         <div class="min-w-0">
           <div class="font-mono text-[11px] tracking-[0.22em] uppercase text-ink/60 mb-1.5">${eyebrow}</div>
           <!-- Dos lineas reservadas: las tarjetas no bailan con modelos largos -->
-          <h2 class="font-display font-bold text-[15px] md:text-[18px] leading-tight tracking-[-0.02em] line-clamp-2 min-h-[2.5em]">${hasBrand ? model : p.name}</h2>
+          <h2 class="font-display font-bold text-[15px] md:text-[18px] leading-tight tracking-[-0.02em] line-clamp-2 min-h-[2.5em]">${escapeHtml(hasBrand ? model : p.name)}</h2>
         </div>
         <div class="text-right whitespace-nowrap flex-shrink-0">
           ${hasDiscount ? `<div class="font-mono text-[11px] text-ink/60 line-through">${formatMoney(p.originalPrice)}</div>` : ''}

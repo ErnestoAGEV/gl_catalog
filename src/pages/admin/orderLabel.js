@@ -124,7 +124,7 @@ export function mountLabelBlock(root, order, onChange) {
       } catch (e) { error = e || true }
       if (error) {
         const msg = `La guía se creó pero no se guardó. Anota el rastreo: ${l.tracking}`
-        showToast(esc(msg), 'error', 15000)
+        showToast(msg, 'error', 15000)
         return refresh({ error: msg })
       }
     }

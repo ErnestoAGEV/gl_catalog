@@ -1,6 +1,7 @@
 import { formatMoney } from '../../utils/format.js'
 import { productPath } from '../../utils/productCopy.js'
 import { isPerfumeCategory } from '../admin/adminProductsData.js'
+import { escapeHtml } from '../../utils/sanitize.js'
 
 export function homeSkeletonCard() {
   return `
@@ -18,9 +19,9 @@ export function homeSkeletonCard() {
 
 export function bestSellerRow(p, idx) {
   const rank = String(idx + 1).padStart(2, '0')
-  const img = p.images?.[0] || '/placeholder.webp'
+  const img = escapeHtml(String(p.images?.[0] || '/placeholder.webp'))
   const isPerfume = isPerfumeCategory(p.type)
-  const descriptor = p.type ? `${p.type}` : ''
+  const descriptor = p.type ? escapeHtml(String(p.type)) : ''
 
   return `
     <li class="ls-row relative py-6 px-3 border-b border-[#EAE9E4] cursor-pointer" data-href="${productPath(p)}">
@@ -29,7 +30,7 @@ export function bestSellerRow(p, idx) {
         <img class="md:hidden col-span-3 w-full aspect-[4/5] rounded-md bg-white ${isPerfume ? 'object-contain p-1' : 'object-cover'}" src="${img}" alt="" loading="lazy" decoding="async" onerror="this.src='/placeholder.webp'" />
         <span class="col-span-5 md:col-span-6 min-w-0">
           ${descriptor ? `<span class="md:hidden block font-mono text-[11px] tracking-[0.14em] uppercase text-ink/70 mb-1">${descriptor}</span>` : ''}
-          <span class="ls-name block font-heading font-bold text-[18px] md:text-[clamp(24px,2.5vw,40px)] tracking-[-0.03em] leading-tight">${p.name}</span>
+          <span class="ls-name block font-heading font-bold text-[18px] md:text-[clamp(24px,2.5vw,40px)] tracking-[-0.03em] leading-tight">${escapeHtml(p.name)}</span>
         </span>
         <span class="hidden md:block col-span-3 font-mono text-[12px] text-ink/55 uppercase tracking-wider">${descriptor}</span>
         <div class="col-span-4 md:col-span-2 flex flex-col md:flex-row items-end md:items-center justify-end gap-0 md:gap-1.5 font-mono text-[15px] font-semibold">
@@ -37,7 +38,7 @@ export function bestSellerRow(p, idx) {
           <span>${formatMoney(p.price)}</span>
         </div>
       </div>
-      <img class="thumb" src="${img}" alt="${p.name}" loading="lazy" onerror="this.src='/placeholder.webp'" />
+      <img class="thumb" src="${img}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="this.src='/placeholder.webp'" />
     </li>
   `
 }

@@ -35,7 +35,7 @@ export function pageCatalog(initialState) {
   const sizes = sortSizes(publicProducts.flatMap(p => p.sizes || []))
   const colors = uniqueSorted(publicProducts.flatMap(p => p.colors || []))
 
-  const options = (items, label) => [`<option value="">${label}</option>`, ...items.map(x => `<option value="${x}">${x}</option>`)].join('')
+  const options = (items, label) => [`<option value="">${label}</option>`, ...items.map(x => `<option value="${escapeHtml(String(x))}">${escapeHtml(String(x))}</option>`)].join('')
 
   // Determine initial category from URL
   const basePath = normalizePath(window.location.pathname)
@@ -567,17 +567,17 @@ export function pageCatalog(initialState) {
         const currentColors = uniqueSorted(publicProducts.flatMap(p => p.colors || []))
         root.querySelectorAll('select[name="type"]').forEach(sel => {
           const curr = sel.value
-          sel.innerHTML = `<option value="">Tipo</option>${currentTypes.map(x => `<option value="${x}">${x}</option>`).join('')}`
+          sel.innerHTML = `<option value="">Tipo</option>${currentTypes.map(x => `<option value="${escapeHtml(String(x))}">${escapeHtml(String(x))}</option>`).join('')}`
           if (curr && currentTypes.includes(curr)) sel.value = curr
         })
         root.querySelectorAll('select[name="size"]').forEach(sel => {
           const curr = sel.value
-          sel.innerHTML = `<option value="">Talla</option>${currentSizes.map(x => `<option value="${x}">${x}</option>`).join('')}`
+          sel.innerHTML = `<option value="">Talla</option>${currentSizes.map(x => `<option value="${escapeHtml(String(x))}">${escapeHtml(String(x))}</option>`).join('')}`
           if (curr && currentSizes.includes(curr)) sel.value = curr
         })
         root.querySelectorAll('select[name="color"]').forEach(sel => {
           const curr = sel.value
-          sel.innerHTML = `<option value="">Color</option>${currentColors.map(x => `<option value="${x}">${x}</option>`).join('')}`
+          sel.innerHTML = `<option value="">Color</option>${currentColors.map(x => `<option value="${escapeHtml(String(x))}">${escapeHtml(String(x))}</option>`).join('')}`
           if (curr && currentColors.includes(curr)) sel.value = curr
         })
         // Solo las tallas y colores que existen donde estas: en Pantalones no

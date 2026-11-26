@@ -12,6 +12,7 @@ import { applySeo } from './seo.js'
 import { addNotification, getNotifications, getUnreadCount, markAllRead, subscribeNotifications } from '../utils/notifications.js'
 import { withTimeout, toCleanup } from '../utils/async.js'
 import { unlockScroll } from '../utils/dom.js'
+import { escapeHtml } from '../utils/sanitize.js'
 
 function playOrderAlertSound() {
   if (typeof window === 'undefined') return
@@ -613,16 +614,16 @@ export async function startApp(mountEl) {
         }
 
         bellList.innerHTML = notifs.map(n => `
-          <div class="flex items-start gap-3 px-4 py-3 border-b border-line last:border-0 hover:bg-canvas transition-colors ${n.read ? 'opacity-60' : ''}" ${n.orderId ? `data-bell-order="${n.orderId}" style="cursor:pointer"` : ''}>
+          <div class="flex items-start gap-3 px-4 py-3 border-b border-line last:border-0 hover:bg-canvas transition-colors ${n.read ? 'opacity-60' : ''}" ${n.orderId ? `data-bell-order="${escapeHtml(String(n.orderId))}" style="cursor:pointer"` : ''}>
             <div class="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center mt-0.5 ${n.read ? 'bg-line text-muted' : 'bg-brand-tint text-brand'}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M6 2 4 6v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6l-2-4H6Z"/><path d="M4 6h16"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
             </div>
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2">
-                <span class="text-[13px] font-semibold text-ink">${n.title}</span>
+                <span class="text-[13px] font-semibold text-ink">${escapeHtml(n.title)}</span>
                 ${!n.read ? '<span class="w-1.5 h-1.5 rounded-full bg-brand shrink-0"></span>' : ''}
               </div>
-              <p class="text-[12.5px] text-muted mt-0.5 truncate">${n.body}</p>
+              <p class="text-[12.5px] text-muted mt-0.5 truncate">${escapeHtml(n.body)}</p>
             </div>
             <span class="text-[11px] text-faint shrink-0 tnum mt-0.5">${timeAgo(n.time)}</span>
           </div>

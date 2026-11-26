@@ -151,7 +151,7 @@ function notifyNewOrder(order) {
   const customer = order?.customer_name || 'Cliente'
   const total = Number(order?.total || 0)
   playNewOrderSound()
-  showToast(`Nuevo pedido de ${esc(customer)} (${formatMoney(total)})`, 'success', 6000)
+  showToast(`Nuevo pedido de ${customer} (${formatMoney(total)})`, 'success', 6000)
   if (typeof window === 'undefined' || typeof Notification === 'undefined') return
   if (Notification.permission !== 'granted') return
   try {
@@ -636,7 +636,7 @@ export function pageAdminOrders(state) {
                 const { result, error: mailError } = await sendOrderConfirmation(order.id, orderConfirmationEmail(order, BRAND.whatsapp))
                 if (result === 'sent') {
                   order.confirmation_sent_at = new Date().toISOString()
-                  showToast(`Correo de confirmación enviado a ${esc(order.customer_email)}`, 'success')
+                  showToast(`Correo de confirmación enviado a ${order.customer_email}`, 'success')
                 } else if (mailError || result === 'no_key') {
                   showToast('El pedido se actualizó, pero no se pudo enviar el correo al cliente', 'error')
                 }

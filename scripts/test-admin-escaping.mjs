@@ -25,6 +25,21 @@ for (const file of readdirSync(DIR).filter(f => f.endsWith('.js'))) {
 }
 assert.deepEqual(leaks, [], `Datos del cliente sin escapar:\n${leaks.join('\n')}`)
 
+// Tienda: nombres de producto/categoria, resenas y notificaciones tambien llegan a innerHTML.
+// Un ${p.name} pelado (sin escapeHtml/esc) falla; "// not-html:" lo exime igual que arriba.
+const STORE_FILES = ['src/core/startApp.js', 'src/pages/catalog/catalog.js', 'src/pages/catalog/catalogCard.js',
+  'src/pages/home/homeCards.js', 'src/pages/product/product.js', 'src/pages/admin/adminCategories.js']
+const BARE = /\$\{\s*(?:p\.name|cat\.name|r\.quote|n\.title|n\.body|x|c)\s*\}/g
+const storeLeaks = []
+for (const file of STORE_FILES) {
+  const lines = readFileSync(file, 'utf8').split('\n')
+  lines.forEach((line, i) => {
+    if ((lines[i - 1] || '').includes('not-html:')) return
+    for (const m of line.matchAll(BARE)) storeLeaks.push(`${file}:${i + 1}  ${line.slice(m.index, m.index + 60).trim()}`)
+  })
+}
+assert.deepEqual(storeLeaks, [], `Datos de la tienda sin escapar:\n${storeLeaks.join('\n')}`)
+
 assert.equal(escapeHtml('<img src=x onerror=alert(1)>'), '&lt;img src=x onerror=alert(1)&gt;')
 assert.equal(escapeHtml('" onmouseover="x'), '&quot; onmouseover=&quot;x')
 

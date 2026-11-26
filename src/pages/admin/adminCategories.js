@@ -1,4 +1,5 @@
 import { getCategories, addCategory, updateCategory, deleteCategory, reorderCategories, getState } from '../../store/index.js'
+import { escapeHtml as esc } from '../../utils/sanitize.js'
 import { showToast } from '../../utils/toast.js'
 import { confirmDelete } from './adminConfirm.js'
 import { ICON } from './adminIcons.js'
@@ -64,12 +65,12 @@ export function pageAdminCategories(state) {
         listEl.innerHTML = categories.map((cat, i) => {
           const count = productCounts[cat.name] || 0
           return `
-          <div class="group flex items-center gap-3 bg-paper rounded-xl2 border border-line hover:border-line-strong hover:shadow-card px-3.5 py-3 transition-[border-color,box-shadow] select-none cursor-grab" data-sort-id="${cat.id}" data-category-id="${cat.id}" data-category-name="${cat.name}">
+          <div class="group flex items-center gap-3 bg-paper rounded-xl2 border border-line hover:border-line-strong hover:shadow-card px-3.5 py-3 transition-[border-color,box-shadow] select-none cursor-grab" data-sort-id="${cat.id}" data-category-id="${cat.id}" data-category-name="${esc(cat.name)}">
             ${dragHandle(cat.name)}
             <div class="w-8 h-8 rounded-lg bg-canvas border border-line flex items-center justify-center eyebrow text-muted tnum shrink-0">${String(i + 1).padStart(2, '0')}</div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
-                <span class="text-[14px] font-semibold text-ink truncate">${cat.name}</span>
+                <span class="text-[14px] font-semibold text-ink truncate">${esc(cat.name)}</span>
                 ${!cat.active ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-line text-muted font-medium">Oculta</span>' : ''}
               </div>
               <span class="text-[12px] text-faint">${count} producto${count !== 1 ? 's' : ''}</span>
@@ -126,6 +127,7 @@ export function pageAdminCategories(state) {
             if (!cat) return
             const count = (getProductCounts()[cat.name]) || 0
             if (count > 0) {
+              // not-html: showToast pinta con textContent
               showToast(`No se puede eliminar "${cat.name}" porque tiene ${count} producto${count !== 1 ? 's' : ''}. Reasigna primero.`, 'error', 5000)
               return
             }
@@ -160,7 +162,7 @@ export function pageAdminCategories(state) {
               <form data-form class="px-5 pb-5 space-y-4">
                 <div>
                   <label class="adm-lbl">Nombre *</label>
-                  <input name="name" type="text" required maxlength="50" value="${isEdit ? cat.name : ''}" class="adm-fld" placeholder="Ej: Camisas" autofocus />
+                  <input name="name" type="text" required maxlength="50" value="${isEdit ? esc(cat.name) : ''}" class="adm-fld" placeholder="Ej: Camisas" autofocus />
                 </div>
                 <p data-error class="hidden text-[13px] text-bad bg-bad-tint rounded-xl2 px-4 py-2"></p>
                 <div class="flex gap-2.5 pt-1">
