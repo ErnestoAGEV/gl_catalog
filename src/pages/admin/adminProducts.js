@@ -227,7 +227,7 @@ export function pageAdminProducts(state) {
         if (imagePreviewsContainer) {
           imagePreviewsContainer.innerHTML = items.map((item, i) => `
             <div class="relative aspect-square rounded-[10px] overflow-hidden bg-canvas border border-line group">
-              <img src="${item.src}" alt="Preview ${i + 1}" class="w-full h-full object-cover"/>
+              <img src="${esc(String(item.src))}" alt="Preview ${i + 1}" class="w-full h-full object-cover"/>
               <div class="absolute top-1 right-1 z-10">
                 <button type="button" class="w-6 h-6 rounded-full bg-bad text-white flex items-center justify-center hover:bg-bad/80 transition-colors shadow-sm" data-remove-kind="${item.kind}" data-remove-idx="${item.idx}" title="Eliminar">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
