@@ -11,7 +11,6 @@
 -- crea los objetos.
 
 revoke insert, update, delete, truncate, references, trigger on all tables in schema public from anon;
-grant insert on public.newsletter_subscribers to anon;  -- el sitio actual; se quita en la Fase C
 revoke truncate, references, trigger on all tables in schema public from authenticated;
 
 alter default privileges for role postgres in schema public revoke insert, update, delete, truncate, references, trigger on tables from anon;

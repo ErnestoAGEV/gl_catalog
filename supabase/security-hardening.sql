@@ -169,9 +169,9 @@ begin
   loop
     sp := (select substr(x, 13) from unnest(f.proconfig) x where x like 'search_path=%' limit 1);
     if coalesce(btrim(sp, '" '), '') = '' then
-      execute format('alter function %s set search_path = public, pg_temp', f.sig);
+      execute format('alter routine %s set search_path = public, pg_temp', f.sig);
     elsif position('pg_temp' in sp) = 0 then
-      execute format('alter function %s set search_path = %s, pg_temp', f.sig, sp);
+      execute format('alter routine %s set search_path = %s, pg_temp', f.sig, sp);
     end if;
   end loop;
 end;

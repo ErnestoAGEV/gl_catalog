@@ -72,6 +72,10 @@ begin
      and exists (select 1 from pg_policy where polrelid = 'public.site_content'::regclass and polname = 'site_content_public_read')
      and exists (select 1 from pg_policy where polrelid = 'public.site_content'::regclass and polname = 'site_content_admin_all'),
     'site_content: politicas distintas de site_content_public_read + site_content_admin_all';
+  assert (select polroles from pg_policy where polrelid = 'public.categories'::regclass and polname = 'categories_admin_all')
+         = array['authenticated'::regrole::oid], 'categories_admin_all no es solo para authenticated';
+  assert (select polroles from pg_policy where polrelid = 'public.site_content'::regclass and polname = 'site_content_admin_all')
+         = array['authenticated'::regrole::oid], 'site_content_admin_all no es solo para authenticated';
   assert (select count(*) from storage.buckets where id in ('products', 'site-content')
           and file_size_limit = 5242880 and 'image/jpeg' = any(allowed_mime_types)) = 2,
     'buckets sin tope de tamano o de tipos';
@@ -104,6 +108,7 @@ begin
   perform set_config('request.jwt.claims', '{"role":"anon"}', true);
   perform set_config('request.headers', '{"cf-connecting-ip":"203.0.113.7"}', true);
   update public.security_limits set max_hits = 100 where name in ('nl_ip', 'nl_email', 'nl_global');
+  delete from public.rate_events where bucket in ('nl_ip', 'nl_email', 'nl_global');
   delete from public.newsletter_subscribers where email like 'zz+t15%@example.com';
   execute 'set local role anon';
   perform public.newsletter_subscribe('ZZ+T15@Example.com');
@@ -150,6 +155,8 @@ begin
   ), (select 'SECURITY DEFINER sin pg_temp: ' || string_agg(p.oid::regprocedure::text, ', ')
       from pg_proc p
       where p.pronamespace = 'public'::regnamespace and p.prosecdef
+        and not exists (select 1 from pg_depend d
+                        where d.classid = 'pg_proc'::regclass and d.objid = p.oid and d.deptype = 'e')
         and not exists (select 1 from unnest(p.proconfig) x where x like 'search_path=%' and position('pg_temp' in x) > 0));
 
   raise exception 'CHECK_OK';

@@ -21,7 +21,7 @@ begin
   delete from public.products where false;
   assert (select count(*) from net.http_request_queue where id > v0) = 1, 'un DELETE de 0 filas encolo un despliegue';
 
-  -- Sin escritura anónima (salvo INSERT en newsletter_subscribers) ni
+  -- Sin escritura anónima (tampoco INSERT en newsletter_subscribers, desde la Fase C) ni
   -- TRUNCATE/REFERENCES/TRIGGER para authenticated. has_any_column_privilege
   -- cubre también los permisos por columna.
   for t in
@@ -30,11 +30,11 @@ begin
   loop
     assert not has_table_privilege('anon', t.oid, 'DELETE,TRUNCATE,TRIGGER'), format('anon puede DELETE/TRUNCATE/TRIGGER en %s', t.relname);
     assert not has_any_column_privilege('anon', t.oid, 'UPDATE,REFERENCES'), format('anon puede UPDATE/REFERENCES en %s', t.relname);
-    assert t.relname = 'newsletter_subscribers' or not has_any_column_privilege('anon', t.oid, 'INSERT'), format('anon puede INSERT en %s', t.relname);
+    assert not has_any_column_privilege('anon', t.oid, 'INSERT'), format('anon puede INSERT en %s', t.relname);
     assert not has_table_privilege('authenticated', t.oid, 'TRUNCATE,TRIGGER'), format('authenticated puede TRUNCATE/TRIGGER en %s', t.relname);
     assert not has_any_column_privilege('authenticated', t.oid, 'REFERENCES'), format('authenticated puede REFERENCES en %s', t.relname);
   end loop;
-  assert has_table_privilege('anon', 'public.newsletter_subscribers', 'INSERT'), 'anon perdio el INSERT del boletin (el sitio actual lo usa)';
+  assert not has_table_privilege('anon', 'public.newsletter_subscribers', 'INSERT'), 'anon conserva el INSERT del boletin (se quito en la Fase C)';
 
   -- Default privileges: lo nuevo nace cerrado
   create table public._zz_acl_probe(id int);
