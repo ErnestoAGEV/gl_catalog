@@ -184,7 +184,7 @@ export function pageAdminNewsletter(state) {
       exportBtn?.addEventListener('click', () => {
         if (!subscribers.length) return
         const rows = [csvRow(['Email', 'Fecha de registro', 'Estado']), ...subscribers.map(s => csvRow([s.email, formatSubscriberDate(s), statusOf(s)]))].join('\n')
-        const blob = new Blob([rows], { type: 'text/csv;charset=utf-8;' })
+        const blob = new Blob(['\uFEFF' + rows], { type: 'text/csv;charset=utf-8;' }) // BOM: Excel abre los acentos bien
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url

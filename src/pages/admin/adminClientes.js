@@ -275,7 +275,7 @@ export function pageAdminClientes(state) {
               csvRow([c.name, c.whatsapp, c.orderCount, c.totalSpent.toFixed(2), formatDate(c.lastOrder), c.ticketAvg.toFixed(2)])
             ),
           ].join('\n')
-          const blob = new Blob([rows], { type: 'text/csv;charset=utf-8;' })
+          const blob = new Blob(['\uFEFF' + rows], { type: 'text/csv;charset=utf-8;' }) // BOM: Excel abre los acentos bien
           const url = URL.createObjectURL(blob)
           const a = document.createElement('a')
           a.href = url
