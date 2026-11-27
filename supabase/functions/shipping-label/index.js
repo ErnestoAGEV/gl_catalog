@@ -174,9 +174,13 @@ Deno.serve(async (req) => {
   const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer /i, '')
   const { data: auth, error: authErr } = token ? await db.auth.getUser(token) : { data: null, error: true }
   if (authErr || !auth?.user) return json({ error: 'auth' }, 401)
-  // Plan de seguridad: aquí cambiará a is_admin() + aal2.
-  const { data: admin, error: adminErr } = await db.from('admin_users').select('user_id').eq('user_id', auth.user.id).maybeSingle()
-  if (adminErr || !admin) return json({ error: 'forbidden' }, 403)
+  // is_admin() con el token del usuario: sigue la misma regla que la base (hoy membresía; en la Fase D, también aal2).
+  const asUser = createClient(Deno.env.get('SUPABASE_URL'), Deno.env.get('SUPABASE_ANON_KEY'), {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+  const { data: isAdmin, error: adminErr } = await asUser.rpc('is_admin')
+  if (adminErr || isAdmin !== true) return json({ error: 'forbidden' }, 403)
 
   let body
   try { body = await req.json() } catch { return json({ error: 'body' }, 400) }
