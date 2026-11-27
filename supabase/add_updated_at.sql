@@ -25,6 +25,7 @@ ALTER COLUMN updated_at SET DEFAULT now();
 CREATE OR REPLACE FUNCTION public.set_updated_at()
 RETURNS trigger
 LANGUAGE plpgsql
+SET search_path = public, pg_temp
 AS $$
 BEGIN
   NEW.updated_at = now();

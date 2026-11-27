@@ -1,3 +1,4 @@
+-- Historico. El estado vigente lo fija security-hardening.sql: correlo despues de este archivo.
 -- Correos del boletín: alta con doble confirmación, envíos a suscriptores y baja.
 --
 -- Cómo funciona: el admin (Newsletter) arma el correo y guarda el asunto y el
@@ -267,85 +268,13 @@ $$;
 REVOKE ALL ON FUNCTION public.newsletter_confirm(uuid) FROM public;
 GRANT EXECUTE ON FUNCTION public.newsletter_confirm(uuid) TO anon, authenticated;
 
--- Puerta vieja: el sitio en caché inserta directo en la tabla (anon tiene
--- INSERT hasta la Fase C). Esa alta pasa por los mismos topes y queda
--- pendiente de confirmar, mande lo que mande el cliente.
-CREATE OR REPLACE FUNCTION public.newsletter_direct_insert()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public, pg_temp
-AS $$
-BEGIN
-  -- Ningún insert entra ya confirmado ni dado de baja, venga de donde venga
-  NEW.confirmed_at := NULL;
-  NEW.unsubscribed_at := NULL;
-  IF current_setting('gl.nl_rpc', true) IS NOT DISTINCT FROM '1' THEN RETURN NEW; END IF;
-  NEW.email := lower(btrim(NEW.email));
-  IF NEW.email IS NULL OR length(NEW.email) > 254
-     OR NEW.email !~ '^[^[:space:]@]+@[^[:space:]@]+[.][^[:space:]@]+$'
-     OR NEW.email ~ '[<>"'']' THEN
-    RAISE EXCEPTION 'El correo no parece valido.' USING errcode = '22023';
-  END IF;
-  IF NOT public.rate_check('nl_ip', public.request_ip()) THEN
-    RAISE EXCEPTION 'Demasiados intentos. Intenta mas tarde.' USING errcode = '22023';
-  END IF;
-  -- Demasiados enlaces a este correo: no se guarda, en silencio (como la RPC)
-  IF NOT public.rate_check('nl_email', NEW.email) THEN RETURN NULL; END IF;
-  IF NOT public.rate_check('nl_global', '*') THEN
-    RAISE EXCEPTION 'Demasiados intentos. Intenta mas tarde.' USING errcode = '22023';
-  END IF;
-  NEW.source := 'home_page';
-  NEW.subscribed_at := now();
-  NEW.unsub_token := gen_random_uuid();
-  NEW.confirm_token := gen_random_uuid();
-  NEW.confirm_sent_at := now();
-  RETURN NEW;
-END;
-$$;
-REVOKE ALL ON FUNCTION public.newsletter_direct_insert() FROM public, anon, authenticated;
-
-DROP TRIGGER IF EXISTS newsletter_direct_insert ON public.newsletter_subscribers;
-CREATE TRIGGER newsletter_direct_insert
-BEFORE INSERT ON public.newsletter_subscribers
-FOR EACH ROW EXECUTE FUNCTION public.newsletter_direct_insert();
-
--- Después de un insert directo: el correo de confirmación, nunca bienvenida.
--- Las altas por newsletter_subscribe lo mandan ellas mismas.
-CREATE OR REPLACE FUNCTION public.send_welcome_email()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public, extensions, vault, pg_temp
-AS $$
-BEGIN
-  IF NEW.confirmed_at IS NULL AND current_setting('gl.nl_rpc', true) IS DISTINCT FROM '1' THEN
-    PERFORM public.send_confirm_to(NEW.email, NEW.confirm_token);
-  END IF;
-  RETURN NULL;
-END;
-$$;
-REVOKE ALL ON FUNCTION public.send_welcome_email() FROM public, anon, authenticated;
-
--- El sitio en caché llama a esto cuando su insert choca con un correo que ya
--- existe. Ya no reactiva: manda el enlace de confirmación.
-CREATE OR REPLACE FUNCTION public.newsletter_resubscribe(p_email text)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public, pg_temp
-AS $$
-BEGIN
-  PERFORM public.newsletter_subscribe(p_email);
-END;
-$$;
-REVOKE ALL ON FUNCTION public.newsletter_resubscribe(text) FROM public;
-GRANT EXECUTE ON FUNCTION public.newsletter_resubscribe(text) TO anon, authenticated;
-
+-- Las puertas viejas del sitio en caché (insert directo con sus triggers y
+-- newsletter_resubscribe) se cerraron en la Fase C: security-hardening.sql.
 DROP TRIGGER IF EXISTS newsletter_welcome_email ON public.newsletter_subscribers;
-CREATE TRIGGER newsletter_welcome_email
-AFTER INSERT ON public.newsletter_subscribers
-FOR EACH ROW EXECUTE FUNCTION public.send_welcome_email();
+DROP TRIGGER IF EXISTS newsletter_direct_insert ON public.newsletter_subscribers;
+DROP FUNCTION IF EXISTS public.send_welcome_email();
+DROP FUNCTION IF EXISTS public.newsletter_direct_insert();
+DROP FUNCTION IF EXISTS public.newsletter_resubscribe(text);
 
 -- La bienvenida ya no existe
 DROP FUNCTION IF EXISTS public.send_welcome_to(text, uuid);

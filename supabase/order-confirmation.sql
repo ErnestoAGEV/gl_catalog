@@ -19,7 +19,7 @@ create or replace function public.send_order_confirmation(p_order_id text, p_sub
 returns text
 language plpgsql
 security definer
-set search_path = public, extensions, vault
+set search_path = public, extensions, vault, pg_temp
 as $$
 declare
   v_order public.orders%rowtype;

@@ -31,7 +31,7 @@ drop policy if exists "Public Access to Upload" on storage.objects;
 drop policy if exists "Public Access to Read Images" on storage.objects; -- duplicada de products_bucket_public_read
 
 -- Funciones de trigger: nadie las llama por /rpc (los triggers siguen disparando)
-revoke execute on function public.send_welcome_email() from public, anon, authenticated;
+-- send_welcome_email() se borro en security-hardening.sql (Fase C)
 revoke execute on function public.trigger_rebuild() from public, anon, authenticated;
 revoke execute on function public.set_updated_at() from public, anon, authenticated;
 
